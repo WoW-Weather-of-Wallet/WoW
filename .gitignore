@@ -1,0 +1,98 @@
+############################################
+# OS
+############################################
+.DS_Store
+Thumbs.db
+
+############################################
+# IDE / Editor
+############################################
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+############################################
+# Logs
+############################################
+*.log
+logs/
+
+############################################
+# Environment variables
+############################################
+.env
+.env.*
+*.env
+
+############################################
+# Keys / Secrets
+############################################
+*.pem
+*.key
+*.crt
+
+############################################
+# Backend (Spring Boot / Gradle)
+############################################
+Backend/.gradle/
+Backend/build/
+Backend/out/
+Backend/.classpath
+Backend/.project
+Backend/.settings/
+
+############################################
+# Frontend (React Native / Node)
+############################################
+Frontend/node_modules/
+Frontend/npm-debug.log*
+Frontend/yarn-debug.log*
+Frontend/yarn-error.log*
+
+Frontend/android/.gradle/
+Frontend/android/app/build/
+Frontend/android/build/
+
+Frontend/ios/Pods/
+Frontend/ios/build/
+
+############################################
+# AI (Python / ML)
+############################################
+AI/__pycache__/
+AI/*.pyc
+AI/*.pyo
+AI/*.pyd
+
+AI/.venv/
+AI/venv/
+AI/env/
+
+AI/.ipynb_checkpoints/
+
+############################################
+# Infra / Docker
+############################################
+Infra/.env
+Infra/*.env
+
+############################################
+# Temporary files
+############################################
+*.tmp
+*.temp
+*.swp
+*.swo
+
+############################################
+# Coverage / test output
+############################################
+coverage/
+htmlcov/
+
+############################################
+# Misc
+############################################
+*.lock
