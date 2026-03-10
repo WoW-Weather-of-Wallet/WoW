@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 
 const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 알뜰폰'];
 
@@ -29,6 +30,7 @@ export default function PhoneAuthScreen({ navigation }: any) {
   const [phone, setPhone] = useState('');
   
   const [modalVisible, setModalVisible] = useState(false);
+  const [termsVisible, setTermsVisible] = useState(false);
 
   const nameRef = useRef<TextInput>(null);
   const ssnFrontRef = useRef<TextInput>(null);
@@ -95,7 +97,7 @@ export default function PhoneAuthScreen({ navigation }: any) {
           isActive: telecom !== '통신사 선택' && phone.length >= 10,
           text: '확인',
           onPress: () => {
-            console.log('인증 과정 다음 화면으로 이동');
+            setTermsVisible(true);
           },
         };
     }
@@ -213,6 +215,16 @@ export default function PhoneAuthScreen({ navigation }: any) {
           </View>
         </Pressable>
       </Modal>
+
+      {/* 약관 동의 바텀시트 모달 */}
+      <TermsBottomSheet 
+        visible={termsVisible} 
+        onClose={() => setTermsVisible(false)} 
+        onConfirm={() => {
+          console.log('인증번호 입력 화면으로 이동');
+          // navigation.navigate('VerifyCode'); // TODO: 다음 단계 화면 연결
+        }} 
+      />
     </KeyboardAvoidingView>
   );
 }
