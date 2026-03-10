@@ -15,7 +15,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function CreateAccountScreen({ navigation }: any) {
+export default function CreateAccountScreen({ route, navigation }: any) {
   const insets = useSafeAreaInsets();
   
   const [step, setStep] = useState(1);
@@ -105,8 +105,7 @@ export default function CreateAccountScreen({ navigation }: any) {
     if (!isFormValid) return;
     
     console.log('계정 생성 정보:', { id, password });
-    console.log('가입 환영 페이지로 이동 (TODO)');
-    // navigation.navigate('Welcome');
+    navigation.replace('Welcome', { ...route.params, id });
   };
 
   const handleIdChange = (text: string) => {

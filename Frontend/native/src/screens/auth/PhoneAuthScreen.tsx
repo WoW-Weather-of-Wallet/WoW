@@ -222,7 +222,13 @@ export default function PhoneAuthScreen({ navigation }: any) {
         onClose={() => setTermsVisible(false)} 
         onConfirm={() => {
           setTermsVisible(false);
-          navigation.navigate('VerifyCode');
+          navigation.navigate('VerifyCode', {
+            name,
+            ssnFront,
+            ssnBack,
+            telecom,
+            phone,
+          });
         }} 
       />
     </KeyboardAvoidingView>
