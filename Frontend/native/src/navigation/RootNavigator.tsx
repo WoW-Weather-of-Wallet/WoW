@@ -16,6 +16,9 @@ import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 
+// Onboarding 화면
+import JobSelectionScreen from '../screens/onboarding/JobSelectionScreen';
+
 const Stack = createNativeStackNavigator();
 
 // -----------------------------------------------
@@ -68,6 +71,12 @@ export default function RootNavigator() {
         <Stack.Screen
           name="Welcome"
           component={WelcomeScreen}
+          options={{ gestureEnabled: false }}
+        />
+        {/* 직업 선택 온보딩 화면 */}
+        <Stack.Screen
+          name="JobSelection"
+          component={JobSelectionScreen}
           options={{ gestureEnabled: false }}
         />
         {/* 로그인 화면 */}
