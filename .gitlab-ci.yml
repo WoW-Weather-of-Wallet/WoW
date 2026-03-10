@@ -21,7 +21,6 @@ deploy:
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
     - if: '$CI_COMMIT_BRANCH == "dev"'
-    - if: '$CI_COMMIT_BRANCH == "infra"'
   script:
     - mkdir -p /home/gitlab-runner/deploy
     - cd /home/gitlab-runner/deploy
