@@ -96,3 +96,5 @@ htmlcov/
 # Misc
 ############################################
 *.lock
+Infra/Docker/env.prod
+Backend/src/main/resources/application-local.yml
