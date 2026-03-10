@@ -30,7 +30,7 @@ deploy:
     - cd /home/gitlab-runner/deploy
     - cp $CI_PROJECT_DIR/Infra/Docker/docker-compose.prod.yml ./docker-compose.prod.yml
     - mkdir -p ./nginx
-    - cp $CI_PROJECT_DIR/Infra/Docker/nginx/nginx.conf ./nginx/nginx.conf
+    - cp $CI_PROJECT_DIR/Infra/Nginx/nginx.conf ./nginx/nginx.conf
     - |
       cat > .env.prod << ENV
       DB_URL=${DB_URL}
