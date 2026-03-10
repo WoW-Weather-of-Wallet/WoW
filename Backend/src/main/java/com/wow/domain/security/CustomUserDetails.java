@@ -29,7 +29,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getUserId();
+        return user.getUserId() != null ? user.getUserId() : user.getSsafyOauthId();
     }
 
     @Override

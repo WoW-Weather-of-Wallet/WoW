@@ -18,6 +18,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
         User user = userRepository.findByUserId(username)
+                .or(() -> userRepository.findBySsafyOauthId(username))
                 .orElseThrow(() -> new UsernameNotFoundException("아이디 또는 비밀번호가 올바르지 않습니다."));
 
         return new CustomUserDetails(user);

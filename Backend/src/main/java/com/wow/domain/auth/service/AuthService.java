@@ -45,10 +45,11 @@ public class AuthService {
                 .gender(request.getGender())
                 .phoneNumber(request.getPhoneNumber())
                 .birthDate(request.getBirthDate())
+                .alarmEnabled(request.isAlarmEnabled())
                 .role(Role.User)
                 .build();
 
-        return UserCreateResponse.from(userRepository.save(user), request.isAlarmEnabled());
+        return UserCreateResponse.from(userRepository.save(user));
     }
 
     @Transactional(readOnly = true)
