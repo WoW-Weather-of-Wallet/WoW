@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -21,17 +21,19 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import CustomTextInput from '../../components/common/CustomTextInput';
 import GradientButton from '../../components/common/GradientButton';
-import { COLORS, FONTS, RADIUS, wp, hp, fp, SPACING } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, wp, hp, fp } from '../../constants/theme';
 
 /**
- * LoginScreen - 로그인 & 회원가입 화면
+ * LoginScreen
+ * 현재는 API 연결 전 단계라서 입력값을 받는 UI와 메인 화면 이동만 우선 구현합니다.
+ * authStore와 auth API가 붙으면 handleLogin 내부만 교체해도 흐름을 이어갈 수 있습니다.
  */
 export default function LoginScreen({ navigation }: any) {
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [autoLogin, setAutoLogin] = useState(false);
 
-  // 진입 애니메이션
+  // 헤더 등장 애니메이션은 기존 로그인 화면 무드를 유지하기 위해 그대로 둡니다.
   const headerOpacity = useSharedValue(0);
   const headerTranslateY = useSharedValue(-20);
 
@@ -51,9 +53,12 @@ export default function LoginScreen({ navigation }: any) {
     transform: [{ translateY: headerTranslateY.value }],
   }));
 
-  // 버튼 핸들러 (백엔드 미완성 → 콘솔 로그)
   const handleLogin = () => {
     console.log('로그인 시도:', { userId, password, autoLogin });
+
+    // 백엔드 인증이 붙기 전까지는 메인 탭 화면을 먼저 검증할 수 있도록
+    // 로그인 버튼 클릭 시 임시로 MainTabs로 이동시킵니다.
+    navigation.replace('MainTabs');
   };
 
   const handleSignup = () => {
@@ -61,19 +66,16 @@ export default function LoginScreen({ navigation }: any) {
   };
 
   const handleFindAccount = () => {
-    console.log('아이디/비밀번호 찾기');
+    console.log('아이디/비밀번호 찾기 연결 예정');
   };
 
   const handleSSAFYLogin = () => {
-    console.log('SSAFY 계정으로 로그인');
+    console.log('SSAFY OAuth 연결 예정');
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor={COLORS.background}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -83,18 +85,31 @@ export default function LoginScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* 헤더 - 로그인 타이틀 */}
+          {/* 헤더 문구는 화면 성격을 빠르게 보여주도록 단순하게 유지합니다. */}
           <Animated.View style={[styles.headerContainer, headerAnimatedStyle]}>
             <Text style={styles.headerTitle}>로그인</Text>
             <View style={styles.headerLine} />
           </Animated.View>
 
-          {/* 입력 폼 영역 */}
+          <Animated.View entering={FadeInDown.delay(160).duration(500).springify()}>
+            {/* 테스트 배너를 헤더 바로 아래에 둬서 스크롤 없이도 바로 보이게 합니다. */}
+            <View style={styles.devEntryCard}>
+              <Text style={styles.devEntryTitle}>개발용 빠른 진입</Text>
+              <Text style={styles.devEntryDescription}>
+                백엔드 로그인 연결 전이라 메인 화면 확인용으로만 사용합니다.
+              </Text>
+              <GradientButton
+                title="TEST: 메인 화면 바로가기"
+                onPress={handleLogin}
+              />
+            </View>
+          </Animated.View>
+
           <Animated.View
             entering={FadeInDown.delay(200).duration(500).springify()}
             style={styles.formContainer}
           >
-            {/* 아이디 입력 */}
+            {/* 추후 react-hook-form으로 교체하더라도 컴포넌트 구조는 유지할 수 있습니다. */}
             <CustomTextInput
               label="아이디"
               value={userId}
@@ -103,7 +118,6 @@ export default function LoginScreen({ navigation }: any) {
               autoComplete="username"
             />
 
-            {/* 비밀번호 입력 */}
             <CustomTextInput
               label="비밀번호"
               value={password}
@@ -113,7 +127,6 @@ export default function LoginScreen({ navigation }: any) {
               autoComplete="password"
             />
 
-            {/* 회원가입 / 로그인 버튼 */}
             <View style={styles.buttonRow}>
               <View style={styles.buttonHalf}>
                 <GradientButton
@@ -132,22 +145,16 @@ export default function LoginScreen({ navigation }: any) {
             </View>
           </Animated.View>
 
-          {/* 아이디/비밀번호 찾기 */}
-          <Animated.View
-            entering={FadeInDown.delay(350).duration(500).springify()}
-          >
+          <Animated.View entering={FadeInDown.delay(350).duration(500).springify()}>
             <TouchableOpacity
               onPress={handleFindAccount}
               style={styles.findAccountButton}
               activeOpacity={0.6}
             >
-              <Text style={styles.findAccountText}>
-                아이디 / 비밀번호 찾기
-              </Text>
+              <Text style={styles.findAccountText}>아이디 / 비밀번호 찾기</Text>
             </TouchableOpacity>
           </Animated.View>
 
-          {/* 자동 로그인 토글 */}
           <Animated.View
             entering={FadeInDown.delay(450).duration(500).springify()}
             style={styles.autoLoginContainer}
@@ -165,7 +172,6 @@ export default function LoginScreen({ navigation }: any) {
             />
           </Animated.View>
 
-          {/* 구분선 */}
           <Animated.View
             entering={FadeInDown.delay(550).duration(500).springify()}
             style={styles.dividerContainer}
@@ -175,10 +181,7 @@ export default function LoginScreen({ navigation }: any) {
             <View style={styles.dividerLine} />
           </Animated.View>
 
-          {/* SSAFY 계정 로그인 */}
-          <Animated.View
-            entering={FadeInDown.delay(650).duration(500).springify()}
-          >
+          <Animated.View entering={FadeInDown.delay(650).duration(500).springify()}>
             <TouchableOpacity
               onPress={handleSSAFYLogin}
               style={styles.ssafyButton}
@@ -190,9 +193,7 @@ export default function LoginScreen({ navigation }: any) {
                 end={{ x: 1, y: 1 }}
                 style={styles.ssafyGradient}
               >
-                <Text style={styles.ssafyButtonText}>
-                  SSAFY 계정으로 로그인
-                </Text>
+                <Text style={styles.ssafyButtonText}>SSAFY 계정으로 로그인</Text>
               </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
@@ -216,11 +217,9 @@ const styles = StyleSheet.create({
     paddingTop: hp(80),
     paddingBottom: hp(40),
   },
-
-  // 헤더
   headerContainer: {
     alignItems: 'center',
-    marginBottom: hp(48),
+    marginBottom: hp(32),
   },
   headerTitle: {
     fontSize: fp(28),
@@ -235,16 +234,33 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     marginTop: hp(12),
   },
-
-  // 폼
+  devEntryCard: {
+    marginBottom: hp(18),
+    padding: wp(16),
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.primary50,
+    borderWidth: 1,
+    borderColor: COLORS.primarySoft,
+  },
+  devEntryTitle: {
+    fontSize: fp(16),
+    fontFamily: FONTS.bold,
+    color: COLORS.primaryDark,
+    marginBottom: hp(6),
+  },
+  devEntryDescription: {
+    fontSize: fp(13),
+    lineHeight: fp(19),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+    marginBottom: hp(12),
+  },
   formContainer: {
     marginBottom: hp(8),
   },
   inputSpacing: {
     marginBottom: hp(14),
   },
-
-  // 버튼 행
   buttonRow: {
     flexDirection: 'row',
     marginTop: hp(8),
@@ -255,8 +271,6 @@ const styles = StyleSheet.create({
   buttonGap: {
     width: wp(12),
   },
-
-  // 아이디/비밀번호 찾기
   findAccountButton: {
     alignItems: 'center',
     paddingVertical: hp(16),
@@ -266,8 +280,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
   },
-
-  // 자동 로그인
   autoLoginContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -281,8 +293,6 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     marginRight: wp(10),
   },
-
-  // 구분선
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -299,8 +309,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     color: COLORS.textTertiary,
   },
-
-  // SSAFY 버튼
   ssafyButton: {
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
