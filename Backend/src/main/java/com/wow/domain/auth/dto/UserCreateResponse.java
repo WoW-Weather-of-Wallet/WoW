@@ -20,7 +20,7 @@ public class UserCreateResponse {
     private LocalDate birthDate;
     private boolean alarmEnabled;
 
-    public static UserCreateResponse from(User user, boolean alarmEnabled) {
+    public static UserCreateResponse from(User user) {
         return new UserCreateResponse(
                 user.getUserId(),
                 user.getJob() != null ? user.getJob().getJobName() : null,
@@ -28,7 +28,7 @@ public class UserCreateResponse {
                 user.getGender(),
                 user.getPhoneNumber(),
                 user.getBirthDate(),
-                alarmEnabled
+                user.isAlarmEnabled()
         );
     }
 

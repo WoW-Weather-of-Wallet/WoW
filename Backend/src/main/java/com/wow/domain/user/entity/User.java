@@ -54,6 +54,17 @@ public class User {
     @Column(length = 5)
     private Role role;
 
+    @Column(name = "alarm_enabled")
+    private boolean alarmEnabled;
+
+    public void updateOnboarding(Job job, String gender, String phoneNumber, LocalDate birthDate, boolean alarmEnabled) {
+        this.job = job;
+        this.gender = gender;
+        this.phoneNumber = phoneNumber;
+        this.birthDate = birthDate;
+        this.alarmEnabled = alarmEnabled;
+    }
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
