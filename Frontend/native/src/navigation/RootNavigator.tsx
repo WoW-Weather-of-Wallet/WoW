@@ -13,6 +13,7 @@ import AccessPermissionScreen from '../screens/auth/AccessPermissionScreen';
 import PhoneAuthScreen from '../screens/auth/PhoneAuthScreen';
 import VerifyCodeScreen from '../screens/auth/VerifyCodeScreen';
 import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
+import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 
 const Stack = createNativeStackNavigator();
@@ -61,6 +62,12 @@ export default function RootNavigator() {
         <Stack.Screen
           name="CreateAccount"
           component={CreateAccountScreen}
+          options={{ gestureEnabled: false }}
+        />
+        {/* 가입 환영 화면 */}
+        <Stack.Screen
+          name="Welcome"
+          component={WelcomeScreen}
           options={{ gestureEnabled: false }}
         />
         {/* 로그인 화면 */}

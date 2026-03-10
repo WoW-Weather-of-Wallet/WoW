@@ -7,7 +7,7 @@ import SecureKeypad from '../../components/common/SecureKeypad';
 
 const MAX_CODE_LENGTH = 6;
 
-export default function VerifyCodeScreen({ navigation }: any) {
+export default function VerifyCodeScreen({ route, navigation }: any) {
   const insets = useSafeAreaInsets();
   const [code, setCode] = useState('');
 
@@ -39,7 +39,7 @@ export default function VerifyCodeScreen({ navigation }: any) {
       // 원래는 서버와 통신하지만, 현재는 데모용 넘어가기
       // 성공 애니메이션/로직 처리 후 다음 화면이동
       console.log('인증 완료. 계정 생성(ID/PW) 화면으로 이동.');
-      navigation.replace('CreateAccount');
+      navigation.replace('CreateAccount', route.params);
     }, 500);
   };
 
