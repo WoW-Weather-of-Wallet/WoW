@@ -15,7 +15,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function CreateAccountScreen({ navigation }: any) {
+export default function CreateAccountScreen({ route, navigation }: any) {
   const insets = useSafeAreaInsets();
   
   const [step, setStep] = useState(1);
@@ -30,8 +30,7 @@ export default function CreateAccountScreen({ navigation }: any) {
   const [isPwVisible, setIsPwVisible] = useState(false);
   const [isConfirmPwVisible, setIsConfirmPwVisible] = useState(false);
 
-  // 안드로이드 네이티브 찰나의 노출 방지를 위한 수동 마스킹 문자
-  const MASK_CHAR = '•';
+  // 수동 마스킹으로 인한 타이핑 버그(IME 충돌) 방지 및 OS 표준 보안 준수를 위해 순정 secureTextEntry 방식 복귀.
 
   const idRef = useRef<TextInput>(null);
   const pwRef = useRef<TextInput>(null);
@@ -58,34 +57,16 @@ export default function CreateAccountScreen({ navigation }: any) {
     }, 800);
   };
 
-  // 2단계 비밀번호 수동 마스킹 처리기
+  // 2단계 비밀번호 정규식 필터링 (영어, 숫자, 특수문자만 허용)
   const handlePasswordChange = (text: string) => {
-    if (isPwVisible) {
-      setPassword(text);
-    } else {
-      // 마스킹된 문자(•)가 얼마나 살아남았는지 확인
-      let matchCount = 0;
-      while (matchCount < text.length && text[matchCount] === MASK_CHAR) {
-        matchCount++;
-      }
-      // 새롭게 타이핑된 진짜 글자들
-      const newChars = text.slice(matchCount);
-      setPassword(password.slice(0, matchCount) + newChars);
-    }
+    const filteredText = text.replace(/[^A-Za-z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/g, '');
+    setPassword(filteredText);
   };
 
-  // 3단계 비밀번호 확인 수동 마스킹 처리기
+  // 3단계 비밀번호 확인 정규식 필터링
   const handleConfirmPasswordChange = (text: string) => {
-    if (isConfirmPwVisible) {
-      setConfirmPassword(text);
-    } else {
-      let matchCount = 0;
-      while (matchCount < text.length && text[matchCount] === MASK_CHAR) {
-        matchCount++;
-      }
-      const newChars = text.slice(matchCount);
-      setConfirmPassword(confirmPassword.slice(0, matchCount) + newChars);
-    }
+    const filteredText = text.replace(/[^A-Za-z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/g, '');
+    setConfirmPassword(filteredText);
   };
 
   const isPasswordValid = password.length >= 8;
@@ -105,8 +86,7 @@ export default function CreateAccountScreen({ navigation }: any) {
     if (!isFormValid) return;
     
     console.log('계정 생성 정보:', { id, password });
-    console.log('가입 환영 페이지로 이동 (TODO)');
-    // navigation.navigate('Welcome');
+    navigation.replace('Welcome', { ...route.params, id });
   };
 
   const handleIdChange = (text: string) => {
@@ -206,13 +186,13 @@ export default function CreateAccountScreen({ navigation }: any) {
               <TextInput
                 ref={pwRef}
                 style={[styles.bareInput, { flex: 1, letterSpacing: password.length > 0 ? 4 : 0 }]}
-                value={isPwVisible ? password : MASK_CHAR.repeat(password.length)}
+                value={password}
                 onChangeText={handlePasswordChange}
                 placeholder="비밀번호 (8자 이상)"
                 placeholderTextColor={COLORS.textTertiary}
                 autoCapitalize="none"
                 autoCorrect={false}
-                secureTextEntry={false} // 수동 마스킹이므로 false
+                secureTextEntry={!isPwVisible} // OS 기본 기능 사용 (타이핑 씹힘/반복 버그 방지)
                 returnKeyType="next"
                 onSubmitEditing={handleNextStep}
               />
@@ -237,13 +217,13 @@ export default function CreateAccountScreen({ navigation }: any) {
               <TextInput
                 ref={confirmPwRef}
                 style={[styles.bareInput, { flex: 1, letterSpacing: confirmPassword.length > 0 ? 4 : 0 }]}
-                value={isConfirmPwVisible ? confirmPassword : MASK_CHAR.repeat(confirmPassword.length)}
+                value={confirmPassword}
                 onChangeText={handleConfirmPasswordChange}
                 placeholder="비밀번호 재입력"
                 placeholderTextColor={COLORS.textTertiary}
                 autoCapitalize="none"
                 autoCorrect={false}
-                secureTextEntry={false} // 수동 마스킹
+                secureTextEntry={!isConfirmPwVisible}
                 returnKeyType="done"
                 onSubmitEditing={handleCreateAccount}
               />
