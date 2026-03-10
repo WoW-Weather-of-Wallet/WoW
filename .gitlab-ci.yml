@@ -8,6 +8,7 @@ deploy:
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
     - if: '$CI_COMMIT_BRANCH == "dev"'
+    - if: '$CI_COMMIT_BRANCH == "infra"'
   script:
     - mkdir -p /home/gitlab-runner/deploy
     - cd /home/gitlab-runner/deploy
@@ -20,5 +21,5 @@ deploy:
       REDIS_HOST=${REDIS_HOST}
       REDIS_PORT=${REDIS_PORT}
       ENV
-    - docker compose -f docker-compose.prod.yml down
-    - docker compose -f docker-compose.prod.yml up -d --build
+    - docker-compose -f docker-compose.prod.yml down
+    - docker-compose -f docker-compose.prod.yml up -d --build
