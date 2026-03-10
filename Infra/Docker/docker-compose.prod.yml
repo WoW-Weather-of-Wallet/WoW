@@ -1,0 +1,11 @@
+services:
+  backend:
+    build:
+      context: ../../Backend
+      dockerfile: Dockerfile
+    container_name: wow-backend
+    restart: unless-stopped
+    env_file:
+      - ./.env.prod
+    ports:
+      - "8050:8050"
