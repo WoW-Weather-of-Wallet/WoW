@@ -9,6 +9,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Auth 화면
 import SplashScreen from '../screens/auth/SplashScreen';
+import AccessPermissionScreen from '../screens/auth/AccessPermissionScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 
 const Stack = createNativeStackNavigator();
@@ -33,6 +34,12 @@ export default function RootNavigator() {
         <Stack.Screen
           name="Splash"
           component={SplashScreen}
+          options={{ gestureEnabled: false }}
+        />
+        {/* 접근 권한 허용 화면 */}
+        <Stack.Screen
+          name="Permission"
+          component={AccessPermissionScreen}
           options={{ gestureEnabled: false }}
         />
         {/* 로그인 화면 */}
