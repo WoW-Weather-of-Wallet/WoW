@@ -35,8 +35,7 @@ export default function WelcomeScreen({ route, navigation }: any) {
   }));
 
   const handleNext = () => {
-    console.log('직업 선택으로 이동 (대기 중)');
-    navigation.popToTop();
+    navigation.replace('JobSelection', route.params);
   };
 
   const handleConfirmRetry = () => {
