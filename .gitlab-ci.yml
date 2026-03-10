@@ -1,0 +1,24 @@
+stages:
+  - deploy
+
+deploy:
+  stage: deploy
+  tags:
+    - deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+  script:
+    - mkdir -p /home/gitlab-runner/deploy
+    - cd /home/gitlab-runner/deploy
+    - cp $CI_PROJECT_DIR/Infra/Docker/docker-compose.prod.yml ./docker-compose.prod.yml
+    - |
+      cat > .env.prod << ENV
+      DB_URL=${DB_URL}
+      DB_USERNAME=${DB_USERNAME}
+      DB_PASSWORD=${DB_PASSWORD}
+      REDIS_HOST=${REDIS_HOST}
+      REDIS_PORT=${REDIS_PORT}
+      ENV
+    - docker compose -f docker-compose.prod.yml down
+    - docker compose -f docker-compose.prod.yml up -d --build
