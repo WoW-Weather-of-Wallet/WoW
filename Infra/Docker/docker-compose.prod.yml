@@ -1,8 +1,6 @@
 services:
   backend:
-    build:
-      context: ../../Backend
-      dockerfile: Dockerfile
+    image: $DOCKERHUB_USERNAME/wow-backend:latest
     container_name: wow-backend
     restart: unless-stopped
     env_file:
