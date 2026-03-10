@@ -1,5 +1,19 @@
 stages:
+  - build
   - deploy
+
+build:
+  stage: build
+  tags:
+    - deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+    - if: '$CI_COMMIT_BRANCH == "infra"'
+  script:
+    - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN
+    - docker build -t $DOCKERHUB_USERNAME/wow-backend:latest $CI_PROJECT_DIR/Backend
+    - docker push $DOCKERHUB_USERNAME/wow-backend:latest
 
 deploy:
   stage: deploy
@@ -22,4 +36,4 @@ deploy:
       REDIS_PORT=${REDIS_PORT}
       ENV
     - docker-compose -f docker-compose.prod.yml down
-    - docker-compose -f docker-compose.prod.yml up -d --build
+    - docker-compose -f docker-compose.prod.yml up -d
