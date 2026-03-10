@@ -26,7 +26,7 @@ import { COLORS, FONTS, RADIUS, wp, hp, fp, SPACING } from '../../constants/them
 /**
  * LoginScreen - 로그인 & 회원가입 화면
  */
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }: any) {
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [autoLogin, setAutoLogin] = useState(false);
@@ -57,7 +57,7 @@ export default function LoginScreen() {
   };
 
   const handleSignup = () => {
-    console.log('회원가입 페이지로 이동');
+    navigation.navigate('PhoneAuth');
   };
 
   const handleFindAccount = () => {

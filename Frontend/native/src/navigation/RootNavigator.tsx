@@ -10,6 +10,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // Auth 화면
 import SplashScreen from '../screens/auth/SplashScreen';
 import AccessPermissionScreen from '../screens/auth/AccessPermissionScreen';
+import PhoneAuthScreen from '../screens/auth/PhoneAuthScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 
 const Stack = createNativeStackNavigator();
@@ -41,6 +42,12 @@ export default function RootNavigator() {
           name="Permission"
           component={AccessPermissionScreen}
           options={{ gestureEnabled: false }}
+        />
+        {/* 전화번호 본인 인증 화면 (회원가입 플로우) */}
+        <Stack.Screen
+          name="PhoneAuth"
+          component={PhoneAuthScreen}
+          options={{ gestureEnabled: true }}
         />
         {/* 로그인 화면 */}
         <Stack.Screen
