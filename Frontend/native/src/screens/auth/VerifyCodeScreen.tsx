@@ -38,10 +38,8 @@ export default function VerifyCodeScreen({ navigation }: any) {
     setTimeout(() => {
       // 원래는 서버와 통신하지만, 현재는 데모용 넘어가기
       // 성공 애니메이션/로직 처리 후 다음 화면이동
-      console.log('인증 완료. 계정 생성(ID/PW) 화면으로 이동. (현재는 Login으로 임시 이동)');
-      // TODO: ID/PW 생성 화면 구성 시 연결
-      // navigation.replace('CreateAccount');
-      navigation.replace('Login');
+      console.log('인증 완료. 계정 생성(ID/PW) 화면으로 이동.');
+      navigation.replace('CreateAccount');
     }, 500);
   };
 
