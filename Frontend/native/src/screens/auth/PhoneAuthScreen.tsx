@@ -221,8 +221,8 @@ export default function PhoneAuthScreen({ navigation }: any) {
         visible={termsVisible} 
         onClose={() => setTermsVisible(false)} 
         onConfirm={() => {
-          console.log('인증번호 입력 화면으로 이동');
-          // navigation.navigate('VerifyCode'); // TODO: 다음 단계 화면 연결
+          setTermsVisible(false);
+          navigation.navigate('VerifyCode');
         }} 
       />
     </KeyboardAvoidingView>

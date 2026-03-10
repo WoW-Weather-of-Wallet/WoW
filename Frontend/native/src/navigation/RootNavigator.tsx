@@ -11,6 +11,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SplashScreen from '../screens/auth/SplashScreen';
 import AccessPermissionScreen from '../screens/auth/AccessPermissionScreen';
 import PhoneAuthScreen from '../screens/auth/PhoneAuthScreen';
+import VerifyCodeScreen from '../screens/auth/VerifyCodeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 
 const Stack = createNativeStackNavigator();
@@ -47,6 +48,12 @@ export default function RootNavigator() {
         <Stack.Screen
           name="PhoneAuth"
           component={PhoneAuthScreen}
+          options={{ gestureEnabled: true }}
+        />
+        {/* 모의 인증번호 입력 화면 */}
+        <Stack.Screen
+          name="VerifyCode"
+          component={VerifyCodeScreen}
           options={{ gestureEnabled: true }}
         />
         {/* 로그인 화면 */}
