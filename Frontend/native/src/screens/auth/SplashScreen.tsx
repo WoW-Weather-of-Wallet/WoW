@@ -34,10 +34,10 @@ export default function SplashScreen() {
   const logoTranslateY = useSharedValue(30);
   const screenOpacity = useSharedValue(1);
 
-  // 로그인 화면으로 이동
-  const navigateToLogin = () => {
+  // 권한 안내 화면으로 이동
+  const navigateToNext = () => {
     // @ts-ignore
-    navigation.replace('Login');
+    navigation.replace('Permission');
   };
 
   useEffect(() => {
@@ -64,9 +64,9 @@ export default function SplashScreen() {
       withTiming(0, { duration: 500, easing: Easing.in(Easing.cubic) })
     );
 
-    // 2.5초 후 로그인 화면으로 전환
+    // 2.5초 후 권한 안내 화면으로 전환
     const timer = setTimeout(() => {
-      navigateToLogin();
+      navigateToNext();
     }, 2500);
 
     return () => clearTimeout(timer);
