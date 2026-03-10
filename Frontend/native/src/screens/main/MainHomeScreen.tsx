@@ -39,6 +39,57 @@ export default function MainHomeScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {/*
+          이번 달 소비 유형 카드
+          홈 진입 직후 가장 먼저 보이는 AI 요약 영역입니다.
+          기존 홈 카드 톤과 맞추기 위해 흰색 바탕 위에 보라 포인트만 강조합니다.
+        */}
+        <View style={styles.spendingTypeCard}>
+          <View style={styles.spendingTypeHeaderRow}>
+            <View style={styles.spendingTypeTextBlock}>
+              <Text style={styles.spendingTypeEyebrow}>이번 달 소비 유형</Text>
+              <View style={styles.spendingTypeTitleRow}>
+                <View style={styles.spendingTypeIconBadge}>
+                  <Ionicons name="restaurant-outline" size={wp(18)} color={COLORS.primary} />
+                </View>
+                <Text style={styles.spendingTypeTitle}>미식 탐험가형</Text>
+              </View>
+            </View>
+
+            <View style={styles.spendingTypeBadge}>
+              <Ionicons name="sparkles-outline" size={wp(14)} color={COLORS.primary} />
+              <Text style={styles.spendingTypeBadgeText}>AI 분석</Text>
+            </View>
+          </View>
+
+          <Text style={styles.spendingTypeDescription}>
+            {mockHomeSummary.spendingTypeDescription}
+          </Text>
+
+          {/*
+            복잡한 차트 대신 상위 카테고리 요약만 먼저 보여줍니다.
+            필요하면 이후 상세 모달에서 레이더/도넛 차트로 확장할 수 있습니다.
+          */}
+          <View style={styles.spendingTypeSummaryCard}>
+            {mockSpendingCategories.slice(0, 3).map((category) => (
+              <View key={category.id} style={styles.spendingTypeSummaryRow}>
+                <View style={styles.spendingTypeCategoryRow}>
+                  <View
+                    style={[
+                      styles.spendingTypeColorDot,
+                      { backgroundColor: category.color },
+                    ]}
+                  />
+                  <Text style={styles.spendingTypeCategoryLabel}>{category.label}</Text>
+                </View>
+                <Text style={styles.spendingTypeCategoryValue}>
+                  {Math.round(category.ratio * 100)}%
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
         {/* 상단 환영 영역: 이름/이번 달 예산 요약을 한 번에 보여줍니다. */}
         <LinearGradient
           colors={['#FAFBFF', '#EEF1FF']}
@@ -196,6 +247,99 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: wp(20),
     gap: hp(18),
+  },
+  spendingTypeCard: {
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.xxl,
+    padding: wp(20),
+    gap: hp(14),
+    borderWidth: 1,
+    borderColor: '#E7EAFA',
+  },
+  spendingTypeHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: wp(12),
+  },
+  spendingTypeTextBlock: {
+    flex: 1,
+  },
+  spendingTypeEyebrow: {
+    fontSize: fp(13),
+    fontFamily: FONTS.medium,
+    color: COLORS.primary,
+    marginBottom: hp(10),
+  },
+  spendingTypeTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(10),
+  },
+  spendingTypeIconBadge: {
+    width: wp(36),
+    height: wp(36),
+    borderRadius: wp(18),
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EFEEFF',
+  },
+  spendingTypeTitle: {
+    fontSize: fp(24),
+    lineHeight: fp(31),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  spendingTypeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(4),
+    borderRadius: RADIUS.full,
+    paddingHorizontal: wp(10),
+    paddingVertical: hp(7),
+    backgroundColor: '#EFEEFF',
+  },
+  spendingTypeBadgeText: {
+    fontSize: fp(12),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.primary,
+  },
+  spendingTypeDescription: {
+    fontSize: fp(14),
+    lineHeight: fp(22),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  spendingTypeSummaryCard: {
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.backgroundSecondary,
+    padding: wp(16),
+    gap: hp(12),
+  },
+  spendingTypeSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  spendingTypeCategoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(8),
+  },
+  spendingTypeColorDot: {
+    width: wp(10),
+    height: wp(10),
+    borderRadius: wp(5),
+  },
+  spendingTypeCategoryLabel: {
+    fontSize: fp(14),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
+  },
+  spendingTypeCategoryValue: {
+    fontSize: fp(14),
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
   },
   heroCard: {
     borderRadius: RADIUS.xxl,

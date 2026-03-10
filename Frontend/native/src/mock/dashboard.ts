@@ -36,6 +36,26 @@ export interface UserShortcut {
   icon: string;
 }
 
+export interface MyCardSummary {
+  id: string;
+  cardName: string;
+  cardType: string;
+  ownerName: string;
+  lastDigits: string;
+  themeStart: string;
+  themeEnd: string;
+  billingDay: string;
+}
+
+export interface MyAccountSummary {
+  id: string;
+  bankName: string;
+  accountAlias: string;
+  accountNumberMasked: string;
+  balance: number;
+  tone: 'primary' | 'mint' | 'gold';
+}
+
 export const mockHomeSummary = {
   userName: '채목',
   monthLabel: '3월',
@@ -44,6 +64,16 @@ export const mockHomeSummary = {
   totalBudget: 1350000,
   spentAmount: 918000,
   forecastText: '이번 주만 잘 지키면 예산 내로 마감 가능해요.',
+  monthSpentAmount: 640000,
+  monthlyBudget: 500000,
+  monthlyForecastRate: 62,
+  budgetUsedAmount: 311000,
+  todaySpentAmount: 19900,
+  updatedAt: '10:00 pm',
+  dailyChangeAmount: -4200,
+  scheduledPaymentAmount: 101000,
+  scheduledPaymentHint: '지금 페이스라면',
+  spendingTypeDescription: '식비가 전체의 35%를 차지해요. 경험과 맛에 투자하는 라이프스타일!',
 };
 
 export const mockHomeInsights: HomeInsight[] = [
@@ -91,6 +121,56 @@ export const mockUserProfile = {
   onboardingCompleted: true,
 };
 
+export const mockMyCards: MyCardSummary[] = [
+  {
+    id: 'card-1',
+    cardName: 'WOW 체크카드',
+    cardType: '체크카드',
+    ownerName: '이채목',
+    lastDigits: '2031',
+    themeStart: '#6666EE',
+    themeEnd: '#8C82F7',
+    billingDay: '매월 12일 결제',
+  },
+  {
+    id: 'card-2',
+    cardName: 'SSAFY 라이프 카드',
+    cardType: '신용카드',
+    ownerName: '이채목',
+    lastDigits: '7814',
+    themeStart: '#2C355B',
+    themeEnd: '#54638F',
+    billingDay: '매월 25일 결제',
+  },
+];
+
+export const mockMyAccounts: MyAccountSummary[] = [
+  {
+    id: 'account-1',
+    bankName: '신한은행',
+    accountAlias: '생활비 통장',
+    accountNumberMasked: '110-***-203184',
+    balance: 842000,
+    tone: 'primary',
+  },
+  {
+    id: 'account-2',
+    bankName: '카카오뱅크',
+    accountAlias: '비상금 통장',
+    accountNumberMasked: '3333-**-8201442',
+    balance: 315000,
+    tone: 'mint',
+  },
+  {
+    id: 'account-3',
+    bankName: '토스뱅크',
+    accountAlias: '저축 목표 통장',
+    accountNumberMasked: '1000-***-552901',
+    balance: 1260000,
+    tone: 'gold',
+  },
+];
+
 export const mockUserShortcuts: UserShortcut[] = [
   {
     id: 'account',
@@ -120,6 +200,6 @@ export const mockUserShortcuts: UserShortcut[] = [
 
 export const mockProfileStats = [
   { id: 'accounts', label: '연결 계좌', value: '4개' },
-  { id: 'rules', label: '고정 지출', value: '6건' },
+  { id: 'rules', label: '보유 카드', value: '2장' },
   { id: 'reports', label: '이번 달 리포트', value: '준비됨' },
 ];
