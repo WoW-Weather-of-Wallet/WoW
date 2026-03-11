@@ -1,95 +1,90 @@
+﻿// =============================================
+// Auth type definitions
+// 현재 백엔드에 실제로 구현되어 있는 회원가입/로그인/프로필/온보딩 스펙을 기준으로 정리합니다.
+// shared 폴더는 웹/앱 공용이므로, 프론트 두 군데에서 재사용할 가능성이 높은 타입만 둡니다.
 // =============================================
-// 인증(Auth) 관련 타입 정의
-// BE 담당: 김진우 / FE 담당: 진현제
-// 1차 MVP: 일반 이메일/비밀번호, SSAFY OAuth
-// 2차 MVP: 구글/카카오 OAuth, 간편 비밀번호
-// =============================================
 
 // -----------------------------------------------
-// 로그인
+// Domain primitives
+// 백엔드 엔티티와 DTO 에서 실제로 쓰는 값만 먼저 공통 타입으로 뽑아 둡니다.
 // -----------------------------------------------
-
-// 로그인 요청
-// POST /api/v1/auth/login
-export interface LoginRequest {
-  loginId: string    // 이메일 (로그인 ID)
-  password: string   // 비밀번호
-}
-
-// 로그인 응답
-export interface LoginResponse {
-  accessToken: string   // JWT Access Token (메모리 저장)
-  refreshToken: string  // JWT Refresh Token (httpOnly 쿠키)
-  user: AuthUser        // 로그인한 유저 기본 정보
-}
+export type Gender = 'M' | 'F';
 
 // -----------------------------------------------
-// 회원가입
-// -----------------------------------------------
-
-// 회원가입 요청
+// Signup
 // POST /api/v1/auth/signup
+// 현재 백엔드는 userId / pw 이름으로 요청을 받습니다.
+// 프론트 UI 의 id / password 상태값과는 이름이 다르므로 연결 시 매핑이 필요합니다.
+// -----------------------------------------------
 export interface SignupRequest {
-  loginId: string      // 이메일
-  password: string     // 비밀번호 (8자 이상)
-  userName: string     // 이름
-  phoneNumber: string  // 휴대폰 번호 (010-XXXX-XXXX)
-  gender: 'M' | 'F'   // 성별
-  birthDate: string    // 생년월일 (YYYY-MM-DD)
-  jobId: number        // 직업 ID
+  userId: string;
+  jobId: number;
+  pw: string;
+  name: string;
+  gender: string;
+  phoneNumber: string;
+  birthDate: string;
+  alarmEnabled: boolean;
+}
+
+export interface SignupResponse {
+  userId: string;
+  jobName: string | null;
+  name: string;
+  gender: string;
+  phoneNumber: string;
+  birthDate: string;
+  alarmEnabled: boolean;
 }
 
 // -----------------------------------------------
-// 이메일 인증
+// Login
+// POST /api/v1/auth/login
+// refreshToken 은 아직 백엔드 응답에 없고, accessToken 만 body 로 내려옵니다.
 // -----------------------------------------------
-
-// 이메일 인증번호 요청
-// POST /api/v1/auth/email-verifications
-export interface EmailVerifyRequest {
-  email: string  // 인증할 이메일
+export interface LoginRequest {
+  userId: string;
+  pw: string;
 }
 
-// 이메일 인증번호 확인
-// POST /api/v1/auth/email-verifications/confirm
-export interface EmailVerifyConfirmRequest {
-  email: string  // 인증한 이메일
-  code: string   // 인증번호 (6자리)
+export interface AuthUserSummary {
+  userId: string;
+  name?: string;
+  role?: string;
 }
 
-// -----------------------------------------------
-// 휴대폰 인증
-// -----------------------------------------------
-
-// 휴대폰 인증번호 요청
-// POST /api/v1/auth/phone/send
-export interface PhoneSendRequest {
-  phoneNumber: string  // 인증할 휴대폰 번호
-}
-
-// 휴대폰 인증번호 확인
-// POST /api/v1/auth/phone/verify
-export interface PhoneVerifyRequest {
-  phoneNumber: string  // 인증한 휴대폰 번호
-  code: string         // 인증번호 (6자리)
+export interface LoginResponse {
+  accessToken: string;
+  expiresIn: number;
+  user: AuthUserSummary;
 }
 
 // -----------------------------------------------
-// 토큰 갱신
+// Profile
+// GET /api/v1/user/profile
+// 회원가입 직후 응답과 거의 비슷한 구조라 화면 렌더링 시 재사용하기 좋습니다.
 // -----------------------------------------------
-
-// 토큰 갱신 응답
-// POST /api/v1/auth/refresh
-export interface RefreshResponse {
-  accessToken: string  // 새로 발급된 Access Token
+export interface UserProfileResponse {
+  userId: string;
+  jobName: string | null;
+  name: string;
+  gender: string;
+  phoneNumber: string;
+  birthDate: string;
+  alarmEnabled: boolean;
 }
 
 // -----------------------------------------------
-// 공통
+// Onboarding
+// PATCH /api/v1/user/onboarding
+// 현재 백엔드는 jobId 를 받지 않고, 성별/전화번호/생년월일/알림여부만 받습니다.
+// 추후 스펙이 바뀌면 이 타입과 API 함수만 바꾸면 화면 코드는 유지하기 쉽습니다.
 // -----------------------------------------------
-
-// Auth 관련 최소 유저 정보 (로그인 응답에 포함)
-export interface AuthUser {
-  id: number        // 유저 ID
-  loginId: string   // 이메일
-  userName: string  // 이름
+export interface SaveOnboardingRequest {
+  gender: string;
+  phoneNumber: string;
+  birthDate: string;
+  alarmEnabled: boolean;
 }
+
+export type SaveOnboardingResponse = UserProfileResponse;

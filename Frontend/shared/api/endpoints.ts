@@ -1,105 +1,84 @@
-// =============================================
-// API 엔드포인트 상수 모음
-// 웹(React) + 앱(React Native) 공용으로 사용
-// BASE_URL은 환경에 따라 변경 필요 (개발/배포)
+﻿// =============================================
+// API endpoints
+// 웹/앱 공용으로 사용하는 엔드포인트 상수입니다.
+// 실제 백엔드 코드 기준으로 현재 존재하는 경로를 우선 반영합니다.
 // =============================================
 
-// 개발: localhost / 배포: 실제 서버 주소로 변경
-export const BASE_URL = 'http://localhost:8080'
+// Vite 환경에서만 import.meta.env 가 존재합니다.
+// shared 코드는 웹/네이티브가 같이 참조하므로, 웹이 아닐 때 접근 에러가 나지 않게 먼저 가드합니다.
+const viteApiBaseUrl =
+  typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_BASE_URL : undefined;
+
+// 변경 사항:
+// 기존에는 배포 서버 URL 이 하드코딩되어 있어서 로컬 백엔드를 붙여도 프론트가 그대로 원격 서버를 호출했습니다.
+// 이제 웹에서는 .env 의 VITE_API_BASE_URL 값을 우선 사용하고, 값이 없을 때만 기존 배포 서버를 fallback 으로 사용합니다.
+export const BASE_URL = viteApiBaseUrl || 'https://j14d106.p.ssafy.io';
 
 export const ENDPOINTS = {
-  // -----------------------------------------------
-  // 사용자 관리 (Auth) - BE 담당: 김진우
-  // -----------------------------------------------
   AUTH: {
-    SIGNUP: '/api/v1/auth/signup',                              // POST - 회원가입
-    LOGIN: '/api/v1/auth/login',                                // POST - 로그인
-    LOGOUT: '/api/v1/auth/logout',                              // DELETE - 로그아웃
-    REFRESH: '/api/v1/auth/refresh',                            // POST - 토큰 갱신
-    PHONE_SEND: '/api/v1/auth/phone/send',                      // POST - 휴대폰 인증번호 요청
-    PHONE_VERIFY: '/api/v1/auth/phone/verify',                  // POST - 휴대폰 인증번호 확인
-    CHECK_EMAIL: '/api/v1/auth/check-email',                    // GET  - 이메일 중복 확인
-    EMAIL_VERIFY_REQUEST: '/api/v1/auth/email-verifications',   // POST - 이메일 인증번호 요청
-    EMAIL_VERIFY_CONFIRM: '/api/v1/auth/email-verifications/confirm', // POST - 이메일 인증번호 확인
-    GOOGLE_OAUTH: '/oauth2/authorization/google',               // POST - 구글 OAuth (2차 MVP)
+    SIGNUP: '/api/v1/auth/signup',
+    LOGIN: '/api/v1/auth/login',
+    LOGOUT: '/api/v1/auth/logout',
+    REFRESH: '/api/v1/auth/refresh',
+    PHONE_SEND: '/api/v1/auth/sms/send',
+    PHONE_VERIFY: '/api/v1/auth/sms/verify',
+    CHECK_EMAIL: '/api/v1/auth/check-email',
+    EMAIL_VERIFY_REQUEST: '/api/v1/auth/email-verifications',
+    EMAIL_VERIFY_CONFIRM: '/api/v1/auth/email-verifications/confirm',
+    GOOGLE_OAUTH: '/oauth2/authorization/google',
   },
 
-  // -----------------------------------------------
-  // 유저 정보 - BE 담당: 김진우
-  // -----------------------------------------------
   USER: {
-    ME: '/api/v1/users/me',                       // GET/PATCH/DELETE - 내 정보 조회/수정/탈퇴
-    PASSWORD: '/api/v1/users/me/password',         // PATCH - 비밀번호 변경
-    NOTIFICATIONS: '/api/v1/users/me/notifications', // GET/PATCH - 알림 설정 조회/변경
-    ONBOARDING: '/api/v1/users/me/onboarding',    // POST - 온보딩 선택 저장
+    // 현재 백엔드 구현은 /users/me 계열이 아니라 /user/profile 계열입니다.
+    PROFILE: '/api/v1/user/profile',
+    ONBOARDING: '/api/v1/user/onboarding',
+    PASSWORD: '/api/v1/user/profile/password',
+    NOTIFICATIONS: '/api/v1/user/profile/notifications',
+    DELETE: '/api/v1/user/profile',
   },
 
-  // -----------------------------------------------
-  // 약관 - BE 담당: 김진우
-  // -----------------------------------------------
   TERMS: {
-    LIST: '/api/v1/terms',       // GET  - 약관 목록 조회
-    AGREE: '/api/v1/terms/agree', // POST - 약관 동의
+    LIST: '/api/v1/terms',
+    AGREE: '/api/v1/terms/agree',
   },
 
-  // -----------------------------------------------
-  // 계좌 - BE 담당: 이채목 / FE 담당: 이채목
-  // -----------------------------------------------
   ACCOUNTS: {
-    LIST: '/api/v1/accounts',                                               // GET - 계좌 정보 및 잔액 조회
-    BALANCE: (accountId: number) => `/api/v1/accounts/${accountId}/balance`, // GET - 특정 계좌 잔액 단건 조회
-    TRANSACTIONS: (accountId: number) => `/api/v1/accounts/${accountId}/transactions`, // GET - 거래 내역 조회
+    LIST: '/api/v1/accounts',
+    BALANCE: (accountId: number) => `/api/v1/accounts/${accountId}/balance`,
+    TRANSACTIONS: (accountId: number) => `/api/v1/accounts/${accountId}/transactions`,
   },
 
-  // -----------------------------------------------
-  // 거래 내역 메모 - FE 담당: 이채목
-  // -----------------------------------------------
   TRANSACTIONS: {
-    MEMO: (transactionId: number) => `/api/v1/transactions/${transactionId}/memo`, // PATCH/DELETE - 메모 작성/수정/삭제
+    MEMO: (transactionId: number) => `/api/v1/transactions/${transactionId}/memo`,
   },
 
-  // -----------------------------------------------
-  // 캘린더 - BE 담당: 오우택
-  // -----------------------------------------------
   CALENDAR: {
-    HEADER: '/api/v1/calendar/header',               // GET - 캘린더 헤더 조회 (잔액, 목표 등)
-    MONTHLY: '/api/v1/calendar/monthly',             // GET - 월 단위 캘린더 조회
-    FIXED_EXPENSES: '/api/v1/calendar/fixed-expenses', // GET - 고정 지출 목록 조회
-    TRANSACTIONS: '/api/v1/calendar/transactions',   // GET - 전체 거래내역 조회
-    AI_FEEDBACK: '/api/v1/calendar/aifeedback',      // GET - AI 피드백 조회
+    HEADER: '/api/v1/calendar/header',
+    MONTHLY: '/api/v1/calendar/monthly',
+    FIXED_EXPENSES: '/api/v1/calendar/fixed-expenses',
+    TRANSACTIONS: '/api/v1/calendar/transactions',
+    AI_FEEDBACK: '/api/v1/calendar/aifeedback',
   },
 
-  // -----------------------------------------------
-  // 고정 지출 - BE 담당: 오우택
-  // -----------------------------------------------
   FIXED_EXPENSES: {
-    LIST: '/api/v1/fixed-expenses',                                          // GET  - 고정 지출 전체 조회
-    BY_CATEGORY: (category: string) => `/api/v1/fixed-expenses?category=${category}`, // GET  - 카테고리별 조회
-    DETAIL: (id: number) => `/api/v1/fixed-expenses/${id}`,                  // PATCH/DELETE - 수정/삭제
+    LIST: '/api/v1/fixed-expenses',
+    BY_CATEGORY: (category: string) => `/api/v1/fixed-expenses?category=${category}`,
+    DETAIL: (id: number) => `/api/v1/fixed-expenses/${id}`,
   },
 
-  // -----------------------------------------------
-  // 유동 지출 - BE 담당: 오우택 (2차 MVP)
-  // -----------------------------------------------
   EXPENSES: {
-    LIST: '/api/v1/expenses',                           // GET/POST - 전체 조회/추가
-    DETAIL: (id: number) => `/api/v1/expenses/${id}`,  // PATCH/DELETE - 수정/삭제
+    LIST: '/api/v1/expenses',
+    DETAIL: (id: number) => `/api/v1/expenses/${id}`,
   },
 
-  // -----------------------------------------------
-  // 메인 화면 - BE 담당 미정
-  // -----------------------------------------------
   MAIN: {
-    SPENDING_TYPE: '/api/v1/main/spending-type',                  // GET - 소비 유형 조회
-    SPENDING_TYPE_ANALYSIS: '/api/v1/main/spending-type/analysis', // GET - 소비 유형 분석 결과 조회
-    SPENDING_MONTHLY: '/api/v1/main/spending/monthly',            // GET - 이번달 소비 카테고리별 조회
-    BUDGET: '/api/v1/main/budget',                                // GET - 이번달 남은 예산 조회
-    WEEKLY_FORECAST: '/api/v1/main/calendar/weekly-forecast',     // GET - 이번주 소비 예보 조회
-    MONTHLY_COMPARE: '/api/v1/main/spending/monthly/compare',     // GET - 이번달 지난달 소비 비교
+    SPENDING_TYPE: '/api/v1/main/spending-type',
+    SPENDING_TYPE_ANALYSIS: '/api/v1/main/spending-type/analysis',
+    SPENDING_MONTHLY: '/api/v1/main/spending/monthly',
+    BUDGET: '/api/v1/main/budget',
+    WEEKLY_FORECAST: '/api/v1/main/calendar/weekly-forecast',
+    MONTHLY_COMPARE: '/api/v1/main/spending/monthly/compare',
   },
 
-  // -----------------------------------------------
-  // 가이드
-  // -----------------------------------------------
-  GUIDE: '/api/v1/guide', // GET - 계좌 조회 가이드
-} as const
+  GUIDE: '/api/v1/guide',
+} as const;

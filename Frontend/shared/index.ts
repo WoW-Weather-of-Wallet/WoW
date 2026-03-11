@@ -1,19 +1,21 @@
-// =============================================
-// @wow/shared - 공통 모듈 진입점
-// React(웹) + React Native(앱) 공용으로 사용
+﻿// =============================================
+// @wow/shared - common exports
+// React 웹과 React Native 앱에서 함께 쓰는 타입/상수/API를 모아 둡니다.
 // =============================================
 
-// API 엔드포인트 상수
+// API endpoint / client helpers
 export * from './api/endpoints';
+export { default as axiosInstance, setAuthToken } from './api/axiosInstance';
+export * from './api/auth';
 
-// 공통 상수
-export * from './constants/categories';   // 지출 카테고리 (식비, 교통 등)
-export * from './constants/spendingTypes'; // 소비 유형 8가지
+// Constants
+export * from './constants/categories';
+export * from './constants/spendingTypes';
 
-// 타입 정의
-export * from './types/user';        // 유저 관련 타입
-export * from './types/auth';        // 인증 관련 타입
-export * from './types/account';     // 계좌 관련 타입
-export * from './types/transaction'; // 거래내역 관련 타입
-export * from './types/calendar';    // 캘린더 관련 타입
-export * from './types/main';        // 메인 화면 관련 타입
+// Types
+export * from './types/user';
+export * from './types/auth';
+export * from './types/account';
+export * from './types/transaction';
+export * from './types/calendar';
+export * from './types/main';
