@@ -26,7 +26,7 @@ import GradientButton from '../../components/common/GradientButton';
 import { useAuthStore } from '../../store/authStore';
 import { COLORS, FONTS, RADIUS, wp, hp, fp } from '../../constants/theme';
 import { login } from '../../services/auth';
-import { extractApiErrorMessage } from '../../../../shared';
+import { extractApiErrorMessage } from '../../utils/error';
 
 /**
  * LoginScreen

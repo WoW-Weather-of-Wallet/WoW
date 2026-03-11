@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DevShortcutButton from '../../components/common/DevShortcutButton';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { checkUserId, signup } from '../../services/auth';
-import { extractApiErrorMessage } from '../../../../shared';
+import { extractApiErrorMessage } from '../../utils/error';
 
 // 현재 백엔드 회원가입 API 는 jobId 를 필수로 받고 있습니다.
 // 하지만 현재 앱 플로우에서는 직업 선택이 회원가입 뒤에 오므로,

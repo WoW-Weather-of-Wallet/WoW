@@ -3,7 +3,7 @@
     "name": "WOW",
     "slug": "wow-app",
     "scheme": "wow",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "orientation": "portrait",
     "icon": "./src/assets/icon.png",
     "userInterfaceStyle": "light",
@@ -38,6 +38,11 @@
         "READ_MEDIA_IMAGES",
         "POST_NOTIFICATIONS",
         "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "POST_NOTIFICATIONS",
+        "USE_BIOMETRIC",
         "USE_FINGERPRINT"
       ]
     },
@@ -49,7 +54,8 @@
       "policy": "appVersion"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/f2ad7c84-70f0-44b9-ac60-fc686a5dff1c"
     },
     "extra": {
       "eas": {

@@ -12,7 +12,7 @@ import SecureKeypad from '../../components/common/SecureKeypad';
 import DevShortcutButton from '../../components/common/DevShortcutButton';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { verifySmsCode } from '../../services/auth';
-import { extractApiErrorMessage } from '../../../../shared';
+import { extractApiErrorMessage } from '../../utils/error';
 
 const MAX_CODE_LENGTH = 6;
 
