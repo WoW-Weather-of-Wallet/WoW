@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -14,13 +14,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import DevShortcutButton from '../../components/common/DevShortcutButton';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
-import { signup } from '../../services/auth';
+import { checkUserId, signup } from '../../services/auth';
+import { extractApiErrorMessage } from '../../../../shared';
 
 // 현재 백엔드 회원가입 API 는 jobId 를 필수로 받고 있습니다.
 // 하지만 현재 앱 플로우에서는 직업 선택이 회원가입 뒤에 오므로,
 // 백엔드 스펙이 정리되기 전까지는 임시 기본값으로 요청을 보냅니다.
-const TEMP_SIGNUP_JOB_ID = 1;
+const TEMP_SIGNUP_JOB_ID = 30;
 
 type CreateAccountRouteParams = {
   name?: string;
@@ -29,6 +31,11 @@ type CreateAccountRouteParams = {
   ssnBack?: string;
 };
 
+/**
+ * 주민등록번호 앞/뒷자리를 기반으로 생년월일을 YYYY-MM-DD 형태로 만듭니다.
+ * 현재 회원가입 화면은 생년월일 입력을 따로 받지 않기 때문에,
+ * 휴대폰 인증 단계에서 수집한 값을 회원가입 요청으로 변환합니다.
+ */
 const buildBirthDate = (ssnFront?: string, ssnBack?: string) => {
   if (!ssnFront || ssnFront.length !== 6 || !ssnBack) {
     return '2000-01-01';
@@ -42,6 +49,10 @@ const buildBirthDate = (ssnFront?: string, ssnBack?: string) => {
   return `${year}-${month}-${day}`;
 };
 
+/**
+ * 주민등록번호 뒷자리 첫 숫자를 성별 값으로 변환합니다.
+ * 현재 백엔드는 문자열 한 글자("M" | "F")를 기대합니다.
+ */
 const buildGender = (ssnBack?: string) => {
   if (!ssnBack) {
     return 'M';
@@ -62,6 +73,8 @@ export default function CreateAccountScreen({ route, navigation }: any) {
   const [isIdAvailable, setIsIdAvailable] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+
+  // 비밀번호 입력은 필요할 때만 노출해서 가독성을 높입니다.
   const [isPwVisible, setIsPwVisible] = useState(false);
   const [isConfirmPwVisible, setIsConfirmPwVisible] = useState(false);
 
@@ -69,28 +82,48 @@ export default function CreateAccountScreen({ route, navigation }: any) {
   const pwRef = useRef<TextInput>(null);
   const confirmPwRef = useRef<TextInput>(null);
 
-  // 현재 백엔드에는 아이디 중복 확인 API 가 없어서,
-  // 화면 진행을 위한 임시 로컬 체크만 수행합니다.
-  const handleCheckId = () => {
-    if (id.length < 4) {
+  // 아이디 중복확인은 회원가입 진행 전 서버 기준으로 먼저 검증합니다.
+  // 성공 응답 안에서 available 값을 보고 다음 단계 진입 여부를 결정합니다.
+  const handleCheckId = async () => {
+    const trimmedId = id.trim();
+
+    if (trimmedId.length < 4 || isCheckingId || isSubmitting) {
       return;
     }
 
     setIsCheckingId(true);
-    setTimeout(() => {
-      setIsCheckingId(false);
+    setSubmitError('');
 
-      if (id.toLowerCase() === 'admin') {
-        setIsIdAvailable(false);
+    try {
+      const response = await checkUserId(trimmedId);
+      const isAvailable = response?.available === true;
+
+      setIsIdAvailable(isAvailable);
+
+      // 사용할 수 있는 아이디일 때만 다음 입력 단계로 자동 이동시켜
+      // 사용자가 중복확인과 비밀번호 입력 순서를 자연스럽게 이어가게 합니다.
+      if (isAvailable) {
+        setTimeout(() => {
+          setStep((prev) => Math.max(prev, 2));
+          pwRef.current?.focus();
+        }, 250);
         return;
       }
 
-      setIsIdAvailable(true);
-      setTimeout(() => {
-        setStep((prev) => Math.max(prev, 2));
-        pwRef.current?.focus();
-      }, 400);
-    }, 800);
+      // 중복 아이디는 에러가 아니라 조회 결과이므로 화면 안내 문구로만 처리합니다.
+      setSubmitError('이미 사용 중인 아이디예요.');
+    } catch (error: any) {
+      const message = extractApiErrorMessage(
+        error,
+        '아이디 중복확인에 실패했어요. 잠시 후 다시 시도해주세요.',
+      );
+
+      setIsIdAvailable(false);
+      setSubmitError(message);
+      Alert.alert('중복확인 실패', message);
+    } finally {
+      setIsCheckingId(false);
+    }
   };
 
   const handlePasswordChange = (text: string) => {
@@ -114,6 +147,10 @@ export default function CreateAccountScreen({ route, navigation }: any) {
     }
   };
 
+  /**
+   * 화면에서 관리하는 상태를 실제 백엔드 DTO 형식으로 변환합니다.
+   * 현재 앱 플로우상 직업 선택이 뒤에 있어 임시 jobId 를 사용합니다.
+   */
   const handleCreateAccount = async () => {
     if (!isFormValid) {
       return;
@@ -154,7 +191,9 @@ export default function CreateAccountScreen({ route, navigation }: any) {
       console.error('[signup catch data]', error?.response?.data);
       console.error('[signup catch message]', error?.message);
 
-      const message = error?.response?.data?.message ?? debugMessage;
+      // 회원가입 실패도 로그인과 같은 에러 우선순위를 따르되,
+      // 백엔드가 아무 응답도 주지 않을 때는 디버그용 문자열을 fallback 으로 남깁니다.
+      const message = extractApiErrorMessage(error, debugMessage);
 
       setSubmitError(message);
       Alert.alert('회원가입 실패', message);
@@ -167,6 +206,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
     setId(text);
     setSubmitError('');
 
+    // 아이디 입력값이 바뀌면 이전 중복확인 결과는 더 이상 신뢰할 수 없으므로 초기화합니다.
     if (isIdAvailable !== null) {
       setIsIdAvailable(null);
     }
@@ -218,6 +258,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
               : '비밀번호를\n한 번 더 입력해주세요.'}
         </Text>
 
+        {/* 회원가입 API 에 실제로 userId 로 들어가는 값입니다. */}
         <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
           <View style={styles.idInputRow}>
             <View style={[styles.underlineContainer, { flex: 1 }]}>
@@ -261,7 +302,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
               사용할 수 있는 아이디예요.
             </Animated.Text>
           )}
-          {isIdAvailable === false && (
+          {isIdAvailable === false && submitError.length === 0 && (
             <Animated.Text entering={FadeInDown.duration(300)} style={styles.errorMessage}>
               이미 사용 중인 아이디예요.
             </Animated.Text>
@@ -346,9 +387,19 @@ export default function CreateAccountScreen({ route, navigation }: any) {
           </Animated.View>
         )}
 
-        {submitError.length > 0 && step >= 3 && (
-          <Text style={styles.submitErrorText}>{submitError}</Text>
-        )}
+        {submitError.length > 0 && <Text style={styles.submitErrorText}>{submitError}</Text>}
+
+        {/* 회원가입 API 가 불안정할 때도 이후 화면 레이아웃 작업이 멈추지 않게 우회 진입을 둡니다. */}
+        <DevShortcutButton
+          label="TEST: 가입 완료 화면으로 이동"
+          description="signup API 호출 없이 Welcome 화면으로 바로 이동합니다."
+          onPress={() =>
+            navigation.replace('Welcome', {
+              ...routeParams,
+              id: id.trim() || 'test-user',
+            })
+          }
+        />
       </ScrollView>
 
       {step >= 2 && (
