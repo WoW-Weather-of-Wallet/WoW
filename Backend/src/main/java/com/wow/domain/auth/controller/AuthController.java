@@ -1,11 +1,8 @@
 package com.wow.domain.auth.controller;
 
-import com.wow.domain.auth.dto.UserCreateRequest;
-import com.wow.domain.auth.dto.UserCreateResponse;
-import com.wow.domain.auth.dto.UserLoginRequest;
-import com.wow.domain.auth.dto.UserLoginResponse;
+import com.wow.domain.auth.dto.*;
 import com.wow.domain.auth.service.AuthService;
-import com.wow.domain.user.entity.User;
+import com.wow.domain.auth.service.SmsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final SmsService smsService;
 
     @PostMapping("/signup")
     public ResponseEntity<UserCreateResponse> signup(@RequestBody UserCreateRequest request) {
@@ -38,6 +36,16 @@ public class AuthController {
 
     }
 
+    @PostMapping("/sms/send")
+    public ResponseEntity<Void> sendSms(@RequestBody SmsSendRequest request) {
+        smsService.sendCode(request.getPhoneNumber());
+        return ResponseEntity.ok().build();
+    }
 
+    @PostMapping("/sms/verify")
+    public ResponseEntity<Void> verifySms(@RequestBody SmsVerifyRequest request) {
+        smsService.verifyCode(request.getPhoneNumber(), request.getCode());
+        return ResponseEntity.ok().build();
+    }
 
 }
