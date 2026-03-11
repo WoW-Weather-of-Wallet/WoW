@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 
@@ -10,6 +11,8 @@ interface SecureKeypadProps {
 
 export default function SecureKeypad({ onPressNumber, onPressDelete }: SecureKeypadProps) {
   const [shuffledNumbers, setShuffledNumbers] = useState<string[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const rotation = useSharedValue(0);
 
   // 화면 진입 시 숫자를 한 번만 섞습니다.
   // 원할 경우 입력될 때마다 섞을 수도 있지만, 사용 편의성을 위해 초기 1회 셔플합니다.
@@ -26,6 +29,31 @@ export default function SecureKeypad({ onPressNumber, onPressDelete }: SecureKey
     setShuffledNumbers(numbers);
   };
 
+  const handleRefresh = () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    
+    // 즉시 번호 새롭게 섞기
+    shuffleKeypad();
+
+    // 360도 회전 애니메이션 (500ms 길이) 실행 후 다시 누를 수 있게 잠금 해제
+    rotation.value = withTiming(
+      rotation.value + 360, 
+      { duration: 500, easing: Easing.inOut(Easing.ease) }, 
+      (finished) => {
+        if (finished) {
+          runOnJS(setIsRefreshing)(false);
+        }
+      }
+    );
+  };
+
+  const animatedIconStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${rotation.value}deg` }],
+    };
+  });
+
   if (shuffledNumbers.length === 0) return null;
 
   // 키패드 매핑
@@ -35,15 +63,19 @@ export default function SecureKeypad({ onPressNumber, onPressDelete }: SecureKey
   // 11번은 지우기
   const renderCell = (index: number) => {
     if (index === 9) {
-      // 우하단(실제로는 좌하단 9번째 인덱스)
+      // 우하단(실제로는 좌하단 9번째 인덱스) - 새로고침 버튼
       return (
-        <View style={styles.cell} key="mascot">
-          <Image 
-            source={require('../../../assets/images/fox_mascot.jpg')} 
-            style={styles.mascotImage} 
-            resizeMode="contain"
-          />
-        </View>
+        <TouchableOpacity 
+          style={styles.cell} 
+          onPress={handleRefresh} 
+          activeOpacity={0.6} 
+          key="refresh"
+          disabled={isRefreshing}
+        >
+          <Animated.View style={animatedIconStyle}>
+            <Ionicons name="refresh-outline" size={wp(32)} color="#1A1A1A" />
+          </Animated.View>
+        </TouchableOpacity>
       );
     }
     if (index === 11) {
@@ -109,9 +141,5 @@ const styles = StyleSheet.create({
     fontSize: fp(28),
     fontFamily: FONTS.semiBold,
     color: '#1A1A1A',
-  },
-  mascotImage: {
-    width: wp(40),
-    height: hp(40),
   },
 });
