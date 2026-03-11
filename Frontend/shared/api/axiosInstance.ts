@@ -1,58 +1,60 @@
-// =============================================
-// Axios 공통 인스턴스
-// 웹(React) + 앱(React Native) 공용으로 사용
-// 토큰 주입은 로그인 후 setAuthToken()으로 설정
+﻿// =============================================
+// Axios instance
+// 웹/앱 공용으로 사용하는 기본 axios 인스턴스입니다.
+// accessToken 은 메모리에서만 다루고, refreshToken 은 httpOnly 쿠키 전제를 따릅니다.
 // =============================================
 
-import axios from 'axios'
-import { BASE_URL } from './endpoints'
+import axios from 'axios';
+import { BASE_URL } from './endpoints';
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
-})
+});
 
 // -----------------------------------------------
-// 요청 인터셉터 - accessToken 자동 주입
-// setAuthToken()으로 토큰 설정 후 모든 요청에 자동 포함
+// Request interceptor
+// 현재는 Authorization 헤더를 setAuthToken 으로만 주입합니다.
+// 추후 authStore 와 연결되면 여기에서 요청별 공통 헤더를 더 붙일 수 있습니다.
 // -----------------------------------------------
 axiosInstance.interceptors.request.use(
-  (config) => {
-    return config
-  },
-  (error) => Promise.reject(error)
-)
+  (config) => config,
+  (error) => Promise.reject(error),
+);
 
 // -----------------------------------------------
-// 응답 인터셉터 - 401 Unauthorized 처리
-// 토큰 만료 시 각 플랫폼 authStore에서 갱신 처리
+// Response interceptor
+// 401 이 왔을 때 refresh 재시도 로직은 아직 넣지 않습니다.
+// refresh 전략은 백엔드 스펙 확정 후 별도로 붙이는 편이 안전합니다.
 // -----------------------------------------------
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      // TODO: 토큰 갱신 로직 구현 (각 플랫폼 authStore에서 처리)
-      // 갱신 실패 시 로그인 화면으로 이동
+      // TODO: refresh API 재시도 정책과 authStore 연동은
+      // 백엔드 응답 스펙이 확정된 뒤에 추가합니다.
     }
-    return Promise.reject(error)
-  }
-)
+
+    return Promise.reject(error);
+  },
+);
 
 // -----------------------------------------------
-// 토큰 주입 함수
-// 로그인 성공 후 authStore에서 호출
-// 로그아웃 시 null 전달하여 토큰 제거
-// 사용 예시: setAuthToken(accessToken)
+// Authorization header helper
+// accessToken 은 저장소가 아니라 메모리(Zustand) 기준으로 관리합니다.
+// 로그인 성공/로그아웃 시점에 이 함수를 호출해 공통 헤더를 동기화합니다.
 // -----------------------------------------------
 export const setAuthToken = (token: string | null) => {
   if (token) {
-    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`
-  } else {
-    delete axiosInstance.defaults.headers.common['Authorization']
+    axiosInstance.defaults.headers.common.Authorization = `Bearer ${token}`;
+    return;
   }
-}
 
-export default axiosInstance
+  delete axiosInstance.defaults.headers.common.Authorization;
+};
+
+export default axiosInstance;
