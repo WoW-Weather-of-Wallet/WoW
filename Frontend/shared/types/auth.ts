@@ -1,127 +1,90 @@
 ﻿// =============================================
 // Auth type definitions
-// 회원가입/로그인/인증번호 검증 흐름에서 공통으로 사용하는 타입만 먼저 정리합니다.
-// shared 폴더는 웹/앱 공용이므로 현재 프로젝트에 필요한 최소 범위만 정의합니다.
+// 현재 백엔드에 실제로 구현되어 있는 회원가입/로그인/프로필/온보딩 스펙을 기준으로 정리합니다.
+// shared 폴더는 웹/앱 공용이므로, 프론트 두 군데에서 재사용할 가능성이 높은 타입만 둡니다.
 // =============================================
 
-import type { User } from './user';
-
 // -----------------------------------------------
-// Common response wrappers
-// 백엔드에서 최종 응답 포맷이 확정되면 여기에 맞춰 한 번에 정리할 수 있도록
-// 성공 여부/메시지/데이터 구조를 느슨하게 감싸 둡니다.
-// -----------------------------------------------
-export interface ApiResponse<T> {
-  success: boolean;
-  message?: string;
-  data: T;
-}
-
-export interface EmptyResponse {
-  success: boolean;
-  message?: string;
-}
-
-// -----------------------------------------------
-// SMS verification
-// 회원가입의 첫 단계인 휴대폰 인증에 사용됩니다.
-// -----------------------------------------------
-export interface SendSmsCodeRequest {
-  phoneNumber: string;
-}
-
-export interface SendSmsCodeResponse {
-  requestId?: string;
-  expiresInSeconds?: number;
-}
-
-export interface VerifySmsCodeRequest {
-  phoneNumber: string;
-  code: string;
-}
-
-export interface VerifySmsCodeResponse {
-  verified: boolean;
-}
-
-// -----------------------------------------------
-// Email validation
-// 회원가입 화면에서 이메일 중복 확인과 이메일 인증에 사용됩니다.
-// -----------------------------------------------
-export interface CheckEmailRequest {
-  email: string;
-}
-
-export interface CheckEmailResponse {
-  available: boolean;
-}
-
-export interface SendEmailVerificationCodeRequest {
-  email: string;
-}
-
-export interface SendEmailVerificationCodeResponse {
-  expiresInSeconds?: number;
-}
-
-export interface ConfirmEmailVerificationCodeRequest {
-  email: string;
-  code: string;
-}
-
-export interface ConfirmEmailVerificationCodeResponse {
-  verified: boolean;
-}
-
-// -----------------------------------------------
-// Signup
-// 백엔드 상세 스펙이 아직 유동적일 수 있어, 화면에서 바로 필요한 값 중심으로 둡니다.
+// Domain primitives
+// 백엔드 엔티티와 DTO 에서 실제로 쓰는 값만 먼저 공통 타입으로 뽑아 둡니다.
 // -----------------------------------------------
 export type Gender = 'M' | 'F';
 
+// -----------------------------------------------
+// Signup
+// POST /api/v1/auth/signup
+// 현재 백엔드는 userId / pw 이름으로 요청을 받습니다.
+// 프론트 UI 의 id / password 상태값과는 이름이 다르므로 연결 시 매핑이 필요합니다.
+// -----------------------------------------------
 export interface SignupRequest {
-  email: string;
-  password: string;
+  userId: string;
+  jobId: number;
+  pw: string;
   name: string;
+  gender: string;
   phoneNumber: string;
-  gender?: Gender;
-  birthDate?: string;
-  agreedTermIds?: number[];
+  birthDate: string;
+  alarmEnabled: boolean;
 }
 
 export interface SignupResponse {
-  userId?: number;
-  email?: string;
-  signupCompleted?: boolean;
+  userId: string;
+  jobName: string | null;
+  name: string;
+  gender: string;
+  phoneNumber: string;
+  birthDate: string;
+  alarmEnabled: boolean;
 }
 
 // -----------------------------------------------
-// Login / token
-// accessToken 은 메모리(Zustand)에서만 관리한다는 현재 원칙을 전제로 둡니다.
-// refreshToken 은 httpOnly 쿠키 기반이라 응답 body 에 없을 수 있습니다.
+// Login
+// POST /api/v1/auth/login
+// refreshToken 은 아직 백엔드 응답에 없고, accessToken 만 body 로 내려옵니다.
 // -----------------------------------------------
 export interface LoginRequest {
-  email: string;
-  password: string;
+  userId: string;
+  pw: string;
+}
+
+export interface AuthUserSummary {
+  userId: string;
+  name?: string;
+  role?: string;
 }
 
 export interface LoginResponse {
   accessToken: string;
-  user?: User;
+  expiresIn: number;
+  user: AuthUserSummary;
 }
 
-export interface RefreshTokenResponse {
-  accessToken: string;
+// -----------------------------------------------
+// Profile
+// GET /api/v1/user/profile
+// 회원가입 직후 응답과 거의 비슷한 구조라 화면 렌더링 시 재사용하기 좋습니다.
+// -----------------------------------------------
+export interface UserProfileResponse {
+  userId: string;
+  jobName: string | null;
+  name: string;
+  gender: string;
+  phoneNumber: string;
+  birthDate: string;
+  alarmEnabled: boolean;
 }
 
 // -----------------------------------------------
 // Onboarding
-// 회원가입 직후 이어지는 선택 저장 API 에 사용됩니다.
+// PATCH /api/v1/user/onboarding
+// 현재 백엔드는 jobId 를 받지 않고, 성별/전화번호/생년월일/알림여부만 받습니다.
+// 추후 스펙이 바뀌면 이 타입과 API 함수만 바꾸면 화면 코드는 유지하기 쉽습니다.
 // -----------------------------------------------
 export interface SaveOnboardingRequest {
-  jobId: number;
+  gender: string;
+  phoneNumber: string;
+  birthDate: string;
+  alarmEnabled: boolean;
 }
 
-export interface SaveOnboardingResponse {
-  saved: boolean;
-}
+export type SaveOnboardingResponse = UserProfileResponse;
