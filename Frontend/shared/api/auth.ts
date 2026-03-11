@@ -1,110 +1,60 @@
 ﻿// =============================================
 // Auth API helpers
-// 회원가입/로그인 흐름에서 사용하는 API 함수만 먼저 정리합니다.
-// shared 폴더이므로 화면에서 실제로 바로 쓰일 함수 중심으로 최소 범위를 유지합니다.
+// 현재 백엔드에 실제로 구현된 엔드포인트만 먼저 연결합니다.
+// 서버에 아직 없는 SMS / 이메일 인증 API 는 여기서 빼 두고,
+// 화면에서는 기존 목업 흐름을 유지한 채 나중에 붙일 수 있게 합니다.
 // =============================================
 
 import axiosInstance from './axiosInstance';
 import { ENDPOINTS } from './endpoints';
 import type {
-  ApiResponse,
-  CheckEmailRequest,
-  CheckEmailResponse,
-  ConfirmEmailVerificationCodeRequest,
-  ConfirmEmailVerificationCodeResponse,
   LoginRequest,
   LoginResponse,
   SaveOnboardingRequest,
   SaveOnboardingResponse,
-  SendEmailVerificationCodeRequest,
-  SendEmailVerificationCodeResponse,
-  SendSmsCodeRequest,
-  SendSmsCodeResponse,
   SignupRequest,
   SignupResponse,
-  VerifySmsCodeRequest,
-  VerifySmsCodeResponse,
+  UserProfileResponse,
 } from '../types/auth';
 
-// 휴대폰 인증번호 발송
-export const sendSmsCode = async (payload: SendSmsCodeRequest) => {
-  const response = await axiosInstance.post<ApiResponse<SendSmsCodeResponse>>(
-    ENDPOINTS.AUTH.PHONE_SEND,
-    payload,
-  );
-
-  return response.data;
-};
-
-// 휴대폰 인증번호 검증
-export const verifySmsCode = async (payload: VerifySmsCodeRequest) => {
-  const response = await axiosInstance.post<ApiResponse<VerifySmsCodeResponse>>(
-    ENDPOINTS.AUTH.PHONE_VERIFY,
-    payload,
-  );
-
-  return response.data;
-};
-
-// 이메일 중복 확인
-export const checkEmailAvailability = async (payload: CheckEmailRequest) => {
-  const response = await axiosInstance.get<ApiResponse<CheckEmailResponse>>(
-    ENDPOINTS.AUTH.CHECK_EMAIL,
-    {
-      params: payload,
-    },
-  );
-
-  return response.data;
-};
-
-// 이메일 인증번호 발송
-export const sendEmailVerificationCode = async (
-  payload: SendEmailVerificationCodeRequest,
-) => {
-  const response = await axiosInstance.post<ApiResponse<SendEmailVerificationCodeResponse>>(
-    ENDPOINTS.AUTH.EMAIL_VERIFY_REQUEST,
-    payload,
-  );
-
-  return response.data;
-};
-
-// 이메일 인증번호 검증
-export const confirmEmailVerificationCode = async (
-  payload: ConfirmEmailVerificationCodeRequest,
-) => {
-  const response = await axiosInstance.post<ApiResponse<ConfirmEmailVerificationCodeResponse>>(
-    ENDPOINTS.AUTH.EMAIL_VERIFY_CONFIRM,
-    payload,
-  );
-
-  return response.data;
-};
-
-// 회원가입
+// -----------------------------------------------
+// signup
+// CreateAccount 화면에서 최종 회원가입 요청을 보낼 때 사용합니다.
+// 현재 백엔드는 userId / pw 필드를 기대하므로 화면 state 를 이 구조로 변환해야 합니다.
+// -----------------------------------------------
 export const signup = async (payload: SignupRequest) => {
-  const response = await axiosInstance.post<ApiResponse<SignupResponse>>(
-    ENDPOINTS.AUTH.SIGNUP,
-    payload,
-  );
+  const response = await axiosInstance.post<SignupResponse>(ENDPOINTS.AUTH.SIGNUP, payload);
 
   return response.data;
 };
 
-// 로그인
+// -----------------------------------------------
+// login
+// 로그인 성공 시 accessToken 을 받고, 이후 setAuthToken 으로 공통 헤더를 동기화할 수 있습니다.
+// -----------------------------------------------
 export const login = async (payload: LoginRequest) => {
-  const response = await axiosInstance.post<ApiResponse<LoginResponse>>(
-    ENDPOINTS.AUTH.LOGIN,
-    payload,
-  );
+  const response = await axiosInstance.post<LoginResponse>(ENDPOINTS.AUTH.LOGIN, payload);
 
   return response.data;
 };
 
-// 온보딩 저장
+// -----------------------------------------------
+// getProfile
+// 로그인 이후 홈/마이페이지에서 사용자 기본 정보를 받아올 때 사용합니다.
+// -----------------------------------------------
+export const getProfile = async () => {
+  const response = await axiosInstance.get<UserProfileResponse>(ENDPOINTS.USER.PROFILE);
+
+  return response.data;
+};
+
+// -----------------------------------------------
+// saveOnboarding
+// 현재 백엔드는 PATCH /api/v1/user/onboarding 으로 처리합니다.
+// 화면에서 선택한 값을 회원 정보에 반영하는 용도로 사용합니다.
+// -----------------------------------------------
 export const saveOnboarding = async (payload: SaveOnboardingRequest) => {
-  const response = await axiosInstance.post<ApiResponse<SaveOnboardingResponse>>(
+  const response = await axiosInstance.patch<SaveOnboardingResponse>(
     ENDPOINTS.USER.ONBOARDING,
     payload,
   );
