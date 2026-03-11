@@ -22,6 +22,12 @@ public class UserController {
         return ResponseEntity.ok(userService.getProfile(userDetails.getUsername()));
     }
 
+    @DeleteMapping("/delete")
+    public ResponseEntity<Void> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
+        userService.deleteUser(userDetails.getUsername());
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/onboarding")
     public ResponseEntity<UserProfileResponse> onboarding(@AuthenticationPrincipal UserDetails userDetails,
                                                           @RequestBody OnboardingRequest request) {
