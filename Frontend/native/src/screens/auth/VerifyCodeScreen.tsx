@@ -9,6 +9,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import SecureKeypad from '../../components/common/SecureKeypad';
+import DevShortcutButton from '../../components/common/DevShortcutButton';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { verifySmsCode } from '../../services/auth';
 
@@ -112,6 +113,13 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
         )}
 
         {verifyError.length > 0 && <Text style={styles.errorText}>{verifyError}</Text>}
+
+        {/* 인증 서버 상태와 무관하게 계정 생성 화면 개발을 이어갈 수 있도록 우회 버튼을 둡니다. */}
+        <DevShortcutButton
+          label="TEST: 인증 성공 처리"
+          description="인증번호 검증 API 가 불안정할 때도 CreateAccount 화면으로 바로 이동합니다."
+          onPress={() => navigation.replace('CreateAccount', route.params)}
+        />
       </View>
 
       <View style={[styles.keypadWrapper, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>

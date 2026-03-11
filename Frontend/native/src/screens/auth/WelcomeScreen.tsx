@@ -4,9 +4,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import DevShortcutButton from '../../components/common/DevShortcutButton';
+import { useAuthStore } from '../../store/authStore';
 
 export default function WelcomeScreen({ route, navigation }: any) {
   const insets = useSafeAreaInsets();
+  const loginWithDevBypass = useAuthStore((state) => state.loginWithDevBypass);
   
   const { name = '고객', ssnFront = '', ssnBack = '', id = '' } = route.params || {};
 
@@ -35,7 +38,10 @@ export default function WelcomeScreen({ route, navigation }: any) {
   }));
 
   const handleNext = () => {
-    navigation.replace('JobSelection', route.params);
+    // 직업 선택/온보딩 정책이 아직 확정되지 않아 현재는 메인 탭으로 바로 보냅니다.
+    // 관련 화면은 삭제하지 않고 보존해 두고, 정책이 확정되면 다시 Welcome -> JobSelection 흐름을 복구합니다.
+    loginWithDevBypass({ userId: id || 'welcome-user', name });
+    navigation.replace('MainTabs');
   };
 
   const handleConfirmRetry = () => {
@@ -95,6 +101,16 @@ export default function WelcomeScreen({ route, navigation }: any) {
           <TouchableOpacity style={styles.confirmButton} onPress={handleNext}>
             <Text style={styles.confirmButtonText}>확인</Text>
           </TouchableOpacity>
+
+          <DevShortcutButton
+            label="TEST: 메인 화면 바로 이동"
+            description="온보딩 정책이 확정되기 전까지 Welcome 화면에서 바로 MainTabs 로 넘어갑니다."
+            onPress={() => {
+              loginWithDevBypass({ userId: id || 'welcome-user', name });
+              navigation.replace('MainTabs');
+            }}
+            style={styles.devShortcut}
+          />
         </Animated.View>
       </View>
 
@@ -216,6 +232,9 @@ const styles = StyleSheet.create({
     fontSize: fp(20),
     fontFamily: FONTS.bold,
     color: '#1A1A1A',
+  },
+  devShortcut: {
+    marginTop: hp(14),
   },
 
   // 모달 스타일

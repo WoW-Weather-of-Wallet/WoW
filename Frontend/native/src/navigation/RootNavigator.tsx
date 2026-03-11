@@ -21,9 +21,9 @@ const Stack = createNativeStackNavigator();
 
 /**
  * RootNavigator
- * 현재는 인증 성공 여부를 실제 상태값으로 분기하지 않고,
- * 로그인 버튼에서 MainTabs로 이동하도록 임시 연결해 둔 상태입니다.
- * authStore가 붙으면 Stack.Screen 조건 분기로 자연스럽게 이전할 수 있습니다.
+ * 현재는 스크린 등록 자체는 유지하고, 진입 분기와 세션 상태만 authStore 로 관리합니다.
+ * 이렇게 두면 로그인 직후/로그아웃 직후의 명시적 navigation 흐름을 깨지 않으면서도
+ * 권한 화면 이후 분기와 공통 세션 상태는 한 곳에서 유지할 수 있습니다.
  */
 export default function RootNavigator() {
   return (
@@ -78,7 +78,9 @@ export default function RootNavigator() {
           options={{ gestureEnabled: false }}
         />
 
-        {/* 직업 선택 온보딩 화면 */}
+        {/* 직업 선택 온보딩 화면
+            현재 정책 미확정으로 기본 회원가입 플로우에서는 진입시키지 않지만,
+            화면 자체는 추후 복구 가능하도록 스택에 남겨 둡니다. */}
         <Stack.Screen
           name="JobSelection"
           component={JobSelectionScreen}

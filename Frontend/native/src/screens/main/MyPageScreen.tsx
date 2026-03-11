@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +20,7 @@ import {
   mockUserShortcuts,
 } from '../../mock/dashboard';
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import { useAuthStore } from '../../store/authStore';
 
 /**
  * MyPageScreen
@@ -27,6 +29,8 @@ import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
  */
 export default function MyPageScreen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
+  const logout = useAuthStore((state) => state.logout);
 
   return (
     <View style={styles.container}>
@@ -49,7 +53,6 @@ export default function MyPageScreen() {
             </View>
             <View style={styles.profileTextBlock}>
               <Text style={styles.profileName}>{mockUserProfile.name}님 안녕하세요!</Text>
-              <Text style={styles.profileEmail}>{mockUserProfile.email}</Text>
               <View style={styles.profileBadge}>
                 <Text style={styles.profileBadgeText}>{mockUserProfile.badge}</Text>
               </View>
@@ -195,15 +198,22 @@ export default function MyPageScreen() {
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>계정 액션</Text>
           <View style={styles.actionButtonSpacing}>
-            <GradientButton
-              title="프로필 수정"
-              onPress={() => console.log('프로필 수정 연결 예정')}
-            />
+          <GradientButton
+            title="프로필 수정"
+            onPress={() => console.log('프로필 수정 연결 예정')}
+          />
           </View>
           <GradientButton
             title="로그아웃"
             variant="outline"
-            onPress={() => console.log('로그아웃 연결 예정')}
+            onPress={() => {
+              // 로그아웃은 authStore 와 Authorization 헤더를 동시에 정리해 인증 전 플로우로 되돌립니다.
+              logout();
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            }}
           />
         </View>
       </ScrollView>
