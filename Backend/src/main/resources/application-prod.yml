@@ -20,3 +20,17 @@ spring:
 
 server:
   port: ${SERVER_PORT:8050}
+
+jwt:
+  secret: ${JWT_SECRET}
+
+sso:
+  ssafy:
+    client-id: ${SSO_SSAFY_CLIENT_ID}
+    client-secret: ${SSO_SSAFY_CLIENT_SECRET}
+    redirect-uri: ${SSO_SSAFY_REDIRECT_URI}
+
+solapi:
+  api-key: ${SOLAPI_API_KEY}
+  api-secret: ${SOLAPI_API_SECRET}
+  sender: ${SOLAPI_SENDER}
