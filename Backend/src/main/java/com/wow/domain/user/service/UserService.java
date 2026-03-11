@@ -1,0 +1,37 @@
+package com.wow.domain.user.service;
+
+import com.wow.domain.user.dto.OnboardingRequest;
+import com.wow.domain.user.dto.UserProfileResponse;
+import com.wow.domain.user.entity.User;
+import com.wow.domain.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class UserService {
+
+    private final UserRepository userRepository;
+
+    @Transactional(readOnly = true)
+    public UserProfileResponse getProfile(String userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        return UserProfileResponse.from(user);
+    }
+
+    @Transactional
+    public UserProfileResponse onboarding(String ssafyOauthId, OnboardingRequest request) {
+        User user = userRepository.findBySsafyOauthId(ssafyOauthId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            throw new IllegalArgumentException("이미 가입된 전화번호입니다.");
+        }
+
+        user.updateOnboarding(request.getGender(), request.getPhoneNumber(), request.getBirthDate(), request.isAlarmEnabled());
+        return UserProfileResponse.from(user);
+    }
+
+}
