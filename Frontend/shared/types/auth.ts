@@ -1,4 +1,4 @@
-﻿// =============================================
+// =============================================
 // Auth type definitions
 // 현재 백엔드에 실제로 구현되어 있는 회원가입/로그인/프로필/온보딩 스펙을 기준으로 정리합니다.
 // shared 폴더는 웹/앱 공용이므로, 프론트 두 군데에서 재사용할 가능성이 높은 타입만 둡니다.
@@ -35,6 +35,17 @@ export interface SignupResponse {
   phoneNumber: string;
   birthDate: string;
   alarmEnabled: boolean;
+}
+
+// -----------------------------------------------
+// Check user id
+// GET /api/v1/auth/check-user-id?userId=...
+// 다른 팀이 작성한 이메일 중복확인 명세와 같은 톤으로,
+// 응답 본문은 래퍼 없이 available / userId 만 내려온다고 가정합니다.
+// -----------------------------------------------
+export interface CheckUserIdResponse {
+  available: boolean;
+  userId: string;
 }
 
 // -----------------------------------------------

@@ -1,4 +1,4 @@
-﻿// =============================================
+// =============================================
 // API endpoints
 // 웹/앱 공용으로 사용하는 엔드포인트 상수입니다.
 // 실제 백엔드 코드 기준으로 현재 존재하는 경로를 우선 반영합니다.
@@ -22,9 +22,8 @@ export const ENDPOINTS = {
     REFRESH: '/api/v1/auth/refresh',
     PHONE_SEND: '/api/v1/auth/sms/send',
     PHONE_VERIFY: '/api/v1/auth/sms/verify',
-    CHECK_EMAIL: '/api/v1/auth/check-email',
-    EMAIL_VERIFY_REQUEST: '/api/v1/auth/email-verifications',
-    EMAIL_VERIFY_CONFIRM: '/api/v1/auth/email-verifications/confirm',
+    // 회원가입 전 아이디 중복확인은 GET query 방식으로 조회성 호출을 보냅니다.
+    CHECK_USER_ID: '/api/v1/auth/check-user-id',
     GOOGLE_OAUTH: '/oauth2/authorization/google',
   },
 
