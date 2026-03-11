@@ -39,6 +39,13 @@ deploy:
       REDIS_HOST=${REDIS_HOST}
       REDIS_PORT=${REDIS_PORT}
       SPRING_PROFILES_ACTIVE=prod
+      JWT_SECRET=${JWT_SECRET}
+      SSO_SSAFY_CLIENT_ID=${SSO_SSAFY_CLIENT_ID}
+      SSO_SSAFY_CLIENT_SECRET=${SSO_SSAFY_CLIENT_SECRET}
+      SSO_SSAFY_REDIRECT_URI=${SSO_SSAFY_REDIRECT_URI}
+      SOLAPI_API_KEY=${SOLAPI_API_KEY}
+      SOLAPI_API_SECRET=${SOLAPI_API_SECRET}
+      SOLAPI_SENDER=${SOLAPI_SENDER}
       ENV
     - docker-compose -f docker-compose.prod.yml down
     - docker-compose -f docker-compose.prod.yml up -d
