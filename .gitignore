@@ -36,29 +36,29 @@ logs/
 ############################################
 # Backend (Spring Boot / Gradle)
 ############################################
-BackEnd/.gradle/
-BackEnd/build/
-BackEnd/out/
-BackEnd/.classpath
-BackEnd/.project
-BackEnd/.settings/
+Backend/.gradle/
+Backend/build/
+Backend/out/
+Backend/.classpath
+Backend/.project
+Backend/.settings/
 
 ############################################
 # Frontend (React / React Native / Node)
 ############################################
-FrontEnd/react/node_modules/
-FrontEnd/react/dist/
-FrontEnd/react/.vite/
+Frontend/react/node_modules/
+Frontend/react/dist/
+Frontend/react/.vite/
 
-FrontEnd/native/node_modules/
-FrontEnd/native/.expo/
-FrontEnd/native/android/.gradle/
-FrontEnd/native/android/app/build/
-FrontEnd/native/android/build/
-FrontEnd/native/ios/Pods/
-FrontEnd/native/ios/build/
+Frontend/native/node_modules/
+Frontend/native/.expo/
+Frontend/native/android/.gradle/
+Frontend/native/android/app/build/
+Frontend/native/android/build/
+Frontend/native/ios/Pods/
+Frontend/native/ios/build/
 
-FrontEnd/shared/node_modules/
+Frontend/shared/node_modules/
 
 ############################################
 # AI (Python / ML)
@@ -99,4 +99,4 @@ htmlcov/
 ############################################
 *.lock
 Infra/Docker/env.prod
-BackEnd/src/main/resources/application-local.yml
+Backend/src/main/resources/application-local.yml
