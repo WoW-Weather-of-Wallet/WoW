@@ -46,7 +46,7 @@ export default function WelcomeScreen({ route, navigation }: any) {
   return (
     <View style={styles.container}>
       {/* 화면 전체를 flex로 구성하여 스크롤 없이 한 화면에 패킹 */}
-      <View style={[styles.mainLayout, { paddingTop: insets.top + hp(40), paddingBottom: insets.bottom || hp(24) }]}>
+      <View style={[styles.mainLayout, { paddingTop: insets.top + hp(40), paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
         
         {/* 상단 둥둥 뜨는 아이콘 및 타이틀 구역 */}
         <View style={styles.headerSection}>

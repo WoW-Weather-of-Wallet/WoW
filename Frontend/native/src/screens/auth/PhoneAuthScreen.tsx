@@ -189,7 +189,7 @@ export default function PhoneAuthScreen({ navigation }: any) {
       </ScrollView>
 
       {/* 하단 확인 버튼 */}
-      <View style={[styles.bottomContainer, { paddingBottom: insets.bottom || hp(24) }]}>
+      <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
         <TouchableOpacity 
           style={[styles.confirmButton, btnState.isActive && styles.activeButton]} 
           disabled={!btnState.isActive}
