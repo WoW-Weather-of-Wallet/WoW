@@ -22,8 +22,10 @@ const axiosInstance = axios.create({
 // 추후 authStore 와 연결되면 여기에서 요청별 공통 헤더를 더 붙일 수 있습니다.
 // -----------------------------------------------
 axiosInstance.interceptors.request.use(
-  (config) => config,
-  (error) => Promise.reject(error),
+  // shared 패키지는 axios 타입을 독립 설치 없이 검사하므로,
+  // 인터셉터 인자는 명시적으로 any 로 적어 단독 타입체크가 막히지 않게 둡니다.
+  (config: any) => config,
+  (error: any) => Promise.reject(error),
 );
 
 // -----------------------------------------------
@@ -32,8 +34,8 @@ axiosInstance.interceptors.request.use(
 // refresh 전략은 백엔드 스펙 확정 후 별도로 붙이는 편이 안전합니다.
 // -----------------------------------------------
 axiosInstance.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+  (response: any) => response,
+  async (error: any) => {
     if (error.response?.status === 401) {
       // TODO: refresh API 재시도 정책과 authStore 연동은
       // 백엔드 응답 스펙이 확정된 뒤에 추가합니다.

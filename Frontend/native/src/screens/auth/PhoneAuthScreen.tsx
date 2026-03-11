@@ -20,6 +20,7 @@ import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import DevShortcutButton from '../../components/common/DevShortcutButton';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { sendSmsCode } from '../../services/auth';
+import { extractApiErrorMessage } from '../../../../shared';
 
 const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 알뜰폰'];
 const TELECOM_PLACEHOLDER = '통신사를 선택해주세요';
@@ -99,10 +100,11 @@ export default function PhoneAuthScreen({ navigation }: any) {
         phone,
       });
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message ??
-        error?.message ??
-        '인증번호 발송에 실패했어요. 휴대폰 번호를 다시 확인해주세요.';
+      // SMS 발송 실패도 다른 auth 화면과 같은 규칙으로 에러 메시지를 정리합니다.
+      const message = extractApiErrorMessage(
+        error,
+        '인증번호 발송에 실패했어요. 휴대폰 번호를 다시 확인해주세요.',
+      );
 
       setSubmitError(message);
       Alert.alert('인증번호 발송 실패', message);
