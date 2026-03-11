@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -23,16 +23,20 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import CustomTextInput from '../../components/common/CustomTextInput';
 import GradientButton from '../../components/common/GradientButton';
+import { useAuthStore } from '../../store/authStore';
 import { COLORS, FONTS, RADIUS, wp, hp, fp } from '../../constants/theme';
-import { login, setNativeAuthToken } from '../../services/auth';
+import { login } from '../../services/auth';
+import { extractApiErrorMessage } from '../../../../shared';
 
 /**
  * LoginScreen
  * 실제 로그인 API 가 연결된 화면입니다.
- * accessToken 은 응답 body 에서 받아 메모리 헤더에만 반영하고,
+ * 세션 저장과 Authorization 헤더 갱신은 authStore 에서 한 번에 처리하고,
  * 개발 중 빠른 화면 확인을 위한 테스트 진입 버튼은 그대로 유지합니다.
  */
 export default function LoginScreen({ navigation }: any) {
+  const loginToStore = useAuthStore((state) => state.login);
+  const loginWithDevBypass = useAuthStore((state) => state.loginWithDevBypass);
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [autoLogin, setAutoLogin] = useState(false);
@@ -76,15 +80,22 @@ export default function LoginScreen({ navigation }: any) {
         pw: password,
       });
 
-      // accessToken 은 localStorage / AsyncStorage 에 저장하지 않고,
-      // 현재 세션 메모리에서만 공통 헤더로 반영합니다.
-      setNativeAuthToken(response.accessToken);
+      // 로그인 성공 시 세션 상태와 Authorization 헤더를 authStore 한 곳에서 같이 동기화합니다.
+      loginToStore({
+        accessToken: response.accessToken,
+        user: response.user,
+        autoLogin,
+      });
 
+      // 현재는 스크린 트리를 완전히 갈아끼우기보다, 로그인 성공 시 메인 탭으로 명시적으로 이동합니다.
       navigation.replace('MainTabs');
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message ??
-        '로그인에 실패했어요. 아이디와 비밀번호를 다시 확인해주세요.';
+      // 로그인/회원가입/SMS 인증이 서로 다른 에러 필드명을 내려줘도
+      // 화면 문구는 shared 헬퍼 한 곳에서 통일된 우선순위로 가져옵니다.
+      const message = extractApiErrorMessage(
+        error,
+        '로그인에 실패했어요. 아이디와 비밀번호를 다시 확인해주세요.',
+      );
 
       setLoginError(message);
       Alert.alert('로그인 실패', message);
@@ -131,7 +142,11 @@ export default function LoginScreen({ navigation }: any) {
               </Text>
               <GradientButton
                 title="TEST: 메인 화면 바로가기"
-                onPress={() => navigation.replace('MainTabs')}
+                onPress={() => {
+                  // 개발자 우회 진입도 실제 로그인과 같은 authStore 를 타게 해서 화면 분기를 일관되게 맞춥니다.
+                  loginWithDevBypass({ userId: 'dev-main-user', name: '개발자' });
+                  navigation.replace('MainTabs');
+                }}
               />
             </View>
           </Animated.View>
@@ -171,7 +186,10 @@ export default function LoginScreen({ navigation }: any) {
               </View>
               <View style={styles.buttonGap} />
               <View style={styles.buttonHalf}>
-                <GradientButton title={isSubmitting ? '로그인 중...' : '로그인'} onPress={handleLogin} />
+                <GradientButton
+                  title={isSubmitting ? '로그인 중...' : '로그인'}
+                  onPress={handleLogin}
+                />
               </View>
             </View>
 
@@ -374,5 +392,3 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 });
-
-

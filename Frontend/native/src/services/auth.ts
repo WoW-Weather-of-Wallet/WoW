@@ -1,4 +1,8 @@
 ﻿import axios from 'axios';
+import {
+  checkUserId as checkUserIdShared,
+  type CheckUserIdResponse,
+} from '../../../shared';
 
 // =============================================
 // Native auth API client
@@ -56,6 +60,14 @@ export interface SmsVerifyRequest {
   phoneNumber: string;
   code: string;
 }
+
+// 네이티브 화면에서는 현재 shared auth API 를 직접 쓰지 않고
+// native 서비스 레이어를 한 번 감싸서 호출하는 흐름이 섞여 있습니다.
+// 아이디 중복확인도 같은 진입점에서 다루면 화면 파일이 덜 퍼지므로,
+// shared 구현을 재사용하되 native 서비스에서 한 번 래핑합니다.
+export const checkUserId = async (userId: string): Promise<CheckUserIdResponse> => {
+  return checkUserIdShared(userId);
+};
 
 const nativeApi = axios.create({
   baseURL: BASE_URL,

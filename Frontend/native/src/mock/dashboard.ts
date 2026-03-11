@@ -115,7 +115,6 @@ export const mockScheduleItems: HomeScheduleItem[] = [
 
 export const mockUserProfile = {
   name: '이채목',
-  email: 'chaemok@ssafy.com',
   badge: 'SSAFY 금융 14기',
   linkedAccounts: 4,
   onboardingCompleted: true,
