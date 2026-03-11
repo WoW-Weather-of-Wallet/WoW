@@ -25,10 +25,6 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_id")
-    private Job job;
-
     @Column(name = "user_id", unique = true, length = 50)
     private String userId;
 
@@ -57,8 +53,7 @@ public class User {
     @Column(name = "alarm_enabled")
     private boolean alarmEnabled;
 
-    public void updateOnboarding(Job job, String gender, String phoneNumber, LocalDate birthDate, boolean alarmEnabled) {
-        this.job = job;
+    public void updateOnboarding(String gender, String phoneNumber, LocalDate birthDate, boolean alarmEnabled) {
         this.gender = gender;
         this.phoneNumber = phoneNumber;
         this.birthDate = birthDate;
