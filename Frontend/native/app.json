@@ -1,4 +1,4 @@
-{
+﻿{
   "expo": {
     "name": "WOW",
     "slug": "wow-app",
@@ -20,7 +20,8 @@
         "foregroundImage": "./src/assets/adaptive-icon.png",
         "backgroundColor": "#6666ee"
       },
-      "package": "com.wow.app"
+      "package": "com.wow.app",
+      "usesCleartextTraffic": true
     }
   }
 }

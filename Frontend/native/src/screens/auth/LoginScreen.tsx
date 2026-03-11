@@ -24,8 +24,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import CustomTextInput from '../../components/common/CustomTextInput';
 import GradientButton from '../../components/common/GradientButton';
 import { COLORS, FONTS, RADIUS, wp, hp, fp } from '../../constants/theme';
-import { login } from '../../../../shared/api/auth';
-import { setAuthToken } from '../../../../shared/api/axiosInstance';
+import { login, setNativeAuthToken } from '../../services/auth';
 
 /**
  * LoginScreen
@@ -79,7 +78,7 @@ export default function LoginScreen({ navigation }: any) {
 
       // accessToken 은 localStorage / AsyncStorage 에 저장하지 않고,
       // 현재 세션 메모리에서만 공통 헤더로 반영합니다.
-      setAuthToken(response.accessToken);
+      setNativeAuthToken(response.accessToken);
 
       navigation.replace('MainTabs');
     } catch (error: any) {
@@ -375,3 +374,5 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 });
+
+

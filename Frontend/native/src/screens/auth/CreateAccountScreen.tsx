@@ -15,12 +15,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
-import { signup } from '../../../../shared/api/auth';
+import { signup } from '../../services/auth';
 
 // 현재 백엔드 회원가입 API 는 jobId 를 필수로 받고 있습니다.
 // 하지만 현재 앱 플로우에서는 직업 선택이 회원가입 뒤에 오므로,
 // 백엔드 스펙이 정리되기 전까지는 임시 기본값으로 요청을 보냅니다.
-const TEMP_SIGNUP_JOB_ID = 30;
+const TEMP_SIGNUP_JOB_ID = 1;
 
 type CreateAccountRouteParams = {
   name?: string;
@@ -29,11 +29,6 @@ type CreateAccountRouteParams = {
   ssnBack?: string;
 };
 
-/**
- * 주민등록번호 앞/뒷자리를 기반으로 생년월일을 YYYY-MM-DD 형태로 만듭니다.
- * 현재 회원가입 화면은 생년월일 입력을 따로 받지 않기 때문에,
- * 휴대폰 인증 단계에서 수집한 값을 회원가입 요청으로 변환합니다.
- */
 const buildBirthDate = (ssnFront?: string, ssnBack?: string) => {
   if (!ssnFront || ssnFront.length !== 6 || !ssnBack) {
     return '2000-01-01';
@@ -47,10 +42,6 @@ const buildBirthDate = (ssnFront?: string, ssnBack?: string) => {
   return `${year}-${month}-${day}`;
 };
 
-/**
- * 주민등록번호 뒷자리 첫 숫자를 성별 값으로 변환합니다.
- * 현재 백엔드는 문자열 한 글자("M" | "F")를 기대합니다.
- */
 const buildGender = (ssnBack?: string) => {
   if (!ssnBack) {
     return 'M';
@@ -71,8 +62,6 @@ export default function CreateAccountScreen({ route, navigation }: any) {
   const [isIdAvailable, setIsIdAvailable] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-
-  // 비밀번호 입력은 필요할 때만 노출해서 가독성을 높입니다.
   const [isPwVisible, setIsPwVisible] = useState(false);
   const [isConfirmPwVisible, setIsConfirmPwVisible] = useState(false);
 
@@ -80,11 +69,8 @@ export default function CreateAccountScreen({ route, navigation }: any) {
   const pwRef = useRef<TextInput>(null);
   const confirmPwRef = useRef<TextInput>(null);
 
-  /**
-   * 현재 백엔드에 아이디 중복 확인 API 가 없어서,
-   * 화면 단계 검증을 위한 임시 체크만 로컬에서 수행합니다.
-   * 실제 중복 여부는 회원가입 요청 결과를 받아 최종적으로 판단해야 합니다.
-   */
+  // 현재 백엔드에는 아이디 중복 확인 API 가 없어서,
+  // 화면 진행을 위한 임시 로컬 체크만 수행합니다.
   const handleCheckId = () => {
     if (id.length < 4) {
       return;
@@ -100,7 +86,6 @@ export default function CreateAccountScreen({ route, navigation }: any) {
       }
 
       setIsIdAvailable(true);
-
       setTimeout(() => {
         setStep((prev) => Math.max(prev, 2));
         pwRef.current?.focus();
@@ -129,10 +114,6 @@ export default function CreateAccountScreen({ route, navigation }: any) {
     }
   };
 
-  /**
-   * 화면에서 관리하는 상태를 실제 백엔드 DTO 형식으로 변환합니다.
-   * 현재 앱 플로우상 직업 선택이 뒤에 있어 임시 jobId 를 사용합니다.
-   */
   const handleCreateAccount = async () => {
     if (!isFormValid) {
       return;
@@ -141,26 +122,39 @@ export default function CreateAccountScreen({ route, navigation }: any) {
     setIsSubmitting(true);
     setSubmitError('');
 
+    const signupPayload = {
+      userId: id,
+      jobId: TEMP_SIGNUP_JOB_ID,
+      pw: password,
+      name: routeParams.name ?? '',
+      gender: buildGender(routeParams.ssnBack),
+      phoneNumber: routeParams.phone ?? '',
+      birthDate: buildBirthDate(routeParams.ssnFront, routeParams.ssnBack),
+      alarmEnabled: true,
+    };
+
+    // 다음 실패부터는 Expo 터미널에서 요청값을 바로 확인할 수 있게 남겨 둡니다.
+    console.log('[signup payload]', JSON.stringify(signupPayload));
+
     try {
-      const signupResponse = await signup({
-        userId: id,
-        jobId: TEMP_SIGNUP_JOB_ID,
-        pw: password,
-        name: routeParams.name ?? '',
-        gender: buildGender(routeParams.ssnBack),
-        phoneNumber: routeParams.phone ?? '',
-        birthDate: buildBirthDate(routeParams.ssnFront, routeParams.ssnBack),
-        alarmEnabled: true,
-      });
+      const signupResponse = await signup(signupPayload);
 
       navigation.replace('Welcome', {
         ...routeParams,
         id: signupResponse.userId,
       });
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message ??
-        '회원가입 중 문제가 발생했어요. 입력값을 다시 확인해주세요.';
+      const debugMessage = [
+        error?.response?.status ? `status: ${error.response.status}` : 'status: unknown',
+        error?.code ? `code: ${error.code}` : 'code: none',
+        error?.message ? `message: ${error.message}` : 'message: none',
+      ].join(' / ');
+
+      console.error('[signup catch status]', error?.response?.status);
+      console.error('[signup catch data]', error?.response?.data);
+      console.error('[signup catch message]', error?.message);
+
+      const message = error?.response?.data?.message ?? debugMessage;
 
       setSubmitError(message);
       Alert.alert('회원가입 실패', message);
@@ -224,7 +218,6 @@ export default function CreateAccountScreen({ route, navigation }: any) {
               : '비밀번호를\n한 번 더 입력해주세요.'}
         </Text>
 
-        {/* 회원가입 API 에 실제로 userId 로 들어가는 값입니다. */}
         <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
           <View style={styles.idInputRow}>
             <View style={[styles.underlineContainer, { flex: 1 }]}>
@@ -359,7 +352,10 @@ export default function CreateAccountScreen({ route, navigation }: any) {
       </ScrollView>
 
       {step >= 2 && (
-        <Animated.View entering={FadeInDown.duration(500)} style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
+        <Animated.View
+          entering={FadeInDown.duration(500)}
+          style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}
+        >
           <TouchableOpacity
             style={[styles.confirmButton, btnState.isActive && styles.activeButton]}
             disabled={!btnState.isActive}

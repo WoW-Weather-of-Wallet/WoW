@@ -4,7 +4,12 @@
 // 실제 백엔드 코드 기준으로 현재 존재하는 경로를 우선 반영합니다.
 // =============================================
 
-export const BASE_URL = 'http://localhost:8080';
+// 로컬 스프링 서버를 직접 붙일 때 사용합니다.
+// export const BASE_URL = 'http://localhost:8080';
+
+// Expo 실기기 테스트에서는 로컬 네트워크 이슈가 잦아서,
+// 현재는 SSAFY 배포 서버를 기본값으로 사용합니다.
+export const BASE_URL = 'https://j14d106.p.ssafy.io';
 
 export const ENDPOINTS = {
   AUTH: {
