@@ -249,7 +249,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
 
       {/* 하단 확인 버튼 */}
       {step >= 2 && (
-        <Animated.View entering={FadeInDown.duration(500)} style={[styles.bottomContainer, { paddingBottom: insets.bottom || hp(24) }]}>
+        <Animated.View entering={FadeInDown.duration(500)} style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
           <TouchableOpacity 
             style={[styles.confirmButton, btnState.isActive && styles.activeButton]} 
             disabled={!btnState.isActive}

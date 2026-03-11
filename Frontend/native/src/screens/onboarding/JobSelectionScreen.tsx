@@ -35,7 +35,7 @@ export default function JobSelectionScreen({ route, navigation }: any) {
   return (
     <View style={styles.container}>
       {/* 백엔드 연동 전까지 회원님의 정보를 모을 와이어프레임 구조 */}
-      <View style={[styles.mainLayout, { paddingTop: insets.top + hp(60), paddingBottom: insets.bottom || hp(24) }]}>
+      <View style={[styles.mainLayout, { paddingTop: insets.top + hp(60), paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
         
         {/* 상단 타이틀 구역 */}
         <Animated.View entering={FadeInDown.duration(500)} style={styles.headerSection}>
