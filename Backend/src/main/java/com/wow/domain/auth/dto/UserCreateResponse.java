@@ -13,7 +13,6 @@ import java.time.LocalDate;
 public class UserCreateResponse {
 
     private String userId;
-    private String jobName;
     private String name;
     private String gender;
     private String phoneNumber;
@@ -23,7 +22,6 @@ public class UserCreateResponse {
     public static UserCreateResponse from(User user) {
         return new UserCreateResponse(
                 user.getUserId(),
-                user.getJob() != null ? user.getJob().getJobName() : null,
                 user.getName(),
                 user.getGender(),
                 user.getPhoneNumber(),

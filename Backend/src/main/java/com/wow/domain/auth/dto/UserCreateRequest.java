@@ -12,7 +12,6 @@ import java.time.LocalDate;
 public class UserCreateRequest {
 
     private String userId;
-    private Long jobId;
     private String pw;
     private String name;
     private String gender;

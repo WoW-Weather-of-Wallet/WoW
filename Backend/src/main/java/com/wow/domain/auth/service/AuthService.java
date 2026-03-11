@@ -3,10 +3,8 @@ package com.wow.domain.auth.service;
 import com.wow.domain.auth.dto.*;
 import com.wow.domain.security.CustomUserDetails;
 import com.wow.domain.security.JwtTokenProvider;
-import com.wow.domain.user.entity.Job;
 import com.wow.domain.user.entity.Role;
 import com.wow.domain.user.entity.User;
-import com.wow.domain.user.repository.JobRepository;
 import com.wow.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,24 +20,26 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final JobRepository jobRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final SmsService smsService;
 
-
+    @Transactional
     public UserCreateResponse signup(UserCreateRequest request) {
 
         if (userRepository.existsByUserId(request.getUserId())) {
             throw new IllegalArgumentException("이미 존재하는 회원입니다.");
         }
 
-        Job job = jobRepository.findById(request.getJobId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 직업입니다."));
+        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            throw new IllegalArgumentException("이미 가입된 전화번호입니다.");
+        }
+
+        smsService.checkVerified(request.getPhoneNumber());
 
         User user = User.builder()
                 .userId(request.getUserId())
-                .job(job)
                 .pw(bCryptPasswordEncoder.encode(request.getPw()))
                 .name(request.getName())
                 .gender(request.getGender())
@@ -49,13 +49,15 @@ public class AuthService {
                 .role(Role.User)
                 .build();
 
-        return UserCreateResponse.from(userRepository.save(user));
+        UserCreateResponse response = UserCreateResponse.from(userRepository.save(user));
+        smsService.deleteVerified(request.getPhoneNumber());
+        return response;
+
     }
 
     @Transactional(readOnly = true)
-    public UserLoginResponse  login(UserLoginRequest request) {
+    public UserLoginResponse login(UserLoginRequest request) {
 
-        // 아이디 비밀번호 검증 후 사용자 인증 정보 객체 생성
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUserId(),
@@ -63,7 +65,6 @@ public class AuthService {
                 )
         );
 
-        // 사용자 인증 정보 객체로 JWT 생성
         CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
 
         String accessToken = jwtTokenProvider.createAccessToken(
