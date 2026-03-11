@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Image, StyleSheet, StatusBar, TouchableOpacity, Text } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -93,12 +93,7 @@ export default function SplashScreen() {
         backgroundColor="transparent"
         translucent
       />
-      <LinearGradient
-        colors={['#7B7BF5', COLORS.primary, '#5252CC']}
-        start={{ x: 0.2, y: 0 }}
-        end={{ x: 0.8, y: 1 }}
-        style={styles.gradient}
-      >
+      <View style={[styles.gradient, { backgroundColor: '#FFFFFF' }]}>
         <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
           <Image
             source={splashLogo}
@@ -106,7 +101,7 @@ export default function SplashScreen() {
             resizeMode="contain"
           />
         </Animated.View>
-      </LinearGradient>
+      </View>
     </Animated.View>
   );
 }
