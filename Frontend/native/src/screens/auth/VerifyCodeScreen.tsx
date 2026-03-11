@@ -79,7 +79,7 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
       </View>
 
       {/* 커스텀 보안 키패드 */}
-      <View style={[styles.keypadWrapper, { paddingBottom: insets.bottom || hp(24) }]}>
+      <View style={[styles.keypadWrapper, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
         <SecureKeypad 
           onPressNumber={handlePressNumber} 
           onPressDelete={handlePressDelete} 
