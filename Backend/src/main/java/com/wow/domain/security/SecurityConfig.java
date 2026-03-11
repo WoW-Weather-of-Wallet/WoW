@@ -36,6 +36,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/sso/providers/ssafy/**"
                         ).permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

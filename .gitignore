@@ -99,3 +99,4 @@ htmlcov/
 *.lock
 Infra/Docker/env.prod
 Backend/src/main/resources/application-local.yml
+Backend/src/main/resources/application-local.yaml
