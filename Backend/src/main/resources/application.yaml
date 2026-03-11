@@ -16,6 +16,11 @@ jwt:
 
 sso:
   ssafy:
-    client-id: fe7346c1-c83b-4a0f-a4f1-6f18d8a801d0
-    client-secret: edf4ab7d-5f30-4220-91d5-dffbc37ef7d3
-    redirect-uri: http://localhost:8080/sso/providers/ssafy/callback
+    client-id: ${SSO_SSAFY_CLIENT_ID}
+    client-secret: ${SSO_SSAFY_CLIENT_SECRET}
+    redirect-uri: ${SSO_SSAFY_REDIRECT_URI}
+
+solapi:
+  api-key: ${SOLAPI_API_KEY}
+  api-secret: ${SOLAPI_API_SECRET}
+  sender: ${SOLAPI_SENDER}
