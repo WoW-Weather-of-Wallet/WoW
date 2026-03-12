@@ -25,6 +25,17 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final SmsService smsService;
 
+    @Transactional(readOnly = true)
+    public UserIdCheckResponse checkUserId(String userId) {
+
+        boolean isAvailable = !userRepository.existsByUserId(userId);
+
+        String message = isAvailable ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다.";
+
+        return new UserIdCheckResponse(isAvailable, message);
+
+    }
+
     @Transactional
     public UserCreateResponse signup(UserCreateRequest request) {
 
