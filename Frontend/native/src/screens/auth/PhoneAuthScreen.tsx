@@ -17,8 +17,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
+import DevShortcutButton from '../../components/common/DevShortcutButton';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { sendSmsCode } from '../../services/auth';
+import { extractApiErrorMessage } from '../../utils/error';
 
 const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 알뜰폰'];
 const TELECOM_PLACEHOLDER = '통신사를 선택해주세요';
@@ -98,10 +100,11 @@ export default function PhoneAuthScreen({ navigation }: any) {
         phone,
       });
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message ??
-        error?.message ??
-        '인증번호 발송에 실패했어요. 휴대폰 번호를 다시 확인해주세요.';
+      // SMS 발송 실패도 다른 auth 화면과 같은 규칙으로 에러 메시지를 정리합니다.
+      const message = extractApiErrorMessage(
+        error,
+        '인증번호 발송에 실패했어요. 휴대폰 번호를 다시 확인해주세요.',
+      );
 
       setSubmitError(message);
       Alert.alert('인증번호 발송 실패', message);
@@ -232,6 +235,21 @@ export default function PhoneAuthScreen({ navigation }: any) {
             {submitError.length > 0 && <Text style={styles.errorText}>{submitError}</Text>}
           </Animated.View>
         )}
+
+        {/* 백엔드 문자 발송 상태와 무관하게 다음 화면 UI 개발을 이어가기 위한 우회 진입점입니다. */}
+        <DevShortcutButton
+          label="TEST: 인증번호 입력 화면으로 이동"
+          description="문자 발송 API 가 실패해도 VerifyCode 화면 UI 개발을 계속 진행할 수 있습니다."
+          onPress={() =>
+            navigation.navigate('VerifyCode', {
+              name: name || '테스트 사용자',
+              ssnFront: ssnFront || '000101',
+              ssnBack: ssnBack || '3',
+              telecom: telecom === TELECOM_PLACEHOLDER ? 'SKT' : telecom,
+              phone: phone || '01012345678',
+            })
+          }
+        />
       </ScrollView>
 
       <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
