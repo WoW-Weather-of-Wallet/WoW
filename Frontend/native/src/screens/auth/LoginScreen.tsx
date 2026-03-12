@@ -29,7 +29,7 @@ import { useAuthStore } from '../../store/authStore';
 import { COLORS, FONTS, RADIUS, wp, hp, fp } from '../../constants/theme';
 import { OAUTH_CONFIG } from '../../constants/config';
 import { login } from '../../services/auth';
-import { extractApiErrorMessage } from '../../../../shared';
+import { extractApiErrorMessage } from '@shared';
 
 /**
  * LoginScreen
