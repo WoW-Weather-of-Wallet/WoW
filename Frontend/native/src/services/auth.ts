@@ -1,8 +1,8 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 import {
   checkUserId as checkUserIdShared,
   type CheckUserIdResponse,
-} from '../../../shared';
+} from '@shared';
 
 // =============================================
 // Native auth API client
