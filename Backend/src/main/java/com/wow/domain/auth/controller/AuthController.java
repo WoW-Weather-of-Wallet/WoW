@@ -7,10 +7,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
+
 
 @Tag(name = "Auth", description = "일반 로그인/회원가입 및 SMS 인증 API")
 @RestController
@@ -21,9 +20,15 @@ public class AuthController {
     private final AuthService authService;
     private final SmsService smsService;
 
+    @Operation(summary = "아이디 중복 확인", description = "사용하려는 아이디의 중복 여부를 확인합니다.")
+    @GetMapping("/check-user-id")
+    public ResponseEntity<UserIdCheckResponse> checkUserId(@RequestParam String userId) {
+        return ResponseEntity.ok(authService.checkUserId(userId));
+    }
+
     @Operation(summary = "일반 회원가입", description = "아이디/비밀번호로 회원가입합니다.")
     @PostMapping("/signup")
-    public ResponseEntity<UserCreateResponse> signup(@RequestBody UserCreateRequest request) {
+    public ResponseEntity<UserCreateResponse> signup(@Valid @RequestBody UserCreateRequest request) {
         return ResponseEntity.ok(authService.signup(request));
     }
 
