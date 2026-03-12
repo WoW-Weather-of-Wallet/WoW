@@ -9,8 +9,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import SecureKeypad from '../../components/common/SecureKeypad';
+import DevShortcutButton from '../../components/common/DevShortcutButton';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { verifySmsCode } from '../../services/auth';
+import { extractApiErrorMessage } from '../../utils/error';
 
 const MAX_CODE_LENGTH = 6;
 
@@ -61,10 +63,11 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
       console.log('인증 완료. 계정 생성(ID/PW) 화면으로 이동.');
       navigation.replace('CreateAccount', route.params);
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message ??
-        error?.message ??
-        '인증번호 확인에 실패했어요. 다시 입력해주세요.';
+      // 인증번호 검증도 공통 파서를 사용해 message 필드 차이를 화면에서 숨깁니다.
+      const message = extractApiErrorMessage(
+        error,
+        '인증번호 확인에 실패했어요. 다시 입력해주세요.',
+      );
 
       setVerifyError(message);
       setCode('');
@@ -112,6 +115,13 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
         )}
 
         {verifyError.length > 0 && <Text style={styles.errorText}>{verifyError}</Text>}
+
+        {/* 인증 서버 상태와 무관하게 계정 생성 화면 개발을 이어갈 수 있도록 우회 버튼을 둡니다. */}
+        <DevShortcutButton
+          label="TEST: 인증 성공 처리"
+          description="인증번호 검증 API 가 불안정할 때도 CreateAccount 화면으로 바로 이동합니다."
+          onPress={() => navigation.replace('CreateAccount', route.params)}
+        />
       </View>
 
       <View style={[styles.keypadWrapper, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>

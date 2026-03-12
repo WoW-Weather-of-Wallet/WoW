@@ -7,6 +7,7 @@
 export * from './api/endpoints';
 export { default as axiosInstance, setAuthToken } from './api/axiosInstance';
 export * from './api/auth';
+export * from './api/error';
 
 // Constants
 export * from './constants/categories';

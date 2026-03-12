@@ -5,6 +5,7 @@ import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import GradientButton from '../../components/common/GradientButton';
+import { useAuthStore } from '../../store/authStore';
 
 const PERMISSIONS = [
   { id: 'notification', title: '알림', icon: 'notifications-outline' as const },
@@ -15,10 +16,11 @@ const PERMISSIONS = [
 
 export default function AccessPermissionScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const handleConfirm = () => {
-    // 확인 후 로그인(또는 다음 온보딩) 화면으로 전환
-    navigation.replace('Login');
+    // 권한 안내 이후에는 현재 인증 상태에 따라 로그인 또는 메인 화면으로 분기합니다.
+    navigation.replace(isAuthenticated ? 'MainTabs' : 'Login');
   };
 
   return (

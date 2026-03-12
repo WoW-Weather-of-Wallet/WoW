@@ -1,27 +1,66 @@
-﻿{
+{
   "expo": {
     "name": "WOW",
     "slug": "wow-app",
-    "version": "1.0.0",
+    "scheme": "wow",
+    "version": "0.1.1",
     "orientation": "portrait",
     "icon": "./src/assets/icon.png",
     "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "splash": {
       "image": "./src/assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#6666ee"
+      "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.wow.app"
+      "bundleIdentifier": "com.wow.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "계정 인증 및 프로필 등록에 필요한 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.",
+        "NSPhotoLibraryUsageDescription": "계정 인증 및 프로필 등록에 필요한 이미지를 불러오기 위해 사진 보관함 접근 권한이 필요합니다.",
+        "NSFaceIDUsageDescription": "간편하고 안전한 로그인을 위해 생체 인증 권한이 필요합니다.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/adaptive-icon.png",
-        "backgroundColor": "#6666ee"
+        "backgroundColor": "#ffffff"
       },
       "package": "com.wow.app",
-      "usesCleartextTraffic": true
+      "versionCode": 1,
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "POST_NOTIFICATIONS",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "POST_NOTIFICATIONS",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT"
+      ]
+    },
+    "plugins": [
+      "expo-splash-screen",
+      "expo-font"
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/f2ad7c84-70f0-44b9-ac60-fc686a5dff1c"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f2ad7c84-70f0-44b9-ac60-fc686a5dff1c"
+      }
     }
   }
 }

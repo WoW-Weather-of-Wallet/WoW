@@ -3,13 +3,14 @@
 // =============================================
 // Native auth API client
 // Expo Go 환경에서 안정적으로 쓰기 위해 네이티브 전용 auth 클라이언트를 둡니다.
-// 로컬 스프링 서버를 직접 붙일 때 사용합니다.
-// export const BASE_URL = 'http://localhost:8080';
-//
-// Expo 실기기 테스트에서는 로컬 네트워크 이슈가 잦아서,
-// 현재는 SSAFY 배포 서버를 기본값으로 사용합니다.
+// Expo 에서는 EXPO_PUBLIC_* 변수만 런타임에 노출됩니다.
+// 변경 사항:
+// 기존에는 API 서버가 배포 주소로 고정되어 있어서 이 맥북 로컬 백엔드를 띄워도 앱이 원격 서버를 호출했습니다.
+// 이제 Frontend/native/.env 의 EXPO_PUBLIC_API_BASE_URL 을 우선 사용하고,
+// 값이 없을 때만 기존 배포 서버를 fallback 으로 사용합니다.
 // =============================================
-export const BASE_URL = 'https://j14d106.p.ssafy.io';
+export const BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL || 'https://j14d106.p.ssafy.io';
 
 export interface NativeSignupRequest {
   userId: string;
@@ -56,6 +57,11 @@ export interface SmsVerifyRequest {
   code: string;
 }
 
+export interface CheckUserIdResponse {
+  available: boolean;
+  userId: string;
+}
+
 const nativeApi = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
@@ -99,10 +105,13 @@ nativeApi.interceptors.response.use(
 
 export const setNativeAuthToken = (token: string | null) => {
   if (token) {
+    // 로그인 성공 시 메모리 상의 공통 Authorization 헤더를 갱신합니다.
+    // 현재는 영구 저장소가 아니라 앱 실행 세션 동안만 유지됩니다.
     nativeApi.defaults.headers.common.Authorization = `Bearer ${token}`;
     return;
   }
 
+  // 로그아웃 또는 토큰 만료 처리 시 이전 세션의 Authorization 헤더가 남지 않도록 제거합니다.
   delete nativeApi.defaults.headers.common.Authorization;
 };
 
@@ -115,6 +124,16 @@ export const sendSmsCode = async (payload: SmsSendRequest) => {
 // 휴대폰 인증번호 검증
 export const verifySmsCode = async (payload: SmsVerifyRequest) => {
   const response = await nativeApi.post('/api/v1/auth/sms/verify', payload);
+  return response.data;
+};
+
+// EAS Build 는 native 폴더만 아카이브하므로, shared 폴더의 auth helper 를 직접 참조하지 않습니다.
+// 아이디 중복확인은 native API 클라이언트에서 직접 호출해 빌드 환경 의존성을 끊습니다.
+export const checkUserId = async (userId: string): Promise<CheckUserIdResponse> => {
+  const response = await nativeApi.get<CheckUserIdResponse>('/api/v1/auth/check-user-id', {
+    params: { userId },
+  });
+
   return response.data;
 };
 
