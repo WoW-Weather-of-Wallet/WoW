@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -20,7 +20,7 @@ import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import DevShortcutButton from '../../components/common/DevShortcutButton';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { sendSmsCode } from '../../services/auth';
-import { extractApiErrorMessage } from '../../../../shared';
+import { extractApiErrorMessage } from '@shared';
 
 const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 알뜰폰'];
 const TELECOM_PLACEHOLDER = '통신사를 선택해주세요';

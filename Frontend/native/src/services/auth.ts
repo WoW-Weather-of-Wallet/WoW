@@ -1,8 +1,8 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 import {
   checkUserId as checkUserIdShared,
   type CheckUserIdResponse,
-} from '../../../shared';
+} from '@shared';
 
 // =============================================
 // Native auth API client
@@ -137,6 +137,37 @@ export const verifySmsCode = async (payload: SmsVerifyRequest) => {
 export const signup = async (payload: NativeSignupRequest) => {
   const response = await nativeApi.post<NativeSignupResponse>('/api/v1/auth/signup', payload);
   return response.data;
+};
+
+// =============================================
+// 알림 설정 관련 API 스켈레톤
+// 담당자가 나중에 실제 백엔드 엔드포인트에 연결할 수 있도록 구조를 마련해 둡니다.
+// =============================================
+
+/**
+ * 사용자의 알림 수신 동의 여부를 조회합니다.
+ * @returns {Promise<{ alarmEnabled: boolean }>} 사용자의 현재 알림 설정 상태
+ */
+export const getNotificationSettings = async () => {
+  // TODO: 백엔드 담당자가 /api/v1/user/settings/notification 등의 조회 API 를 완성하면 연결합니다.
+  // const response = await nativeApi.get('/api/v1/user/settings/notification');
+  // return response.data;
+  
+  // 임시 반환 (연결 전까지 기본값 유지)
+  return { alarmEnabled: true };
+};
+
+/**
+ * 사용자의 알림 수신 동의 여부를 변경합니다.
+ * @param {boolean} enabled 변경할 알림 상태 (true: 동의, false: 미동의)
+ */
+export const updateNotificationSettings = async (enabled: boolean) => {
+  // TODO: 백엔드 담당자가 엔드포인트를 확정하면 PATCH 또는 PUT 으로 연결합니다.
+  // const response = await nativeApi.patch('/api/v1/user/settings/notification', { alarmEnabled: enabled });
+  // return response.data;
+  
+  console.log('[API Skeleton] 알림 설정 변경 요청:', enabled);
+  return { success: true, alarmEnabled: enabled };
 };
 
 export const login = async (payload: NativeLoginRequest) => {
