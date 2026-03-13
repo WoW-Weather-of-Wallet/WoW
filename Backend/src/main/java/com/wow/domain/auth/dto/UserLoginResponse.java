@@ -11,10 +11,11 @@ public class UserLoginResponse {
 
     private String accessToken;
     private long expiresIn;
+    private String refreshToken;
     private UserSummaryResponse user;
 
-    public static UserLoginResponse of(String accessToken, long expiresIn, UserSummaryResponse user) {
-        return new UserLoginResponse(accessToken, expiresIn, user);
+    public static UserLoginResponse of(String accessToken, long expiresIn, String refreshToken, UserSummaryResponse user) {
+        return new UserLoginResponse(accessToken, expiresIn, refreshToken, user);
     }
 
 }

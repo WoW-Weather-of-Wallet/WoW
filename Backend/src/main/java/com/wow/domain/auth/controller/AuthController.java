@@ -8,8 +8,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
 
 @Tag(name = "Auth", description = "일반 로그인/회원가입 및 SMS 인증 API")
 @RestController
@@ -50,6 +51,19 @@ public class AuthController {
     public ResponseEntity<Void> verifySms(@RequestBody SmsVerifyRequest request) {
         smsService.verifyCode(request.getPhoneNumber(), request.getCode());
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Access Token 재발급", description = "Refresh Token으로 새로운 Access Token을 발급받습니다.")
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenRefreshResponse> refresh(@RequestBody TokenRefreshRequest request) {
+        return ResponseEntity.ok(authService.refresh(request.getRefreshToken()));
+    }
+
+    @Operation(summary = "로그아웃", description = "Redis에서 Refresh Token을 삭제합니다.")
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails userDetails) {
+        authService.logout(userDetails.getUsername());
+        return ResponseEntity.noContent().build();
     }
 
 }
