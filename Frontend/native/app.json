@@ -36,12 +36,11 @@
       "permissions": [
         "CAMERA",
         "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE",
         "POST_NOTIFICATIONS",
-        "USE_BIOMETRIC",
-        "USE_FINGERPRINT",
-        "CAMERA",
-        "READ_MEDIA_IMAGES",
-        "POST_NOTIFICATIONS",
+        "READ_SMS",
+        "READ_PHONE_STATE",
+        "CALL_PHONE",
         "USE_BIOMETRIC",
         "USE_FINGERPRINT"
       ]
