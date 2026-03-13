@@ -141,4 +141,23 @@ public class AuthService {
 
     }
 
+    @Transactional
+    public void changePassword(String userId, ChangePasswordRequest request) {
+
+        User user = userRepository.findByUserId(userId)
+                .or(() -> userRepository.findBySsafyOauthId(userId))
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        if (user.getPw() == null) {
+            throw new IllegalArgumentException("일반 회원만 비밀번호를 변경할 수 있습니다.");
+        }
+
+        if (!bCryptPasswordEncoder.matches(request.getCurrentPw(), user.getPw())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
+
+    }
+
 }

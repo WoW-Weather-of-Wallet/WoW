@@ -66,6 +66,10 @@ public class User {
         if (birthDate != null) this.birthDate = birthDate;
     }
 
+    public void updatePw(String encodedPw) {
+        this.pw = encodedPw;
+    }
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
