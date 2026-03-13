@@ -1,6 +1,7 @@
 package com.wow.domain.user.controller;
 
 import com.wow.domain.user.dto.OnboardingRequest;
+import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.dto.UserProfileResponse;
 import com.wow.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +32,13 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
         userService.deleteUser(userDetails.getUsername());
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "회원 정보 수정", description = "로그인한 사용자의 이름(일반 회원만), 성별, 생년월일을 수정합니다.")
+    @PatchMapping("/profile")
+    public ResponseEntity<UserProfileResponse> updateProfile(@AuthenticationPrincipal UserDetails userDetails,
+                                                             @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(userService.updateProfile(userDetails.getUsername(), request));
     }
 
     @Operation(summary = "온보딩", description = "SSAFY 로그인 후 추가 정보(성별, 휴대폰, 생년월일, 알림 설정)를 입력합니다.")

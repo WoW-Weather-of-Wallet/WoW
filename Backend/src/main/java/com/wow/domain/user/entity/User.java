@@ -60,6 +60,12 @@ public class User {
         this.alarmEnabled = alarmEnabled;
     }
 
+    public void updateProfile(String name, String gender, LocalDate birthDate) {
+        if (name != null) this.name = name;
+        if (gender != null) this.gender = gender;
+        if (birthDate != null) this.birthDate = birthDate;
+    }
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -1,6 +1,7 @@
 package com.wow.domain.user.service;
 
 import com.wow.domain.user.dto.OnboardingRequest;
+import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.dto.UserProfileResponse;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
@@ -22,6 +23,7 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         return UserProfileResponse.from(user);
+
     }
 
     @Transactional
@@ -32,6 +34,19 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         userRepository.delete(user);
+    }
+
+    @Transactional
+    public UserProfileResponse updateProfile(String userId, UpdateProfileRequest request) {
+
+        User user = userRepository.findByUserId(userId)
+                .or(() -> userRepository.findBySsafyOauthId(userId))
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        user.updateProfile(request.getName(), request.getGender(), request.getBirthDate());
+
+        return UserProfileResponse.from(user);
+
     }
 
     @Transactional
