@@ -71,7 +71,9 @@ public class AuthService {
                 .build();
 
         UserCreateResponse response = UserCreateResponse.from(userRepository.save(user));
+
         smsService.deleteVerified(request.getPhoneNumber());
+
         return response;
 
     }

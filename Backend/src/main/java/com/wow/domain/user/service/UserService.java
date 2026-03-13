@@ -1,6 +1,8 @@
 package com.wow.domain.user.service;
 
+import com.wow.domain.auth.service.SmsService;
 import com.wow.domain.user.dto.OnboardingRequest;
+import com.wow.domain.user.dto.UpdatePhoneRequest;
 import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.dto.UserProfileResponse;
 import com.wow.domain.user.entity.User;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final SmsService smsService;
 
     @Transactional(readOnly = true)
     public UserProfileResponse getProfile(String userId) {
@@ -46,6 +49,25 @@ public class UserService {
         user.updateProfile(request.getName(), request.getGender(), request.getBirthDate());
 
         return UserProfileResponse.from(user);
+
+    }
+
+    @Transactional
+    public void updatePhone(String userId, UpdatePhoneRequest request) {
+
+        User user = userRepository.findByUserId(userId)
+                .or(() -> userRepository.findBySsafyOauthId(userId))
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            throw new IllegalArgumentException("이미 가입된 전화번호입니다.");
+        }
+
+        smsService.checkVerified(request.getPhoneNumber());
+
+        user.updatePhoneNumber(request.getPhoneNumber());
+
+        smsService.deleteVerified(request.getPhoneNumber());
 
     }
 
