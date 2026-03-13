@@ -22,6 +22,7 @@
       "infoPlist": {
         "NSCameraUsageDescription": "계정 인증 및 프로필 등록에 필요한 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.",
         "NSPhotoLibraryUsageDescription": "계정 인증 및 프로필 등록에 필요한 이미지를 불러오기 위해 사진 보관함 접근 권한이 필요합니다.",
+        "NSPhotoLibraryAddUsageDescription": "선택한 이미지를 저장하기 위해 사진 보관함 접근 권한이 필요합니다.",
         "NSFaceIDUsageDescription": "간편하고 안전한 로그인을 위해 생체 인증 권한이 필요합니다.",
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -36,14 +37,33 @@
       "permissions": [
         "CAMERA",
         "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO",
+        "READ_MEDIA_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
         "POST_NOTIFICATIONS",
         "USE_BIOMETRIC",
-        "USE_FINGERPRINT"
+        "USE_FINGERPRINT",
+        "READ_PHONE_STATE"
       ]
     },
     "plugins": [
       "expo-splash-screen",
       "expo-font",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "계정 인증 및 프로필 등록에 필요한 이미지를 불러오기 위해 사진 보관함 접근 권한이 필요합니다.",
+          "savePhotosPermission": "이미지를 저장하기 위해 사진 보관함 접근 권한이 필요합니다.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "사진 촬영을 위해 카메라 권한이 필요합니다."
+        }
+      ],
       "expo-web-browser"
     ],
     "runtimeVersion": {
