@@ -6,16 +6,8 @@
 
 // Vite 환경에서만 import.meta.env 가 존재합니다.
 // shared 코드는 웹/네이티브가 같이 참조하므로, 웹이 아닐 때 접근 에러가 나지 않게 먼저 가드합니다.
-type SharedImportMeta = ImportMeta & {
-  env?: {
-    VITE_API_BASE_URL?: string;
-  };
-};
-
 const viteApiBaseUrl =
-  typeof import.meta !== 'undefined'
-    ? (import.meta as SharedImportMeta).env?.VITE_API_BASE_URL
-    : undefined;
+  typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_BASE_URL : undefined;
 
 // 변경 사항:
 // 기존에는 배포 서버 URL 이 하드코딩되어 있어서 로컬 백엔드를 붙여도 프론트가 그대로 원격 서버를 호출했습니다.

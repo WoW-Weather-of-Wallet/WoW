@@ -11,9 +11,7 @@ import {
   StatusBar,
   Alert,
   ActivityIndicator,
-  Linking,
 } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -27,9 +25,8 @@ import CustomTextInput from '../../components/common/CustomTextInput';
 import GradientButton from '../../components/common/GradientButton';
 import { useAuthStore } from '../../store/authStore';
 import { COLORS, FONTS, RADIUS, wp, hp, fp } from '../../constants/theme';
-import { OAUTH_CONFIG } from '../../constants/config';
 import { login } from '../../services/auth';
-import { extractApiErrorMessage } from '@shared';
+import { extractApiErrorMessage } from '../../utils/error';
 
 /**
  * LoginScreen
@@ -115,18 +112,8 @@ export default function LoginScreen({ navigation }: any) {
     console.log('아이디/비밀번호 찾기 연결 예정');
   };
 
-  const handleSSAFYLogin = async () => {
-    const { AUTH_URL, CLIENT_ID, REDIRECT_URI, RESPONSE_TYPE } = OAUTH_CONFIG.SSAFY;
-    const url = `${AUTH_URL}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(
-      REDIRECT_URI,
-    )}&response_type=${RESPONSE_TYPE}`;
-
-    try {
-      await WebBrowser.openBrowserAsync(url);
-    } catch (error) {
-      Alert.alert('오류', 'SSAFY 로그인 화면을 열 수 없습니다.');
-      console.error('SSAFY Login Error:', error);
-    }
+  const handleSSAFYLogin = () => {
+    console.log('SSAFY OAuth 연결 예정');
   };
 
   return (

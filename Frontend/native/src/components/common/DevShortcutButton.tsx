@@ -11,8 +11,8 @@ interface DevShortcutButtonProps {
 
 /**
  * DevShortcutButton
- * 백엔드가 불안정한 동안 화면 개발을 막지 않기 위해 두는 개발자 전용 우회 버튼입니다.
- * __DEV__ 환경에서만 렌더링되도록 감싸서, 배포 빌드에서는 실수로 노출되지 않게 합니다.
+ * API ����ȭ ������ �帧�� ���� �ʱ� ���� �δ� ��ȸ ��ư�Դϴ�.
+ * ����� ����/���� ���� ������� �������մϴ�.
  */
 export default function DevShortcutButton({
   label,
@@ -20,18 +20,13 @@ export default function DevShortcutButton({
   onPress,
   style,
 }: DevShortcutButtonProps) {
-  // 개발 빌드가 아닐 때는 우회 버튼 자체를 렌더링하지 않습니다.
-  if (!__DEV__) {
-    return null;
-  }
-
   return (
     <View style={[styles.card, style]}>
       <Text style={styles.badge}>DEV ONLY</Text>
       <Text style={styles.label}>{label}</Text>
       {description ? <Text style={styles.description}>{description}</Text> : null}
       <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
-        <Text style={styles.buttonText}>바로 이동</Text>
+        <Text style={styles.buttonText}>�ٷ� �̵�</Text>
       </TouchableOpacity>
     </View>
   );
