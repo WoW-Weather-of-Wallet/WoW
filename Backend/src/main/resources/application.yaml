@@ -11,7 +11,8 @@ spring:
     password: ${POSTGRES_PASSWORD}
 
 jwt:
-  access-exp-min: 1440
+  access-exp-min: 30
+  refresh-exp-day: 14
   issuer: wowDev
 
 sso:

@@ -9,9 +9,11 @@ import com.wow.domain.user.entity.Role;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
 
+import java.time.Duration;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -21,6 +23,8 @@ import org.springframework.web.client.RestTemplate;
 @Service
 @RequiredArgsConstructor
 public class SsafyOAuthService {
+
+    private static final String REFRESH_KEY_PREFIX = "refresh:";
 
     @Value("${sso.ssafy.client-id}")
     private String clientId;
@@ -34,6 +38,7 @@ public class SsafyOAuthService {
     private final RestTemplate restTemplate;
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final StringRedisTemplate redisTemplate;
 
     // 1. 인가코드 받기 URL 생성
     public String getLoginUrl() {
@@ -45,6 +50,7 @@ public class SsafyOAuthService {
 
     // 2. 인가코드로 로그인 전체 처리
     public UserLoginResponse login(String code) {
+
         // 2-1. 인가코드 → SSAFY 액세스 토큰
         SsafyTokenResponse tokenResponse = getAccessToken(code);
 
@@ -55,17 +61,28 @@ public class SsafyOAuthService {
         User user = userRepository.findBySsafyOauthId(userInfo.getUserId())
                 .orElseGet(() -> registerUser(userInfo));
 
-        // 2-4. 우리 서비스 JWT 발급
+        // 2-4. JWT 발급
+        String userId = user.getSsafyOauthId();
         String accessToken = jwtTokenProvider.createAccessToken(
-                user.getSsafyOauthId(),
+                userId,
                 List.of("ROLE_" + user.getRole().name())
+        );
+        String refreshToken = jwtTokenProvider.createRefreshToken(userId);
+
+        // 2-5. RefreshToken redis에 저장
+        redisTemplate.opsForValue().set(
+                REFRESH_KEY_PREFIX + userId,
+                refreshToken,
+                Duration.ofSeconds(jwtTokenProvider.getRefreshTokenValidityInSeconds())
         );
 
         return UserLoginResponse.of(
                 accessToken,
                 jwtTokenProvider.getAccessTokenValidityInSeconds(),
+                refreshToken,
                 UserSummaryResponse.from(user)
         );
+
     }
 
     // SSAFY 토큰 요청
