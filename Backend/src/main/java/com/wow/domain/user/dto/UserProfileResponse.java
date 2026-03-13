@@ -1,5 +1,6 @@
 package com.wow.domain.user.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.wow.domain.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,6 +11,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserProfileResponse {
 
     private String userId;
@@ -18,16 +20,29 @@ public class UserProfileResponse {
     private String phoneNumber;
     private LocalDate birthDate;
     private boolean alarmEnabled;
+    private String loginType;
 
     public static UserProfileResponse from(User user) {
         return new UserProfileResponse(
-                user.getUserId(),
+                resolveUserId(user),
                 user.getName(),
                 user.getGender(),
                 user.getPhoneNumber(),
                 user.getBirthDate(),
-                user.isAlarmEnabled()
+                user.isAlarmEnabled(),
+                resolveLoginType(user)
         );
+    }
+
+    private static String resolveUserId(User user) {
+        if (user.getUserId() != null) return user.getUserId();
+        return null;
+    }
+
+    private static String resolveLoginType(User user) {
+        if (user.getUserId() != null) return "NORMAL";
+        if (user.getSsafyOauthId() != null) return "SSAFY";
+        return null;
     }
 
 }

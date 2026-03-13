@@ -31,10 +31,15 @@ public class SecurityConfig {
                                 "/api/v1/auth/signup",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/sms/send",
-                                "/api/v1/auth/sms/verify"
+                                "/api/v1/auth/sms/verify",
+                                "/api/v1/auth/check-user-id"
                         ).permitAll()
                         .requestMatchers(
                                 "/sso/providers/ssafy/**"
+                        ).permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -45,7 +50,6 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .build();
-
     }
 
     @Bean
