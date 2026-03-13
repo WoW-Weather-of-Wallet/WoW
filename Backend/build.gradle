@@ -29,6 +29,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 
+	// 엑셀 파싱
+	implementation 'org.apache.poi:poi-ooxml:5.2.3'
+
 	// 수정됨: security-oauth2-client -> oauth2-client
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
