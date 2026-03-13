@@ -11,18 +11,18 @@ module.exports = function (api) {
       "nativewind/babel",
     ],
     plugins: [
-      "react-native-reanimated/plugin",
       [
-        'module-resolver',
+        "module-resolver",
         {
-          root: ['./'],
+          root: ["./"],
           alias: {
-            '@': './src',
-            '@shared': path.resolve(__dirname, '../shared/index.ts'),
+            "@": path.resolve(__dirname, "src"),
+            "@shared": path.resolve(__dirname, "..", "shared"),
           },
-          extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
+          extensions: [".js", ".jsx", ".ts", ".tsx", ".json"],
         },
       ],
+      "react-native-reanimated/plugin",
     ],
   };
 };

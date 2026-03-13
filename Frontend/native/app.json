@@ -63,7 +63,8 @@
         {
           "cameraPermission": "사진 촬영을 위해 카메라 권한이 필요합니다."
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "runtimeVersion": {
       "policy": "appVersion"
