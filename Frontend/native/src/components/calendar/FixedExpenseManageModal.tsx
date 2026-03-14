@@ -58,7 +58,7 @@ export default function FixedExpenseManageModal({
       <View style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor={COLORS.gradientStart} />
 
-        <View style={[styles.header, { paddingTop: insets.top + hp(12) }]}>
+        <View style={[styles.header, { paddingTop: insets.top + 2 }]}>
           <TouchableOpacity activeOpacity={0.86} style={styles.backButton} onPress={onClose}>
             <Ionicons name="arrow-back" size={wp(18)} color={COLORS.textInverse} />
           </TouchableOpacity>
@@ -66,8 +66,15 @@ export default function FixedExpenseManageModal({
         </View>
 
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>활성화된 고정지출 합계</Text>
-          <Text style={styles.summaryAmount}>₩{totalAmount.toLocaleString()}</Text>
+          <View style={styles.summaryTopRow}>
+            <View style={styles.summaryTextBlock}>
+              <Text style={styles.summaryLabel}>활성화된 고정지출 합계</Text>
+              <Text style={styles.summaryAmount}>₩{totalAmount.toLocaleString()}</Text>
+            </View>
+            <TouchableOpacity activeOpacity={0.88} style={styles.addButton} onPress={onPressAdd}>
+              <Text style={styles.addButtonText}>+ 항목 추가</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.summaryHint}>자동으로 반영할 항목을 켜 두면 캘린더 요약에 함께 표시됩니다.</Text>
         </View>
 
@@ -78,12 +85,6 @@ export default function FixedExpenseManageModal({
           ]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.actionRow}>
-            <TouchableOpacity activeOpacity={0.88} style={styles.addButton} onPress={onPressAdd}>
-              <Text style={styles.addButtonText}>+ 항목 추가</Text>
-            </TouchableOpacity>
-          </View>
-
           {items.map((item) => (
             <View key={item.id} style={styles.itemCard}>
               <View style={styles.itemTopRow}>
@@ -106,26 +107,37 @@ export default function FixedExpenseManageModal({
                   </View>
                 </View>
 
-                <Text style={styles.itemAmount}>₩{item.amount.toLocaleString()}</Text>
+                <View style={styles.itemAmountBlock}>
+                  <Text style={styles.itemAmount}>₩{item.amount.toLocaleString()}</Text>
+                </View>
               </View>
 
               <View style={styles.controlRow}>
-                <TouchableOpacity
-                  activeOpacity={0.86}
-                  style={styles.editChip}
-                  onPress={() => onPressEdit(item.id)}
-                >
-                  <Text style={styles.editChipText}>수정</Text>
-                </TouchableOpacity>
-                <Switch
-                  value={item.isEnabled}
-                  trackColor={{ false: '#DDDCF0', true: '#B8B1FF' }}
-                  thumbColor="#FFFFFF"
-                  onValueChange={(nextValue) => onToggleItem(item.id, nextValue)}
-                />
-                <TouchableOpacity activeOpacity={0.86} onPress={() => onDeleteItem(item.id)}>
-                  <Text style={styles.deleteText}>삭제</Text>
-                </TouchableOpacity>
+                <View style={styles.controlActions}>
+                  <TouchableOpacity
+                    activeOpacity={0.86}
+                    style={styles.editChip}
+                    onPress={() => onPressEdit(item.id)}
+                  >
+                    <Text style={styles.editChipText}>수정</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.86}
+                    style={styles.deleteChip}
+                    onPress={() => onDeleteItem(item.id)}
+                  >
+                    <Text style={styles.deleteChipText}>삭제</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.switchWrap}>
+                  <Text style={styles.switchLabel}>{item.isEnabled ? '활성' : '비활성'}</Text>
+                  <Switch
+                    value={item.isEnabled}
+                    trackColor={{ false: '#DDDCF0', true: '#B8B1FF' }}
+                    thumbColor="#FFFFFF"
+                    onValueChange={(nextValue) => onToggleItem(item.id, nextValue)}
+                  />
+                </View>
               </View>
             </View>
           ))}
@@ -146,29 +158,38 @@ const styles = StyleSheet.create({
     gap: wp(12),
     backgroundColor: COLORS.gradientStart,
     paddingHorizontal: wp(20),
-    paddingBottom: hp(18),
+    paddingBottom: 4,
   },
   backButton: {
-    width: wp(34),
-    height: wp(34),
-    borderRadius: wp(17),
+    width: wp(30),
+    height: wp(30),
+    borderRadius: wp(15),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF1E',
   },
   headerTitle: {
-    fontSize: fp(22),
+    fontSize: fp(19),
     fontFamily: FONTS.bold,
     color: COLORS.textInverse,
   },
   summaryCard: {
     marginHorizontal: wp(20),
-    marginTop: hp(-6),
-    marginBottom: hp(18),
+    marginTop: hp(8),
+    marginBottom: hp(22),
     borderRadius: RADIUS.xxl,
     backgroundColor: '#8E84F5',
     paddingHorizontal: wp(18),
-    paddingVertical: hp(20),
+    paddingVertical: hp(16),
+  },
+  summaryTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: wp(12),
+  },
+  summaryTextBlock: {
+    flex: 1,
   },
   summaryLabel: {
     fontSize: fp(13),
@@ -177,36 +198,34 @@ const styles = StyleSheet.create({
     marginBottom: hp(8),
   },
   summaryAmount: {
-    fontSize: fp(30),
+    fontSize: fp(28),
     fontFamily: FONTS.bold,
     color: COLORS.textInverse,
   },
   summaryHint: {
-    marginTop: hp(8),
+    marginTop: hp(6),
     fontSize: fp(12),
     fontFamily: FONTS.medium,
     color: '#ECE8FF',
   },
   contentContainer: {
     paddingHorizontal: wp(20),
+    paddingTop: hp(6),
     gap: hp(14),
-  },
-  actionRow: {
-    alignItems: 'flex-end',
   },
   addButton: {
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: wp(18),
-    paddingVertical: hp(10),
-    shadowColor: COLORS.primary,
+    backgroundColor: '#FFFFFF26',
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(9),
+    shadowColor: COLORS.gradientStart,
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
+    shadowOpacity: 0.1,
     shadowRadius: 10,
-    elevation: 3,
+    elevation: 2,
   },
   addButtonText: {
-    fontSize: fp(14),
+    fontSize: fp(13),
     fontFamily: FONTS.bold,
     color: COLORS.textInverse,
   },
@@ -214,8 +233,8 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xl,
     backgroundColor: COLORS.background,
     paddingHorizontal: wp(16),
-    paddingVertical: hp(16),
-    gap: hp(14),
+    paddingVertical: hp(14),
+    gap: hp(10),
   },
   itemTopRow: {
     flexDirection: 'row',
@@ -230,9 +249,9 @@ const styles = StyleSheet.create({
     gap: wp(12),
   },
   iconWrap: {
-    width: wp(48),
-    height: wp(48),
-    borderRadius: wp(18),
+    width: wp(46),
+    height: wp(46),
+    borderRadius: wp(17),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -251,31 +270,59 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   itemAmount: {
-    fontSize: fp(17),
+    fontSize: fp(16),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    flexShrink: 0,
+  },
+  itemAmountBlock: {
+    minWidth: wp(82),
+    alignItems: 'flex-end',
   },
   controlRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: wp(10),
+    justifyContent: 'space-between',
+    gap: wp(12),
+    paddingTop: hp(2),
+  },
+  controlActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(8),
   },
   editChip: {
     borderRadius: RADIUS.full,
     backgroundColor: '#EFEEFF',
-    paddingHorizontal: wp(10),
-    paddingVertical: hp(6),
+    paddingHorizontal: wp(12),
+    paddingVertical: hp(7),
   },
   editChipText: {
     fontSize: fp(12),
     fontFamily: FONTS.semiBold,
     color: COLORS.primary,
   },
-  deleteText: {
-    fontSize: fp(13),
+  deleteChip: {
+    borderRadius: RADIUS.full,
+    backgroundColor: '#FDECEC',
+    paddingHorizontal: wp(12),
+    paddingVertical: hp(7),
+  },
+  deleteChipText: {
+    fontSize: fp(12),
     fontFamily: FONTS.semiBold,
     color: '#D87272',
+  },
+  switchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(6),
+    flexShrink: 0,
+  },
+  switchLabel: {
+    fontSize: fp(12),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textSecondary,
+    minWidth: wp(34),
+    textAlign: 'right',
   },
 });
