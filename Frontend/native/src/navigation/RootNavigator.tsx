@@ -1,4 +1,4 @@
-﻿// =============================================
+// =============================================
 // RootNavigator - 앱 전체 네비게이션 구조
 // 인증 전 스택과 인증 후 메인 탭을 한 곳에서 관리합니다.
 // =============================================
@@ -14,8 +14,9 @@ import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import MainTabNavigator from './MainTabNavigator';
 
-// Onboarding 화면
+// Onboarding & MyPage 화면
 import JobSelectionScreen from '../screens/onboarding/JobSelectionScreen';
+import SettingsScreen from '../screens/mypage/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -99,6 +100,15 @@ export default function RootNavigator() {
           name="MainTabs"
           component={MainTabNavigator}
           options={{ gestureEnabled: false }}
+        />
+        {/* 설정 상세 화면 */}
+        <Stack.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{ 
+            gestureEnabled: true,
+            animation: 'slide_from_right' 
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>
