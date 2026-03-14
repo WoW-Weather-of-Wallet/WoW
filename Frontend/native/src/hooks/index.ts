@@ -1,3 +1,3 @@
-// hooks/ - 공통 훅 export 정리
-// 권한 MR에서는 권한 훅만 외부로 노출합니다.
+// hooks 배럴 파일.
+// 현재 MR 범위에서는 권한 관련 훅만 노출하고, 홈 전용 훅은 직접 import로 분리한다.
 export * from './useAppPermissions';
