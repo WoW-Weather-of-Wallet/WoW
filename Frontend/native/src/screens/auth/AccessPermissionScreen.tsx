@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Linking,
   ScrollView,
   StatusBar,
@@ -10,17 +11,25 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import Animated, {
+  FadeInDown,
+  FadeInRight,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  cancelAnimation,
+  Easing,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import PermissionCard from '../../components/auth/PermissionCard';
 import GradientButton from '../../components/common/GradientButton';
 import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
+import { PermissionMeta } from '../../constants/auth/permissionConfig';
 import { getPermissionItems } from '../../constants/auth/permissionConfig';
 import { PermissionKey, useAppPermissions } from '../../hooks';
 import { useAuthStore } from '../../store/authStore';
 
-// 권한 화면은 렌더링과 사용자 액션 연결만 담당하고,
-// 실제 권한 조회와 요청은 useAppPermissions 훅으로 넘깁니다.
 export default function AccessPermissionScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -30,34 +39,74 @@ export default function AccessPermissionScreen({ navigation }: any) {
     isRefreshing,
     isRequestingAll,
     permissionStates,
-    platformLabel,
     refreshPermissionStates,
     requestAllPermissions,
     requestPermission,
   } = useAppPermissions();
 
+  const rotation = useSharedValue(0);
+
   const permissionItems = useMemo(
-    () => getPermissionItems(biometricLabel, isAndroidExpoGo),
-    [biometricLabel, isAndroidExpoGo],
+    () => getPermissionItems(biometricLabel),
+    [biometricLabel],
   );
 
+  useEffect(() => {
+    if (isRefreshing) {
+      // 0도에서 360도로 한 바퀴만 정교하게 회전 (새로고침 딜레이 1.2초와 동기화)
+      rotation.value = 0;
+      rotation.value = withTiming(360, {
+        duration: 1200,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+      });
+    }
+  }, [isRefreshing, rotation]);
+
+  const animatedRotationStyles = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+
   const handleConfirm = () => {
-    navigation.replace(isAuthenticated ? 'MainTabs' : 'Login');
-  };
+    // 필수 권한 확인: 지문, 전화, 메시지 권한이 'granted'인지 체크
+    const mandatoryKeys: PermissionKey[] = ['biometrics', 'phone', 'sms'];
+    const missingPermissions = mandatoryKeys.filter(key => permissionStates[key] !== 'granted');
 
-  const openSettings = () => {
-    Linking.openSettings();
-  };
-
-  // 설정 화면으로 보내야 하는 상태와 직접 요청 가능한 상태를 여기서 나눕니다.
-  const handlePermissionPress = (permissionKey: PermissionKey) => {
-    const state = permissionStates[permissionKey];
-
-    if (state === 'blocked' || state === 'system') {
-      openSettings();
+    if (missingPermissions.length > 0) {
+      Alert.alert(
+        '필수 권한 미허용',
+        '금융 서비스 이용을 위해 필수 접근 권한(생체 인증, 전화, 메시지) 허용이 반드시 필요합니다. 모든 필수 항목을 허용해 주세요.',
+        [{ text: '확인' }]
+      );
       return;
     }
 
+    navigation.replace(isAuthenticated ? 'MainTabs' : 'Login');
+  };
+
+  const handlePermissionPress = (permissionKey: PermissionKey) => {
+    const state = permissionStates[permissionKey];
+    const isMandatory = ['biometrics', 'phone', 'sms'].includes(permissionKey);
+
+    // 1. 이미 허용된 권한인 경우: 시스템 정책상 취소는 설정에서만 가능
+    if (state === 'granted') {
+      // 시뮬레이션 권한(전화, 메시지, 파일 + Expo Go의 경우 알림)은 내부 상태이므로 여기서 바로 토글이 가능합니다.
+      const simulatedKeys = ['phone', 'sms', 'files'];
+      if (isAndroidExpoGo) simulatedKeys.push('notification');
+
+      if (simulatedKeys.includes(permissionKey)) {
+        void requestPermission(permissionKey);
+        return;
+      }
+
+      Alert.alert(
+        '권한 안내',
+        '이미 허용된 권한입니다. 권한 취소는 기기의 [설정 > 애플리케이션 > WOW]에서 가능합니다.',
+        [{ text: '확인' }]
+      );
+      return;
+    }
+
+    // 2. 거부되었거나 아직 요청 전인 경우: 다시 요청 시도
     void requestPermission(permissionKey);
   };
 
@@ -79,27 +128,57 @@ export default function AccessPermissionScreen({ navigation }: any) {
           entering={FadeInDown.delay(100).duration(600).springify()}
           style={styles.titleContainer}
         >
-          <Text style={styles.titleText}>{platformLabel} 사용에 필요한 권한을</Text>
-          <Text style={styles.titleText}>한 번에 확인하고 정리해보세요.</Text>
+          <Text style={styles.titleText}>편리한 서비스 이용을 위한</Text>
+          <Text style={styles.titleText}>접근 권한을 확인해주세요</Text>
           <Text style={styles.subtitleText}>
-            필요한 권한만 요청하고, 지원하지 않는 권한은 현재 앱 기준으로
-            안내해드릴게요.
+            더 안전하고 편리한 금융 관리를 위해{"\n"}꼭 필요한 권한만 요청드립니다.
           </Text>
         </Animated.View>
 
-        <View style={styles.listContainer}>
-          {permissionItems.map((item, index) => (
-            <Animated.View
-              key={item.id}
-              entering={FadeInRight.delay(220 + index * 90).duration(420).springify()}
-            >
-              <PermissionCard
-                item={item}
-                state={permissionStates[item.id]}
-                onPress={handlePermissionPress}
-              />
-            </Animated.View>
-          ))}
+        {/* 필수 권한 섹션 */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionHeader}>필수 접근 권한</Text>
+          <View style={styles.listContainer}>
+            {permissionItems
+              .filter((item: PermissionMeta) => item.type === 'mandatory')
+              .map((item: PermissionMeta, index: number) => (
+                <Animated.View
+                  key={item.id}
+                  entering={FadeInRight.delay(200 + index * 80)
+                    .duration(400)
+                    .springify()}
+                >
+                  <PermissionCard
+                    item={item}
+                    state={permissionStates[item.id as PermissionKey]}
+                    onPress={handlePermissionPress}
+                  />
+                </Animated.View>
+              ))}
+          </View>
+        </View>
+
+        {/* 선택 권한 섹션 */}
+        <View style={[styles.sectionContainer, styles.marginTop24]}>
+          <Text style={styles.sectionHeader}>선택 접근 권한</Text>
+          <View style={styles.listContainer}>
+            {permissionItems
+              .filter((item: PermissionMeta) => item.type === 'optional')
+              .map((item: PermissionMeta, index: number) => (
+                <Animated.View
+                  key={item.id}
+                  entering={FadeInRight.delay(300 + index * 80)
+                    .duration(400)
+                    .springify()}
+                >
+                  <PermissionCard
+                    item={item}
+                    state={permissionStates[item.id as PermissionKey]}
+                    onPress={handlePermissionPress}
+                  />
+                </Animated.View>
+              ))}
+          </View>
         </View>
 
         <View style={styles.footer}>
@@ -107,26 +186,27 @@ export default function AccessPermissionScreen({ navigation }: any) {
             style={styles.refreshRow}
             onPress={() => void refreshPermissionStates()}
             disabled={isRefreshing}
+            activeOpacity={0.6}
           >
-            {isRefreshing ? (
-              <ActivityIndicator color={COLORS.primary} />
-            ) : (
-              <Ionicons name="refresh" size={18} color={COLORS.primary} />
-            )}
-            <Text style={styles.refreshText}>권한 상태 다시 확인</Text>
+            <Animated.View style={animatedRotationStyles}>
+              <Ionicons name="refresh-outline" size={wp(16)} color={COLORS.primary} />
+            </Animated.View>
+            <Text style={styles.refreshText}>권한 상태 업데이트</Text>
           </TouchableOpacity>
 
-          <GradientButton
-            title={isRequestingAll ? '권한 확인 중...' : '필요한 권한 한 번에 요청'}
-            onPress={() => void requestAllPermissions()}
-          />
-
-          <View style={styles.skipButton}>
+          <View style={styles.buttonGap}>
             <GradientButton
-              title="다음으로 이동"
+              title="금융 서비스 시작하기"
               onPress={handleConfirm}
-              variant="outline"
             />
+            {!isRefreshing && !isRequestingAll && (
+              <TouchableOpacity
+                onPress={() => void requestAllPermissions()}
+                style={styles.retryButton}
+              >
+                <Text style={styles.retryText}>권한 전체 허용 시도하기</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -141,45 +221,70 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(24),
   },
   scrollContent: {
-    paddingBottom: hp(24),
+    paddingBottom: hp(40),
   },
   titleContainer: {
-    marginTop: hp(20),
-    marginBottom: hp(20),
+    marginTop: hp(40),
+    marginBottom: hp(32),
   },
   titleText: {
-    fontSize: fp(24),
+    fontSize: fp(26),
     fontFamily: FONTS.bold,
-    color: '#1A1A1A',
-    lineHeight: fp(34),
-    letterSpacing: -0.5,
+    color: COLORS.textPrimary,
+    lineHeight: fp(36),
+    letterSpacing: -0.6,
   },
   subtitleText: {
-    marginTop: hp(10),
-    fontSize: fp(14),
-    lineHeight: fp(21),
+    marginTop: hp(12),
+    fontSize: fp(15),
+    lineHeight: fp(22),
     fontFamily: FONTS.medium,
-    color: '#6B7280',
+    color: COLORS.textSecondary,
+  },
+  sectionContainer: {
+    width: '100%',
+  },
+  marginTop24: {
+    marginTop: hp(24),
+  },
+  sectionHeader: {
+    fontSize: fp(14),
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+    marginBottom: hp(12),
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   listContainer: {
-    gap: hp(10),
+    gap: hp(12),
   },
   footer: {
-    paddingTop: hp(18),
+    marginTop: hp(40),
   },
   refreshRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: wp(8),
-    marginBottom: hp(14),
+    gap: wp(6),
+    marginBottom: hp(24),
   },
   refreshText: {
     fontSize: fp(14),
     fontFamily: FONTS.semiBold,
     color: COLORS.primary,
   },
-  skipButton: {
-    marginTop: hp(12),
+  buttonGap: {
+    gap: hp(12),
+  },
+  retryButton: {
+    paddingVertical: hp(12),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  retryText: {
+    fontSize: fp(14),
+    fontFamily: FONTS.medium,
+    color: COLORS.textTertiary,
+    textDecorationLine: 'underline',
   },
 });
