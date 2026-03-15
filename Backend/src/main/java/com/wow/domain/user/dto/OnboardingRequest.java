@@ -12,7 +12,6 @@ import java.time.LocalDate;
 public class OnboardingRequest {
 
     private String gender;
-    private String phoneNumber;
     private LocalDate birthDate;
     private boolean alarmEnabled;
 
