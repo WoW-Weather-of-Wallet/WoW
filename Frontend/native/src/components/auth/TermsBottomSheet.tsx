@@ -7,7 +7,8 @@ import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 interface TermsBottomSheetProps {
   visible: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  // 휴대폰 인증 단계에서 필수 약관 동의 완료 여부를 상위 화면으로 전달한다.
+  onConfirm: (termsAgreed: boolean) => void;
 }
 
 export default function TermsBottomSheet({ visible, onClose, onConfirm }: TermsBottomSheetProps) {
@@ -22,8 +23,7 @@ export default function TermsBottomSheet({ visible, onClose, onConfirm }: TermsB
 
   const isAllRequiredAgreed = agreements.service && agreements.privacy && agreements.telecom;
 
-  // 모달이 열릴 때마다 상태 초기화하지 않고 기억하는 경우도 있지만, 
-  // 보통 닫았다가 다시 열면 유지하거나, 최초 진입 시엔 false로 합니다.
+  // 약관 바텀시트 내부 체크 상태를 기반으로 "전체 동의" 표시를 동기화한다.
   useEffect(() => {
     setAllAgreed(isAllRequiredAgreed);
   }, [agreements, isAllRequiredAgreed]);
@@ -91,7 +91,7 @@ export default function TermsBottomSheet({ visible, onClose, onConfirm }: TermsB
               disabled={!isAllRequiredAgreed}
               onPress={() => {
                 onClose();
-                setTimeout(onConfirm, 300); // 부드럽게 닫힌 후 진행
+                setTimeout(() => onConfirm(true), 300);
               }}
               activeOpacity={0.8}
             >

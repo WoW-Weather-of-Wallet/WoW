@@ -1,299 +1,242 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
-import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import DevShortcutButton from '../../components/common/DevShortcutButton';
+import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
+import { login } from '../../services/auth';
 import { useAuthStore } from '../../store/authStore';
+import { extractApiErrorMessage } from '../../utils/error';
+
+type WelcomeRouteParams = {
+  // CreateAccount 완료 후 Welcome 화면으로 넘기는 가입 정보 요약 데이터
+  signupMode?: 'normal' | 'ssafy';
+  userId?: string;
+  ssafyOauthId?: string;
+  pw?: string;
+  name?: string;
+  birthDate?: string;
+  gender?: string;
+  phoneNumber?: string;
+  termsAgreed?: boolean;
+  alarmEnabled?: boolean;
+};
 
 export default function WelcomeScreen({ route, navigation }: any) {
   const insets = useSafeAreaInsets();
-  const loginWithDevBypass = useAuthStore((state) => state.loginWithDevBypass);
-  
-  const { name = '고객', ssnFront = '', ssnBack = '', id = '' } = route.params || {};
+  const loginToStore = useAuthStore((state) => state.login);
+  const routeParams = (route?.params ?? {}) as WelcomeRouteParams;
+  const signupMode = routeParams.signupMode === 'ssafy' ? 'ssafy' : 'normal';
+  const isSsafySignup = signupMode === 'ssafy';
+  const [isConfirming, setIsConfirming] = useState(false);
 
-  let birthDate = '정보 없음';
-  let gender = '정보 없음';
+  // Welcome 확인 버튼 처리
+  // 일반 회원가입은 POST /api/v1/auth/login 으로 자동 로그인 후 MainTabs로 이동한다.
+  // SSAFY 회원가입은 이미 열린 세션을 그대로 사용해 MainTabs로 이동한다.
+  const handleConfirm = async () => {
+    if (isConfirming) {
+      return;
+    }
 
-  if (ssnFront.length === 6 && ssnBack.length >= 1) {
-    const century = (ssnBack.charAt(0) === '1' || ssnBack.charAt(0) === '2') ? '19' : '20';
-    const year = ssnFront.slice(0, 2);
-    const month = ssnFront.slice(2, 4);
-    const day = ssnFront.slice(4, 6);
-    birthDate = `${century}${year}-${month}-${day}`;
-    
-    gender = (ssnBack.charAt(0) === '1' || ssnBack.charAt(0) === '3') ? '남성' : '여성';
-  }
+    if (isSsafySignup) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'MainTabs' }],
+      });
+      return;
+    }
 
-  const iconScale = useSharedValue(0.3);
-  const [retryModalVisible, setRetryModalVisible] = useState(false);
-  
-  useEffect(() => {
-    iconScale.value = withDelay(200, withSpring(1, { damping: 10, stiffness: 90 }));
-  }, []);
+    if (!routeParams.userId || !routeParams.pw) {
+      Alert.alert('자동 로그인 실패', '로그인 정보가 없어 다시 로그인해주세요.');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+      return;
+    }
 
-  const animatedIconStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: iconScale.value }],
-  }));
+    setIsConfirming(true);
 
-  const handleNext = () => {
-    // 직업 선택/온보딩 정책이 아직 확정되지 않아 현재는 메인 탭으로 바로 보냅니다.
-    // 관련 화면은 삭제하지 않고 보존해 두고, 정책이 확정되면 다시 Welcome -> JobSelection 흐름을 복구합니다.
-    loginWithDevBypass({ userId: id || 'welcome-user', name });
-    navigation.replace('MainTabs');
-  };
+    try {
+      const loginResponse = await login({
+        userId: routeParams.userId,
+        pw: routeParams.pw,
+      });
 
-  const handleConfirmRetry = () => {
-    setRetryModalVisible(false);
-    navigation.replace('PhoneAuth'); 
+      loginToStore({
+        accessToken: loginResponse.accessToken,
+        user: loginResponse.user,
+      });
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'MainTabs' }],
+      });
+    } catch (error: any) {
+      const message = extractApiErrorMessage(
+        error,
+        '회원가입은 완료됐지만 자동 로그인에 실패했어요. 다시 로그인해주세요.',
+      );
+
+      Alert.alert('자동 로그인 실패', message);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    } finally {
+      setIsConfirming(false);
+    }
   };
 
   return (
     <View style={styles.container}>
-      {/* 화면 전체를 flex로 구성하여 스크롤 없이 한 화면에 패킹 */}
-      <View style={[styles.mainLayout, { paddingTop: insets.top + hp(40), paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
-        
-        {/* 상단 둥둥 뜨는 아이콘 및 타이틀 구역 */}
+      <View
+        style={[
+          styles.mainLayout,
+          { paddingTop: insets.top + hp(44), paddingBottom: Math.max(insets.bottom, hp(24)) },
+        ]}
+      >
         <View style={styles.headerSection}>
-          <Animated.View style={[styles.iconContainer, animatedIconStyle]}>
-            <Ionicons name="checkmark-circle" size={wp(80)} color={COLORS.primary} />
+          <Animated.View entering={FadeInDown.duration(500)} style={styles.iconContainer}>
+            <Ionicons name="checkmark-circle" size={wp(84)} color={COLORS.primary} />
           </Animated.View>
-          
-          <Animated.View entering={FadeInDown.delay(500).duration(500)} style={styles.titleWrapper}>
-            <Text style={styles.title}>{name}님의 가입을{'\n'}환영합니다!</Text>
-            <Text style={styles.subtitle}>기입한 정보를 확인해주세요.</Text>
+
+          <Animated.View entering={FadeInDown.delay(180).duration(500)} style={styles.titleBlock}>
+            <Text style={styles.title}>회원가입이 완료되었어요</Text>
+            <Text style={styles.subtitle}>
+              {routeParams.name ? `${routeParams.name}님 정보를 확인해주세요.` : '가입 정보를 확인해주세요.'}
+            </Text>
           </Animated.View>
         </View>
 
-        {/* 중앙 가입 정보 표시 구역 */}
-        <Animated.View entering={FadeInDown.delay(800).duration(600)} style={styles.infoSection}>
+        <Animated.View entering={FadeInDown.delay(280).duration(500)} style={styles.infoSection}>
+          {/* 회원가입 완료 직후 확인해야 하는 핵심 가입 정보를 요약해서 보여준다. */}
           <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>이름</Text>
-              <Text style={styles.infoValue}>{name}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>아이디</Text>
-              <Text style={styles.infoValue}>{id}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>성별</Text>
-              <Text style={styles.infoValue}>{gender}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>생년월일</Text>
-              <Text style={styles.infoValue}>{birthDate}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>푸시 알림</Text>
-              <Text style={styles.infoValue}>허용</Text>
-            </View>
+            <InfoRow
+              label={isSsafySignup ? 'SSAFY ID' : '아이디'}
+              value={routeParams.ssafyOauthId ?? routeParams.userId ?? '-'}
+            />
+            <InfoRow label="이름" value={routeParams.name ?? '-'} />
+            <InfoRow label="생년월일" value={routeParams.birthDate ?? '-'} />
+            <InfoRow
+              label="성별"
+              value={routeParams.gender === 'M' ? '남성' : routeParams.gender === 'F' ? '여성' : '-'}
+            />
+            <InfoRow label="휴대폰" value={routeParams.phoneNumber ?? '-'} />
+            <InfoRow label="약관동의" value={routeParams.termsAgreed ? '완료' : '미완료'} />
+            <InfoRow label="알림" value={routeParams.alarmEnabled ? '허용' : '미허용'} />
           </View>
         </Animated.View>
 
-        {/* 하단 메인 액션 및 롤백 구역 */}
-        <Animated.View entering={FadeInDown.delay(1200).duration(500)} style={styles.bottomContainer}>
-          <TouchableOpacity style={styles.retryButton} onPress={() => setRetryModalVisible(true)}>
-            <Text style={styles.retryButtonText}>잘못 입력하셨나요?</Text>
+        <Animated.View entering={FadeInDown.delay(380).duration(500)} style={styles.bottomSection}>
+          <TouchableOpacity
+            style={[styles.confirmButton, isConfirming && styles.confirmButtonDisabled]}
+            onPress={() => void handleConfirm()}
+            disabled={isConfirming}
+          >
+            {isConfirming ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.confirmButtonText}>확인</Text>
+            )}
           </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.confirmButton} onPress={handleNext}>
-            <Text style={styles.confirmButtonText}>확인</Text>
-          </TouchableOpacity>
-
-          <DevShortcutButton
-            label="TEST: 메인 화면 바로 이동"
-            description="온보딩 정책이 확정되기 전까지 Welcome 화면에서 바로 MainTabs 로 넘어갑니다."
-            onPress={() => {
-              loginWithDevBypass({ userId: id || 'welcome-user', name });
-              navigation.replace('MainTabs');
-            }}
-            style={styles.devShortcut}
-          />
         </Animated.View>
       </View>
+    </View>
+  );
+}
 
-      {/* 정보 수정 재시도 확인 모달창 */}
-      <Modal visible={retryModalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>정보 수정</Text>
-            </View>
-            <Text style={styles.modalDesc}>
-              수정하시려면 처음 단계부터{'\n'}다시 진행하셔야 합니다.{'\n\n'}정말 다시 입력하시겠습니까?
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setRetryModalVisible(false)}>
-                <Text style={styles.modalCancelText}>아니요, 올바르게 입력했습니다</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalConfirmBtn} onPress={handleConfirmRetry}>
-                <Text style={styles.modalConfirmText}>네, 다시 입력하겠습니다</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
   },
   mainLayout: {
     flex: 1,
     justifyContent: 'space-between',
+    paddingHorizontal: wp(28),
   },
   headerSection: {
-    paddingHorizontal: wp(28),
     alignItems: 'center',
-    marginBottom: hp(24),
+    gap: hp(18),
   },
   iconContainer: {
-    marginBottom: hp(24),
+    marginTop: hp(20),
   },
-  titleWrapper: {
+  titleBlock: {
     alignItems: 'center',
+    gap: hp(10),
   },
   title: {
-    fontSize: fp(32),
+    fontSize: fp(30),
     fontFamily: FONTS.bold,
     color: '#1A1A1A',
-    lineHeight: fp(46),
     textAlign: 'center',
-    marginBottom: hp(12),
-    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: fp(18),
+    fontSize: fp(16),
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
     textAlign: 'center',
   },
   infoSection: {
-    flex: 1, // 스크롤 없이 남은 공간을 차지하며 중앙 정렬되게 함
+    flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: wp(28),
-    alignItems: 'center',
   },
   infoCard: {
-    width: '100%',
-    paddingVertical: hp(20),
-    paddingHorizontal: wp(20),
     backgroundColor: '#F9FAFB',
-    borderRadius: wp(16),
+    borderRadius: wp(18),
+    paddingHorizontal: wp(20),
+    paddingVertical: hp(20),
+    gap: hp(14),
   },
   infoRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
     alignItems: 'center',
-    marginVertical: hp(10),
   },
   infoLabel: {
-    width: wp(100),
-    fontSize: fp(20),
+    width: wp(92),
+    fontSize: fp(15),
     fontFamily: FONTS.medium,
     color: COLORS.textTertiary,
   },
   infoValue: {
     flex: 1,
-    fontSize: fp(20),
-    fontFamily: FONTS.bold,
+    fontSize: fp(17),
+    fontFamily: FONTS.semiBold,
     color: '#1A1A1A',
   },
-  bottomContainer: {
-    paddingHorizontal: wp(28),
-    justifyContent: 'flex-end',
-    paddingTop: hp(10),
-  },
-  retryButton: {
-    paddingVertical: hp(10),
-    marginBottom: hp(16),
-    alignItems: 'center',
-  },
-  retryButtonText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: COLORS.textTertiary,
-    textDecorationLine: 'underline',
+  bottomSection: {
+    paddingBottom: hp(8),
   },
   confirmButton: {
-    backgroundColor: '#E5E7EB',
+    backgroundColor: COLORS.primary,
     borderRadius: wp(30),
     paddingVertical: hp(16),
     alignItems: 'center',
   },
+  confirmButtonDisabled: {
+    opacity: 0.7,
+  },
   confirmButtonText: {
     fontSize: fp(20),
     fontFamily: FONTS.bold,
-    color: '#1A1A1A',
-  },
-  devShortcut: {
-    marginTop: hp(14),
-  },
-
-  // 모달 스타일
-  modalOverlay: { 
-    flex: 1, 
-    backgroundColor: 'rgba(0,0,0,0.4)', 
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: wp(28),
-  },
-  modalContent: { 
-    width: '100%',
-    backgroundColor: '#FFFFFF', 
-    borderRadius: wp(16), 
-    paddingHorizontal: wp(24), 
-    paddingTop: hp(24), 
-    paddingBottom: hp(20),
-  },
-  modalHeader: { 
-    marginBottom: hp(16), 
-    alignItems: 'center',
-  },
-  modalTitle: { 
-    fontSize: fp(20), 
-    fontFamily: FONTS.bold, 
-    color: '#1A1A1A',
-  },
-  modalDesc: { 
-    fontSize: fp(16), 
-    fontFamily: FONTS.medium, 
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: fp(24),
-    marginBottom: hp(24),
-  },
-  modalButtons: {
-    flexDirection: 'column',
-    gap: hp(10),
-  },
-  modalCancelBtn: {
-    paddingVertical: hp(14),
-    borderRadius: wp(12),
-    backgroundColor: '#1A1A1A', // 무거운 액션을 막는 주 색상
-    alignItems: 'center',
-  },
-  modalCancelText: {
-    fontSize: fp(16),
-    fontFamily: FONTS.bold,
     color: '#FFFFFF',
-  },
-  modalConfirmBtn: {
-    paddingVertical: hp(14),
-    borderRadius: wp(12),
-    backgroundColor: '#F3F4F6', // 초기화해버리는 리스크 큰 버튼은 얌전하게
-    alignItems: 'center',
-  },
-  modalConfirmText: {
-    fontSize: fp(16),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
   },
 });

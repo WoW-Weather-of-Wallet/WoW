@@ -28,12 +28,11 @@ export const ENDPOINTS = {
   },
 
   USER: {
-    // 현재 백엔드 구현은 /users/me 계열이 아니라 /user/profile 계열입니다.
+    // 사용자 프로필 조회 및 수정 계열 API 경로
     PROFILE: '/api/v1/user/profile',
-    ONBOARDING: '/api/v1/user/onboarding',
-    PASSWORD: '/api/v1/user/profile/password',
-    NOTIFICATIONS: '/api/v1/user/profile/notifications',
-    DELETE: '/api/v1/user/profile',
+    PASSWORD: '/api/v1/auth/password',
+    PHONE: '/api/v1/user/phone',
+    DELETE: '/api/v1/user/delete',
   },
 
   TERMS: {

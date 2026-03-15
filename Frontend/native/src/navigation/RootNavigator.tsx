@@ -14,9 +14,6 @@ import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import MainTabNavigator from './MainTabNavigator';
 
-// Onboarding 화면
-import JobSelectionScreen from '../screens/onboarding/JobSelectionScreen';
-
 const Stack = createNativeStackNavigator();
 
 /**
@@ -71,19 +68,10 @@ export default function RootNavigator() {
           options={{ gestureEnabled: false }}
         />
 
-        {/* 가입 환영 화면 */}
+        {/* 회원가입 완료 후 가입 정보를 확인하고 자동 로그인을 이어가는 화면 */}
         <Stack.Screen
           name="Welcome"
           component={WelcomeScreen}
-          options={{ gestureEnabled: false }}
-        />
-
-        {/* 직업 선택 온보딩 화면
-            현재 정책 미확정으로 기본 회원가입 플로우에서는 진입시키지 않지만,
-            화면 자체는 추후 복구 가능하도록 스택에 남겨 둡니다. */}
-        <Stack.Screen
-          name="JobSelection"
-          component={JobSelectionScreen}
           options={{ gestureEnabled: false }}
         />
 
