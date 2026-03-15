@@ -45,12 +45,12 @@ export interface SignupResponse {
 // -----------------------------------------------
 // Check user id
 // GET /api/v1/auth/check-user-id?userId=...
-// 다른 팀이 작성한 이메일 중복확인 명세와 같은 톤으로,
-// 응답 본문은 래퍼 없이 available / userId 만 내려온다고 가정합니다.
+// 회원가입 userId 중복확인 응답
+// 사용 가능 여부와 화면 안내용 메시지를 함께 받습니다.
 // -----------------------------------------------
 export interface CheckUserIdResponse {
   available: boolean;
-  userId: string;
+  message?: string;
 }
 
 // -----------------------------------------------

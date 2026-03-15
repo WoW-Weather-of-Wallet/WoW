@@ -111,8 +111,8 @@ export default function CreateAccountScreen({ route, navigation }: any) {
         return;
       }
 
-      // 중복 결과는 예외가 아니라 안내 메시지로만 보여준다.
-      setSubmitError('이미 사용 중인 아이디예요.');
+      // 중복 결과는 예외가 아니라 응답 메시지 기준으로 안내 문구만 보여준다.
+      setSubmitError(response?.message ?? '이미 사용 중인 아이디예요.');
     } catch (error: any) {
       const message = extractApiErrorMessage(
         error,

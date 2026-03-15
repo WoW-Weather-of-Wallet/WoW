@@ -73,8 +73,9 @@ export interface SmsVerifyRequest {
 }
 
 export interface CheckUserIdResponse {
+  // 일반 회원가입의 userId 중복확인 응답
   available: boolean;
-  userId: string;
+  message?: string;
 }
 
 const nativeApi = axios.create({
