@@ -14,5 +14,6 @@ public class SsafyRegisterRequest {
     private String gender;
     private LocalDate birthDate;
     private boolean alarmEnabled;
+    private boolean termsAgreed;
 
 }

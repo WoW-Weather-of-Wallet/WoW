@@ -19,6 +19,7 @@ public class UserCreateRequest {
     private String gender;
     private String phoneNumber;
     private LocalDate birthDate;
+    private boolean termsAgreed;
     private boolean alarmEnabled;
 
 }

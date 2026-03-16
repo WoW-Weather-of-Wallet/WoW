@@ -71,6 +71,7 @@ public class AuthService {
                 .phoneNumber(request.getPhoneNumber())
                 .birthDate(request.getBirthDate())
                 .alarmEnabled(request.isAlarmEnabled())
+                .termsAgreed(request.isTermsAgreed())
                 .role(Role.User)
                 .build();
 

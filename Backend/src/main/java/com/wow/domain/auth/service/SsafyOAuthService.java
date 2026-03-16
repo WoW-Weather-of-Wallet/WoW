@@ -169,6 +169,7 @@ public class SsafyOAuthService {
                 .name(name)
                 .gender(request.getGender())
                 .alarmEnabled(request.isAlarmEnabled())
+                .termsAgreed(request.isTermsAgreed())
                 .birthDate(request.getBirthDate())
                 .phoneNumber(request.getPhoneNumber())
                 .role(Role.User)
