@@ -18,9 +18,6 @@ import FindPwScreen from '../screens/auth/FindPwScreen';
 import RecoveryResultScreen from '../screens/auth/RecoveryResultScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import MainTabNavigator from './MainTabNavigator';
-
-// Onboarding & MyPage 화면
-import JobSelectionScreen from '../screens/onboarding/JobSelectionScreen';
 import SettingsScreen from '../screens/mypage/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
@@ -42,58 +39,42 @@ export default function RootNavigator() {
           animationDuration: 300,
         }}
       >
-        {/* 앱 첫 진입 시 보여주는 스플래시 화면 */}
         <Stack.Screen
           name="Splash"
           component={SplashScreen}
           options={{ gestureEnabled: false }}
         />
 
-        {/* 권한 안내 화면 */}
         <Stack.Screen
           name="Permission"
           component={AccessPermissionScreen}
           options={{ gestureEnabled: false }}
         />
 
-        {/* 회원가입 시작용 휴대폰 인증 화면 */}
         <Stack.Screen
           name="PhoneAuth"
           component={PhoneAuthScreen}
           options={{ gestureEnabled: true }}
         />
 
-        {/* 인증번호 입력 화면 */}
         <Stack.Screen
           name="VerifyCode"
           component={VerifyCodeScreen}
           options={{ gestureEnabled: true }}
         />
 
-        {/* 비밀번호/아이디 생성 화면 */}
         <Stack.Screen
           name="CreateAccount"
           component={CreateAccountScreen}
           options={{ gestureEnabled: false }}
         />
 
-        {/* 가입 환영 화면 */}
         <Stack.Screen
           name="Welcome"
           component={WelcomeScreen}
           options={{ gestureEnabled: false }}
         />
 
-        {/* 직업 선택 온보딩 화면
-            현재 정책 미확정으로 기본 회원가입 플로우에서는 진입시키지 않지만,
-            화면 자체는 추후 복구 가능하도록 스택에 남겨 둡니다. */}
-        <Stack.Screen
-          name="JobSelection"
-          component={JobSelectionScreen}
-          options={{ gestureEnabled: false }}
-        />
-
-        {/* 로그인 화면 */}
         <Stack.Screen
           name="Login"
           component={LoginScreen}
@@ -104,7 +85,7 @@ export default function RootNavigator() {
         <Stack.Screen
           name="AccountRecovery"
           component={AccountRecoveryScreen}
-          options={{ 
+          options={{
             gestureEnabled: true,
             animation: 'slide_from_right'
           }}
@@ -113,7 +94,7 @@ export default function RootNavigator() {
         <Stack.Screen
           name="FindId"
           component={FindIdScreen}
-          options={{ 
+          options={{
             gestureEnabled: true,
             animation: 'slide_from_right'
           }}
@@ -122,7 +103,7 @@ export default function RootNavigator() {
         <Stack.Screen
           name="FindPw"
           component={FindPwScreen}
-          options={{ 
+          options={{
             gestureEnabled: true,
             animation: 'slide_from_right'
           }}
@@ -131,7 +112,7 @@ export default function RootNavigator() {
         <Stack.Screen
           name="RecoveryResult"
           component={RecoveryResultScreen}
-          options={{ 
+          options={{
             gestureEnabled: false,
             animation: 'fade'
           }}
@@ -140,25 +121,26 @@ export default function RootNavigator() {
         <Stack.Screen
           name="ResetPassword"
           component={ResetPasswordScreen}
-          options={{ 
+          options={{
             gestureEnabled: true,
             animation: 'slide_from_right'
           }}
         />
 
         {/* 인증 이후 진입하는 메인 앱 영역 */}
+
         <Stack.Screen
           name="MainTabs"
           component={MainTabNavigator}
           options={{ gestureEnabled: false }}
         />
-        {/* 설정 상세 화면 */}
+
         <Stack.Screen
           name="Settings"
           component={SettingsScreen}
-          options={{ 
+          options={{
             gestureEnabled: true,
-            animation: 'slide_from_right' 
+            animation: 'slide_from_right',
           }}
         />
       </Stack.Navigator>

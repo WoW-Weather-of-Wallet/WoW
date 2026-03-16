@@ -11,8 +11,6 @@ import type {
   CheckUserIdResponse,
   LoginRequest,
   LoginResponse,
-  SaveOnboardingRequest,
-  SaveOnboardingResponse,
   SignupRequest,
   SignupResponse,
   UserProfileResponse,
@@ -60,17 +58,4 @@ export const getProfile = async (): Promise<UserProfileResponse> => {
   const response = await axiosInstance.get(ENDPOINTS.USER.PROFILE);
 
   return response.data as UserProfileResponse;
-};
-
-// -----------------------------------------------
-// saveOnboarding
-// 현재 백엔드는 PATCH /api/v1/user/onboarding 으로 처리합니다.
-// 화면에서 선택한 값을 회원 정보에 반영하는 용도로 사용합니다.
-// -----------------------------------------------
-export const saveOnboarding = async (
-  payload: SaveOnboardingRequest,
-): Promise<SaveOnboardingResponse> => {
-  const response = await axiosInstance.patch(ENDPOINTS.USER.ONBOARDING, payload);
-
-  return response.data as SaveOnboardingResponse;
 };

@@ -60,8 +60,9 @@ export default function LoginScreen({ navigation }: any) {
 
   useEffect(() => {
     /**
-     * SSAFY 로그인 완료 후 앱 딥링크로 복귀한 경우를 처리합니다.
-     * access token 이 포함된 URL만 로그인 완료로 보고 store 와 화면 전환을 진행합니다.
+     * SSAFY 로그인 완료 후 앱 딥링크 처리
+     * access token 이 포함된 경우 세션을 열고,
+     * signupRequired 값에 따라 CreateAccount 또는 MainTabs로 분기합니다.
      */
     const handleSsafyCallback = (url: string | null) => {
       if (!url) {
@@ -80,8 +81,13 @@ export default function LoginScreen({ navigation }: any) {
         autoLogin,
       });
 
-      if (parsed.onboardingRequired) {
-        navigation.replace('JobSelection');
+      if (parsed.signupRequired) {
+        navigation.replace('CreateAccount', {
+          signupMode: 'ssafy',
+          ssafyOauthId: parsed.user.userId,
+          name: parsed.user.name,
+          termsAgreed: true,
+        });
         return;
       }
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   StatusBar,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,11 +18,16 @@ import {
   mockMyAccounts,
   mockMyCards,
   mockProfileStats,
-  mockUserProfile,
   mockUserShortcuts,
 } from '../../mock/dashboard';
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
+import {
+  getProfile,
+  logout as logoutRequest,
+  type NativeUserProfileResponse,
+} from '../../services/auth';
+import { extractApiErrorMessage } from '../../utils/error';
 
 /**
  * MyPageScreen
@@ -31,6 +38,72 @@ export default function MyPageScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const logout = useAuthStore((state) => state.logout);
+  const sessionUser = useAuthStore((state) => state.user);
+  const [profile, setProfile] = useState<NativeUserProfileResponse | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const loadProfile = useCallback(async () => {
+    setIsLoadingProfile(true);
+
+    try {
+      const response = await getProfile();
+      setProfile(response);
+    } catch (error) {
+      const message = extractApiErrorMessage(
+        error,
+        '내 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
+      );
+
+      setProfile(null);
+      Alert.alert('프로필 조회 실패', message);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadProfile();
+    }, [loadProfile]),
+  );
+
+  useEffect(() => {
+    void loadProfile();
+  }, [loadProfile]);
+
+  const displayName = profile?.name ?? sessionUser?.name ?? '사용자';
+  const displayInitial = displayName.slice(0, 1);
+  const displayBadge = profile?.loginType === 'SSAFY' ? 'SSAFY 회원' : '일반 회원';
+  const displayOnboardingStatus = profile?.phoneNumber ? '완료' : '진행 중';
+  const displayLinkedAccounts = '준비중';
+
+  const handleLogout = async () => {
+    if (isLoggingOut) {
+      return;
+    }
+
+    setIsLoggingOut(true);
+
+    try {
+      await logoutRequest();
+    } catch (error) {
+      const message = extractApiErrorMessage(
+        error,
+        '로그아웃 처리 중 문제가 있었어요. 다시 시도해주세요.',
+      );
+
+      Alert.alert('로그아웃 실패', message);
+      setIsLoggingOut(false);
+      return;
+    }
+
+    logout();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Login' }],
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -45,27 +118,22 @@ export default function MyPageScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* 
-            상단 프로필 카드 영역: 
-            사용자 정보를 간략히 요약하며, 클릭 시 상세 설정 페이지(SettingsScreen)로 이동합니다.
-            애니메이션 피드백을 위해 TouchableOpacity의 activeOpacity를 0.9로 설정했습니다.
-        */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.profileCard}
           activeOpacity={0.9}
           onPress={() => navigation.navigate('Settings')}
         >
           <View style={styles.profileHeaderRow}>
             <View style={styles.avatarCircle}>
-              <Text style={styles.avatarText}>{mockUserProfile.name.slice(0, 1)}</Text>
+              <Text style={styles.avatarText}>{displayInitial}</Text>
             </View>
             <View style={styles.profileTextBlock}>
               <View style={styles.nameRow}>
-                <Text style={styles.profileName}>{mockUserProfile.name}님 안녕하세요!</Text>
+                <Text style={styles.profileName}>{displayName}님 안녕하세요!</Text>
                 <Ionicons name="chevron-forward" size={wp(20)} color={COLORS.textTertiary} />
               </View>
               <View style={styles.profileBadge}>
-                <Text style={styles.profileBadgeText}>{mockUserProfile.badge}</Text>
+                <Text style={styles.profileBadgeText}>{displayBadge}</Text>
               </View>
             </View>
           </View>
@@ -73,16 +141,21 @@ export default function MyPageScreen() {
           <View style={styles.profileSummaryRow}>
             <View style={styles.profileSummaryItem}>
               <Text style={styles.profileSummaryLabel}>연결 계좌</Text>
-              <Text style={styles.profileSummaryValue}>{mockUserProfile.linkedAccounts}개</Text>
+              <Text style={styles.profileSummaryValue}>{displayLinkedAccounts}</Text>
             </View>
             <View style={styles.profileDivider} />
             <View style={styles.profileSummaryItem}>
               <Text style={styles.profileSummaryLabel}>온보딩</Text>
-              <Text style={styles.profileSummaryValue}>
-                {mockUserProfile.onboardingCompleted ? '완료' : '진행 중'}
-              </Text>
+              <Text style={styles.profileSummaryValue}>{displayOnboardingStatus}</Text>
             </View>
           </View>
+
+          {isLoadingProfile ? (
+            <View style={styles.profileLoadingRow}>
+              <ActivityIndicator color={COLORS.primary} />
+              <Text style={styles.profileLoadingText}>프로필을 불러오는 중입니다.</Text>
+            </View>
+          ) : null}
         </TouchableOpacity>
 
         <View style={styles.statsRow}>
@@ -94,7 +167,6 @@ export default function MyPageScreen() {
           ))}
         </View>
 
-        {/* 대표 카드 섹션: 카드 실물 느낌을 주는 카드형 UI로 우선 노출합니다. */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>보유 카드</Text>
@@ -133,7 +205,6 @@ export default function MyPageScreen() {
           ))}
         </View>
 
-        {/* 계좌 섹션: 잔액과 계좌 성격을 빠르게 볼 수 있게 리스트형으로 배치합니다. */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>연결 계좌</Text>
@@ -174,7 +245,6 @@ export default function MyPageScreen() {
           })}
         </View>
 
-        {/* 빠른 설정 메뉴는 보조 영역으로 내려서, 필요할 때만 접근하도록 둡니다. */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>설정 및 바로가기</Text>
@@ -209,23 +279,15 @@ export default function MyPageScreen() {
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>계정 액션</Text>
           <View style={styles.actionButtonSpacing}>
-          <GradientButton
-            title="프로필 수정"
-            onPress={() => console.log('프로필 수정 연결 예정')}
-          />
+            <GradientButton
+              title="프로필 수정"
+              onPress={() => navigation.navigate('Settings')}
+            />
           </View>
           <GradientButton
-            title="로그아웃"
+            title={isLoggingOut ? '로그아웃 중...' : '로그아웃'}
             variant="outline"
-            onPress={() => {
-              // 로그아웃 시 authStore의 토큰과 상태를 초기화하고 로그인 화면으로 이동시킵니다.
-              // 이는 앱의 전역 인증 상태를 가장 확실하게 초기화하는 방법입니다.
-              logout();
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Login' }],
-              });
-            }}
+            onPress={() => void handleLogout()}
           />
         </View>
       </ScrollView>
@@ -280,12 +342,6 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     marginBottom: hp(4),
   },
-  profileEmail: {
-    fontSize: fp(13),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-    marginBottom: hp(10),
-  },
   profileBadge: {
     alignSelf: 'flex-start',
     backgroundColor: COLORS.primary50,
@@ -326,6 +382,16 @@ const styles = StyleSheet.create({
     height: hp(34),
     backgroundColor: COLORS.border,
     marginHorizontal: wp(16),
+  },
+  profileLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(8),
+  },
+  profileLoadingText: {
+    fontSize: fp(12),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
   },
   statsRow: {
     flexDirection: 'row',

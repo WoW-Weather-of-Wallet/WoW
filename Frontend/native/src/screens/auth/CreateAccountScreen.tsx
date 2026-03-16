@@ -19,16 +19,15 @@ import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { checkUserId, signup } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 
-// 현재 백엔드 회원가입 API 는 jobId 를 필수로 받고 있습니다.
-// 하지만 현재 앱 플로우에서는 직업 선택이 회원가입 뒤에 오므로,
-// 백엔드 스펙이 정리되기 전까지는 임시 기본값으로 요청을 보냅니다.
-const TEMP_SIGNUP_JOB_ID = 30;
-
 type CreateAccountRouteParams = {
+  // 일반 회원가입/SSAFY 회원가입 공용 화면에서 분기 기준으로 사용
+  signupMode?: 'normal' | 'ssafy';
   name?: string;
   phone?: string;
   ssnFront?: string;
   ssnBack?: string;
+  termsAgreed?: boolean;
+  ssafyOauthId?: string;
 };
 
 /**
@@ -64,8 +63,11 @@ const buildGender = (ssnBack?: string) => {
 export default function CreateAccountScreen({ route, navigation }: any) {
   const insets = useSafeAreaInsets();
   const routeParams = (route?.params ?? {}) as CreateAccountRouteParams;
+  const signupMode = routeParams.signupMode === 'ssafy' ? 'ssafy' : 'normal';
+  const isSsafySignup = signupMode === 'ssafy';
 
-  const [step, setStep] = useState(1);
+  // 일반 회원가입은 아이디 입력부터 시작하고, SSAFY 회원가입은 비밀번호 설정 단계부터 시작한다.
+  const [step, setStep] = useState(isSsafySignup ? 2 : 1);
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -82,8 +84,8 @@ export default function CreateAccountScreen({ route, navigation }: any) {
   const pwRef = useRef<TextInput>(null);
   const confirmPwRef = useRef<TextInput>(null);
 
-  // 아이디 중복확인은 회원가입 진행 전 서버 기준으로 먼저 검증합니다.
-  // 성공 응답 안에서 available 값을 보고 다음 단계 진입 여부를 결정합니다.
+  // 일반 회원가입의 아이디 중복확인 단계
+  // GET /api/v1/auth/check-user-id 응답의 isAvailable 값을 기준으로 다음 단계 진입을 연다.
   const handleCheckId = async () => {
     const trimmedId = id.trim();
 
@@ -96,12 +98,11 @@ export default function CreateAccountScreen({ route, navigation }: any) {
 
     try {
       const response = await checkUserId(trimmedId);
-      const isAvailable = response?.available === true;
+      const isAvailable = response?.isAvailable === true;
 
       setIsIdAvailable(isAvailable);
 
-      // 사용할 수 있는 아이디일 때만 다음 입력 단계로 자동 이동시켜
-      // 사용자가 중복확인과 비밀번호 입력 순서를 자연스럽게 이어가게 합니다.
+      // 일반 회원가입에서만 아이디 확인 후 비밀번호 입력 단계로 넘긴다.
       if (isAvailable) {
         setTimeout(() => {
           setStep((prev) => Math.max(prev, 2));
@@ -110,8 +111,8 @@ export default function CreateAccountScreen({ route, navigation }: any) {
         return;
       }
 
-      // 중복 아이디는 에러가 아니라 조회 결과이므로 화면 안내 문구로만 처리합니다.
-      setSubmitError('이미 사용 중인 아이디예요.');
+      // 중복 결과는 예외가 아니라 응답 메시지 기준으로 안내 문구만 보여준다.
+      setSubmitError(response?.message ?? '이미 사용 중인 아이디예요.');
     } catch (error: any) {
       const message = extractApiErrorMessage(
         error,
@@ -138,7 +139,9 @@ export default function CreateAccountScreen({ route, navigation }: any) {
 
   const isPasswordValid = password.length >= 8;
   const isPasswordMatch = isPasswordValid && password === confirmPassword;
-  const isFormValid = Boolean(isIdAvailable) && isPasswordMatch && !isSubmitting;
+  const hasSignupIdentifier =
+    isSsafySignup ? Boolean(routeParams.ssafyOauthId?.trim()) : Boolean(isIdAvailable);
+  const isFormValid = hasSignupIdentifier && isPasswordMatch && !isSubmitting;
 
   const handleNextStep = () => {
     if (step === 2 && isPasswordValid) {
@@ -148,11 +151,20 @@ export default function CreateAccountScreen({ route, navigation }: any) {
   };
 
   /**
-   * 화면에서 관리하는 상태를 실제 백엔드 DTO 형식으로 변환합니다.
-   * 현재 앱 플로우상 직업 선택이 뒤에 있어 임시 jobId 를 사용합니다.
+   * CreateAccount 화면의 최종 회원가입 처리
+   * POST /api/v1/auth/signup 요청으로 일반 회원가입 또는 SSAFY 회원가입을 완료하고
+   * 성공 시 Welcome 화면으로 이동해 최종 확인을 받는다.
    */
   const handleCreateAccount = async () => {
     if (!isFormValid) {
+      return;
+    }
+
+    const trimmedUserId = id.trim();
+    const ssafyOauthId = routeParams.ssafyOauthId?.trim();
+
+    if (!trimmedUserId && !ssafyOauthId) {
+      setSubmitError('회원가입 식별 정보가 없어 다시 로그인부터 진행해주세요.');
       return;
     }
 
@@ -160,26 +172,37 @@ export default function CreateAccountScreen({ route, navigation }: any) {
     setSubmitError('');
 
     const signupPayload = {
-      userId: id,
-      jobId: TEMP_SIGNUP_JOB_ID,
+      userId: isSsafySignup ? undefined : trimmedUserId,
+      ssafyOauthId: isSsafySignup ? ssafyOauthId : undefined,
       pw: password,
       name: routeParams.name ?? '',
       gender: buildGender(routeParams.ssnBack),
       phoneNumber: routeParams.phone ?? '',
       birthDate: buildBirthDate(routeParams.ssnFront, routeParams.ssnBack),
       alarmEnabled: true,
+      termsAgreed: routeParams.termsAgreed === true,
     };
 
-    // 다음 실패부터는 Expo 터미널에서 요청값을 바로 확인할 수 있게 남겨 둡니다.
+    // 회원가입 요청 본문 확인용 로그
     console.log('[signup payload]', JSON.stringify(signupPayload));
 
     try {
-      const signupResponse = await signup(signupPayload);
-
+      await signup(signupPayload);
+      // Welcome 화면에서 가입 정보 확인과 일반 회원 자동로그인 처리를 이어간다.
       navigation.replace('Welcome', {
         ...routeParams,
-        id: signupResponse.userId,
+        signupMode,
+        userId: signupPayload.userId,
+        ssafyOauthId: signupPayload.ssafyOauthId,
+        pw: signupPayload.pw,
+        name: signupPayload.name,
+        birthDate: signupPayload.birthDate,
+        gender: signupPayload.gender,
+        phoneNumber: signupPayload.phoneNumber,
+        termsAgreed: signupPayload.termsAgreed,
+        alarmEnabled: signupPayload.alarmEnabled,
       });
+      return;
     } catch (error: any) {
       const debugMessage = [
         error?.response?.status ? `status: ${error.response.status}` : 'status: unknown',
@@ -191,8 +214,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
       console.error('[signup catch data]', error?.response?.data);
       console.error('[signup catch message]', error?.message);
 
-      // 회원가입 실패도 로그인과 같은 에러 우선순위를 따르되,
-      // 백엔드가 아무 응답도 주지 않을 때는 디버그용 문자열을 fallback 으로 남깁니다.
+      // 회원가입 실패 시 auth 공통 에러 파서를 통해 화면 문구를 정리한다.
       const message = extractApiErrorMessage(error, debugMessage);
 
       setSubmitError(message);
@@ -200,6 +222,37 @@ export default function CreateAccountScreen({ route, navigation }: any) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // 개발 중 실제 signup API 없이 Welcome 화면과 이후 진입 흐름을 확인할 때 사용한다.
+  const handleDevSuccess = () => {
+    if (isSsafySignup) {
+      navigation.replace('Welcome', {
+        ...routeParams,
+        signupMode,
+        ssafyOauthId: routeParams.ssafyOauthId,
+        name: routeParams.name ?? '테스트 사용자',
+        birthDate: buildBirthDate(routeParams.ssnFront, routeParams.ssnBack),
+        gender: buildGender(routeParams.ssnBack),
+        phoneNumber: routeParams.phone ?? '01012345678',
+        termsAgreed: routeParams.termsAgreed === true,
+        alarmEnabled: true,
+      });
+      return;
+    }
+
+    navigation.replace('Welcome', {
+      ...routeParams,
+      signupMode,
+      userId: id.trim() || 'test-user',
+      pw: password || 'test1234',
+      name: routeParams.name ?? '테스트 사용자',
+      birthDate: buildBirthDate(routeParams.ssnFront, routeParams.ssnBack),
+      gender: buildGender(routeParams.ssnBack),
+      phoneNumber: routeParams.phone ?? '01012345678',
+      termsAgreed: routeParams.termsAgreed === true,
+      alarmEnabled: true,
+    });
   };
 
   const handleIdChange = (text: string) => {
@@ -213,7 +266,8 @@ export default function CreateAccountScreen({ route, navigation }: any) {
   };
 
   const getButtonState = () => {
-    if (step === 1) {
+    // 일반 회원가입은 아이디 단계 -> 비밀번호 단계 -> 확인 단계 순서로 이동한다.
+    if (!isSsafySignup && step === 1) {
       return { text: '다음', isActive: false, onPress: undefined as (() => void) | undefined };
     }
 
@@ -251,64 +305,80 @@ export default function CreateAccountScreen({ route, navigation }: any) {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>
-          {step === 1
+          {isSsafySignup
+            ? '비밀번호를\n입력해주세요.'
+            : step === 1
             ? '회원가입 아이디를\n입력해주세요.'
             : step === 2
               ? '비밀번호를\n입력해주세요.'
               : '비밀번호를\n한 번 더 입력해주세요.'}
         </Text>
 
-        {/* 회원가입 API 에 실제로 userId 로 들어가는 값입니다. */}
-        <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
-          <View style={styles.idInputRow}>
-            <View style={[styles.underlineContainer, { flex: 1 }]}>
-              <TextInput
-                ref={idRef}
-                style={[styles.bareInput, { letterSpacing: id.length > 0 ? 1 : 0 }]}
-                value={id}
-                onChangeText={handleIdChange}
-                placeholder="아이디 (4자 이상)"
-                placeholderTextColor={COLORS.textTertiary}
-                autoCapitalize="none"
-                autoCorrect={false}
-                returnKeyType="done"
-                onSubmitEditing={id.length >= 4 && isIdAvailable === null ? handleCheckId : undefined}
-                editable={!isCheckingId && !isSubmitting}
-                autoFocus
-              />
+        {/* 일반 회원가입에서만 userId 입력 및 중복확인 UI를 보여준다. */}
+        {!isSsafySignup && (
+          <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
+            <View style={styles.idInputRow}>
+              <View style={[styles.underlineContainer, { flex: 1 }]}>
+                <TextInput
+                  ref={idRef}
+                  style={[styles.bareInput, { letterSpacing: id.length > 0 ? 1 : 0 }]}
+                  value={id}
+                  onChangeText={handleIdChange}
+                  placeholder="아이디 (4자 이상)"
+                  placeholderTextColor={COLORS.textTertiary}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="done"
+                  onSubmitEditing={id.length >= 4 && isIdAvailable === null ? handleCheckId : undefined}
+                  editable={!isCheckingId && !isSubmitting}
+                  autoFocus
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.checkButton,
+                  id.length >= 4 ? styles.checkButtonActive : styles.checkButtonInactive,
+                  isIdAvailable === true && styles.checkButtonSuccess,
+                ]}
+                disabled={id.length < 4 || isCheckingId || isIdAvailable === true || isSubmitting}
+                onPress={handleCheckId}
+              >
+                {isCheckingId ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : isIdAvailable === true ? (
+                  <Ionicons name="checkmark" size={wp(20)} color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.checkButtonText}>중복확인</Text>
+                )}
+              </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={[
-                styles.checkButton,
-                id.length >= 4 ? styles.checkButtonActive : styles.checkButtonInactive,
-                isIdAvailable === true && styles.checkButtonSuccess,
-              ]}
-              disabled={id.length < 4 || isCheckingId || isIdAvailable === true || isSubmitting}
-              onPress={handleCheckId}
-            >
-              {isCheckingId ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : isIdAvailable === true ? (
-                <Ionicons name="checkmark" size={wp(20)} color="#FFFFFF" />
-              ) : (
-                <Text style={styles.checkButtonText}>중복확인</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+            {isIdAvailable === true && (
+              <Animated.Text entering={FadeInDown.duration(300)} style={styles.successMessage}>
+                사용할 수 있는 아이디예요.
+              </Animated.Text>
+            )}
+            {isIdAvailable === false && submitError.length === 0 && (
+              <Animated.Text entering={FadeInDown.duration(300)} style={styles.errorMessage}>
+                이미 사용 중인 아이디예요.
+              </Animated.Text>
+            )}
+          </Animated.View>
+        )}
 
-          {isIdAvailable === true && (
-            <Animated.Text entering={FadeInDown.duration(300)} style={styles.successMessage}>
-              사용할 수 있는 아이디예요.
-            </Animated.Text>
-          )}
-          {isIdAvailable === false && submitError.length === 0 && (
-            <Animated.Text entering={FadeInDown.duration(300)} style={styles.errorMessage}>
-              이미 사용 중인 아이디예요.
-            </Animated.Text>
-          )}
-        </Animated.View>
+        {/* SSAFY 회원가입에서는 콜백으로 받은 이름을 읽기 전용으로 노출한다. */}
+        {isSsafySignup && routeParams.name ? (
+          <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
+            <Text style={styles.fixedLabel}>이름</Text>
+            <View style={styles.fixedValueBox}>
+              <Text style={styles.fixedValueText}>{routeParams.name}</Text>
+              <Text style={styles.fixedHintText}>SSAFY 계정에서 가져온 이름이라 수정할 수 없어요.</Text>
+            </View>
+          </Animated.View>
+        ) : null}
 
+        {/* 비밀번호 설정 단계: 일반/SSAFY 회원가입 모두 공통으로 사용한다. */}
         {step >= 2 && (
           <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
             <View style={[styles.underlineContainer, styles.passwordRow]}>
@@ -344,6 +414,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
           </Animated.View>
         )}
 
+        {/* 비밀번호 확인 단계: 최종 회원가입 직전 검증용 입력 영역 */}
         {step >= 3 && (
           <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
             <View style={[styles.underlineContainer, styles.passwordRow]}>
@@ -391,14 +462,9 @@ export default function CreateAccountScreen({ route, navigation }: any) {
 
         {/* 회원가입 API 가 불안정할 때도 이후 화면 레이아웃 작업이 멈추지 않게 우회 진입을 둡니다. */}
         <DevShortcutButton
-          label="TEST: 가입 완료 화면으로 이동"
-          description="signup API 호출 없이 Welcome 화면으로 바로 이동합니다."
-          onPress={() =>
-            navigation.replace('Welcome', {
-              ...routeParams,
-              id: id.trim() || 'test-user',
-            })
-          }
+          label="TEST: 가입 성공 처리"
+          description="signup API 호출 없이 Welcome 화면으로 이동해 최종 진입 흐름을 확인합니다."
+          onPress={handleDevSuccess}
         />
       </ScrollView>
 
@@ -500,6 +566,29 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: '#22C55E',
     marginTop: hp(8),
+  },
+  fixedLabel: {
+    fontSize: fp(14),
+    fontFamily: FONTS.medium,
+    color: COLORS.textTertiary,
+    marginBottom: hp(10),
+  },
+  fixedValueBox: {
+    borderRadius: wp(16),
+    backgroundColor: '#F9FAFB',
+    paddingHorizontal: wp(18),
+    paddingVertical: hp(16),
+    gap: hp(8),
+  },
+  fixedValueText: {
+    fontSize: fp(20),
+    fontFamily: FONTS.bold,
+    color: '#1A1A1A',
+  },
+  fixedHintText: {
+    fontSize: fp(13),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
   },
   errorMessage: {
     fontSize: fp(14),
