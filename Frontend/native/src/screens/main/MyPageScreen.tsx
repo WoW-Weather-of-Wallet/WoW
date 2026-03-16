@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -61,6 +61,12 @@ export default function MyPageScreen() {
       setIsLoadingProfile(false);
     }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadProfile();
+    }, [loadProfile]),
+  );
 
   useEffect(() => {
     void loadProfile();
@@ -275,7 +281,7 @@ export default function MyPageScreen() {
           <View style={styles.actionButtonSpacing}>
             <GradientButton
               title="프로필 수정"
-              onPress={() => console.log('프로필 수정 연결 예정')}
+              onPress={() => navigation.navigate('Settings')}
             />
           </View>
           <GradientButton

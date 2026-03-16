@@ -25,6 +25,7 @@ interface AuthState {
   autoLoginEnabled: boolean;
   login: (payload: LoginSessionPayload) => void;
   loginWithDevBypass: (payload?: DevSessionPayload) => void;
+  updateUser: (payload: Partial<AuthUser>) => void;
   logout: () => void;
 }
 
@@ -66,6 +67,17 @@ export const useAuthStore = create<AuthState>((set) => ({
       },
       autoLoginEnabled: false,
     });
+  },
+
+  updateUser: (payload) => {
+    set((state) => ({
+      user: state.user
+        ? {
+            ...state.user,
+            ...payload,
+          }
+        : state.user,
+    }));
   },
 
   logout: () => {

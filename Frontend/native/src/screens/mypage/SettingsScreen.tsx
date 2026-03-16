@@ -13,7 +13,7 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,6 +39,7 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const logout = useAuthStore((state) => state.logout);
+  const updateUser = useAuthStore((state) => state.updateUser);
   const [profile, setProfile] = useState<NativeUserProfileResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,6 +71,12 @@ export default function SettingsScreen() {
       setIsLoading(false);
     }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadProfile();
+    }, [loadProfile]),
+  );
 
   useEffect(() => {
     void loadProfile();
@@ -128,6 +135,10 @@ export default function SettingsScreen() {
           birthDate: birthDate.trim() || undefined,
         });
         setProfile(updated);
+        updateUser({
+          userId: updated.userId ?? undefined,
+          name: updated.name,
+        });
       }
 
       if (editMode === 'phone') {
