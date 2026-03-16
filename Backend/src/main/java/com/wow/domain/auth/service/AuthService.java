@@ -42,7 +42,7 @@ public class AuthService {
 
         String message = isAvailable ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다.";
 
-        return new UserIdCheckResponse(isAvailable, message);
+        return new UserIdCheckResponse(isAvailable, message, userId);
 
     }
 
@@ -51,6 +51,10 @@ public class AuthService {
 
         if (userRepository.existsByUserId(request.getUserId())) {
             throw new IllegalArgumentException("이미 존재하는 회원입니다.");
+        }
+
+        if (userRepository.existsByNameAndGenderAndBirthDate(request.getName(), request.getGender(), request.getBirthDate())) {
+            throw new IllegalArgumentException("이미 가입된 회원입니다.");
         }
 
         if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
