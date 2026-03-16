@@ -42,11 +42,22 @@ export interface NativeLoginRequest {
 export interface NativeLoginResponse {
   accessToken: string;
   expiresIn: number;
+  refreshToken?: string;
   user: {
     userId: string;
     name?: string;
     role?: string;
   };
+}
+
+export interface NativeUserProfileResponse {
+  userId?: string | null;
+  name: string;
+  gender?: string | null;
+  phoneNumber?: string | null;
+  birthDate?: string | null;
+  alarmEnabled: boolean;
+  loginType?: 'NORMAL' | 'SSAFY' | string | null;
 }
 
 /**
@@ -162,6 +173,16 @@ export const signup = async (payload: NativeSignupRequest) => {
 // 일반 회원가입 완료 후 Welcome 화면에서 호출하는 자동 로그인 API
 export const login = async (payload: NativeLoginRequest) => {
   const response = await nativeApi.post<NativeLoginResponse>('/api/v1/auth/login', payload);
+  return response.data;
+};
+
+export const getProfile = async () => {
+  const response = await nativeApi.get<NativeUserProfileResponse>('/api/v1/user/profile');
+  return response.data;
+};
+
+export const logout = async () => {
+  const response = await nativeApi.post('/api/v1/auth/logout');
   return response.data;
 };
 
