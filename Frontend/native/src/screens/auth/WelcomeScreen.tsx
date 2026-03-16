@@ -10,6 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import StepIndicator from '../../components/common/StepIndicator';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { login } from '../../services/auth';
 import { useAuthStore } from '../../store/authStore';
@@ -104,6 +105,9 @@ export default function WelcomeScreen({ route, navigation }: any) {
         ]}
       >
         <View style={styles.headerSection}>
+          <View style={{ marginBottom: hp(40) }}>
+            <StepIndicator currentStep={4} totalSteps={4} />
+          </View>
           <Animated.View entering={FadeInDown.duration(500)} style={styles.iconContainer}>
             <Ionicons name="checkmark-circle" size={wp(84)} color={COLORS.primary} />
           </Animated.View>

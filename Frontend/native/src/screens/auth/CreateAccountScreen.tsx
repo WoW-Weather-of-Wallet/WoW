@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import DevShortcutButton from '../../components/common/DevShortcutButton';
+import StepIndicator from '../../components/common/StepIndicator';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { checkUserId, signup } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
@@ -304,6 +305,11 @@ export default function CreateAccountScreen({ route, navigation }: any) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        <StepIndicator
+          currentStep={isSsafySignup ? 3 : (step === 1 ? 2 : 3)}
+          totalSteps={4}
+        />
+
         <Text style={styles.title}>
           {isSsafySignup
             ? '비밀번호를\n입력해주세요.'
@@ -313,6 +319,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
               ? '비밀번호를\n입력해주세요.'
               : '비밀번호를\n한 번 더 입력해주세요.'}
         </Text>
+
 
         {/* 일반 회원가입에서만 userId 입력 및 중복확인 UI를 보여준다. */}
         {!isSsafySignup && (
