@@ -2,6 +2,7 @@ package com.wow.domain.auth.service;
 
 import com.wow.domain.auth.dto.UserLoginResponse;
 import com.wow.domain.auth.dto.UserSummaryResponse;
+import com.wow.domain.auth.dto.ssafy.SsafyCheckRequest;
 import com.wow.domain.auth.dto.ssafy.SsafyRegisterRequest;
 import com.wow.domain.auth.dto.ssafy.SsafyTokenResponse;
 import com.wow.domain.auth.dto.ssafy.SsafyUserInfo;
@@ -62,6 +63,7 @@ public class SsafyOAuthService {
     public String login(String code) {
 
         SsafyTokenResponse tokenResponse = getAccessToken(code);
+
         SsafyUserInfo userInfo = getUserInfo(tokenResponse.getAccessToken());
 
         log.info("SSAFY 로그인 - userId: {}, name: {}", userInfo.getUserId(), userInfo.getName());
@@ -74,7 +76,7 @@ public class SsafyOAuthService {
             return buildLoginRedirectUrl(issueToken(existingUser.get()));
         }
 
-        // 신규 회원 → 휴대 전화 인증 받기 전 Redis에 30분동안 ssafyOauthId 임시 저장
+        // 신규 회원 → 중복 검증 하기 전 Redis에 30분동안 ssafyOauthId 임시 저장
         log.info("신규 회원 - Redis 저장 키: {}", PENDING_KEY_PREFIX + userInfo.getUserId());
         redisTemplate.opsForValue().set(
                 PENDING_KEY_PREFIX + userInfo.getUserId(),
@@ -82,7 +84,7 @@ public class SsafyOAuthService {
                 Duration.ofMinutes(PENDING_TTL_MINUTES)
         );
 
-        // 전화번호 입력 딥링크 반환
+        // 신규 회원 정보 입력 딥링크 반환 (성별, 생년월일, 전화번호)
         return UriComponentsBuilder
                 .fromUriString("wow://auth/ssafy/register")
                 .queryParam("ssafyOauthId", userInfo.getUserId())
@@ -113,9 +115,36 @@ public class SsafyOAuthService {
         return redirectBuilder.build().encode().toUriString();
     }
 
-    // 3. 신규 SSAFY 회원 전화번호 인증 후 회원가입 + JWT 발급
+    // 3. 신규 SSAFY 회원 중복 확인 (SMS 인증 전)
+    public void checkDuplicate(SsafyCheckRequest request) {
+
+        if (userRepository.existsBySsafyOauthId(request.getSsafyOauthId())) {
+            throw new IllegalArgumentException("이미 가입된 SSAFY 계정입니다.");
+        }
+
+        String name = redisTemplate.opsForValue().get(PENDING_KEY_PREFIX + request.getSsafyOauthId());
+
+        if (name == null) {
+            throw new IllegalArgumentException("SSAFY 로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
+        }
+
+        if (userRepository.existsByNameAndGenderAndBirthDate(name, request.getGender(), request.getBirthDate())) {
+            throw new IllegalArgumentException("이미 가입된 회원입니다.");
+        }
+
+        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            throw new IllegalArgumentException("이미 가입된 전화번호입니다.");
+        }
+
+    }
+
+    // 4. 신규 SSAFY 회원 SMS 인증 완료 후 회원가입 + JWT 발급
     @Transactional
     public UserLoginResponse register(SsafyRegisterRequest request) {
+
+        if (userRepository.existsBySsafyOauthId(request.getSsafyOauthId())) {
+            throw new IllegalArgumentException("이미 가입된 SSAFY 계정입니다.");
+        }
 
         String redisKey = PENDING_KEY_PREFIX + request.getSsafyOauthId();
         String name = redisTemplate.opsForValue().get(redisKey);
@@ -123,6 +152,10 @@ public class SsafyOAuthService {
 
         if (name == null) {
             throw new IllegalArgumentException("SSAFY 로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
+        }
+
+        if (userRepository.existsByNameAndGenderAndBirthDate(name, request.getGender(), request.getBirthDate())) {
+            throw new IllegalArgumentException("이미 가입된 회원입니다.");
         }
 
         if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
@@ -134,6 +167,9 @@ public class SsafyOAuthService {
         User newUser = User.builder()
                 .ssafyOauthId(request.getSsafyOauthId())
                 .name(name)
+                .gender(request.getGender())
+                .alarmEnabled(request.isAlarmEnabled())
+                .birthDate(request.getBirthDate())
                 .phoneNumber(request.getPhoneNumber())
                 .role(Role.User)
                 .build();
@@ -191,6 +227,7 @@ public class SsafyOAuthService {
 
     // JWT 발급 공통 로직
     private UserLoginResponse issueToken(User user) {
+
         String userId = user.getSsafyOauthId();
         String accessToken = jwtTokenProvider.createAccessToken(
                 userId,
@@ -210,6 +247,7 @@ public class SsafyOAuthService {
                 refreshToken,
                 UserSummaryResponse.from(user)
         );
+
     }
 
 }
