@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 
 // =============================================
 // Native auth API client
@@ -100,7 +100,7 @@ export interface SmsVerifyRequest {
 
 export interface CheckUserIdResponse {
   // 일반 회원가입의 userId 중복확인 응답
-  isAvailable: boolean;
+  available: boolean;
   message?: string;
 }
 
@@ -115,7 +115,11 @@ const nativeApi = axios.create({
 
 nativeApi.interceptors.request.use((config) => {
   console.log('[API request]', config.method?.toUpperCase(), `${config.baseURL}${config.url}`);
-  console.log('[API request payload]', config.data);
+  if (config.method?.toUpperCase() === 'GET' && config.params) {
+    console.log('[API request params]', config.params);
+  } else {
+    console.log('[API request payload]', config.data);
+  }
   return config;
 });
 
