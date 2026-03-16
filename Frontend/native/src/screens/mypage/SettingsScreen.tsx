@@ -36,8 +36,25 @@ import {
   type NativeUserProfileResponse,
 } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
+import { validatePassword } from '../../utils/validation';
 
 type EditMode = 'profile' | 'phone' | 'password' | null;
+
+/**
+ * 휴대폰 번호를 마스킹 처리합니다. (01012345678 -> 010-****-5678)
+ * 번호가 11자리가 아닐 경우를 대비한 유연한 처리를 포함합니다.
+ */
+const maskPhoneNumber = (phone: string) => {
+  if (!phone) return '-';
+  const cleaned = phone.replace(/[^0-9]/g, '');
+  
+  if (cleaned.length === 11) {
+    return `${cleaned.slice(0, 3)}-****-${cleaned.slice(7)}`;
+  } else if (cleaned.length === 10) {
+    return `${cleaned.slice(0, 3)}-***-${cleaned.slice(6)}`;
+  }
+  return phone;
+};
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -62,6 +79,11 @@ export default function SettingsScreen() {
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const [isTermsModalVisible, setIsTermsModalVisible] = useState(false);
   const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
+
+  // 비밀번호 변경 모달에서의 비밀번호 숨김/보임 처리를 위한 상태입니다.
+  const [isCurrentPwVisible, setIsCurrentPwVisible] = useState(false);
+  const [isNewPwVisible, setIsNewPwVisible] = useState(false);
+  const [isConfirmPwVisible, setIsConfirmPwVisible] = useState(false);
 
   const appVersion = useMemo(() => Constants.expoConfig?.version ?? 'unknown', []);
   const isPushEnabled = profile?.alarmEnabled ?? false;
@@ -102,8 +124,10 @@ export default function SettingsScreen() {
     setCurrentPw('');
     setNewPw('');
     setConfirmPw('');
-    setIsPhoneCodeSent(false);
     setIsPhoneVerified(false);
+    setIsCurrentPwVisible(false);
+    setIsNewPwVisible(false);
+    setIsConfirmPwVisible(false);
   };
 
   const closeEditor = () => {
@@ -226,6 +250,13 @@ export default function SettingsScreen() {
       }
 
       if (editMode === 'password') {
+        // 1. 새 비밀번호 유효성 검사 (복잡성, 연속성, 반복성 등)
+        // 현재 로그인된 사용자의 아이디와 대조하기 위해 profile?.userId를 전달합니다.
+        const validation = validatePassword(newPw, profile?.userId || undefined);
+        if (!validation.isValid) {
+          throw new Error(validation.message);
+        }
+
         if (currentPw === newPw) {
           throw new Error('현재 비밀번호와 다른 새 비밀번호를 입력해주세요.');
         }
@@ -310,7 +341,7 @@ export default function SettingsScreen() {
   const pushToggleDescription = isPushEnabled ? '켜짐' : '꺼짐';
   const userIdentifier =
     profile?.userId ?? (profile?.loginType === 'SSAFY' ? 'SSAFY 로그인' : '-');
-  const phoneDisplay = profile?.phoneNumber ?? '미등록';
+  const phoneDisplay = maskPhoneNumber(profile?.phoneNumber ?? '');
 
   return (
     <View style={styles.container}>
@@ -468,30 +499,78 @@ export default function SettingsScreen() {
 
             {editMode === 'password' ? (
               <>
-                <TextInput
-                  style={styles.input}
-                  placeholder="현재 비밀번호"
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={currentPw}
-                  onChangeText={setCurrentPw}
-                  secureTextEntry
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="새 비밀번호"
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={newPw}
-                  onChangeText={setNewPw}
-                  secureTextEntry
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="새 비밀번호 확인"
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={confirmPw}
-                  onChangeText={setConfirmPw}
-                  secureTextEntry
-                />
+                <View style={styles.passwordInputContainer}>
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    placeholder="현재 비밀번호"
+                    placeholderTextColor={COLORS.textTertiary}
+                    value={currentPw}
+                    onChangeText={setCurrentPw}
+                    secureTextEntry={!isCurrentPwVisible}
+                  />
+                  <TouchableOpacity 
+                    style={styles.inputEyeIcon} 
+                    onPress={() => setIsCurrentPwVisible(!isCurrentPwVisible)}
+                  >
+                    <Ionicons 
+                      name={isCurrentPwVisible ? "eye-outline" : "eye-off-outline"} 
+                      size={wp(22)} 
+                      color={COLORS.textTertiary} 
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.passwordInputContainer}>
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    placeholder="새 비밀번호 (8~20자, 조합 필수)"
+                    placeholderTextColor={COLORS.textTertiary}
+                    value={newPw}
+                    onChangeText={setNewPw}
+                    secureTextEntry={!isNewPwVisible}
+                  />
+                  <TouchableOpacity 
+                    style={styles.inputEyeIcon} 
+                    onPress={() => setIsNewPwVisible(!isNewPwVisible)}
+                  >
+                    <Ionicons 
+                      name={isNewPwVisible ? "eye-outline" : "eye-off-outline"} 
+                      size={wp(22)} 
+                      color={COLORS.textTertiary} 
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                {newPw.length > 0 && (
+                  <Text style={[
+                    styles.errorMessage, 
+                    { marginTop: 0, marginBottom: hp(8), fontSize: fp(12) },
+                    validatePassword(newPw, profile?.userId || undefined).isValid && { color: COLORS.success }
+                  ]}>
+                    * {validatePassword(newPw, profile?.userId || undefined).message}
+                  </Text>
+                )}
+
+                <View style={styles.passwordInputContainer}>
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    placeholder="새 비밀번호 확인"
+                    placeholderTextColor={COLORS.textTertiary}
+                    value={confirmPw}
+                    onChangeText={setConfirmPw}
+                    secureTextEntry={!isConfirmPwVisible}
+                  />
+                  <TouchableOpacity 
+                    style={styles.inputEyeIcon} 
+                    onPress={() => setIsConfirmPwVisible(!isConfirmPwVisible)}
+                  >
+                    <Ionicons 
+                      name={isConfirmPwVisible ? "eye-outline" : "eye-off-outline"} 
+                      size={wp(22)} 
+                      color={COLORS.textTertiary} 
+                    />
+                  </TouchableOpacity>
+                </View>
               </>
             ) : null}
 
@@ -698,5 +777,21 @@ const styles = StyleSheet.create({
     fontSize: fp(14),
     fontFamily: FONTS.semiBold,
     color: '#FFFFFF',
+  },
+  errorMessage: {
+    fontSize: fp(14),
+    fontFamily: FONTS.medium,
+    color: '#EF4444',
+    marginTop: hp(8),
+  },
+  passwordInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  inputEyeIcon: {
+    position: 'absolute',
+    right: wp(12),
+    padding: wp(4),
   },
 });
