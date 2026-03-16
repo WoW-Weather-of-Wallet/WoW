@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -45,14 +45,25 @@ export default function MyPageScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* 상단 프로필은 간단히 두고, 아래에서 카드/계좌 중심으로 내용을 확장합니다. */}
-        <View style={styles.profileCard}>
+        {/* 
+            상단 프로필 카드 영역: 
+            사용자 정보를 간략히 요약하며, 클릭 시 상세 설정 페이지(SettingsScreen)로 이동합니다.
+            애니메이션 피드백을 위해 TouchableOpacity의 activeOpacity를 0.9로 설정했습니다.
+        */}
+        <TouchableOpacity 
+          style={styles.profileCard}
+          activeOpacity={0.9}
+          onPress={() => navigation.navigate('Settings')}
+        >
           <View style={styles.profileHeaderRow}>
             <View style={styles.avatarCircle}>
               <Text style={styles.avatarText}>{mockUserProfile.name.slice(0, 1)}</Text>
             </View>
             <View style={styles.profileTextBlock}>
-              <Text style={styles.profileName}>{mockUserProfile.name}님 안녕하세요!</Text>
+              <View style={styles.nameRow}>
+                <Text style={styles.profileName}>{mockUserProfile.name}님 안녕하세요!</Text>
+                <Ionicons name="chevron-forward" size={wp(20)} color={COLORS.textTertiary} />
+              </View>
               <View style={styles.profileBadge}>
                 <Text style={styles.profileBadgeText}>{mockUserProfile.badge}</Text>
               </View>
@@ -72,7 +83,7 @@ export default function MyPageScreen() {
               </Text>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
 
         <View style={styles.statsRow}>
           {mockProfileStats.map((stat) => (
@@ -207,7 +218,8 @@ export default function MyPageScreen() {
             title="로그아웃"
             variant="outline"
             onPress={() => {
-              // 로그아웃은 authStore 와 Authorization 헤더를 동시에 정리해 인증 전 플로우로 되돌립니다.
+              // 로그아웃 시 authStore의 토큰과 상태를 초기화하고 로그인 화면으로 이동시킵니다.
+              // 이는 앱의 전역 인증 상태를 가장 확실하게 초기화하는 방법입니다.
               logout();
               navigation.reset({
                 index: 0,
@@ -256,6 +268,11 @@ const styles = StyleSheet.create({
   },
   profileTextBlock: {
     flex: 1,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   profileName: {
     fontSize: fp(24),
