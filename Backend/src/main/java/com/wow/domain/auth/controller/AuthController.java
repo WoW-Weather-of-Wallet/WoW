@@ -72,6 +72,13 @@ public class AuthController {
         return ResponseEntity.ok(authService.findId(request));
     }
 
+    @Operation(summary = "비밀번호 찾기", description = "아이디, 이름, 생년월일, 전화번호 SMS 인증 완료 후 새 비밀번호로 변경합니다.")
+    @PostMapping("/find/pw")
+    public ResponseEntity<Void> findPw(@RequestBody FindPwRequest request) {
+        authService.findPw(request);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "비밀번호 변경", description = "현재 비밀번호를 확인 후 새 비밀번호로 변경합니다. (일반 회원 전용)")
     @PatchMapping("/password")
     public ResponseEntity<Void> changePassword(@AuthenticationPrincipal UserDetails userDetails,

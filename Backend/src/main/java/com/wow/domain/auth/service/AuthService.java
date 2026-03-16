@@ -163,6 +163,21 @@ public class AuthService {
     }
 
     @Transactional
+    public void findPw(FindPwRequest request) {
+
+        User user = userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(
+                request.getUserId(), request.getName(), request.getBirthDate(), request.getPhoneNumber())
+                .orElseThrow(() -> new IllegalArgumentException("일치하는 회원 정보가 없습니다."));
+
+        smsService.checkVerified(request.getPhoneNumber());
+
+        user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
+
+        smsService.deleteVerified(request.getPhoneNumber());
+
+    }
+
+    @Transactional
     public void changePassword(String userId, ChangePasswordRequest request) {
 
         User user = userRepository.findByUserId(userId)
