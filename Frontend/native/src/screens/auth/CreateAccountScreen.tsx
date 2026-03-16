@@ -98,7 +98,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
 
     try {
       const response = await checkUserId(trimmedId);
-      const isAvailable = response?.available === true;
+      const isAvailable = response?.isAvailable === true;
 
       setIsIdAvailable(isAvailable);
 

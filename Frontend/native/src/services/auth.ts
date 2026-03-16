@@ -100,7 +100,8 @@ export interface SmsVerifyRequest {
 
 export interface CheckUserIdResponse {
   // 일반 회원가입의 userId 중복확인 응답
-  available: boolean;
+  // 백엔드 변수명은 isAvailable 이지만, JSON 직렬화 시 available 로 내려올 수 있어 둘 다 대응하도록 정의합니다.
+  isAvailable: boolean;
   message?: string;
 }
 
@@ -176,11 +177,15 @@ export const verifySmsCode = async (payload: SmsVerifyRequest) => {
 // 일반 회원가입의 userId 중복확인 API
 // EAS Build 환경에서 shared 폴더 의존성을 줄이기 위해 native 클라이언트에서 직접 호출한다.
 export const checkUserId = async (userId: string): Promise<CheckUserIdResponse> => {
-  const response = await nativeApi.get<CheckUserIdResponse>('/api/v1/auth/check-user-id', {
+  const response = await nativeApi.get<any>('/api/v1/auth/check-user-id', {
     params: { userId },
   });
 
-  return response.data;
+  // 백엔드(Java/Jackson) 직렬화 특성상 isAvailable 이 available 로 내려오는 경우를 모두 처리합니다.
+  return {
+    isAvailable: response.data.available ?? response.data.isAvailable,
+    message: response.data.message,
+  };
 };
 
 // 일반/SSAFY 회원가입 공용 signup API
