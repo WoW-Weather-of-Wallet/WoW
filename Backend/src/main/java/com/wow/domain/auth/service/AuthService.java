@@ -53,12 +53,8 @@ public class AuthService {
             throw new IllegalArgumentException("이미 존재하는 회원입니다.");
         }
 
-        if (userRepository.existsByNameAndGenderAndBirthDate(request.getName(), request.getGender(), request.getBirthDate())) {
+        if (userRepository.existsDuplicate(request.getName(), request.getGender(), request.getBirthDate(), request.getPhoneNumber())) {
             throw new IllegalArgumentException("이미 가입된 회원입니다.");
-        }
-
-        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            throw new IllegalArgumentException("이미 가입된 전화번호입니다.");
         }
 
         smsService.checkVerified(request.getPhoneNumber());
@@ -145,6 +141,24 @@ public class AuthService {
     public void logout(String userId) {
 
         redisTemplate.delete(REFRESH_KEY_PREFIX + userId);
+
+    }
+
+    @Transactional(readOnly = true)
+    public FindIdResponse findId(FindIdRequest request) {
+
+        User user = userRepository.findByNameAndBirthDateAndPhoneNumber(
+                request.getName(), request.getBirthDate(), request.getPhoneNumber())
+                .orElseThrow(() -> new IllegalArgumentException("일치하는 회원 정보가 없습니다."));
+
+        if (user.getUserId() == null) {
+            throw new IllegalArgumentException("SSAFY 계정으로 가입된 회원입니다.");
+        }
+
+        smsService.checkVerified(request.getPhoneNumber());
+        smsService.deleteVerified(request.getPhoneNumber());
+
+        return new FindIdResponse(user.getUserId());
 
     }
 
