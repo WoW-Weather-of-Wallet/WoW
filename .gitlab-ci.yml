@@ -12,8 +12,6 @@ build-front:
         - Frontend/react/**/*
         - Frontend/native/**/*
         - Frontend/shared/**/*
-        - Infra/**/*
-        - .gitlab-ci.yml
   script:
     - docker run --rm --user $(id -u):$(id -g) -e HOME=/tmp -e npm_config_cache=/tmp/.npm -v $CI_PROJECT_DIR/Frontend/react:/app -w /app node:20-alpine sh -c "npm ci && npm run build"
     - docker run --rm --user $(id -u):$(id -g) -e HOME=/tmp -e npm_config_cache=/tmp/.npm -v $CI_PROJECT_DIR/Frontend:/app -w /app/shared node:20-alpine sh -c "npm ci && npx tsc -p tsconfig.json --noEmit"
@@ -27,8 +25,6 @@ build-back:
     - if: '$CI_COMMIT_BRANCH'
       changes:
         - Backend/**/*
-        - Infra/**/*
-        - .gitlab-ci.yml
   script:
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
     - docker build -t $DOCKERHUB_USERNAME/wow-backend:latest $CI_PROJECT_DIR/Backend
