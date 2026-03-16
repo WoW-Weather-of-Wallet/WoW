@@ -12,6 +12,9 @@ import VerifyCodeScreen from '../screens/auth/VerifyCodeScreen';
 import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
+import AccountRecoveryScreen from '../screens/auth/AccountRecoveryScreen';
+import FindIdScreen from '../screens/auth/FindIdScreen';
+import FindPwScreen from '../screens/auth/FindPwScreen';
 import MainTabNavigator from './MainTabNavigator';
 
 // Onboarding & MyPage 화면
@@ -93,6 +96,34 @@ export default function RootNavigator() {
           name="Login"
           component={LoginScreen}
           options={{ gestureEnabled: false }}
+        />
+
+        {/* 계정 찾기 화면 */}
+        <Stack.Screen
+          name="AccountRecovery"
+          component={AccountRecoveryScreen}
+          options={{ 
+            gestureEnabled: true,
+            animation: 'slide_from_right'
+          }}
+        />
+
+        <Stack.Screen
+          name="FindId"
+          component={FindIdScreen}
+          options={{ 
+            gestureEnabled: true,
+            animation: 'slide_from_right'
+          }}
+        />
+
+        <Stack.Screen
+          name="FindPw"
+          component={FindPwScreen}
+          options={{ 
+            gestureEnabled: true,
+            animation: 'slide_from_right'
+          }}
         />
 
         {/* 인증 이후 진입하는 메인 앱 영역 */}

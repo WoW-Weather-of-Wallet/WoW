@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -60,8 +60,26 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
         code: finalCode,
       });
 
-      console.log('인증 완료. 계정 생성(ID/PW) 화면으로 이동.');
-      navigation.replace('CreateAccount', route.params);
+      console.log('인증 완료. 플로우:', route.params.flow);
+      
+      if (route.params.flow === 'FindId') {
+        // 아이디 찾기 성공: 아이디 안내 (현재는 더미 알럿, 추후 결과 화면으로 이동 가능)
+        Alert.alert(
+          '아이디 확인',
+          `${route.params.name}님의 아이디는 [ssafy***] 입니다.`,
+          [{ text: '로그인하러 가기', onPress: () => navigation.navigate('Login') }]
+        );
+      } else if (route.params.flow === 'FindPw') {
+        // 비밀번호 찾기 성공: 비밀번호 재설정 화면으로 이동
+        Alert.alert(
+          '인증 성공',
+          '본인 확인이 완료되었습니다. 비밀번호 재설정 페이지로 이동합니다.',
+          [{ text: '확인', onPress: () => console.log('비밀번호 재설정 화면 이동 개발 예정') }]
+        );
+      } else {
+        // 기본 플로우 (회원가입)
+        navigation.replace('CreateAccount', route.params);
+      }
     } catch (error: any) {
       // 인증번호 검증도 공통 파서를 사용해 message 필드 차이를 화면에서 숨깁니다.
       const message = extractApiErrorMessage(
@@ -119,8 +137,16 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
         {/* 인증 서버 상태와 무관하게 계정 생성 화면 개발을 이어갈 수 있도록 우회 버튼을 둡니다. */}
         <DevShortcutButton
           label="TEST: 인증 성공 처리"
-          description="인증번호 검증 API 가 불안정할 때도 CreateAccount 화면으로 바로 이동합니다."
-          onPress={() => navigation.replace('CreateAccount', route.params)}
+          description="인증 절차를 건너뛰고 다음 화면으로 이동합니다."
+          onPress={() => {
+             if (route.params.flow === 'FindId') {
+               Alert.alert('아이디 확인', `${route.params.name}님의 아이디는 [test_user] 입니다.`);
+             } else if (route.params.flow === 'FindPw') {
+               Alert.alert('비밀번호 재설정', '비밀번호 재설정 단계로 이동합니다.');
+             } else {
+               navigation.replace('CreateAccount', route.params);
+             }
+          }}
         />
       </View>
 
