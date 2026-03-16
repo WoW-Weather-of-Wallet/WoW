@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Modal,
   Pressable,
@@ -11,13 +12,12 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  ActivityIndicator,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, FONTS, fp, hp, wp, RADIUS } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
 import ProfileEditHeader from '../../components/mypage/ProfileEditHeader';
 import SettingSection from '../../components/mypage/SettingSection';
@@ -27,8 +27,10 @@ import {
   deleteAccount,
   getProfile,
   logout as logoutRequest,
+  sendSmsCode,
   updatePhone,
   updateProfile,
+  verifySmsCode,
   type NativeUserProfileResponse,
 } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
@@ -40,17 +42,22 @@ export default function SettingsScreen() {
   const navigation = useNavigation<any>();
   const logout = useAuthStore((state) => state.logout);
   const updateUser = useAuthStore((state) => state.updateUser);
+
   const [profile, setProfile] = useState<NativeUserProfileResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editMode, setEditMode] = useState<EditMode>(null);
+
   const [name, setName] = useState('');
   const [gender, setGender] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneCode, setPhoneCode] = useState('');
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
+  const [isPhoneCodeSent, setIsPhoneCodeSent] = useState(false);
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
 
   const appVersion = useMemo(() => Constants.expoConfig?.version ?? 'unknown', []);
   const isPushEnabled = profile?.alarmEnabled ?? false;
@@ -87,9 +94,17 @@ export default function SettingsScreen() {
     setGender('');
     setBirthDate('');
     setPhoneNumber('');
+    setPhoneCode('');
     setCurrentPw('');
     setNewPw('');
     setConfirmPw('');
+    setIsPhoneCodeSent(false);
+    setIsPhoneVerified(false);
+  };
+
+  const closeEditor = () => {
+    setEditMode(null);
+    resetForm();
   };
 
   const openProfileEditor = () => {
@@ -101,6 +116,9 @@ export default function SettingsScreen() {
 
   const openPhoneEditor = () => {
     setPhoneNumber(profile?.phoneNumber ?? '');
+    setPhoneCode('');
+    setIsPhoneCodeSent(false);
+    setIsPhoneVerified(false);
     setEditMode('phone');
   };
 
@@ -111,13 +129,63 @@ export default function SettingsScreen() {
     setEditMode('password');
   };
 
-  const closeEditor = () => {
-    setEditMode(null);
-    resetForm();
+  const handleEditProfilePhoto = () => {
+    Alert.alert(
+      '프로필 사진 변경',
+      '프로필 사진 업로드 API는 아직 백엔드에 준비되지 않았습니다.',
+    );
   };
 
-  const handleEditProfilePhoto = () => {
-    Alert.alert('프로필 사진 변경', '프로필 사진 업로드 API는 아직 백엔드에 준비되지 않았습니다.');
+  const handleSendPhoneCode = async () => {
+    const normalizedPhone = phoneNumber.replace(/[^0-9]/g, '');
+
+    if (isSubmitting || normalizedPhone.length < 10) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await sendSmsCode({ phoneNumber: normalizedPhone });
+      setIsPhoneCodeSent(true);
+      setIsPhoneVerified(false);
+      Alert.alert('인증번호 발송', '인증번호를 문자로 전송했습니다.');
+    } catch (error) {
+      const message = extractApiErrorMessage(
+        error,
+        '인증번호를 보내지 못했어요. 다시 시도해주세요.',
+      );
+      Alert.alert('인증번호 발송 실패', message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyPhoneCode = async () => {
+    const normalizedPhone = phoneNumber.replace(/[^0-9]/g, '');
+
+    if (isSubmitting || !isPhoneCodeSent || phoneCode.trim().length !== 6) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await verifySmsCode({
+        phoneNumber: normalizedPhone,
+        code: phoneCode.trim(),
+      });
+      setIsPhoneVerified(true);
+      Alert.alert('인증 완료', '휴대폰 번호 인증이 완료되었습니다.');
+    } catch (error) {
+      const message = extractApiErrorMessage(
+        error,
+        '인증번호를 확인하지 못했어요. 다시 시도해주세요.',
+      );
+      Alert.alert('인증 실패', message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -134,6 +202,7 @@ export default function SettingsScreen() {
           gender: gender.trim() || undefined,
           birthDate: birthDate.trim() || undefined,
         });
+
         setProfile(updated);
         updateUser({
           userId: updated.userId ?? undefined,
@@ -142,6 +211,10 @@ export default function SettingsScreen() {
       }
 
       if (editMode === 'phone') {
+        if (!isPhoneVerified) {
+          throw new Error('휴대폰 번호 변경 전에 SMS 인증을 완료해주세요.');
+        }
+
         await updatePhone({
           phoneNumber: phoneNumber.replace(/[^0-9]/g, ''),
         });
@@ -234,7 +307,8 @@ export default function SettingsScreen() {
   };
 
   const pushToggleDescription = isPushEnabled ? '켜짐' : '꺼짐';
-  const userIdentifier = profile?.userId ?? (profile?.loginType === 'SSAFY' ? 'SSAFY 로그인' : '-');
+  const userIdentifier =
+    profile?.userId ?? (profile?.loginType === 'SSAFY' ? 'SSAFY 로그인' : '-');
   const phoneDisplay = profile?.phoneNumber ?? '미등록';
 
   return (
@@ -263,33 +337,18 @@ export default function SettingsScreen() {
         ) : null}
 
         <SettingSection title="계정 정보">
-          <SettingItem
-            label="아이디"
-            value={userIdentifier}
-            type="text"
-          />
+          <SettingItem label="아이디" value={userIdentifier} type="text" />
           <SettingItem
             label="프로필 정보 수정"
             value={profile?.name ?? '-'}
             onPress={openProfileEditor}
           />
-          <SettingItem
-            label="비밀번호 변경"
-            onPress={openPasswordEditor}
-          />
-          <SettingItem
-            label="휴대폰 번호"
-            value={phoneDisplay}
-            onPress={openPhoneEditor}
-          />
+          <SettingItem label="비밀번호 변경" onPress={openPasswordEditor} />
+          <SettingItem label="휴대폰 번호" value={phoneDisplay} onPress={openPhoneEditor} />
         </SettingSection>
 
         <SettingSection title="서비스 설정">
-          <SettingItem
-            label="알림 상태"
-            value={pushToggleDescription}
-            type="text"
-          />
+          <SettingItem label="알림 상태" value={pushToggleDescription} type="text" />
           <View style={styles.toggleRow}>
             <Text style={styles.toggleDescription}>
               알림 설정 변경 API는 아직 준비되지 않아 현재 상태만 표시합니다.
@@ -304,16 +363,8 @@ export default function SettingsScreen() {
         </SettingSection>
 
         <SettingSection title="이용 안내">
-          <SettingItem
-            label="로그인 타입"
-            value={profile?.loginType ?? '-'}
-            type="text"
-          />
-          <SettingItem
-            label="현재 버전"
-            value={appVersion}
-            type="text"
-          />
+          <SettingItem label="로그인 타입" value={profile?.loginType ?? '-'} type="text" />
+          <SettingItem label="현재 버전" value={appVersion} type="text" />
         </SettingSection>
 
         <SettingSection>
@@ -369,14 +420,54 @@ export default function SettingsScreen() {
             ) : null}
 
             {editMode === 'phone' ? (
-              <TextInput
-                style={styles.input}
-                placeholder="휴대폰 번호 (- 없이 입력)"
-                placeholderTextColor={COLORS.textTertiary}
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
-                keyboardType="number-pad"
-              />
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder="휴대폰 번호 (- 없이 입력)"
+                  placeholderTextColor={COLORS.textTertiary}
+                  value={phoneNumber}
+                  onChangeText={(value) => {
+                    setPhoneNumber(value);
+                    setIsPhoneVerified(false);
+                  }}
+                  keyboardType="number-pad"
+                />
+                <TouchableOpacity
+                  style={[styles.inlineActionButton, styles.secondaryInlineActionButton]}
+                  onPress={() => void handleSendPhoneCode()}
+                  disabled={isSubmitting}
+                >
+                  <Text style={styles.secondaryInlineActionText}>
+                    {isPhoneCodeSent ? '인증번호 다시 발송' : '인증번호 발송'}
+                  </Text>
+                </TouchableOpacity>
+
+                {isPhoneCodeSent ? (
+                  <>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="인증번호 6자리"
+                      placeholderTextColor={COLORS.textTertiary}
+                      value={phoneCode}
+                      onChangeText={setPhoneCode}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                    />
+                    <TouchableOpacity
+                      style={[
+                        styles.inlineActionButton,
+                        isPhoneVerified && styles.verifiedInlineActionButton,
+                      ]}
+                      onPress={() => void handleVerifyPhoneCode()}
+                      disabled={isSubmitting || isPhoneVerified}
+                    >
+                      <Text style={styles.inlineActionText}>
+                        {isPhoneVerified ? '인증 완료' : '인증번호 확인'}
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                ) : null}
+              </>
             ) : null}
 
             {editMode === 'password' ? (
@@ -410,7 +501,7 @@ export default function SettingsScreen() {
 
             {editMode === 'phone' ? (
               <Text style={styles.helperText}>
-                백엔드 정책상 휴대폰 번호 변경 전 SMS 인증이 필요합니다.
+                백엔드 정책상 휴대폰 번호 변경 전에 SMS 인증을 완료해야 합니다.
               </Text>
             ) : null}
 
@@ -522,6 +613,31 @@ const styles = StyleSheet.create({
     lineHeight: fp(18),
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
+  },
+  inlineActionButton: {
+    borderRadius: RADIUS.md,
+    paddingVertical: hp(12),
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primary,
+  },
+  secondaryInlineActionButton: {
+    backgroundColor: COLORS.backgroundSecondary,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  verifiedInlineActionButton: {
+    backgroundColor: COLORS.success,
+  },
+  inlineActionText: {
+    fontSize: fp(14),
+    fontFamily: FONTS.semiBold,
+    color: '#FFFFFF',
+  },
+  secondaryInlineActionText: {
+    fontSize: fp(14),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
   },
   modalButtonRow: {
     flexDirection: 'row',
