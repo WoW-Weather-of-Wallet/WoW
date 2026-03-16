@@ -12,7 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Auth", description = "일반 로그인/회원가입 및 SMS 인증 API")
+@Tag(name = "Auth", description = "일반 로그인/회원가입 관련 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
@@ -63,6 +63,19 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails userDetails) {
         authService.logout(userDetails.getUsername());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "아이디 찾기", description = "이름, 생년월일, 전화번호 SMS 인증 완료 후 아이디를 반환합니다.")
+    @PostMapping("/find/id")
+    public ResponseEntity<FindIdResponse> findId(@RequestBody FindIdRequest request) {
+        return ResponseEntity.ok(authService.findId(request));
+    }
+
+    @Operation(summary = "비밀번호 찾기", description = "아이디, 이름, 생년월일, 전화번호 SMS 인증 완료 후 새 비밀번호로 변경합니다.")
+    @PostMapping("/find/pw")
+    public ResponseEntity<Void> findPw(@RequestBody FindPwRequest request) {
+        authService.findPw(request);
         return ResponseEntity.noContent().build();
     }
 

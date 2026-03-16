@@ -1,6 +1,5 @@
 package com.wow.domain.user.controller;
 
-import com.wow.domain.user.dto.OnboardingRequest;
 import com.wow.domain.user.dto.UpdatePhoneRequest;
 import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.dto.UserProfileResponse;
@@ -48,13 +47,6 @@ public class UserController {
                                             @RequestBody UpdatePhoneRequest request) {
         userService.updatePhone(userDetails.getUsername(), request);
         return ResponseEntity.noContent().build();
-    }
-
-    @Operation(summary = "온보딩", description = "SSAFY 로그인 후 추가 정보(성별, 휴대폰, 생년월일, 알림 설정)를 입력합니다.")
-    @PatchMapping("/onboarding")
-    public ResponseEntity<UserProfileResponse> onboarding(@AuthenticationPrincipal UserDetails userDetails,
-                                                          @RequestBody OnboardingRequest request) {
-        return ResponseEntity.ok(userService.onboarding(userDetails.getUsername(), request));
     }
 
 }
