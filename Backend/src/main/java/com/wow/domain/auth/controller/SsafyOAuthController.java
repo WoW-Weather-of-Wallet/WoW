@@ -7,6 +7,7 @@ import com.wow.domain.auth.service.SsafyOAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +43,7 @@ public class SsafyOAuthController {
 
     @Operation(summary = "SSAFY 신규 회원 등록", description = "SMS 인증 완료 후 신규 SSAFY 회원을 등록하고 JWT를 발급합니다.")
     @PostMapping("/register")
-    public ResponseEntity<UserLoginResponse> register(@RequestBody SsafyRegisterRequest request) {
+    public ResponseEntity<UserLoginResponse> register(@Valid @RequestBody SsafyRegisterRequest request) {
         return ResponseEntity.ok(ssafyOAuthService.register(request));
     }
 

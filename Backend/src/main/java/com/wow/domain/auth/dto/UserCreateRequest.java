@@ -1,5 +1,6 @@
 package com.wow.domain.auth.dto;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,6 +20,7 @@ public class UserCreateRequest {
     private String gender;
     private String phoneNumber;
     private LocalDate birthDate;
+    @AssertTrue(message = "필수 약관에 동의해야 합니다.")
     private boolean termsAgreed;
     private boolean alarmEnabled;
 
