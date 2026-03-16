@@ -22,6 +22,8 @@ import { useAuthStore } from '../../store/authStore';
 import ProfileEditHeader from '../../components/mypage/ProfileEditHeader';
 import SettingSection from '../../components/mypage/SettingSection';
 import SettingItem from '../../components/mypage/SettingItem';
+import AgreedTermsModal from '../../components/mypage/AgreedTermsModal';
+import WithdrawConfirmationModal from '../../components/mypage/WithdrawConfirmationModal';
 import {
   changePassword,
   deleteAccount,
@@ -58,6 +60,8 @@ export default function SettingsScreen() {
   const [confirmPw, setConfirmPw] = useState('');
   const [isPhoneCodeSent, setIsPhoneCodeSent] = useState(false);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [isTermsModalVisible, setIsTermsModalVisible] = useState(false);
+  const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
 
   const appVersion = useMemo(() => Constants.expoConfig?.version ?? 'unknown', []);
   const isPushEnabled = profile?.alarmEnabled ?? false;
@@ -222,9 +226,13 @@ export default function SettingsScreen() {
       }
 
       if (editMode === 'password') {
+        if (currentPw === newPw) {
+          throw new Error('현재 비밀번호와 다른 새 비밀번호를 입력해주세요.');
+        }
         if (newPw !== confirmPw) {
           throw new Error('새 비밀번호가 일치하지 않습니다.');
         }
+
 
         await changePassword({
           currentPw,
@@ -275,36 +283,29 @@ export default function SettingsScreen() {
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      '회원 탈퇴',
-      '주의: 탈퇴 후 모든 데이터가 삭제되며 복구할 수 없습니다. 계속하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '탈퇴하기',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteAccount();
-            } catch (error) {
-              const message = extractApiErrorMessage(
-                error,
-                '회원 탈퇴를 처리하지 못했어요. 다시 시도해주세요.',
-              );
-              Alert.alert('회원 탈퇴 실패', message);
-              return;
-            }
-
-            logout();
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Login' }],
-            });
-          },
-        },
-      ],
-    );
+    setIsWithdrawModalVisible(true);
   };
+
+  const onConfirmWithdraw = async () => {
+    setIsSubmitting(true);
+    try {
+      await deleteAccount();
+      logout();
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    } catch (error) {
+      const message = extractApiErrorMessage(
+        error,
+        '회원 탈퇴를 처리하지 못했어요. 다시 시도해주세요.',
+      );
+      Alert.alert('회원 탈퇴 실패', message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
 
   const pushToggleDescription = isPushEnabled ? '켜짐' : '꺼짐';
   const userIdentifier =
@@ -363,9 +364,13 @@ export default function SettingsScreen() {
         </SettingSection>
 
         <SettingSection title="이용 안내">
-          <SettingItem label="로그인 타입" value={profile?.loginType ?? '-'} type="text" />
+          <SettingItem
+            label="동의한 약관 확인"
+            onPress={() => setIsTermsModalVisible(true)}
+          />
           <SettingItem label="현재 버전" value={appVersion} type="text" />
         </SettingSection>
+
 
         <SettingSection>
           <SettingItem label="로그아웃" onPress={handleLogout} />
@@ -393,31 +398,22 @@ export default function SettingsScreen() {
 
             {editMode === 'profile' ? (
               <>
-                <TextInput
-                  style={styles.input}
-                  placeholder="이름"
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={name}
-                  onChangeText={setName}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="성별 (M/F)"
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={gender}
-                  onChangeText={setGender}
-                  autoCapitalize="characters"
-                  maxLength={1}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="생년월일 (YYYY-MM-DD)"
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={birthDate}
-                  onChangeText={setBirthDate}
-                />
+                <View style={styles.readOnlyInput}>
+                  <Text style={styles.readOnlyLabel}>이름</Text>
+                  <Text style={styles.readOnlyValue}>{name}</Text>
+                </View>
+                <View style={styles.readOnlyInput}>
+                  <Text style={styles.readOnlyLabel}>성별</Text>
+                  <Text style={styles.readOnlyValue}>{gender === 'M' ? '남성' : '여성'}</Text>
+                </View>
+                <View style={styles.readOnlyInput}>
+                  <Text style={styles.readOnlyLabel}>생년월일</Text>
+                  <Text style={styles.readOnlyValue}>{birthDate}</Text>
+                </View>
+                <Text style={styles.readOnlyHint}>* 기본 정보는 본인인증을 통해 확인된 정보라 직접 수정할 수 없어요.</Text>
               </>
             ) : null}
+
 
             {editMode === 'phone' ? (
               <>
@@ -499,12 +495,6 @@ export default function SettingsScreen() {
               </>
             ) : null}
 
-            {editMode === 'phone' ? (
-              <Text style={styles.helperText}>
-                백엔드 정책상 휴대폰 번호 변경 전에 SMS 인증을 완료해야 합니다.
-              </Text>
-            ) : null}
-
             <View style={styles.modalButtonRow}>
               <TouchableOpacity style={styles.secondaryButton} onPress={closeEditor}>
                 <Text style={styles.secondaryButtonText}>취소</Text>
@@ -518,7 +508,19 @@ export default function SettingsScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      <AgreedTermsModal
+        visible={isTermsModalVisible}
+        onClose={() => setIsTermsModalVisible(false)}
+      />
+
+      <WithdrawConfirmationModal
+        visible={isWithdrawModalVisible}
+        onClose={() => setIsWithdrawModalVisible(false)}
+        onConfirm={onConfirmWithdraw}
+      />
     </View>
+
   );
 }
 
@@ -614,7 +616,37 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
   },
+  readOnlyInput: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: RADIUS.md,
+    paddingHorizontal: wp(14),
+    paddingVertical: hp(12),
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: hp(4),
+  },
+  readOnlyLabel: {
+    fontSize: fp(14),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textTertiary,
+  },
+  readOnlyValue: {
+    fontSize: fp(15),
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
+  },
+  readOnlyHint: {
+    fontSize: fp(12),
+    fontFamily: FONTS.medium,
+    color: COLORS.textTertiary,
+    marginTop: hp(4),
+    paddingHorizontal: wp(4),
+  },
   inlineActionButton: {
+
     borderRadius: RADIUS.md,
     paddingVertical: hp(12),
     alignItems: 'center',
