@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
@@ -12,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, wp, hp, fp, RADIUS } from '../../constants/theme';
 import CustomTextInput from '../../components/common/CustomTextInput';
@@ -23,6 +23,7 @@ import CustomTextInput from '../../components/common/CustomTextInput';
 export default function ResetPasswordScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const insets = useSafeAreaInsets();
   const { userId } = route.params || {};
 
   const [password, setPassword] = useState('');
@@ -57,10 +58,10 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top, height: hp(56) + insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
         </TouchableOpacity>
@@ -121,7 +122,7 @@ export default function ResetPasswordScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
