@@ -13,19 +13,20 @@ export const BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL || 'https://j14d106.p.ssafy.io';
 
 export interface NativeSignupRequest {
-  userId: string;
-  jobId: number;
+  // 일반 회원가입은 userId, SSAFY 회원가입은 ssafyOauthId만 채운다.
+  userId?: string;
+  ssafyOauthId?: string;
   pw: string;
   name: string;
   gender: string;
   phoneNumber: string;
   birthDate: string;
   alarmEnabled: boolean;
+  termsAgreed: boolean;
 }
 
 export interface NativeSignupResponse {
   userId: string;
-  jobName: string | null;
   name: string;
   gender: string;
   phoneNumber: string;
@@ -41,6 +42,7 @@ export interface NativeLoginRequest {
 export interface NativeLoginResponse {
   accessToken: string;
   expiresIn: number;
+  refreshToken?: string;
   user: {
     userId: string;
     name?: string;
@@ -48,9 +50,34 @@ export interface NativeLoginResponse {
   };
 }
 
+export interface NativeUserProfileResponse {
+  userId?: string | null;
+  name: string;
+  gender?: string | null;
+  phoneNumber?: string | null;
+  birthDate?: string | null;
+  alarmEnabled: boolean;
+  loginType?: 'NORMAL' | 'SSAFY' | string | null;
+}
+
+export interface NativeUpdateProfileRequest {
+  name?: string;
+  gender?: string;
+  birthDate?: string;
+}
+
+export interface NativeUpdatePhoneRequest {
+  phoneNumber: string;
+}
+
+export interface NativeChangePasswordRequest {
+  currentPw: string;
+  newPw: string;
+}
+
 /**
  * SSAFY OAuth callback result
- * 백엔드가 앱 딥링크로 되돌려주는 대표 필드를 느슨하게 수용합니다.
+ * SSAFY 로그인 완료 후 앱 딥링크에서 읽어오는 세션/가입 분기 정보
  */
 export interface NativeSsafyCallbackResult {
   accessToken: string;
@@ -59,7 +86,7 @@ export interface NativeSsafyCallbackResult {
     name?: string;
     role?: string;
   };
-  onboardingRequired: boolean;
+  signupRequired: boolean;
 }
 
 export interface SmsSendRequest {
@@ -72,8 +99,9 @@ export interface SmsVerifyRequest {
 }
 
 export interface CheckUserIdResponse {
-  available: boolean;
-  userId: string;
+  // 일반 회원가입의 userId 중복확인 응답
+  isAvailable: boolean;
+  message?: string;
 }
 
 const nativeApi = axios.create({
@@ -129,20 +157,20 @@ export const setNativeAuthToken = (token: string | null) => {
   delete nativeApi.defaults.headers.common.Authorization;
 };
 
-// 휴대폰 인증번호 발송
+// 휴대폰 인증 단계에서 사용하는 SMS 발송 API
 export const sendSmsCode = async (payload: SmsSendRequest) => {
   const response = await nativeApi.post('/api/v1/auth/sms/send', payload);
   return response.data;
 };
 
-// 휴대폰 인증번호 검증
+// VerifyCode 화면에서 사용하는 SMS 인증번호 검증 API
 export const verifySmsCode = async (payload: SmsVerifyRequest) => {
   const response = await nativeApi.post('/api/v1/auth/sms/verify', payload);
   return response.data;
 };
 
-// EAS Build 는 native 폴더만 아카이브하므로, shared 폴더의 auth helper 를 직접 참조하지 않습니다.
-// 아이디 중복확인은 native API 클라이언트에서 직접 호출해 빌드 환경 의존성을 끊습니다.
+// 일반 회원가입의 userId 중복확인 API
+// EAS Build 환경에서 shared 폴더 의존성을 줄이기 위해 native 클라이언트에서 직접 호출한다.
 export const checkUserId = async (userId: string): Promise<CheckUserIdResponse> => {
   const response = await nativeApi.get<CheckUserIdResponse>('/api/v1/auth/check-user-id', {
     params: { userId },
@@ -151,13 +179,45 @@ export const checkUserId = async (userId: string): Promise<CheckUserIdResponse> 
   return response.data;
 };
 
+// 일반/SSAFY 회원가입 공용 signup API
 export const signup = async (payload: NativeSignupRequest) => {
   const response = await nativeApi.post<NativeSignupResponse>('/api/v1/auth/signup', payload);
   return response.data;
 };
 
+// 일반 회원가입 완료 후 Welcome 화면에서 호출하는 자동 로그인 API
 export const login = async (payload: NativeLoginRequest) => {
   const response = await nativeApi.post<NativeLoginResponse>('/api/v1/auth/login', payload);
+  return response.data;
+};
+
+export const getProfile = async () => {
+  const response = await nativeApi.get<NativeUserProfileResponse>('/api/v1/user/profile');
+  return response.data;
+};
+
+export const logout = async () => {
+  const response = await nativeApi.post('/api/v1/auth/logout');
+  return response.data;
+};
+
+export const updateProfile = async (payload: NativeUpdateProfileRequest) => {
+  const response = await nativeApi.patch<NativeUserProfileResponse>('/api/v1/user/profile', payload);
+  return response.data;
+};
+
+export const updatePhone = async (payload: NativeUpdatePhoneRequest) => {
+  const response = await nativeApi.patch('/api/v1/user/phone', payload);
+  return response.data;
+};
+
+export const changePassword = async (payload: NativeChangePasswordRequest) => {
+  const response = await nativeApi.patch('/api/v1/auth/password', payload);
+  return response.data;
+};
+
+export const deleteAccount = async () => {
+  const response = await nativeApi.delete('/api/v1/user/delete');
   return response.data;
 };
 
@@ -185,7 +245,7 @@ const getParamValue = (params: URLSearchParams, keys: string[]) => {
 
 /**
  * SSAFY callback URL 파싱
- * access token 이 포함된 경우에만 로그인 완료로 간주합니다.
+ * 로그인 성공 후 앱으로 돌아온 딥링크에서 세션 정보와 가입 필요 여부를 읽어옵니다.
  */
 export const parseSsafyCallbackUrl = (
   url: string,
@@ -205,8 +265,8 @@ export const parseSsafyCallbackUrl = (
         name: getParamValue(params, ['name', 'userName', 'nickname']) || undefined,
         role: getParamValue(params, ['role']) || undefined,
       },
-      onboardingRequired:
-        getParamValue(params, ['onboardingRequired', 'needsOnboarding']) === 'true',
+      signupRequired:
+        getParamValue(params, ['signupRequired', 'needsSignup', 'onboardingRequired']) === 'true',
     };
   } catch (error) {
     console.log('[SSAFY callback parse failed]', error);
