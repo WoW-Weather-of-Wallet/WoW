@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
-@Tag(name = "SSAFY OAuth", description = "SSAFY SSO OAuth API")
+@Tag(name = "SSAFY OAuth", description = "SSAFY 로그인/회원가입 관련 API")
 @RestController
 @RequestMapping("/sso/providers/ssafy")
 @RequiredArgsConstructor
