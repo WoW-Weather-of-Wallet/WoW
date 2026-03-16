@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -12,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { wp, hp, fp, COLORS, FONTS } from '../../constants/theme';
 import IdentityVerificationForm, { IdentityData } from '../../components/auth/IdentityVerificationForm';
@@ -25,6 +25,7 @@ import { sendSmsCode } from '../../services/auth';
  */
 export default function FindIdScreen() {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [termsVisible, setTermsVisible] = useState(false);
   const [pendingData, setPendingData] = useState<IdentityData | null>(null);
@@ -56,11 +57,11 @@ export default function FindIdScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       
       {/* 헤더 */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top, height: hp(56) + insets.top }]}>
         <TouchableOpacity 
           style={styles.backButton} 
           onPress={() => navigation.goBack()}
@@ -98,7 +99,7 @@ export default function FindIdScreen() {
         onClose={() => setTermsVisible(false)}
         onConfirm={handleTermsConfirm}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 

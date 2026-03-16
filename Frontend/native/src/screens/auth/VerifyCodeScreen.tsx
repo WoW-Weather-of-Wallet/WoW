@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import SecureKeypad from '../../components/common/SecureKeypad';
 import DevShortcutButton from '../../components/common/DevShortcutButton';
+import StepIndicator from '../../components/common/StepIndicator';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { verifySmsCode } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
@@ -122,7 +123,8 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={[styles.content, { paddingTop: insets.top + hp(60) }]}>
-        <Animated.View entering={FadeInDown.duration(500)}>
+        <StepIndicator currentStep={1} totalSteps={4} />
+        <Animated.View entering={FadeInDown.delay(100).duration(500)}>
           <Text style={styles.title}>인증번호 6자리를{`\n`}입력해주세요.</Text>
           <Text style={styles.subtitle}>문자로 전송된 6자리 인증번호를 입력하면 다음 단계로 넘어갑니다.</Text>
         </Animated.View>

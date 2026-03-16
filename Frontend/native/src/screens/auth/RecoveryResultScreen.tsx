@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
@@ -9,6 +8,7 @@ import {
   Linking,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 import { COLORS, FONTS, wp, hp, fp, RADIUS } from '../../constants/theme';
@@ -24,6 +24,7 @@ import { getSsafyLoginUrl } from '../../services/auth';
 export default function RecoveryResultScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const insets = useSafeAreaInsets();
   const { name, userId, userType } = route.params || {};
 
   // userType: 'local', 'ssafy', 'none', 'fail'
@@ -54,10 +55,10 @@ export default function RecoveryResultScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top, height: hp(56) + insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Login')}>
           <Ionicons name="close" size={wp(28)} color={COLORS.textPrimary} />
         </TouchableOpacity>
@@ -153,7 +154,7 @@ export default function RecoveryResultScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import DevShortcutButton from '../../components/common/DevShortcutButton';
+import StepIndicator from '../../components/common/StepIndicator';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { sendSmsCode } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
@@ -156,12 +157,10 @@ export default function PhoneAuthScreen({ navigation }: any) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        <StepIndicator currentStep={1} totalSteps={4} />
+
         <Text style={styles.title}>
-          {step === 1
-            ? '이름을\n입력해주세요.'
-            : step === 2
-              ? '주민등록번호를\n입력해주세요.'
-              : '휴대폰 번호를\n입력해주세요.'}
+          본인 확인을 위해{'\n'}인증이 필요해요.
         </Text>
 
         <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>

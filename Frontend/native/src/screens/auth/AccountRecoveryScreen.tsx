@@ -1,7 +1,6 @@
 import {
   Alert,
   Linking,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { getSsafyLoginUrl } from '../../services/auth';
@@ -23,6 +23,7 @@ import SsafyRecoveryNotice from '../../components/auth/SsafyRecoveryNotice';
  */
 export default function AccountRecoveryScreen() {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
 
   const handleFindId = () => {
     navigation.navigate('FindId');
@@ -42,11 +43,11 @@ export default function AccountRecoveryScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       
       {/* 헤더 영역 */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top, height: hp(56) + insets.top }]}>
         <TouchableOpacity 
           style={styles.backButton} 
           onPress={() => navigation.goBack()}
@@ -86,7 +87,7 @@ export default function AccountRecoveryScreen() {
         <SsafyRecoveryNotice onLinkPress={handleSsafyLink} />
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
