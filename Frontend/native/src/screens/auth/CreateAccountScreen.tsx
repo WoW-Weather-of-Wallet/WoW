@@ -85,7 +85,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
   const confirmPwRef = useRef<TextInput>(null);
 
   // 일반 회원가입의 아이디 중복확인 단계
-  // GET /api/v1/auth/check-user-id 응답의 available 값을 기준으로 다음 단계 진입을 연다.
+  // GET /api/v1/auth/check-user-id 응답의 isAvailable 값을 기준으로 다음 단계 진입을 연다.
   const handleCheckId = async () => {
     const trimmedId = id.trim();
 
@@ -98,7 +98,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
 
     try {
       const response = await checkUserId(trimmedId);
-      const isAvailable = response?.available === true;
+      const isAvailable = response?.isAvailable === true;
 
       setIsIdAvailable(isAvailable);
 

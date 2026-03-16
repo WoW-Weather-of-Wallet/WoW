@@ -49,7 +49,7 @@ export interface SignupResponse {
 // 사용 가능 여부와 화면 안내용 메시지를 함께 받습니다.
 // -----------------------------------------------
 export interface CheckUserIdResponse {
-  available: boolean;
+  isAvailable: boolean;
   message?: string;
 }
 
