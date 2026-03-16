@@ -12,6 +12,11 @@ import VerifyCodeScreen from '../screens/auth/VerifyCodeScreen';
 import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
+import AccountRecoveryScreen from '../screens/auth/AccountRecoveryScreen';
+import FindIdScreen from '../screens/auth/FindIdScreen';
+import FindPwScreen from '../screens/auth/FindPwScreen';
+import RecoveryResultScreen from '../screens/auth/RecoveryResultScreen';
+import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import MainTabNavigator from './MainTabNavigator';
 import SettingsScreen from '../screens/mypage/SettingsScreen';
 
@@ -75,6 +80,54 @@ export default function RootNavigator() {
           component={LoginScreen}
           options={{ gestureEnabled: false }}
         />
+
+        {/* 계정 찾기 화면 */}
+        <Stack.Screen
+          name="AccountRecovery"
+          component={AccountRecoveryScreen}
+          options={{
+            gestureEnabled: true,
+            animation: 'slide_from_right'
+          }}
+        />
+
+        <Stack.Screen
+          name="FindId"
+          component={FindIdScreen}
+          options={{
+            gestureEnabled: true,
+            animation: 'slide_from_right'
+          }}
+        />
+
+        <Stack.Screen
+          name="FindPw"
+          component={FindPwScreen}
+          options={{
+            gestureEnabled: true,
+            animation: 'slide_from_right'
+          }}
+        />
+
+        <Stack.Screen
+          name="RecoveryResult"
+          component={RecoveryResultScreen}
+          options={{
+            gestureEnabled: false,
+            animation: 'fade'
+          }}
+        />
+
+        <Stack.Screen
+          name="ResetPassword"
+          component={ResetPasswordScreen}
+          options={{
+            gestureEnabled: true,
+            animation: 'slide_from_right'
+          }}
+        />
+
+        {/* 인증 이후 진입하는 메인 앱 영역 */}
 
         <Stack.Screen
           name="MainTabs"

@@ -157,7 +157,7 @@ export default function LoginScreen({ navigation }: any) {
   };
 
   const handleFindAccount = () => {
-    console.log('아이디/비밀번호 찾기 연결 예정');
+    navigation.navigate('AccountRecovery');
   };
 
   const handleSSAFYLogin = async () => {

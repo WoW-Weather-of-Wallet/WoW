@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -60,8 +60,35 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
         code: finalCode,
       });
 
-      console.log('인증 완료. 계정 생성(ID/PW) 화면으로 이동.');
-      navigation.replace('CreateAccount', route.params);
+      console.log('인증 완료. 플로우:', route.params.flow);
+      
+      if (route.params.flow === 'FindId') {
+        // 아이디 찾기 성공: 결과 화면으로 이동
+        // TODO: 실제 API 결과(userType, userId) 연동 필요
+        // 현재는 시뮬레이션을 위해 이름에 따라 타입을 나눕니다.
+        let userType: 'local' | 'ssafy' | 'none' = 'local';
+        let foundId = 'ssafy_dummy';
+
+        if (route.params.name.includes('싸피')) {
+          userType = 'ssafy';
+        } else if (route.params.name.includes('미가입')) {
+          userType = 'none';
+        }
+
+        navigation.navigate('RecoveryResult', {
+          name: route.params.name,
+          userId: foundId,
+          userType: userType
+        });
+      } else if (route.params.flow === 'FindPw') {
+        // 비밀번호 찾기 성공: 비밀번호 재설정 화면으로 이동
+        navigation.navigate('ResetPassword', {
+          userId: route.params.userId || 'dummy_id'
+        });
+      } else {
+        // 기본 플로우 (회원가입)
+        navigation.replace('CreateAccount', route.params);
+      }
     } catch (error: any) {
       // 인증번호 검증도 공통 파서를 사용해 message 필드 차이를 화면에서 숨깁니다.
       const message = extractApiErrorMessage(
@@ -119,8 +146,38 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
         {/* 인증 서버 상태와 무관하게 계정 생성 화면 개발을 이어갈 수 있도록 우회 버튼을 둡니다. */}
         <DevShortcutButton
           label="TEST: 인증 성공 처리"
-          description="인증번호 검증 API 가 불안정할 때도 CreateAccount 화면으로 바로 이동합니다."
-          onPress={() => navigation.replace('CreateAccount', route.params)}
+          description="인증 절차를 건너뛰고 다음 화면으로 이동합니다."
+          onPress={() => {
+             if (route.params.flow === 'FindId') {
+               // 아이디 찾기 결과 화면으로 시뮬레이션 이동 (이름에 따라 분기 가능)
+               let userType: 'local' | 'ssafy' | 'none' = 'local';
+               if (route.params.name.includes('싸피')) userType = 'ssafy';
+               if (route.params.name.includes('미가입')) userType = 'none';
+
+               navigation.navigate('RecoveryResult', {
+                 name: route.params.name,
+                 userId: 'test_user_id',
+                 userType: userType
+               });
+             } else if (route.params.flow === 'FindPw') {
+               // 비밀번호 찾기 시나리오
+               if (route.params.name.includes('미가입')) {
+                 // 일치하는 계정 정보가 없는 경우 시뮬레이션
+                 navigation.navigate('RecoveryResult', {
+                   name: route.params.name,
+                   userId: '',
+                   userType: 'fail'
+                 });
+               } else {
+                 // 비밀번호 재설정 화면으로 이동
+                 navigation.navigate('ResetPassword', {
+                   userId: route.params.userId || 'test_user_id'
+                 });
+               }
+             } else {
+               navigation.replace('CreateAccount', route.params);
+             }
+          }}
         />
       </View>
 
