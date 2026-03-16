@@ -11,7 +11,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { COLORS, FONTS, wp, hp, fp, RADIUS } from '../../constants/theme';
@@ -27,11 +27,19 @@ import { sendSmsCode } from '../../services/auth';
  */
 export default function FindPwScreen() {
   const navigation = useNavigation<any>();
-  const [userId, setUserId] = useState('');
+  const route = useRoute<any>();
+  const [userId, setUserId] = useState(route.params?.prefilledId || '');
   const [showVerification, setShowVerification] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [termsVisible, setTermsVisible] = useState(false);
   const [pendingData, setPendingData] = useState<IdentityData | null>(null);
+
+  // 아이디 찾기 결과에서 넘어온 경우 자동 입력 처리
+  React.useEffect(() => {
+    if (route.params?.prefilledId) {
+      setUserId(route.params.prefilledId);
+    }
+  }, [route.params?.prefilledId]);
 
   const handleIdSubmit = () => {
     if (userId.trim().length >= 4 && userId.trim().length <= 20) {

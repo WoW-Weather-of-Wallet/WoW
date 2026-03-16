@@ -15,6 +15,8 @@ import LoginScreen from '../screens/auth/LoginScreen';
 import AccountRecoveryScreen from '../screens/auth/AccountRecoveryScreen';
 import FindIdScreen from '../screens/auth/FindIdScreen';
 import FindPwScreen from '../screens/auth/FindPwScreen';
+import RecoveryResultScreen from '../screens/auth/RecoveryResultScreen';
+import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import MainTabNavigator from './MainTabNavigator';
 
 // Onboarding & MyPage 화면
@@ -120,6 +122,24 @@ export default function RootNavigator() {
         <Stack.Screen
           name="FindPw"
           component={FindPwScreen}
+          options={{ 
+            gestureEnabled: true,
+            animation: 'slide_from_right'
+          }}
+        />
+
+        <Stack.Screen
+          name="RecoveryResult"
+          component={RecoveryResultScreen}
+          options={{ 
+            gestureEnabled: false,
+            animation: 'fade'
+          }}
+        />
+
+        <Stack.Screen
+          name="ResetPassword"
+          component={ResetPasswordScreen}
           options={{ 
             gestureEnabled: true,
             animation: 'slide_from_right'

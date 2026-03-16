@@ -63,19 +63,28 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
       console.log('인증 완료. 플로우:', route.params.flow);
       
       if (route.params.flow === 'FindId') {
-        // 아이디 찾기 성공: 아이디 안내 (현재는 더미 알럿, 추후 결과 화면으로 이동 가능)
-        Alert.alert(
-          '아이디 확인',
-          `${route.params.name}님의 아이디는 [ssafy***] 입니다.`,
-          [{ text: '로그인하러 가기', onPress: () => navigation.navigate('Login') }]
-        );
+        // 아이디 찾기 성공: 결과 화면으로 이동
+        // TODO: 실제 API 결과(userType, userId) 연동 필요
+        // 현재는 시뮬레이션을 위해 이름에 따라 타입을 나눕니다.
+        let userType: 'local' | 'ssafy' | 'none' = 'local';
+        let foundId = 'ssafy_dummy';
+
+        if (route.params.name.includes('싸피')) {
+          userType = 'ssafy';
+        } else if (route.params.name.includes('미가입')) {
+          userType = 'none';
+        }
+
+        navigation.navigate('RecoveryResult', {
+          name: route.params.name,
+          userId: foundId,
+          userType: userType
+        });
       } else if (route.params.flow === 'FindPw') {
         // 비밀번호 찾기 성공: 비밀번호 재설정 화면으로 이동
-        Alert.alert(
-          '인증 성공',
-          '본인 확인이 완료되었습니다. 비밀번호 재설정 페이지로 이동합니다.',
-          [{ text: '확인', onPress: () => console.log('비밀번호 재설정 화면 이동 개발 예정') }]
-        );
+        navigation.navigate('ResetPassword', {
+          userId: route.params.userId || 'dummy_id'
+        });
       } else {
         // 기본 플로우 (회원가입)
         navigation.replace('CreateAccount', route.params);
@@ -140,9 +149,31 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
           description="인증 절차를 건너뛰고 다음 화면으로 이동합니다."
           onPress={() => {
              if (route.params.flow === 'FindId') {
-               Alert.alert('아이디 확인', `${route.params.name}님의 아이디는 [test_user] 입니다.`);
+               // 아이디 찾기 결과 화면으로 시뮬레이션 이동 (이름에 따라 분기 가능)
+               let userType: 'local' | 'ssafy' | 'none' = 'local';
+               if (route.params.name.includes('싸피')) userType = 'ssafy';
+               if (route.params.name.includes('미가입')) userType = 'none';
+
+               navigation.navigate('RecoveryResult', {
+                 name: route.params.name,
+                 userId: 'test_user_id',
+                 userType: userType
+               });
              } else if (route.params.flow === 'FindPw') {
-               Alert.alert('비밀번호 재설정', '비밀번호 재설정 단계로 이동합니다.');
+               // 비밀번호 찾기 시나리오
+               if (route.params.name.includes('미가입')) {
+                 // 일치하는 계정 정보가 없는 경우 시뮬레이션
+                 navigation.navigate('RecoveryResult', {
+                   name: route.params.name,
+                   userId: '',
+                   userType: 'fail'
+                 });
+               } else {
+                 // 비밀번호 재설정 화면으로 이동
+                 navigation.navigate('ResetPassword', {
+                   userId: route.params.userId || 'test_user_id'
+                 });
+               }
              } else {
                navigation.replace('CreateAccount', route.params);
              }
