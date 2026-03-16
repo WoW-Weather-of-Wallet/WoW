@@ -53,12 +53,6 @@ public class User {
     @Column(name = "alarm_enabled")
     private boolean alarmEnabled;
 
-    public void updateOnboarding(String gender, LocalDate birthDate, boolean alarmEnabled) {
-        this.gender = gender;
-        this.birthDate = birthDate;
-        this.alarmEnabled = alarmEnabled;
-    }
-
     public void updateProfile(String name, String gender, LocalDate birthDate) {
         if (name != null) this.name = name;
         if (gender != null) this.gender = gender;

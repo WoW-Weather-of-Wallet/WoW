@@ -1,7 +1,6 @@
 package com.wow.domain.user.service;
 
 import com.wow.domain.auth.service.SmsService;
-import com.wow.domain.user.dto.OnboardingRequest;
 import com.wow.domain.user.dto.UpdatePhoneRequest;
 import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.dto.UserProfileResponse;
@@ -71,16 +70,5 @@ public class UserService {
 
     }
 
-    @Transactional
-    public UserProfileResponse onboarding(String ssafyOauthId, OnboardingRequest request) {
-
-        User user = userRepository.findBySsafyOauthId(ssafyOauthId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-
-        user.updateOnboarding(request.getGender(), request.getBirthDate(), request.isAlarmEnabled());
-
-        return UserProfileResponse.from(user);
-
-    }
 
 }
