@@ -6,7 +6,9 @@ import com.wow.domain.security.CustomUserDetailsService;
 import com.wow.domain.security.JwtTokenProvider;
 import com.wow.domain.user.entity.Role;
 import com.wow.domain.user.entity.User;
+import com.wow.domain.user.entity.UserTerm;
 import com.wow.domain.user.repository.UserRepository;
+import com.wow.domain.user.repository.UserTermRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -28,6 +31,7 @@ public class AuthService {
     private static final String REFRESH_KEY_PREFIX = "refresh:";
 
     private final UserRepository userRepository;
+    private final UserTermRepository userTermRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
@@ -57,6 +61,7 @@ public class AuthService {
             throw new IllegalArgumentException("이미 가입된 회원입니다.");
         }
 
+        // SMS 검증 확인
         smsService.checkVerified(request.getPhoneNumber());
 
         User user = User.builder()
@@ -67,12 +72,22 @@ public class AuthService {
                 .phoneNumber(request.getPhoneNumber())
                 .birthDate(request.getBirthDate())
                 .alarmEnabled(request.isAlarmEnabled())
-                .termsAgreed(request.isTermsAgreed())
                 .role(Role.User)
                 .build();
 
-        UserCreateResponse response = UserCreateResponse.from(userRepository.save(user));
+        // USER 저장
+        userRepository.save(user);
 
+        // 회원 동의 이력 저장
+        userTermRepository.save(UserTerm.builder()
+                .user(user)
+                .agreed(request.isTermsAgreed())
+                .agreedAt(LocalDateTime.now())
+                .build());
+
+        UserCreateResponse response = UserCreateResponse.from(user);
+
+        // Redis에 인증 이력 삭제
         smsService.deleteVerified(request.getPhoneNumber());
 
         return response;

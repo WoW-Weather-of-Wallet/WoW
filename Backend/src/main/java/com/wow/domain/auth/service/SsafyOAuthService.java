@@ -9,9 +9,12 @@ import com.wow.domain.auth.dto.ssafy.SsafyUserInfo;
 import com.wow.domain.security.JwtTokenProvider;
 import com.wow.domain.user.entity.Role;
 import com.wow.domain.user.entity.User;
+import com.wow.domain.user.entity.UserTerm;
 import com.wow.domain.user.repository.UserRepository;
+import com.wow.domain.user.repository.UserTermRepository;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,6 +53,7 @@ public class SsafyOAuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final StringRedisTemplate redisTemplate;
     private final SmsService smsService;
+    private final UserTermRepository userTermRepository;
 
     // 1. 인가코드 받기 URL 생성
     public String getLoginUrl() {
@@ -142,6 +146,7 @@ public class SsafyOAuthService {
             throw new IllegalArgumentException("이미 가입된 SSAFY 계정입니다.");
         }
 
+        // redis에서 ssafyOauthId로 name 가져오기
         String redisKey = PENDING_KEY_PREFIX + request.getSsafyOauthId();
         String name = redisTemplate.opsForValue().get(redisKey);
         log.info("Redis 조회 키: {}, 결과: {}", redisKey, name);
@@ -154,6 +159,7 @@ public class SsafyOAuthService {
             throw new IllegalArgumentException("이미 가입된 회원입니다.");
         }
 
+        // SMS 검증
         smsService.checkVerified(request.getPhoneNumber());
 
         User newUser = User.builder()
@@ -161,15 +167,25 @@ public class SsafyOAuthService {
                 .name(name)
                 .gender(request.getGender())
                 .alarmEnabled(request.isAlarmEnabled())
-                .termsAgreed(request.isTermsAgreed())
                 .birthDate(request.getBirthDate())
                 .phoneNumber(request.getPhoneNumber())
                 .role(Role.User)
                 .build();
 
+        // USER 저장
         userRepository.save(newUser);
 
+        // 회원 동의 이력 저장
+        userTermRepository.save(UserTerm.builder()
+                .user(newUser)
+                .agreed(request.isTermsAgreed())
+                .agreedAt(LocalDateTime.now())
+                .build());
+
+        // redis에서 ssafyOauthId 삭제
         redisTemplate.delete(PENDING_KEY_PREFIX + request.getSsafyOauthId());
+
+        // redis에서 sms 인증 완료 기록 삭제
         smsService.deleteVerified(request.getPhoneNumber());
 
         return issueToken(newUser);
