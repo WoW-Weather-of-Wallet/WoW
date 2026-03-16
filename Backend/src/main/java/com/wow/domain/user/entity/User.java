@@ -53,7 +53,7 @@ public class User {
     @Column(name = "alarm_enabled")
     private boolean alarmEnabled;
 
-    @Column(name = "terms_agreed")
+    @Column(name = "terms_agreed", columnDefinition = "boolean default false")
     private boolean termsAgreed;
 
     public void updateProfile(String name, String gender, LocalDate birthDate) {
