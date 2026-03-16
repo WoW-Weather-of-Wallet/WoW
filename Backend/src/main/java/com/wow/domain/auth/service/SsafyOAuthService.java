@@ -84,7 +84,7 @@ public class SsafyOAuthService {
                 Duration.ofMinutes(PENDING_TTL_MINUTES)
         );
 
-        // 신규 회원 정보 입력 딥링크 반환 (성별, 생년월일, 전화번호)
+        // 신규 회원 정보 입력 딥링크 반환
         return UriComponentsBuilder
                 .fromUriString("wow://auth/ssafy/register")
                 .queryParam("ssafyOauthId", userInfo.getUserId())
