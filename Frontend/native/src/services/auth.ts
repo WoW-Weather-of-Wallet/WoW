@@ -60,6 +60,21 @@ export interface NativeUserProfileResponse {
   loginType?: 'NORMAL' | 'SSAFY' | string | null;
 }
 
+export interface NativeUpdateProfileRequest {
+  name?: string;
+  gender?: string;
+  birthDate?: string;
+}
+
+export interface NativeUpdatePhoneRequest {
+  phoneNumber: string;
+}
+
+export interface NativeChangePasswordRequest {
+  currentPw: string;
+  newPw: string;
+}
+
 /**
  * SSAFY OAuth callback result
  * SSAFY 로그인 완료 후 앱 딥링크에서 읽어오는 세션/가입 분기 정보
@@ -183,6 +198,26 @@ export const getProfile = async () => {
 
 export const logout = async () => {
   const response = await nativeApi.post('/api/v1/auth/logout');
+  return response.data;
+};
+
+export const updateProfile = async (payload: NativeUpdateProfileRequest) => {
+  const response = await nativeApi.patch<NativeUserProfileResponse>('/api/v1/user/profile', payload);
+  return response.data;
+};
+
+export const updatePhone = async (payload: NativeUpdatePhoneRequest) => {
+  const response = await nativeApi.patch('/api/v1/user/phone', payload);
+  return response.data;
+};
+
+export const changePassword = async (payload: NativeChangePasswordRequest) => {
+  const response = await nativeApi.patch('/api/v1/auth/password', payload);
+  return response.data;
+};
+
+export const deleteAccount = async () => {
+  const response = await nativeApi.delete('/api/v1/user/delete');
   return response.data;
 };
 

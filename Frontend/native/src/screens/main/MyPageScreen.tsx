@@ -18,7 +18,6 @@ import {
   mockMyAccounts,
   mockMyCards,
   mockProfileStats,
-  mockUserProfile,
   mockUserShortcuts,
 } from '../../mock/dashboard';
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
@@ -71,7 +70,7 @@ export default function MyPageScreen() {
   const displayInitial = displayName.slice(0, 1);
   const displayBadge = profile?.loginType === 'SSAFY' ? 'SSAFY 회원' : '일반 회원';
   const displayOnboardingStatus = profile?.phoneNumber ? '완료' : '진행 중';
-  const displayLinkedAccounts = mockUserProfile.linkedAccounts;
+  const displayLinkedAccounts = '준비중';
 
   const handleLogout = async () => {
     if (isLoggingOut) {
@@ -113,14 +112,20 @@ export default function MyPageScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* 상단 프로필만 먼저 실데이터로 교체해 로그인 결과가 화면에 보이게 합니다. */}
-        <View style={styles.profileCard}>
+        <TouchableOpacity
+          style={styles.profileCard}
+          activeOpacity={0.9}
+          onPress={() => navigation.navigate('Settings')}
+        >
           <View style={styles.profileHeaderRow}>
             <View style={styles.avatarCircle}>
               <Text style={styles.avatarText}>{displayInitial}</Text>
             </View>
             <View style={styles.profileTextBlock}>
-              <Text style={styles.profileName}>{displayName}님 안녕하세요!</Text>
+              <View style={styles.nameRow}>
+                <Text style={styles.profileName}>{displayName}님 안녕하세요!</Text>
+                <Ionicons name="chevron-forward" size={wp(20)} color={COLORS.textTertiary} />
+              </View>
               <View style={styles.profileBadge}>
                 <Text style={styles.profileBadgeText}>{displayBadge}</Text>
               </View>
@@ -130,7 +135,7 @@ export default function MyPageScreen() {
           <View style={styles.profileSummaryRow}>
             <View style={styles.profileSummaryItem}>
               <Text style={styles.profileSummaryLabel}>연결 계좌</Text>
-              <Text style={styles.profileSummaryValue}>{displayLinkedAccounts}개</Text>
+              <Text style={styles.profileSummaryValue}>{displayLinkedAccounts}</Text>
             </View>
             <View style={styles.profileDivider} />
             <View style={styles.profileSummaryItem}>
@@ -145,7 +150,7 @@ export default function MyPageScreen() {
               <Text style={styles.profileLoadingText}>프로필을 불러오는 중입니다.</Text>
             </View>
           ) : null}
-        </View>
+        </TouchableOpacity>
 
         <View style={styles.statsRow}>
           {mockProfileStats.map((stat) => (
@@ -319,6 +324,11 @@ const styles = StyleSheet.create({
   },
   profileTextBlock: {
     flex: 1,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   profileName: {
     fontSize: fp(24),

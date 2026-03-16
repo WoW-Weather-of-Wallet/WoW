@@ -1,4 +1,4 @@
-﻿// =============================================
+// =============================================
 // RootNavigator - 앱 전체 네비게이션 구조
 // 인증 전 스택과 인증 후 메인 탭을 한 곳에서 관리합니다.
 // =============================================
@@ -13,6 +13,7 @@ import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import MainTabNavigator from './MainTabNavigator';
+import SettingsScreen from '../screens/mypage/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -33,60 +34,61 @@ export default function RootNavigator() {
           animationDuration: 300,
         }}
       >
-        {/* 앱 첫 진입 시 보여주는 스플래시 화면 */}
         <Stack.Screen
           name="Splash"
           component={SplashScreen}
           options={{ gestureEnabled: false }}
         />
 
-        {/* 권한 안내 화면 */}
         <Stack.Screen
           name="Permission"
           component={AccessPermissionScreen}
           options={{ gestureEnabled: false }}
         />
 
-        {/* 회원가입 시작용 휴대폰 인증 화면 */}
         <Stack.Screen
           name="PhoneAuth"
           component={PhoneAuthScreen}
           options={{ gestureEnabled: true }}
         />
 
-        {/* 인증번호 입력 화면 */}
         <Stack.Screen
           name="VerifyCode"
           component={VerifyCodeScreen}
           options={{ gestureEnabled: true }}
         />
 
-        {/* 비밀번호/아이디 생성 화면 */}
         <Stack.Screen
           name="CreateAccount"
           component={CreateAccountScreen}
           options={{ gestureEnabled: false }}
         />
 
-        {/* 회원가입 완료 후 가입 정보를 확인하고 자동 로그인을 이어가는 화면 */}
         <Stack.Screen
           name="Welcome"
           component={WelcomeScreen}
           options={{ gestureEnabled: false }}
         />
 
-        {/* 로그인 화면 */}
         <Stack.Screen
           name="Login"
           component={LoginScreen}
           options={{ gestureEnabled: false }}
         />
 
-        {/* 인증 이후 진입하는 메인 앱 영역 */}
         <Stack.Screen
           name="MainTabs"
           component={MainTabNavigator}
           options={{ gestureEnabled: false }}
+        />
+
+        <Stack.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{
+            gestureEnabled: true,
+            animation: 'slide_from_right',
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>
