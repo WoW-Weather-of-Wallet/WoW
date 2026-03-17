@@ -42,6 +42,15 @@ public class UserCreateRequest {
     private String gender;
 
     @NotBlank(message = "전화번호를 입력해주세요.")
+    /*
+     * 수정 이유:
+     * - 회원가입에서도 전화번호 형식을 DTO 단계에서 먼저 검증하도록 보강했습니다.
+     *
+     * 수정 전 코드:
+     * - @NotBlank(...)
+     * - private String phoneNumber;
+     */
+    @Pattern(regexp = "^01\\d-?\\d{3,4}-?\\d{4}$", message = "전화번호는 01012345678 또는 010-1234-5678 형식으로 입력해주세요.")
     private String phoneNumber;
 
     @NotNull(message = "생년월일을 입력해주세요.")

@@ -36,6 +36,15 @@ public class FindIdRequest {
     private String gender;
 
     @NotBlank(message = "전화번호를 입력해주세요.")
+    /*
+     * 수정 이유:
+     * - 아이디 찾기에도 같은 휴대폰 번호 형식 규칙을 적용해 입력 방어를 맞췄습니다.
+     *
+     * 수정 전 코드:
+     * - @NotBlank(...)
+     * - private String phoneNumber;
+     */
+    @Pattern(regexp = "^01\\d-?\\d{3,4}-?\\d{4}$", message = "전화번호는 01012345678 또는 010-1234-5678 형식으로 입력해주세요.")
     private String phoneNumber;
 
 }

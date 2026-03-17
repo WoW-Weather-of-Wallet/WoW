@@ -14,6 +14,15 @@ public class SsafyRegisterRequest {
     private String ssafyOauthId;
 
     @NotBlank(message = "전화번호를 입력해주세요.")
+    /*
+     * 수정 이유:
+     * - SSAFY 회원가입도 동일한 휴대폰 번호 형식 규칙을 사용하도록 맞췄습니다.
+     *
+     * 수정 전 코드:
+     * - @NotBlank(...)
+     * - private String phoneNumber;
+     */
+    @Pattern(regexp = "^01\\d-?\\d{3,4}-?\\d{4}$", message = "전화번호는 01012345678 또는 010-1234-5678 형식으로 입력해주세요.")
     private String phoneNumber;
 
     @NotBlank(message = "성별을 입력해주세요.")

@@ -3,7 +3,9 @@ package com.wow.validation;
 import com.wow.domain.auth.dto.TokenRefreshRequest;
 import com.wow.domain.auth.dto.UserCreateRequest;
 import com.wow.domain.auth.dto.FindIdRequest;
+import com.wow.domain.auth.dto.SmsSendRequest;
 import com.wow.domain.user.dto.UpdateProfileRequest;
+import com.wow.domain.user.dto.UpdatePhoneRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -137,5 +139,36 @@ class RequestValidationTest {
         assertThat(violations)
                 .extracting(violation -> violation.getPropertyPath().toString())
                 .contains("gender");
+    }
+
+    @Test
+    void smsSendRequestRejectsInvalidPhoneNumberFormat() {
+        /*
+         * 회귀 방지 목적:
+         * - SMS 발송 요청은 휴대폰 번호 형식이 맞지 않으면 DTO 단계에서 차단되어야 합니다.
+         */
+        SmsSendRequest request = new SmsSendRequest("invalid-phone");
+
+        Set<ConstraintViolation<SmsSendRequest>> violations = validator.validate(request);
+
+        assertThat(violations)
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .contains("phoneNumber");
+    }
+
+    @Test
+    void updatePhoneRequestRejectsInvalidPhoneNumberFormat() {
+        /*
+         * 회귀 방지 목적:
+         * - 휴대폰 변경 요청도 동일한 번호 형식 규칙을 유지해야 합니다.
+         */
+        UpdatePhoneRequest request = new UpdatePhoneRequest();
+        ReflectionTestUtils.setField(request, "phoneNumber", "02-123-4567");
+
+        Set<ConstraintViolation<UpdatePhoneRequest>> violations = validator.validate(request);
+
+        assertThat(violations)
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .contains("phoneNumber");
     }
 }
