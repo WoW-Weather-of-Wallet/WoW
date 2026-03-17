@@ -55,7 +55,7 @@ public class AuthController {
 
     @Operation(summary = "Access Token 재발급", description = "Refresh Token으로 새로운 Access Token을 발급받습니다.")
     @PostMapping("/refresh")
-    public ResponseEntity<TokenRefreshResponse> refresh(@RequestBody TokenRefreshRequest request) {
+    public ResponseEntity<TokenRefreshResponse> refresh(@Valid @RequestBody TokenRefreshRequest request) {
         return ResponseEntity.ok(authService.refresh(request.getRefreshToken()));
     }
 

@@ -59,10 +59,24 @@ public class SsafyOAuthService {
 
     // 1. 인가코드 받기 URL 생성
     public String getLoginUrl() {
-        return "https://project.ssafy.com/oauth/sso-check"
-                + "?client_id=" + clientId
-                + "&redirect_uri=" + redirectUri
-                + "&response_type=code";
+        /*
+         * 수정 이유:
+         * - redirect_uri를 문자열로 직접 붙이면 인코딩이 보장되지 않습니다.
+         * - OAuth 쿼리 파라미터는 UriComponentsBuilder로 조합해 안전하게 인코딩하도록 변경했습니다.
+         *
+         * 수정 전 코드:
+         * - return "https://project.ssafy.com/oauth/sso-check"
+         * -         + "?client_id=" + clientId
+         * -         + "&redirect_uri=" + redirectUri
+         * -         + "&response_type=code";
+         */
+        return UriComponentsBuilder.fromUriString("https://project.ssafy.com/oauth/sso-check")
+                .queryParam("client_id", clientId)
+                .queryParam("redirect_uri", redirectUri)
+                .queryParam("response_type", "code")
+                .build()
+                .encode()
+                .toUriString();
     }
 
     // 2. 인가코드로 로그인 처리
@@ -210,7 +224,20 @@ public class SsafyOAuthService {
                 SsafyTokenResponse.class
         );
 
-        return response.getBody();
+        /*
+         * 수정 이유:
+         * - 외부 API 응답 body가 비어 있으면 이후 getAccessToken() 호출 시 NPE가 발생할 수 있습니다.
+         * - 응답 구조를 먼저 검증하고, 비정상 응답이면 명확한 예외를 던지도록 변경했습니다.
+         *
+         * 수정 전 코드:
+         * - return response.getBody();
+         */
+        SsafyTokenResponse body = response.getBody();
+        if (body == null || body.getAccessToken() == null || body.getAccessToken().isBlank()) {
+            throw new IllegalArgumentException("SSAFY 토큰 응답이 올바르지 않습니다.");
+        }
+
+        return body;
 
     }
 
@@ -230,7 +257,20 @@ public class SsafyOAuthService {
                 SsafyUserInfo.class
         );
 
-        return response.getBody();
+        /*
+         * 수정 이유:
+         * - 외부 API 응답 body가 비어 있으면 이후 userInfo.getUserId() 사용 지점에서 NPE가 발생할 수 있습니다.
+         * - 최소한의 필수 필드를 확인한 뒤에만 다음 로직으로 진행하도록 변경했습니다.
+         *
+         * 수정 전 코드:
+         * - return response.getBody();
+         */
+        SsafyUserInfo body = response.getBody();
+        if (body == null || body.getUserId() == null || body.getUserId().isBlank()) {
+            throw new IllegalArgumentException("SSAFY 사용자 정보 응답이 올바르지 않습니다.");
+        }
+
+        return body;
 
     }
 

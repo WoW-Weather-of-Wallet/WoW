@@ -18,6 +18,16 @@ import java.time.LocalDate;
 public class UserCreateRequest {
 
     @Pattern(regexp = "^(?=.*[a-z])[a-z0-9]{4,20}$", message = "아이디는 영문 소문자 필수 포함, 영문 소문자와 숫자만 사용 가능하며 특수문자는 사용 불가, 4자 이상 20자 이하여야 합니다.")
+    /*
+     * 수정 이유:
+     * - @Pattern만 있으면 null은 검증에서 통과합니다.
+     * - 일반 회원가입에서 userId가 null로 저장되는 것을 막기 위해 @NotBlank를 추가했습니다.
+     *
+     * 수정 전 코드:
+     * - @Pattern(...)
+     * - private String userId;
+     */
+    @NotBlank(message = "아이디를 입력해주세요.")
     private String userId;
 
     @NotBlank(message = "비밀번호를 입력해주세요.")
