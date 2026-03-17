@@ -44,21 +44,6 @@ Backend/.project
 Backend/.settings/
 
 ############################################
-<<<<<<< HEAD
-# Frontend (React Native / Node)
-############################################
-Frontend/node_modules/
-Frontend/npm-debug.log*
-Frontend/yarn-debug.log*
-Frontend/yarn-error.log*
-
-Frontend/android/.gradle/
-Frontend/android/app/build/
-Frontend/android/build/
-
-Frontend/ios/Pods/
-Frontend/ios/build/
-=======
 # Frontend (React / React Native / Node)
 ############################################
 Frontend/react/node_modules/
@@ -74,7 +59,6 @@ Frontend/native/ios/Pods/
 Frontend/native/ios/build/
 
 Frontend/shared/node_modules/
->>>>>>> 3ffa401250b0d4df10bbd0336b96b27c05401b9c
 
 ############################################
 # AI (Python / ML)
