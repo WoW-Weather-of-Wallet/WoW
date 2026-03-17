@@ -184,13 +184,21 @@ export const validateBirthDate = (birthDate: string): ValidationResult => {
   const year = parseInt(cleaned.substring(0, 4), 10);
   const month = parseInt(cleaned.substring(4, 6), 10);
   const day = parseInt(cleaned.substring(6, 8), 10);
-  
+
   const now = new Date();
   const currentYear = now.getFullYear();
-  
-  if (year < 1900 || year > currentYear) return { isValid: false, message: '태어난 년도를 정확히 입력해주세요.' };
+
+  if (year < 1900 || year > currentYear)
+    return { isValid: false, message: '태어난 년도를 정확히 입력해주세요.' };
   if (month < 1 || month > 12) return { isValid: false, message: '태어난 월을 정확히 입력해주세요.' };
-  if (day < 1 || day > 31) return { isValid: false, message: '태어난 일을 정확히 입력해주세요.' };
-  
+
+  // [UX-Refinement] 월별 최대 일수 및 윤년 검증 추가
+  const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  const daysInMonth = [31, isLeapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  if (day < 1 || day > daysInMonth[month - 1]) {
+    return { isValid: false, message: `태어난 일을 정확히 입력해주세요. (${month}월은 1~${daysInMonth[month - 1]}일까지 있어요)` };
+  }
+
   return { isValid: true, message: '올바른 생년월일 형식입니다.' };
 };
