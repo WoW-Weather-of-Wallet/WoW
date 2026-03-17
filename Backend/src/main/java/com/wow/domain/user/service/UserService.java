@@ -42,6 +42,7 @@ public class UserService {
 
         // 유저 삭제
         userRepository.delete(user);
+
     }
 
     @Transactional
@@ -63,6 +64,12 @@ public class UserService {
         User user = userRepository.findByUserId(userId)
                 .or(() -> userRepository.findBySsafyOauthId(userId))
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        String newPhoneNumber = request.getPhoneNumber();
+
+        if (newPhoneNumber.equals(user.getPhoneNumber())) {
+            throw new IllegalArgumentException("현재 사용 중인 전화번호와 동일합니다.");
+        }
 
         if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
             throw new IllegalArgumentException("이미 가입된 전화번호입니다.");
