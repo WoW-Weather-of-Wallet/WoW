@@ -4,6 +4,7 @@ import com.wow.domain.auth.dto.TokenRefreshRequest;
 import com.wow.domain.auth.dto.UserCreateRequest;
 import com.wow.domain.auth.dto.FindIdRequest;
 import com.wow.domain.auth.dto.SmsSendRequest;
+import com.wow.domain.auth.dto.SmsVerifyRequest;
 import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.dto.UpdatePhoneRequest;
 import jakarta.validation.ConstraintViolation;
@@ -170,5 +171,20 @@ class RequestValidationTest {
         assertThat(violations)
                 .extracting(violation -> violation.getPropertyPath().toString())
                 .contains("phoneNumber");
+    }
+
+    @Test
+    void smsVerifyRequestRejectsNonSixDigitCode() {
+        /*
+         * 회귀 방지 목적:
+         * - SMS 인증번호는 6자리 숫자 형식만 허용되어야 합니다.
+         */
+        SmsVerifyRequest request = new SmsVerifyRequest("01012345678", "12AB");
+
+        Set<ConstraintViolation<SmsVerifyRequest>> violations = validator.validate(request);
+
+        assertThat(violations)
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .contains("code");
     }
 }

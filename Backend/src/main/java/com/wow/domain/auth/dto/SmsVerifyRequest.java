@@ -24,6 +24,15 @@ public class SmsVerifyRequest {
     private String phoneNumber;
 
     @NotBlank(message = "인증번호를 입력해주세요.")
+    /*
+     * 수정 이유:
+     * - 인증번호는 생성 로직상 6자리 숫자이므로, DTO에서도 동일한 형식만 허용하는 편이 안전합니다.
+     *
+     * 수정 전 코드:
+     * - @NotBlank(...)
+     * - private String code;
+     */
+    @Pattern(regexp = "^\\d{6}$", message = "인증번호는 6자리 숫자로 입력해주세요.")
     private String code;
 
 }
