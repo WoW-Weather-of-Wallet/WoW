@@ -35,7 +35,7 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "회원 정보 수정", description = "로그인한 사용자의 이름(일반 회원만), 성별, 생년월일을 수정합니다.")
+    @Operation(summary = "회원 정보 수정", description = "로그인한 사용자의 이름, 성별, 생년월일을 수정합니다.")
     @PatchMapping("/profile")
     public ResponseEntity<UserProfileResponse> updateProfile(@AuthenticationPrincipal UserDetails userDetails,
                                                              @Valid @RequestBody UpdateProfileRequest request) {
