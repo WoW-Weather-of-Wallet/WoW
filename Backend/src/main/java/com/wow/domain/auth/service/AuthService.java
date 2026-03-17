@@ -103,7 +103,7 @@ public class AuthService {
 
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public UserLoginResponse login(UserLoginRequest request) {
 
         Authentication auth = authenticationManager.authenticate(
@@ -122,7 +122,6 @@ public class AuthService {
                         .map(GrantedAuthority::getAuthority)
                         .toList()
         );
-
         String refreshToken = jwtTokenProvider.createRefreshToken(userId);
 
         redisTemplate.opsForValue().set(
