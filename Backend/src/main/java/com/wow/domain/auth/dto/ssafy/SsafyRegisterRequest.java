@@ -3,6 +3,7 @@ package com.wow.domain.auth.dto.ssafy;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -19,6 +20,7 @@ public class SsafyRegisterRequest {
     @NotBlank(message = "성별을 입력해주세요.")
     private String gender;
     @NotNull(message = "생년월일을 입력해주세요.")
+    @Past(message = "생년월일은 오늘 이전 날짜여야 합니다.")
     private LocalDate birthDate;
     private boolean alarmEnabled;
     @AssertTrue(message = "약관에 동의해야 합니다.")
