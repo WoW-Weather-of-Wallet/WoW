@@ -2,6 +2,7 @@ package com.wow.validation;
 
 import com.wow.domain.auth.dto.TokenRefreshRequest;
 import com.wow.domain.auth.dto.UserCreateRequest;
+import com.wow.domain.auth.dto.FindIdRequest;
 import com.wow.domain.user.dto.UpdateProfileRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -99,5 +100,42 @@ class RequestValidationTest {
         assertThat(violations)
                 .extracting(violation -> violation.getPropertyPath().toString())
                 .doesNotContain("name");
+    }
+
+    @Test
+    void findIdRequestRejectsNullGender() {
+        /*
+         * 회귀 방지 목적:
+         * - 아이디 찾기 본인 확인 조건에 gender가 추가된 정책이 유지되는지 확인합니다.
+         */
+        FindIdRequest request = new FindIdRequest();
+        ReflectionTestUtils.setField(request, "name", "홍길동");
+        ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
+        ReflectionTestUtils.setField(request, "phoneNumber", "01012345678");
+
+        Set<ConstraintViolation<FindIdRequest>> violations = validator.validate(request);
+
+        assertThat(violations)
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .contains("gender");
+    }
+
+    @Test
+    void findIdRequestRejectsInvalidGender() {
+        /*
+         * 회귀 방지 목적:
+         * - 아이디 찾기 gender 입력은 M/F만 허용하도록 유지되는지 확인합니다.
+         */
+        FindIdRequest request = new FindIdRequest();
+        ReflectionTestUtils.setField(request, "name", "홍길동");
+        ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
+        ReflectionTestUtils.setField(request, "phoneNumber", "01012345678");
+        ReflectionTestUtils.setField(request, "gender", "X");
+
+        Set<ConstraintViolation<FindIdRequest>> violations = validator.validate(request);
+
+        assertThat(violations)
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .contains("gender");
     }
 }

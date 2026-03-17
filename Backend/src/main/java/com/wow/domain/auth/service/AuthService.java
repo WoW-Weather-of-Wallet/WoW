@@ -173,10 +173,36 @@ public class AuthService {
 
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
 
-        User user = userRepository.findByNameAndBirthDateAndPhoneNumber(
-                request.getName(), request.getBirthDate(), phoneNumber)
+        /*
+         * 수정 이유:
+         * - SSAFY 계정 여부를 안내하는 정책을 유지하는 대신, 조회 조건을 gender까지 포함해 본인 확인 강도를 높였습니다.
+         *
+         * 수정 전 코드:
+         * - userRepository.findByNameAndBirthDateAndPhoneNumber(request.getName(), request.getBirthDate(), phoneNumber)
+         */
+        User user = userRepository.findByNameAndGenderAndBirthDateAndPhoneNumber(
+                request.getName(), request.getGender(), request.getBirthDate(), phoneNumber)
                 .orElseThrow(() -> new IllegalArgumentException("일치하는 회원 정보가 없습니다."));
 
+        /*
+         * 수정 이유:
+         * - 아이디 찾기 응답에서 "SSAFY 계정" 여부를 따로 알려주면 계정 유형 정보가 노출됩니다.
+         * - 찾기 실패 상황은 같은 메시지로 반환해 불필요한 정보 노출을 줄이도록 변경했습니다.
+         *
+         * 수정 전 코드:
+         * - if (user.getUserId() == null) {
+         * -     throw new IllegalArgumentException("SSAFY 계정으로 가입된 회원입니다.");
+         * - }
+         */
+        /*
+         * 수정 이유:
+         * - 정책 변경에 따라 SSAFY 계정 여부는 알려주되, 조회 조건을 gender까지 포함해 본인 확인 강도를 높였습니다.
+         *
+         * 수정 전 코드:
+         * - if (user.getUserId() == null) {
+         * -     throw new IllegalArgumentException("일치하는 회원 정보가 없습니다.");
+         * - }
+         */
         if (user.getUserId() == null) {
             throw new IllegalArgumentException("SSAFY 계정으로 가입된 회원입니다.");
         }
