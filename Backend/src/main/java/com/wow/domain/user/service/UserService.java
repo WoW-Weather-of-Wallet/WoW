@@ -76,6 +76,10 @@ public class UserService {
 
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
 
+        if (phoneNumber.equals(user.getPhoneNumber())) {
+            throw new IllegalArgumentException("현재 전화번호와 동일합니다.");
+        }
+
         if (userRepository.existsByPhoneNumber(phoneNumber)) {
             throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
         }
