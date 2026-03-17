@@ -85,12 +85,17 @@ class AuthServiceTest {
         when(valueOperations.get("refresh:wowuser")).thenReturn("refresh-token");
         when(customUserDetailsService.loadUserByUsername("wowuser")).thenReturn(userDetails);
         when(jwtTokenProvider.createAccessToken("wowuser", List.of("ROLE_User"))).thenReturn("new-access-token");
+        when(jwtTokenProvider.createRefreshToken("wowuser")).thenReturn("new-refresh-token");
         when(jwtTokenProvider.getAccessTokenValidityInSeconds()).thenReturn(1800L);
+        when(jwtTokenProvider.getRefreshTokenValidityInSeconds()).thenReturn(1209600L);
 
         TokenRefreshResponse response = authService.refresh("refresh-token");
 
         assertThat(response.getAccessToken()).isEqualTo("new-access-token");
         assertThat(response.getExpiresIn()).isEqualTo(1800L);
+        assertThat(response.getRefreshToken()).isEqualTo("new-refresh-token");
+        assertThat(response.getRefreshExpiresIn()).isEqualTo(1209600L);
+        verify(valueOperations).set("refresh:wowuser", "new-refresh-token", java.time.Duration.ofSeconds(1209600L));
     }
 
     @Test

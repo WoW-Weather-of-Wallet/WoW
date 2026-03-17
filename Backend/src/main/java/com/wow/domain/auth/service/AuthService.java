@@ -157,9 +157,30 @@ public class AuthService {
                 .map(GrantedAuthority::getAuthority)
                 .toList();
 
+        /*
+         * 수정 이유:
+         * - 기존에는 access token만 재발급해 탈취된 refresh token이 만료 전까지 재사용될 수 있었습니다.
+         * - refresh token도 새로 발급하고 Redis 저장값을 교체하는 rotation 방식으로 보안을 강화했습니다.
+         *
+         * 수정 전 코드:
+         * - String newAccessToken = jwtTokenProvider.createAccessToken(userId, roles);
+         * - return new TokenRefreshResponse(newAccessToken, jwtTokenProvider.getAccessTokenValidityInSeconds());
+         */
         String newAccessToken = jwtTokenProvider.createAccessToken(userId, roles);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(userId);
 
-        return new TokenRefreshResponse(newAccessToken, jwtTokenProvider.getAccessTokenValidityInSeconds());
+        redisTemplate.opsForValue().set(
+                REFRESH_KEY_PREFIX + userId,
+                newRefreshToken,
+                Duration.ofSeconds(jwtTokenProvider.getRefreshTokenValidityInSeconds())
+        );
+
+        return new TokenRefreshResponse(
+                newAccessToken,
+                jwtTokenProvider.getAccessTokenValidityInSeconds(),
+                newRefreshToken,
+                jwtTokenProvider.getRefreshTokenValidityInSeconds()
+        );
     }
 
     public void logout(String userId) {
