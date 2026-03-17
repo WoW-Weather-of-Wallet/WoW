@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,7 @@ public class UserCreateRequest {
     private String pw;
 
     @NotBlank(message = "이름을 입력해주세요.")
+    @Size(max = 10, message = "이름은 10자 이하여야 합니다.")
     private String name;
 
     @NotBlank(message = "성별을 입력해주세요.")

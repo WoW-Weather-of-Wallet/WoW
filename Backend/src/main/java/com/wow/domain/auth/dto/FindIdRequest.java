@@ -3,6 +3,7 @@ package com.wow.domain.auth.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -13,6 +14,7 @@ import java.time.LocalDate;
 public class FindIdRequest {
 
     @NotBlank(message = "이름을 입력해주세요.")
+    @Size(max = 10, message = "이름은 10자 이하여야 합니다.")
     private String name;
 
     @NotNull(message = "생년월일을 입력해주세요.")
