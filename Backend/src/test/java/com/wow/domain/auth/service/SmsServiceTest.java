@@ -13,6 +13,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -86,5 +87,26 @@ class SmsServiceTest {
         verify(valueOperations).set("sms:cooldown:01012345678", "true", Duration.ofSeconds(60));
         verify(valueOperations).set(anyString(), anyString(), any(Duration.class));
         verify(messageService).sendOne(any());
+    }
+
+    @Test
+    void sendCodeRollsBackRedisStateWhenMessageSendFails() {
+        /*
+         * 회귀 방지 목적:
+         * - 외부 SMS 발송 실패 시 cooldown/count/code가 남지 않도록 롤백되어야 합니다.
+         */
+        when(redisTemplate.hasKey("sms:cooldown:01012345678")).thenReturn(false);
+        when(valueOperations.increment("sms:count:01012345678")).thenReturn(1L);
+        when(valueOperations.decrement("sms:count:01012345678")).thenReturn(0L);
+        doThrow(new RuntimeException("send failed")).when(messageService).sendOne(any());
+
+        assertThatThrownBy(() -> smsService.sendCode("010-1234-5678"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("send failed");
+
+        verify(redisTemplate).delete("sms:cooldown:01012345678");
+        verify(redisTemplate).delete("sms:count:01012345678");
+        verify(redisTemplate).delete("sms:code:01012345678");
+        verify(valueOperations).decrement("sms:count:01012345678");
     }
 }

@@ -58,7 +58,20 @@ public class SmsService {
         message.setTo(normalized);
         message.setText("[WoW] 인증번호 [" + code + "]를 입력해주세요.");
 
-        messageService.sendOne(new SingleMessageSendingRequest(message));
+        try {
+            messageService.sendOne(new SingleMessageSendingRequest(message));
+        } catch (RuntimeException e) {
+            /*
+             * 수정 이유:
+             * - 외부 SMS 발송이 실패했는데 Redis의 code/cooldown/count가 남으면 사용자는 문자를 못 받았는데도 재시도가 막힐 수 있습니다.
+             * - 전송 실패 시 발송 관련 상태를 롤백해 정합성을 맞추도록 변경했습니다.
+             *
+             * 수정 전 코드:
+             * - messageService.sendOne(new SingleMessageSendingRequest(message));
+             */
+            rollbackSendState(normalized);
+            throw e;
+        }
     }
 
     public void verifyCode(String phoneNumber, String code) {
@@ -114,6 +127,20 @@ public class SmsService {
                 "true",
                 Duration.ofSeconds(SEND_COOLDOWN_SECONDS)
         );
+    }
+
+    private void rollbackSendState(String phoneNumber) {
+        String countKey = SEND_COUNT_KEY_PREFIX + phoneNumber;
+        String cooldownKey = SEND_COOLDOWN_KEY_PREFIX + phoneNumber;
+        String codeKey = CODE_KEY_PREFIX + phoneNumber;
+
+        redisTemplate.delete(codeKey);
+        redisTemplate.delete(cooldownKey);
+
+        Long updatedCount = redisTemplate.opsForValue().decrement(countKey);
+        if (updatedCount != null && updatedCount <= 0) {
+            redisTemplate.delete(countKey);
+        }
     }
 
     private String generateCode() {
