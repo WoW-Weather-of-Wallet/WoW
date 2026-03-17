@@ -1,5 +1,6 @@
 package com.wow.domain.auth.service;
 
+import com.wow.global.constant.RedisKeys;
 import net.nurigo.sdk.message.model.Message;
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
 import net.nurigo.sdk.message.service.DefaultMessageService;
@@ -20,11 +21,6 @@ public class SmsService {
     private static final long SEND_COOLDOWN_SECONDS = 60;
     private static final long SEND_LIMIT_WINDOW_MINUTES = 60;
     private static final long MAX_SEND_COUNT_PER_WINDOW = 5;
-    private static final String VERIFIED_KEY_PREFIX = "sms:verified:";
-    private static final String CODE_KEY_PREFIX = "sms:code:";
-    private static final String SEND_COOLDOWN_KEY_PREFIX = "sms:cooldown:";
-    private static final String SEND_COUNT_KEY_PREFIX = "sms:count:";
-
     private final StringRedisTemplate redisTemplate;
     private final DefaultMessageService messageService;
     @Value("${solapi.sender}")
@@ -48,7 +44,7 @@ public class SmsService {
         String code = generateCode();
 
         redisTemplate.opsForValue().set(
-                CODE_KEY_PREFIX + normalized,
+                RedisKeys.SMS_CODE_PREFIX + normalized,
                 code,
                 Duration.ofMinutes(CODE_TTL_MINUTES)
         );
@@ -76,7 +72,7 @@ public class SmsService {
 
     public void verifyCode(String phoneNumber, String code) {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
-        String savedCode = redisTemplate.opsForValue().get(CODE_KEY_PREFIX + normalized);
+        String savedCode = redisTemplate.opsForValue().get(RedisKeys.SMS_CODE_PREFIX + normalized);
 
         if (savedCode == null) {
             throw new IllegalArgumentException("인증번호가 만료되었습니다.");
@@ -85,10 +81,10 @@ public class SmsService {
             throw new IllegalArgumentException("인증번호가 올바르지 않습니다.");
         }
 
-        redisTemplate.delete(CODE_KEY_PREFIX + normalized);
+        redisTemplate.delete(RedisKeys.SMS_CODE_PREFIX + normalized);
 
         redisTemplate.opsForValue().set(
-                VERIFIED_KEY_PREFIX + normalized,
+                RedisKeys.SMS_VERIFIED_PREFIX + normalized,
                 "true",
                 Duration.ofMinutes(30)
         );
@@ -96,23 +92,23 @@ public class SmsService {
 
     public void checkVerified(String phoneNumber) {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
-        String verified = redisTemplate.opsForValue().get(VERIFIED_KEY_PREFIX + normalized);
+        String verified = redisTemplate.opsForValue().get(RedisKeys.SMS_VERIFIED_PREFIX + normalized);
         if (!"true".equals(verified)) {
             throw new IllegalArgumentException("휴대폰 인증이 필요합니다.");
         }
     }
 
     public void deleteVerified(String phoneNumber) {
-        redisTemplate.delete(VERIFIED_KEY_PREFIX + PhoneNumberUtils.normalize(phoneNumber));
+        redisTemplate.delete(RedisKeys.SMS_VERIFIED_PREFIX + PhoneNumberUtils.normalize(phoneNumber));
     }
 
     private void validateSendRateLimit(String phoneNumber) {
-        String cooldownKey = SEND_COOLDOWN_KEY_PREFIX + phoneNumber;
+        String cooldownKey = RedisKeys.SMS_COOLDOWN_PREFIX + phoneNumber;
         if (Boolean.TRUE.equals(redisTemplate.hasKey(cooldownKey))) {
             throw new IllegalArgumentException("인증번호는 1분 후에 다시 요청해주세요.");
         }
 
-        String countKey = SEND_COUNT_KEY_PREFIX + phoneNumber;
+        String countKey = RedisKeys.SMS_COUNT_PREFIX + phoneNumber;
         Long sendCount = redisTemplate.opsForValue().increment(countKey);
         if (sendCount != null && sendCount == 1L) {
             redisTemplate.expire(countKey, Duration.ofMinutes(SEND_LIMIT_WINDOW_MINUTES));
@@ -130,9 +126,9 @@ public class SmsService {
     }
 
     private void rollbackSendState(String phoneNumber) {
-        String countKey = SEND_COUNT_KEY_PREFIX + phoneNumber;
-        String cooldownKey = SEND_COOLDOWN_KEY_PREFIX + phoneNumber;
-        String codeKey = CODE_KEY_PREFIX + phoneNumber;
+        String countKey = RedisKeys.SMS_COUNT_PREFIX + phoneNumber;
+        String cooldownKey = RedisKeys.SMS_COOLDOWN_PREFIX + phoneNumber;
+        String codeKey = RedisKeys.SMS_CODE_PREFIX + phoneNumber;
 
         redisTemplate.delete(codeKey);
         redisTemplate.delete(cooldownKey);

@@ -2,6 +2,7 @@ package com.wow.domain.auth.service;
 
 import com.wow.domain.auth.dto.*;
 import com.wow.global.util.PhoneNumberUtils;
+import com.wow.global.constant.RedisKeys;
 import com.wow.domain.security.CustomUserDetails;
 import com.wow.domain.security.CustomUserDetailsService;
 import com.wow.domain.security.JwtTokenProvider;
@@ -28,8 +29,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-
-    private static final String REFRESH_KEY_PREFIX = "refresh:";
 
     private final UserRepository userRepository;
     private final UserTermRepository userTermRepository;
@@ -125,7 +124,7 @@ public class AuthService {
         String refreshToken = jwtTokenProvider.createRefreshToken(userId);
 
         redisTemplate.opsForValue().set(
-                REFRESH_KEY_PREFIX + userId,
+                RedisKeys.REFRESH_TOKEN_PREFIX + userId,
                 refreshToken,
                 Duration.ofSeconds(jwtTokenProvider.getRefreshTokenValidityInSeconds())
         );
@@ -146,7 +145,7 @@ public class AuthService {
         }
 
         String userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
-        String savedToken = redisTemplate.opsForValue().get(REFRESH_KEY_PREFIX + userId);
+        String savedToken = redisTemplate.opsForValue().get(RedisKeys.REFRESH_TOKEN_PREFIX + userId);
 
         if (!refreshToken.equals(savedToken)) {
             throw new IllegalArgumentException("refresh token이 일치하지 않습니다.");
@@ -170,7 +169,7 @@ public class AuthService {
         String newRefreshToken = jwtTokenProvider.createRefreshToken(userId);
 
         redisTemplate.opsForValue().set(
-                REFRESH_KEY_PREFIX + userId,
+                RedisKeys.REFRESH_TOKEN_PREFIX + userId,
                 newRefreshToken,
                 Duration.ofSeconds(jwtTokenProvider.getRefreshTokenValidityInSeconds())
         );
@@ -185,7 +184,7 @@ public class AuthService {
 
     public void logout(String userId) {
 
-        redisTemplate.delete(REFRESH_KEY_PREFIX + userId);
+        redisTemplate.delete(RedisKeys.REFRESH_TOKEN_PREFIX + userId);
 
     }
 

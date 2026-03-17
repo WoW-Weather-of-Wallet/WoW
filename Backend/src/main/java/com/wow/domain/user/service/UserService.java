@@ -7,6 +7,7 @@ import com.wow.domain.user.dto.UserProfileResponse;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.domain.user.repository.UserTermRepository;
+import com.wow.global.constant.RedisKeys;
 import com.wow.global.util.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -16,8 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-
-    private static final String REFRESH_KEY_PREFIX = "refresh:";
 
     private final UserRepository userRepository;
     private final UserTermRepository userTermRepository;
@@ -47,7 +46,7 @@ public class UserService {
 
         // Redis refresh token 삭제
         String redisKey = user.getUserId() != null ? user.getUserId() : user.getSsafyOauthId();
-        redisTemplate.delete(REFRESH_KEY_PREFIX + redisKey);
+        redisTemplate.delete(RedisKeys.REFRESH_TOKEN_PREFIX + redisKey);
 
         // 유저 삭제
         userRepository.delete(user);

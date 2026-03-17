@@ -6,6 +6,7 @@ import com.wow.domain.auth.dto.ssafy.SsafyCheckRequest;
 import com.wow.domain.auth.dto.ssafy.SsafyRegisterRequest;
 import com.wow.domain.auth.dto.ssafy.SsafyTokenResponse;
 import com.wow.domain.auth.dto.ssafy.SsafyUserInfo;
+import com.wow.global.constant.RedisKeys;
 import com.wow.domain.security.JwtTokenProvider;
 import com.wow.domain.user.entity.Role;
 import com.wow.domain.user.entity.User;
@@ -35,9 +36,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 public class SsafyOAuthService {
 
-    private static final String REFRESH_KEY_PREFIX = "refresh:";
-    private static final String PENDING_KEY_PREFIX = "ssafy:pending:";
-    private static final String AUTH_CODE_KEY_PREFIX = "ssafy:code:";
     private static final long PENDING_TTL_MINUTES = 30;
     private static final long AUTH_CODE_TTL_SECONDS = 30;
 
@@ -92,7 +90,7 @@ public class SsafyOAuthService {
         if (existingUser.isPresent()) {
             String authCode = UUID.randomUUID().toString();
             redisTemplate.opsForValue().set(
-                    AUTH_CODE_KEY_PREFIX + authCode,
+                    RedisKeys.SSAFY_AUTH_CODE_PREFIX + authCode,
                     userInfo.getUserId(),
                     Duration.ofSeconds(AUTH_CODE_TTL_SECONDS)
             );
@@ -106,7 +104,7 @@ public class SsafyOAuthService {
 
         // 신규 회원 → 중복 검증 하기 전 Redis에 30분동안 ssafyOauthId 임시 저장
         redisTemplate.opsForValue().set(
-                PENDING_KEY_PREFIX + userInfo.getUserId(),
+                RedisKeys.SSAFY_PENDING_PREFIX + userInfo.getUserId(),
                 userInfo.getName(),
                 Duration.ofMinutes(PENDING_TTL_MINUTES)
         );
@@ -129,7 +127,7 @@ public class SsafyOAuthService {
             throw new IllegalArgumentException("이미 가입된 SSAFY 계정입니다.");
         }
 
-        String name = redisTemplate.opsForValue().get(PENDING_KEY_PREFIX + request.getSsafyOauthId());
+        String name = redisTemplate.opsForValue().get(RedisKeys.SSAFY_PENDING_PREFIX + request.getSsafyOauthId());
 
         if (name == null) {
             throw new IllegalArgumentException("SSAFY 로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
@@ -154,7 +152,7 @@ public class SsafyOAuthService {
         }
 
         // redis에서 ssafyOauthId로 name 가져오기
-        String redisKey = PENDING_KEY_PREFIX + request.getSsafyOauthId();
+        String redisKey = RedisKeys.SSAFY_PENDING_PREFIX + request.getSsafyOauthId();
         String name = redisTemplate.opsForValue().get(redisKey);
 
         if (name == null) {
@@ -195,7 +193,7 @@ public class SsafyOAuthService {
                 .build());
 
         // redis에서 ssafyOauthId 삭제
-        redisTemplate.delete(PENDING_KEY_PREFIX + request.getSsafyOauthId());
+        redisTemplate.delete(RedisKeys.SSAFY_PENDING_PREFIX + request.getSsafyOauthId());
 
         // redis에서 sms 인증 완료 기록 삭제
         smsService.deleteVerified(phoneNumber);
@@ -277,13 +275,13 @@ public class SsafyOAuthService {
     // 일회성 code로 JWT 교환
     public UserLoginResponse exchangeToken(String code) {
 
-        String ssafyOauthId = redisTemplate.opsForValue().get(AUTH_CODE_KEY_PREFIX + code);
+        String ssafyOauthId = redisTemplate.opsForValue().get(RedisKeys.SSAFY_AUTH_CODE_PREFIX + code);
 
         if (ssafyOauthId == null) {
             throw new IllegalArgumentException("유효하지 않거나 만료된 코드입니다.");
         }
 
-        redisTemplate.delete(AUTH_CODE_KEY_PREFIX + code);
+        redisTemplate.delete(RedisKeys.SSAFY_AUTH_CODE_PREFIX + code);
 
         User user = userRepository.findBySsafyOauthId(ssafyOauthId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
@@ -303,7 +301,7 @@ public class SsafyOAuthService {
         String refreshToken = jwtTokenProvider.createRefreshToken(userId);
 
         redisTemplate.opsForValue().set(
-                REFRESH_KEY_PREFIX + userId,
+                RedisKeys.REFRESH_TOKEN_PREFIX + userId,
                 refreshToken,
                 Duration.ofSeconds(jwtTokenProvider.getRefreshTokenValidityInSeconds())
         );
