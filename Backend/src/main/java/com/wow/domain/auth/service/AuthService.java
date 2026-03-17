@@ -215,7 +215,7 @@ public class AuthService {
     }
 
     @Transactional
-    public void findPw(FindPwRequest request) {
+    public void findPassword(FindPwRequest request) {
 
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
 

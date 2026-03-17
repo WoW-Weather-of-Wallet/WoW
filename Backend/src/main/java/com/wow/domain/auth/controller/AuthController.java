@@ -74,8 +74,8 @@ public class AuthController {
 
     @Operation(summary = "비밀번호 찾기", description = "아이디, 이름, 생년월일, 전화번호 SMS 인증 완료 후 새 비밀번호로 변경합니다.")
     @PostMapping("/find/password")
-    public ResponseEntity<Void> findPw(@Valid @RequestBody FindPwRequest request) {
-        authService.findPw(request);
+    public ResponseEntity<Void> findPassword(@Valid @RequestBody FindPwRequest request) {
+        authService.findPassword(request);
         return ResponseEntity.noContent().build();
     }
 
