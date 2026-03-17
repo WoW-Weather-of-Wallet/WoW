@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import com.wow.domain.term.entity.Term;
 
 @Entity
 @Builder
@@ -23,6 +24,10 @@ public class UserTerm {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "term_id", nullable = false)
+    private Term term;
 
     @Column(nullable = false)
     private boolean agreed;
