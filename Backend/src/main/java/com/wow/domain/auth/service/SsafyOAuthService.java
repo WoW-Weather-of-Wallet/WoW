@@ -21,7 +21,6 @@ import java.util.UUID;
 
 import com.wow.global.util.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.*;
@@ -32,7 +31,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SsafyOAuthService {
@@ -74,15 +72,11 @@ public class SsafyOAuthService {
 
         SsafyUserInfo userInfo = getUserInfo(tokenResponse.getAccessToken());
 
-        log.info("SSAFY 로그인 - userId: {}, name: {}", userInfo.getUserId(), userInfo.getName());
-
         Optional<User> existingUser = userRepository.findBySsafyOauthId(userInfo.getUserId());
 
         // 기존 회원이면 일회성 code 발급 후 딥링크 URL 반환
         if (existingUser.isPresent()) {
-            log.info("기존 회원 로그인 - ssafyOauthId: {}", userInfo.getUserId());
             String authCode = UUID.randomUUID().toString();
-            log.info("SSAFY 로그인 code 발급: {}", authCode);
             redisTemplate.opsForValue().set(
                     AUTH_CODE_KEY_PREFIX + authCode,
                     userInfo.getUserId(),
@@ -97,7 +91,6 @@ public class SsafyOAuthService {
         }
 
         // 신규 회원 → 중복 검증 하기 전 Redis에 30분동안 ssafyOauthId 임시 저장
-        log.info("신규 회원 - Redis 저장 키: {}", PENDING_KEY_PREFIX + userInfo.getUserId());
         redisTemplate.opsForValue().set(
                 PENDING_KEY_PREFIX + userInfo.getUserId(),
                 userInfo.getName(),
@@ -149,7 +142,6 @@ public class SsafyOAuthService {
         // redis에서 ssafyOauthId로 name 가져오기
         String redisKey = PENDING_KEY_PREFIX + request.getSsafyOauthId();
         String name = redisTemplate.opsForValue().get(redisKey);
-        log.info("Redis 조회 키: {}, 결과: {}", redisKey, name);
 
         if (name == null) {
             throw new IllegalArgumentException("SSAFY 로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
@@ -255,8 +247,6 @@ public class SsafyOAuthService {
 
         User user = userRepository.findBySsafyOauthId(ssafyOauthId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-
-        log.info("code로 토큰 교환 - ssafyOauthId: {}", ssafyOauthId);
 
         return issueToken(user);
 
