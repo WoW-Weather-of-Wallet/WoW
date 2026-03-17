@@ -1,0 +1,104 @@
+############################################
+# OS
+############################################
+.DS_Store
+Thumbs.db
+
+############################################
+# IDE / Editor
+############################################
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+############################################
+# Logs
+############################################
+*.log
+logs/
+
+############################################
+# Environment variables
+############################################
+.env
+.env.*
+*.env
+
+############################################
+# Keys / Secrets
+############################################
+*.pem
+*.key
+*.crt
+
+############################################
+# Backend (Spring Boot / Gradle)
+############################################
+Backend/.gradle/
+Backend/build/
+Backend/out/
+Backend/.classpath
+Backend/.project
+Backend/.settings/
+
+############################################
+# Frontend (React / React Native / Node)
+############################################
+Frontend/react/node_modules/
+Frontend/react/dist/
+Frontend/react/.vite/
+
+Frontend/native/node_modules/
+Frontend/native/.expo/
+Frontend/native/android/.gradle/
+Frontend/native/android/app/build/
+Frontend/native/android/build/
+Frontend/native/ios/Pods/
+Frontend/native/ios/build/
+
+Frontend/shared/node_modules/
+
+############################################
+# AI (Python / ML)
+############################################
+AI/__pycache__/
+AI/*.pyc
+AI/*.pyo
+AI/*.pyd
+
+AI/.venv/
+AI/venv/
+AI/env/
+
+AI/.ipynb_checkpoints/
+
+############################################
+# Infra / Docker
+############################################
+Infra/.env
+Infra/*.env
+Infra/.env.prod
+
+############################################
+# Temporary files
+############################################
+*.tmp
+*.temp
+*.swp
+*.swo
+
+############################################
+# Coverage / test output
+############################################
+coverage/
+htmlcov/
+
+############################################
+# Misc
+############################################
+*.lock
+Infra/Docker/env.prod
+Backend/src/main/resources/application-local.yml
+Backend/src/main/resources/application-local.yaml
