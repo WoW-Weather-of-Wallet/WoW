@@ -96,6 +96,7 @@ export default function FindIdScreen() {
 
       <TermsBottomSheet
         visible={termsVisible}
+        flow="FindId"
         onClose={() => setTermsVisible(false)}
         onConfirm={handleTermsConfirm}
       />

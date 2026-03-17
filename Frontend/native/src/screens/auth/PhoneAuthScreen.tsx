@@ -27,7 +27,7 @@ import { validateName, validatePhone } from '../../utils/validation';
 const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 알뜰폰'];
 const TELECOM_PLACEHOLDER = '통신사를 선택해주세요';
 
-export default function PhoneAuthScreen({ navigation }: any) {
+export default function PhoneAuthScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
 
   const [step, setStep] = useState(1);
@@ -258,20 +258,7 @@ export default function PhoneAuthScreen({ navigation }: any) {
           </Animated.View>
         )}
 
-        {/* 백엔드 문자 발송 상태와 무관하게 다음 화면 UI 개발을 이어가기 위한 우회 진입점입니다. */}
-        <DevShortcutButton
-          label="TEST: 인증번호 입력 화면으로 이동"
-          description="문자 발송 API 가 실패해도 VerifyCode 화면 UI 개발을 계속 진행할 수 있습니다."
-          onPress={() =>
-            navigation.navigate('VerifyCode', {
-              name: name || '테스트 사용자',
-              ssnFront: ssnFront || '000101',
-              ssnBack: ssnBack || '3',
-              telecom: telecom === TELECOM_PLACEHOLDER ? 'SKT' : telecom,
-              phone: phone || '01012345678',
-            })
-          }
-        />
+        {/* [Defense-Log] 운영 환경 전환을 위해 하드코딩된 인증 우회 버튼(DevShortcutButton)을 제거했습니다. */}
       </ScrollView>
 
       <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
@@ -308,6 +295,7 @@ export default function PhoneAuthScreen({ navigation }: any) {
 
       <TermsBottomSheet
         visible={termsVisible}
+        flow={route.params?.flow}
         onClose={() => setTermsVisible(false)}
         onConfirm={(agreed) => {
           // 필수 약관 동의가 끝난 시점의 값을 회원가입 플로우 전체에서 재사용한다.

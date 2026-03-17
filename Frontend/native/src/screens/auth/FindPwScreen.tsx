@@ -176,6 +176,7 @@ export default function FindPwScreen() {
 
       <TermsBottomSheet
         visible={termsVisible}
+        flow="FindPw"
         onClose={() => setTermsVisible(false)}
         onConfirm={handleTermsConfirm}
       />

@@ -98,6 +98,22 @@ export interface SmsVerifyRequest {
   code: string;
 }
 
+export interface FindIdRequest {
+  name: string;
+  phoneNumber: string;
+}
+
+export interface FindIdResponse {
+  userId: string;
+  userType: 'NORMAL' | 'SSAFY';
+}
+
+export interface FindPasswordRequest {
+  userId: string;
+  name: string;
+  phoneNumber: string;
+}
+
 export interface CheckUserIdResponse {
   // 일반 회원가입의 userId 중복확인 응답
   // 백엔드 변수명은 isAvailable 이지만, JSON 직렬화 시 available 로 내려올 수 있어 둘 다 대응하도록 정의합니다.
@@ -227,6 +243,18 @@ export const changePassword = async (payload: NativeChangePasswordRequest) => {
 
 export const deleteAccount = async () => {
   const response = await nativeApi.delete('/api/v1/user/delete');
+  return response.data;
+};
+
+// 아이디 찾기 API
+export const findUserId = async (payload: FindIdRequest): Promise<FindIdResponse> => {
+  const response = await nativeApi.post<FindIdResponse>('/api/v1/auth/find/id', payload);
+  return response.data;
+};
+
+// 비밀번호 찾기 (재설정 권한 확인) API
+export const findPassword = async (payload: FindPasswordRequest) => {
+  const response = await nativeApi.post('/api/v1/auth/find/password', payload);
   return response.data;
 };
 

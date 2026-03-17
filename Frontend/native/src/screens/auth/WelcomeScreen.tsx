@@ -200,8 +200,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   infoSection: {
-    flex: 1,
-    justifyContent: 'center',
+    marginVertical: hp(24),
   },
   infoCard: {
     backgroundColor: '#F9FAFB',
@@ -227,7 +226,8 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   bottomSection: {
-    paddingBottom: hp(8),
+    paddingBottom: hp(12),
+    marginTop: 'auto',
   },
   confirmButton: {
     backgroundColor: COLORS.primary,
