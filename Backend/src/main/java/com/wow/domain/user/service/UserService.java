@@ -61,6 +61,17 @@ public class UserService {
                 .or(() -> userRepository.findBySsafyOauthId(userId))
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
+        /*
+         * 수정 이유:
+         * - DTO 검증이 있더라도 서비스에서 한 번 더 막아두면 다른 진입 경로나 future refactor에서도 안전합니다.
+         *
+         * 수정 전 코드:
+         * - user.updateProfile(request.getName(), request.getGender(), request.getBirthDate());
+         */
+        if (request.getName() != null && request.getName().isBlank()) {
+            throw new IllegalArgumentException("이름은 공백만 입력할 수 없습니다.");
+        }
+
         user.updateProfile(request.getName(), request.getGender(), request.getBirthDate());
 
         return UserProfileResponse.from(user);
