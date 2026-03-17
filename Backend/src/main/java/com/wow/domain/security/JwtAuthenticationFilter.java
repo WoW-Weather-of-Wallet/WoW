@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -26,12 +27,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 토큰이 존재하며 유효한 토큰인 경우
         if (token != null && jwtTokenProvider.validateToken(token)) {
 
-            // 토큰으로 Authentication (사용자 인증 정보) 객체 생성
-            Authentication authentication = jwtTokenProvider.getAuthentication(token);
+            try {
+                // 토큰으로 Authentication (사용자 인증 정보) 객체 생성
+                Authentication authentication = jwtTokenProvider.getAuthentication(token);
 
-            // 사용자 인증 정보 저장
-            // 이후 @AuthenticationPrincipal이나
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                // 사용자 인증 정보 저장
+                // 이후 @AuthenticationPrincipal이나
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            } catch (UsernameNotFoundException e) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "존재하지 않는 사용자입니다.");
+                return;
+            }
 
         }
 
