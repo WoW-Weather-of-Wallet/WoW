@@ -73,7 +73,7 @@ public class AuthController {
     }
 
     @Operation(summary = "비밀번호 찾기", description = "아이디, 이름, 생년월일, 전화번호 SMS 인증 완료 후 새 비밀번호로 변경합니다.")
-    @PostMapping("/find/pw")
+    @PostMapping("/find/password")
     public ResponseEntity<Void> findPw(@RequestBody FindPwRequest request) {
         authService.findPw(request);
         return ResponseEntity.noContent().build();
