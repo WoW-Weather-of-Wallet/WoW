@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.wow.global.util.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,6 +82,7 @@ public class SsafyOAuthService {
         if (existingUser.isPresent()) {
             log.info("기존 회원 로그인 - ssafyOauthId: {}", userInfo.getUserId());
             String authCode = UUID.randomUUID().toString();
+            log.info("SSAFY 로그인 code 발급: {}", authCode);
             redisTemplate.opsForValue().set(
                     AUTH_CODE_KEY_PREFIX + authCode,
                     userInfo.getUserId(),
@@ -114,6 +116,8 @@ public class SsafyOAuthService {
     // 3. 신규 SSAFY 회원 중복 확인 (SMS 인증 전)
     public void checkDuplicate(SsafyCheckRequest request) {
 
+        String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+
         if (userRepository.existsBySsafyOauthId(request.getSsafyOauthId())) {
             throw new IllegalArgumentException("이미 가입된 SSAFY 계정입니다.");
         }
@@ -124,11 +128,11 @@ public class SsafyOAuthService {
             throw new IllegalArgumentException("SSAFY 로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
         }
 
-        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+        if (userRepository.existsByPhoneNumber(phoneNumber)) {
             throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
         }
 
-        if (userRepository.existsDuplicate(name, request.getGender(), request.getBirthDate(), request.getPhoneNumber())) {
+        if (userRepository.existsDuplicate(name, request.getGender(), request.getBirthDate(), phoneNumber)) {
             throw new IllegalArgumentException("이미 가입된 회원입니다.");
         }
 
@@ -151,16 +155,18 @@ public class SsafyOAuthService {
             throw new IllegalArgumentException("SSAFY 로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
         }
 
-        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+        String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+
+        if (userRepository.existsByPhoneNumber(phoneNumber)) {
             throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
         }
 
-        if (userRepository.existsDuplicate(name, request.getGender(), request.getBirthDate(), request.getPhoneNumber())) {
+        if (userRepository.existsDuplicate(name, request.getGender(), request.getBirthDate(), phoneNumber)) {
             throw new IllegalArgumentException("이미 가입된 회원입니다.");
         }
 
         // SMS 검증
-        smsService.checkVerified(request.getPhoneNumber());
+        smsService.checkVerified(phoneNumber);
 
         User newUser = User.builder()
                 .ssafyOauthId(request.getSsafyOauthId())
@@ -168,7 +174,7 @@ public class SsafyOAuthService {
                 .gender(request.getGender())
                 .alarmEnabled(request.isAlarmEnabled())
                 .birthDate(request.getBirthDate())
-                .phoneNumber(request.getPhoneNumber())
+                .phoneNumber(phoneNumber)
                 .role(Role.User)
                 .build();
 
@@ -186,7 +192,7 @@ public class SsafyOAuthService {
         redisTemplate.delete(PENDING_KEY_PREFIX + request.getSsafyOauthId());
 
         // redis에서 sms 인증 완료 기록 삭제
-        smsService.deleteVerified(request.getPhoneNumber());
+        smsService.deleteVerified(phoneNumber);
 
         return issueToken(newUser);
     }

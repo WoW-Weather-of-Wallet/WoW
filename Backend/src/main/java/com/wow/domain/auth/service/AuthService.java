@@ -1,6 +1,7 @@
 package com.wow.domain.auth.service;
 
 import com.wow.domain.auth.dto.*;
+import com.wow.global.util.PhoneNumberUtils;
 import com.wow.domain.security.CustomUserDetails;
 import com.wow.domain.security.CustomUserDetailsService;
 import com.wow.domain.security.JwtTokenProvider;
@@ -53,29 +54,31 @@ public class AuthService {
     @Transactional
     public UserCreateResponse signup(UserCreateRequest request) {
 
+        String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+
         if (userRepository.existsByUserId(request.getUserId())) {
             throw new IllegalArgumentException("이미 존재하는 회원입니다.");
         }
 
-        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+        if (userRepository.existsByPhoneNumber(phoneNumber)) {
             throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
         }
 
-        if (userRepository.existsDuplicate(request.getName(), request.getGender(), request.getBirthDate(), request.getPhoneNumber())) {
+        if (userRepository.existsDuplicate(request.getName(), request.getGender(), request.getBirthDate(), phoneNumber)) {
             throw new IllegalArgumentException("이미 가입된 회원입니다.");
         }
 
         validatePassword(request.getPw(), request.getUserId());
 
         // SMS 검증 확인
-        smsService.checkVerified(request.getPhoneNumber());
+        smsService.checkVerified(phoneNumber);
 
         User user = User.builder()
                 .userId(request.getUserId())
                 .pw(bCryptPasswordEncoder.encode(request.getPw()))
                 .name(request.getName())
                 .gender(request.getGender())
-                .phoneNumber(request.getPhoneNumber())
+                .phoneNumber(phoneNumber)
                 .birthDate(request.getBirthDate())
                 .alarmEnabled(request.isAlarmEnabled())
                 .role(Role.User)
@@ -94,7 +97,7 @@ public class AuthService {
         UserCreateResponse response = UserCreateResponse.from(user);
 
         // Redis에 인증 이력 삭제
-        smsService.deleteVerified(request.getPhoneNumber());
+        smsService.deleteVerified(phoneNumber);
 
         return response;
 

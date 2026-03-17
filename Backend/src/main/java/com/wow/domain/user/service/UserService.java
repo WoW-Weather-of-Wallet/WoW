@@ -7,6 +7,7 @@ import com.wow.domain.user.dto.UserProfileResponse;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.domain.user.repository.UserTermRepository;
+import com.wow.global.util.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,23 +66,18 @@ public class UserService {
                 .or(() -> userRepository.findBySsafyOauthId(userId))
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        String newPhoneNumber = request.getPhoneNumber();
+        String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
 
-        if (newPhoneNumber.equals(user.getPhoneNumber())) {
-            throw new IllegalArgumentException("현재 사용 중인 전화번호와 동일합니다.");
-        }
-
-        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+        if (userRepository.existsByPhoneNumber(phoneNumber)) {
             throw new IllegalArgumentException("이미 가입된 전화번호입니다.");
         }
 
-        smsService.checkVerified(request.getPhoneNumber());
+        smsService.checkVerified(phoneNumber);
 
-        user.updatePhoneNumber(request.getPhoneNumber());
+        user.updatePhoneNumber(phoneNumber);
 
-        smsService.deleteVerified(request.getPhoneNumber());
+        smsService.deleteVerified(phoneNumber);
 
     }
-
 
 }
