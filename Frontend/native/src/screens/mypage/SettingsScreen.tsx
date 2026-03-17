@@ -239,12 +239,26 @@ export default function SettingsScreen() {
       }
 
       if (editMode === 'phone') {
+        /**
+         * [Defense-Log] 백엔드 중복 체크 로직(P2)이 본인 번호를 제외하지 못하는 이슈 대응
+         * 현재 번호와 동일한 경우 백엔드에서 400 에러("이미 가입된 번호")를 낼 수 있으므로
+         * 프론트엔드에서 미리 체크하여 불필요한 요청을 방지합니다.
+         */
+        const normalizedNew = phoneNumber.replace(/[^0-9]/g, '');
+        const normalizedOld = profile?.phoneNumber?.replace(/[^0-9]/g, '') || '';
+        
+        if (normalizedNew === normalizedOld) {
+          Alert.alert('정보 유지', '현재 등록된 번호와 동일해요.');
+          closeEditor();
+          return;
+        }
+
         if (!isPhoneVerified) {
           throw new Error('휴대폰 번호 변경 전에 SMS 인증을 완료해주세요.');
         }
 
         await updatePhone({
-          phoneNumber: phoneNumber.replace(/[^0-9]/g, ''),
+          phoneNumber: normalizedNew,
         });
         await loadProfile();
       }
@@ -429,6 +443,11 @@ export default function SettingsScreen() {
 
             {editMode === 'profile' ? (
               <>
+                {/**
+                 * [Defense-Log] 백엔드 감사 결과(P1, P3)에 따르면 SSAFY 회원도 프로필 수정이 가능할 수 있음.
+                 * 하지만 기획상 이름/성별/생년월일은 본인인증 데이터이므로 수정을 막는 것이 안전합니다.
+                 * (백엔드는 열려있어도 프론트 UI에서 선제적 방어)
+                 */}
                 <View style={styles.readOnlyInput}>
                   <Text style={styles.readOnlyLabel}>이름</Text>
                   <Text style={styles.readOnlyValue}>{name}</Text>

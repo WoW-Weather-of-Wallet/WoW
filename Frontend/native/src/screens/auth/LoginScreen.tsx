@@ -122,6 +122,21 @@ export default function LoginScreen({ navigation }: any) {
     setIsSubmitting(true);
     setLoginError('');
 
+    /**
+     * [Defense-Log] 백엔드 요청값 검증(P2) 부재에 대응
+     * 로그인 시 아이디/비밀번호가 비어있는지 프론트엔드에서 먼저 체크합니다.
+     */
+    if (!userId.trim()) {
+      setLoginError('아이디를 입력해주세요.');
+      setIsSubmitting(false);
+      return;
+    }
+    if (!password.trim()) {
+      setLoginError('비밀번호를 입력해주세요.');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const response = await login({
         userId: userId.trim(),

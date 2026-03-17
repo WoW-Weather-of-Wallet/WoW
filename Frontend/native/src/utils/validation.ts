@@ -137,3 +137,49 @@ export const validatePassword = (password: string, userId?: string): ValidationR
 
   return { isValid: true, message: '안전한 비밀번호입니다.' };
 };
+
+/**
+ * [Defense-Log] 백엔드 요청값 검증(P2) 부재에 대응하기 위한 이름 검증
+ * 이름은 2~20자 사이의 한글/영문만 허용하며 필수 입력값입니다.
+ */
+export const validateName = (name: string): ValidationResult => {
+  const trimmed = name.trim();
+  if (!trimmed) return { isValid: false, message: '이름을 입력해주세요.' };
+  if (trimmed.length < 2 || trimmed.length > 20) return { isValid: false, message: '이름은 2자 이상 20자 이하로 입력해주세요.' };
+  if (!/^[a-zA-Z가-힣\s]+$/.test(trimmed)) return { isValid: false, message: '이름에 특수문자나 숫자를 포함할 수 없습니다.' };
+  return { isValid: true, message: '올바른 이름 형식입니다.' };
+};
+
+/**
+ * [Defense-Log] 백엔드 전화번호 중복 체크(P1) 및 검증(P2) 부재에 대응
+ * 숫자만 10~11자리인지 확인합니다.
+ */
+export const validatePhone = (phone: string): ValidationResult => {
+  const cleaned = phone.replace(/[^0-9]/g, '');
+  if (!cleaned) return { isValid: false, message: '휴대폰 번호를 입력해주세요.' };
+  if (cleaned.length < 10 || cleaned.length > 11) return { isValid: false, message: '올바른 휴대폰 번호 형식이 아닙니다. (10~11자리 숫자)' };
+  return { isValid: true, message: '올바른 휴대폰 번호 형식입니다.' };
+};
+
+/**
+ * [Defense-Log] 백엔드 생년월일 검증(P2) 부재에 대응
+ * 8자리 숫자(YYYYMMDD) 형식을 확인합니다.
+ */
+export const validateBirthDate = (birthDate: string): ValidationResult => {
+  const cleaned = birthDate.replace(/[^0-9]/g, '');
+  if (!cleaned) return { isValid: false, message: '생년월일을 입력해주세요.' };
+  if (cleaned.length !== 8) return { isValid: false, message: '생년월일 8자리를 입력해주세요. (예: 19990101)' };
+  
+  const year = parseInt(cleaned.substring(0, 4), 10);
+  const month = parseInt(cleaned.substring(4, 6), 10);
+  const day = parseInt(cleaned.substring(6, 8), 10);
+  
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  
+  if (year < 1900 || year > currentYear) return { isValid: false, message: '태어난 년도를 정확히 입력해주세요.' };
+  if (month < 1 || month > 12) return { isValid: false, message: '태어난 월을 정확히 입력해주세요.' };
+  if (day < 1 || day > 31) return { isValid: false, message: '태어난 일을 정확히 입력해주세요.' };
+  
+  return { isValid: true, message: '올바른 생년월일 형식입니다.' };
+};

@@ -19,7 +19,7 @@ import StepIndicator from '../../components/common/StepIndicator';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { checkUserId, signup } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
-import { validateId, validatePassword } from '../../utils/validation';
+import { validateId, validatePassword, validateName, validatePhone } from '../../utils/validation';
 
 type CreateAccountRouteParams = {
   // 일반 회원가입/SSAFY 회원가입 공용 화면에서 분기 기준으로 사용
@@ -187,13 +187,34 @@ export default function CreateAccountScreen({ route, navigation }: any) {
     setIsSubmitting(true);
     setSubmitError('');
 
+    const currentName = routeParams.name ?? '';
+    const currentPhone = routeParams.phone ?? '';
+
+    /**
+     * [Defense-Log] 백엔드 요청값 검증(P2) 부재에 대응
+     * 가입 단계에서 이름과 전화번호가 올바른 형식인지 최종적으로 한 번 더 검사합니다.
+     */
+    const nameValidation = validateName(currentName);
+    if (!nameValidation.isValid) {
+      setSubmitError(nameValidation.message);
+      setIsSubmitting(false);
+      return;
+    }
+
+    const phoneValidation = validatePhone(currentPhone);
+    if (!phoneValidation.isValid) {
+      setSubmitError(phoneValidation.message);
+      setIsSubmitting(false);
+      return;
+    }
+
     const signupPayload = {
       userId: isSsafySignup ? undefined : trimmedUserId,
       ssafyOauthId: isSsafySignup ? ssafyOauthId : undefined,
       pw: password,
-      name: routeParams.name ?? '',
+      name: currentName.trim(),
       gender: buildGender(routeParams.ssnBack),
-      phoneNumber: routeParams.phone ?? '',
+      phoneNumber: currentPhone.replace(/[^0-9]/g, ''),
       birthDate: buildBirthDate(routeParams.ssnFront, routeParams.ssnBack),
       alarmEnabled: true,
       termsAgreed: routeParams.termsAgreed === true,

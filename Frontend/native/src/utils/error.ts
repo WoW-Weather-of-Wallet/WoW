@@ -17,10 +17,27 @@ export const extractApiErrorMessage = (
     | {
         message?: string;
         response?: {
+          status?: number;
           data?: ApiErrorData;
         };
       }
     | undefined;
+
+  /**
+   * [Defense-Log] 백엔드 감사 결과(P2)에 따라 요청값 검증이 서버측에서 부족할 수 있고,
+   * 예외 처리가 좁아(GlobalExceptionHandler) 401, 500 에러가 생으로 노출될 수 있음.
+   * 프론트엔드에서 상태 코드를 가로채어 친절한 한국어 문구로 치환합니다.
+   */
+  const status = apiError?.response?.status;
+  if (status === 401) {
+    return '아이디 또는 비밀번호가 올바르지 않습니다.';
+  }
+  if (status === 403) {
+    return '접근 권한이 없습니다.';
+  }
+  if (status === 500) {
+    return '서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+  }
 
   return (
     apiError?.response?.data?.errorMessage ??
