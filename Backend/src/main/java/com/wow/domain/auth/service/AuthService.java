@@ -172,16 +172,18 @@ public class AuthService {
     @Transactional(readOnly = true)
     public FindIdResponse findId(FindIdRequest request) {
 
+        String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+
         User user = userRepository.findByNameAndBirthDateAndPhoneNumber(
-                request.getName(), request.getBirthDate(), request.getPhoneNumber())
+                request.getName(), request.getBirthDate(), phoneNumber)
                 .orElseThrow(() -> new IllegalArgumentException("일치하는 회원 정보가 없습니다."));
 
         if (user.getUserId() == null) {
             throw new IllegalArgumentException("SSAFY 계정으로 가입된 회원입니다.");
         }
 
-        smsService.checkVerified(request.getPhoneNumber());
-        smsService.deleteVerified(request.getPhoneNumber());
+        smsService.checkVerified(phoneNumber);
+        smsService.deleteVerified(phoneNumber);
 
         return new FindIdResponse(user.getUserId());
 
@@ -190,17 +192,19 @@ public class AuthService {
     @Transactional
     public void findPw(FindPwRequest request) {
 
+        String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+
         User user = userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(
-                request.getUserId(), request.getName(), request.getBirthDate(), request.getPhoneNumber())
+                request.getUserId(), request.getName(), request.getBirthDate(), phoneNumber)
                 .orElseThrow(() -> new IllegalArgumentException("일치하는 회원 정보가 없습니다."));
 
-        smsService.checkVerified(request.getPhoneNumber());
+        smsService.checkVerified(phoneNumber);
 
         validatePassword(request.getNewPw(), request.getUserId());
 
         user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
 
-        smsService.deleteVerified(request.getPhoneNumber());
+        smsService.deleteVerified(phoneNumber);
 
     }
 
