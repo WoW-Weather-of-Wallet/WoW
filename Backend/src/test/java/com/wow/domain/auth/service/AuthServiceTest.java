@@ -3,6 +3,7 @@ package com.wow.domain.auth.service;
 import com.wow.domain.auth.dto.FindIdRequest;
 import com.wow.domain.auth.dto.FindIdResponse;
 import com.wow.domain.auth.dto.FindPwRequest;
+import com.wow.domain.auth.dto.TokenRefreshResponse;
 import com.wow.domain.security.CustomUserDetailsService;
 import com.wow.domain.security.JwtTokenProvider;
 import com.wow.domain.user.entity.Role;
@@ -15,11 +16,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,10 +59,55 @@ class AuthServiceTest {
     private StringRedisTemplate redisTemplate;
 
     @Mock
+    private ValueOperations<String, String> valueOperations;
+
+    @Mock
     private CustomUserDetailsService customUserDetailsService;
 
     @InjectMocks
     private AuthService authService;
+
+    @Test
+    void refreshReturnsNewAccessTokenWhenStoredRefreshTokenMatches() {
+        /*
+         * 회귀 방지 목적:
+         * - refresh token이 유효하고 Redis 저장값과 일치할 때만 access token이 재발급되어야 합니다.
+         */
+        UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+                "wowuser",
+                "pw",
+                List.of(new SimpleGrantedAuthority("ROLE_User"))
+        );
+
+        when(jwtTokenProvider.validateToken("refresh-token")).thenReturn(true);
+        when(jwtTokenProvider.getUserIdFromToken("refresh-token")).thenReturn("wowuser");
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("refresh:wowuser")).thenReturn("refresh-token");
+        when(customUserDetailsService.loadUserByUsername("wowuser")).thenReturn(userDetails);
+        when(jwtTokenProvider.createAccessToken("wowuser", List.of("ROLE_User"))).thenReturn("new-access-token");
+        when(jwtTokenProvider.getAccessTokenValidityInSeconds()).thenReturn(1800L);
+
+        TokenRefreshResponse response = authService.refresh("refresh-token");
+
+        assertThat(response.getAccessToken()).isEqualTo("new-access-token");
+        assertThat(response.getExpiresIn()).isEqualTo(1800L);
+    }
+
+    @Test
+    void refreshThrowsWhenStoredRefreshTokenDoesNotMatch() {
+        /*
+         * 회귀 방지 목적:
+         * - Redis 저장값과 다른 refresh token으로는 재발급이 되면 안 됩니다.
+         */
+        when(jwtTokenProvider.validateToken("refresh-token")).thenReturn(true);
+        when(jwtTokenProvider.getUserIdFromToken("refresh-token")).thenReturn("wowuser");
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("refresh:wowuser")).thenReturn("another-token");
+
+        assertThatThrownBy(() -> authService.refresh("refresh-token"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("refresh token");
+    }
 
     @Test
     void findIdUsesGenderAndNormalizedPhoneNumber() {
