@@ -1,6 +1,7 @@
 package com.wow.domain.auth.service;
 
 import com.wow.domain.auth.dto.*;
+import com.wow.global.util.PhoneNumberUtils;
 import com.wow.domain.security.CustomUserDetails;
 import com.wow.domain.security.CustomUserDetailsService;
 import com.wow.domain.security.JwtTokenProvider;
@@ -53,23 +54,31 @@ public class AuthService {
     @Transactional
     public UserCreateResponse signup(UserCreateRequest request) {
 
+        String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+
         if (userRepository.existsByUserId(request.getUserId())) {
             throw new IllegalArgumentException("이미 존재하는 회원입니다.");
         }
 
-        if (userRepository.existsDuplicate(request.getName(), request.getGender(), request.getBirthDate(), request.getPhoneNumber())) {
+        if (userRepository.existsByPhoneNumber(phoneNumber)) {
+            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
+        }
+
+        if (userRepository.existsDuplicate(request.getName(), request.getGender(), request.getBirthDate(), phoneNumber)) {
             throw new IllegalArgumentException("이미 가입된 회원입니다.");
         }
 
+        validatePassword(request.getPw(), request.getUserId());
+
         // SMS 검증 확인
-        smsService.checkVerified(request.getPhoneNumber());
+        smsService.checkVerified(phoneNumber);
 
         User user = User.builder()
                 .userId(request.getUserId())
                 .pw(bCryptPasswordEncoder.encode(request.getPw()))
                 .name(request.getName())
                 .gender(request.getGender())
-                .phoneNumber(request.getPhoneNumber())
+                .phoneNumber(phoneNumber)
                 .birthDate(request.getBirthDate())
                 .alarmEnabled(request.isAlarmEnabled())
                 .role(Role.User)
@@ -88,7 +97,7 @@ public class AuthService {
         UserCreateResponse response = UserCreateResponse.from(user);
 
         // Redis에 인증 이력 삭제
-        smsService.deleteVerified(request.getPhoneNumber());
+        smsService.deleteVerified(phoneNumber);
 
         return response;
 
@@ -113,6 +122,7 @@ public class AuthService {
                         .map(GrantedAuthority::getAuthority)
                         .toList()
         );
+
         String refreshToken = jwtTokenProvider.createRefreshToken(userId);
 
         redisTemplate.opsForValue().set(
@@ -162,16 +172,18 @@ public class AuthService {
     @Transactional(readOnly = true)
     public FindIdResponse findId(FindIdRequest request) {
 
+        String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+
         User user = userRepository.findByNameAndBirthDateAndPhoneNumber(
-                request.getName(), request.getBirthDate(), request.getPhoneNumber())
+                request.getName(), request.getBirthDate(), phoneNumber)
                 .orElseThrow(() -> new IllegalArgumentException("일치하는 회원 정보가 없습니다."));
 
         if (user.getUserId() == null) {
             throw new IllegalArgumentException("SSAFY 계정으로 가입된 회원입니다.");
         }
 
-        smsService.checkVerified(request.getPhoneNumber());
-        smsService.deleteVerified(request.getPhoneNumber());
+        smsService.checkVerified(phoneNumber);
+        smsService.deleteVerified(phoneNumber);
 
         return new FindIdResponse(user.getUserId());
 
@@ -180,15 +192,19 @@ public class AuthService {
     @Transactional
     public void findPw(FindPwRequest request) {
 
+        String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+
         User user = userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(
-                request.getUserId(), request.getName(), request.getBirthDate(), request.getPhoneNumber())
+                request.getUserId(), request.getName(), request.getBirthDate(), phoneNumber)
                 .orElseThrow(() -> new IllegalArgumentException("일치하는 회원 정보가 없습니다."));
 
-        smsService.checkVerified(request.getPhoneNumber());
+        smsService.checkVerified(phoneNumber);
+
+        validatePassword(request.getNewPw(), request.getUserId());
 
         user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
 
-        smsService.deleteVerified(request.getPhoneNumber());
+        smsService.deleteVerified(phoneNumber);
 
     }
 
@@ -207,8 +223,61 @@ public class AuthService {
             throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
         }
 
+        validatePassword(request.getNewPw(), userId);
+
         user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
 
+    }
+
+    private void validatePassword(String pw, String userId) {
+        if (pw == null || pw.length() < 8 || pw.length() > 20) {
+            throw new IllegalArgumentException("비밀번호는 8자 이상 20자 이하여야 합니다.");
+        }
+        if (!pw.matches(".*[A-Z].*")) {
+            throw new IllegalArgumentException("비밀번호에 영문 대문자가 1개 이상 포함되어야 합니다.");
+        }
+        if (!pw.matches(".*[a-z].*")) {
+            throw new IllegalArgumentException("비밀번호에 영문 소문자가 1개 이상 포함되어야 합니다.");
+        }
+        if (!pw.matches(".*[0-9].*")) {
+            throw new IllegalArgumentException("비밀번호에 숫자가 1개 이상 포함되어야 합니다.");
+        }
+        if (!pw.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*")) {
+            throw new IllegalArgumentException("비밀번호에 특수문자가 1개 이상 포함되어야 합니다.");
+        }
+        if (userId != null && userId.equals(pw)) {
+            throw new IllegalArgumentException("비밀번호는 아이디와 동일할 수 없습니다.");
+        }
+        if (hasConsecutiveSequence(pw)) {
+            throw new IllegalArgumentException("비밀번호에 연속된 문자/숫자를 4개 이상 사용할 수 없습니다.");
+        }
+        if (hasRepeatedChars(pw)) {
+            throw new IllegalArgumentException("비밀번호에 동일한 문자/숫자를 4개 이상 연속 사용할 수 없습니다.");
+        }
+    }
+
+    private boolean hasConsecutiveSequence(String pw) {
+        String lower = pw.toLowerCase();
+        for (int i = 0; i <= lower.length() - 4; i++) {
+            boolean ascending = true;
+            boolean descending = true;
+            for (int j = i + 1; j < i + 4; j++) {
+                if (lower.charAt(j) != lower.charAt(j - 1) + 1) ascending = false;
+                if (lower.charAt(j) != lower.charAt(j - 1) - 1) descending = false;
+            }
+            if (ascending || descending) return true;
+        }
+        return false;
+    }
+
+    private boolean hasRepeatedChars(String pw) {
+        for (int i = 0; i <= pw.length() - 4; i++) {
+            char c = pw.charAt(i);
+            if (pw.charAt(i + 1) == c && pw.charAt(i + 2) == c && pw.charAt(i + 3) == c) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

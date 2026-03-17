@@ -6,6 +6,7 @@ import com.wow.domain.user.dto.UserProfileResponse;
 import com.wow.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -34,17 +35,17 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "회원 정보 수정", description = "로그인한 사용자의 이름(일반 회원만), 성별, 생년월일을 수정합니다.")
+    @Operation(summary = "회원 정보 수정", description = "로그인한 사용자의 이름, 성별, 생년월일을 수정합니다.")
     @PatchMapping("/profile")
     public ResponseEntity<UserProfileResponse> updateProfile(@AuthenticationPrincipal UserDetails userDetails,
-                                                             @RequestBody UpdateProfileRequest request) {
+                                                             @Valid @RequestBody UpdateProfileRequest request) {
         return ResponseEntity.ok(userService.updateProfile(userDetails.getUsername(), request));
     }
 
     @Operation(summary = "휴대폰 번호 수정", description = "SMS 인증 완료 후 휴대폰 번호를 변경합니다.")
     @PatchMapping("/phone")
     public ResponseEntity<Void> updatePhone(@AuthenticationPrincipal UserDetails userDetails,
-                                            @RequestBody UpdatePhoneRequest request) {
+                                            @Valid @RequestBody UpdatePhoneRequest request) {
         userService.updatePhone(userDetails.getUsername(), request);
         return ResponseEntity.noContent().build();
     }

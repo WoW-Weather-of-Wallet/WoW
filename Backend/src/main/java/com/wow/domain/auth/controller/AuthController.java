@@ -35,20 +35,20 @@ public class AuthController {
 
     @Operation(summary = "일반 로그인", description = "아이디/비밀번호로 로그인하고 JWT를 발급받습니다.")
     @PostMapping("/login")
-    public ResponseEntity<UserLoginResponse> login(@RequestBody UserLoginRequest request) {
+    public ResponseEntity<UserLoginResponse> login(@Valid @RequestBody UserLoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 
     @Operation(summary = "SMS 인증번호 발송", description = "입력한 휴대폰 번호로 6자리 인증번호를 발송합니다.")
     @PostMapping("/sms/send")
-    public ResponseEntity<Void> sendSms(@RequestBody SmsSendRequest request) {
+    public ResponseEntity<Void> sendSms(@Valid @RequestBody SmsSendRequest request) {
         smsService.sendCode(request.getPhoneNumber());
         return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "SMS 인증번호 확인", description = "발송된 인증번호를 검증합니다. 인증 성공 시 30분간 인증 상태가 유지됩니다.")
     @PostMapping("/sms/verify")
-    public ResponseEntity<Void> verifySms(@RequestBody SmsVerifyRequest request) {
+    public ResponseEntity<Void> verifySms(@Valid @RequestBody SmsVerifyRequest request) {
         smsService.verifyCode(request.getPhoneNumber(), request.getCode());
         return ResponseEntity.ok().build();
     }
@@ -68,13 +68,13 @@ public class AuthController {
 
     @Operation(summary = "아이디 찾기", description = "이름, 생년월일, 전화번호 SMS 인증 완료 후 아이디를 반환합니다.")
     @PostMapping("/find/id")
-    public ResponseEntity<FindIdResponse> findId(@RequestBody FindIdRequest request) {
+    public ResponseEntity<FindIdResponse> findId(@Valid @RequestBody FindIdRequest request) {
         return ResponseEntity.ok(authService.findId(request));
     }
 
     @Operation(summary = "비밀번호 찾기", description = "아이디, 이름, 생년월일, 전화번호 SMS 인증 완료 후 새 비밀번호로 변경합니다.")
-    @PostMapping("/find/pw")
-    public ResponseEntity<Void> findPw(@RequestBody FindPwRequest request) {
+    @PostMapping("/find/password")
+    public ResponseEntity<Void> findPw(@Valid @RequestBody FindPwRequest request) {
         authService.findPw(request);
         return ResponseEntity.noContent().build();
     }
@@ -82,7 +82,7 @@ public class AuthController {
     @Operation(summary = "비밀번호 변경", description = "현재 비밀번호를 확인 후 새 비밀번호로 변경합니다. (일반 회원 전용)")
     @PatchMapping("/password")
     public ResponseEntity<Void> changePassword(@AuthenticationPrincipal UserDetails userDetails,
-                                               @RequestBody ChangePasswordRequest request) {
+                                               @Valid @RequestBody ChangePasswordRequest request) {
         authService.changePassword(userDetails.getUsername(), request);
         return ResponseEntity.noContent().build();
     }

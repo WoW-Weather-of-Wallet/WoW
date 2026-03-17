@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import com.wow.global.util.PhoneNumberUtils;
 import java.security.SecureRandom;
 import java.time.Duration;
 
@@ -32,24 +33,26 @@ public class SmsService {
     }
 
     public void sendCode(String phoneNumber) {
+        String normalized = PhoneNumberUtils.normalize(phoneNumber);
         String code = generateCode();
 
         redisTemplate.opsForValue().set(
-                CODE_KEY_PREFIX + phoneNumber,
+                CODE_KEY_PREFIX + normalized,
                 code,
                 Duration.ofMinutes(CODE_TTL_MINUTES)
         );
 
         Message message = new Message();
         message.setFrom(sender);
-        message.setTo(phoneNumber);
+        message.setTo(normalized);
         message.setText("[WoW] 인증번호 [" + code + "]를 입력해주세요.");
 
         messageService.sendOne(new SingleMessageSendingRequest(message));
     }
 
     public void verifyCode(String phoneNumber, String code) {
-        String savedCode = redisTemplate.opsForValue().get(CODE_KEY_PREFIX + phoneNumber);
+        String normalized = PhoneNumberUtils.normalize(phoneNumber);
+        String savedCode = redisTemplate.opsForValue().get(CODE_KEY_PREFIX + normalized);
 
         if (savedCode == null) {
             throw new IllegalArgumentException("인증번호가 만료되었습니다.");
@@ -58,24 +61,25 @@ public class SmsService {
             throw new IllegalArgumentException("인증번호가 올바르지 않습니다.");
         }
 
-        redisTemplate.delete(CODE_KEY_PREFIX + phoneNumber);
+        redisTemplate.delete(CODE_KEY_PREFIX + normalized);
 
         redisTemplate.opsForValue().set(
-                VERIFIED_KEY_PREFIX + phoneNumber,
+                VERIFIED_KEY_PREFIX + normalized,
                 "true",
                 Duration.ofMinutes(30)
         );
     }
 
     public void checkVerified(String phoneNumber) {
-        String verified = redisTemplate.opsForValue().get(VERIFIED_KEY_PREFIX + phoneNumber);
+        String normalized = PhoneNumberUtils.normalize(phoneNumber);
+        String verified = redisTemplate.opsForValue().get(VERIFIED_KEY_PREFIX + normalized);
         if (!"true".equals(verified)) {
             throw new IllegalArgumentException("휴대폰 인증이 필요합니다.");
         }
     }
 
     public void deleteVerified(String phoneNumber) {
-        redisTemplate.delete(VERIFIED_KEY_PREFIX + phoneNumber);
+        redisTemplate.delete(VERIFIED_KEY_PREFIX + PhoneNumberUtils.normalize(phoneNumber));
     }
 
     private String generateCode() {
