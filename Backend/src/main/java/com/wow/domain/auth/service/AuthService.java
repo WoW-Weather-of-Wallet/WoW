@@ -57,9 +57,15 @@ public class AuthService {
             throw new IllegalArgumentException("이미 존재하는 회원입니다.");
         }
 
+        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
+        }
+
         if (userRepository.existsDuplicate(request.getName(), request.getGender(), request.getBirthDate(), request.getPhoneNumber())) {
             throw new IllegalArgumentException("이미 가입된 회원입니다.");
         }
+
+        validatePassword(request.getPw(), request.getUserId());
 
         // SMS 검증 확인
         smsService.checkVerified(request.getPhoneNumber());
@@ -113,6 +119,7 @@ public class AuthService {
                         .map(GrantedAuthority::getAuthority)
                         .toList()
         );
+
         String refreshToken = jwtTokenProvider.createRefreshToken(userId);
 
         redisTemplate.opsForValue().set(
@@ -186,6 +193,8 @@ public class AuthService {
 
         smsService.checkVerified(request.getPhoneNumber());
 
+        validatePassword(request.getNewPw(), request.getUserId());
+
         user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
 
         smsService.deleteVerified(request.getPhoneNumber());
@@ -207,8 +216,61 @@ public class AuthService {
             throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
         }
 
+        validatePassword(request.getNewPw(), userId);
+
         user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
 
+    }
+
+    private void validatePassword(String pw, String userId) {
+        if (pw == null || pw.length() < 8 || pw.length() > 20) {
+            throw new IllegalArgumentException("비밀번호는 8자 이상 20자 이하여야 합니다.");
+        }
+        if (!pw.matches(".*[A-Z].*")) {
+            throw new IllegalArgumentException("비밀번호에 영문 대문자가 1개 이상 포함되어야 합니다.");
+        }
+        if (!pw.matches(".*[a-z].*")) {
+            throw new IllegalArgumentException("비밀번호에 영문 소문자가 1개 이상 포함되어야 합니다.");
+        }
+        if (!pw.matches(".*[0-9].*")) {
+            throw new IllegalArgumentException("비밀번호에 숫자가 1개 이상 포함되어야 합니다.");
+        }
+        if (!pw.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*")) {
+            throw new IllegalArgumentException("비밀번호에 특수문자가 1개 이상 포함되어야 합니다.");
+        }
+        if (userId != null && userId.equals(pw)) {
+            throw new IllegalArgumentException("비밀번호는 아이디와 동일할 수 없습니다.");
+        }
+        if (hasConsecutiveSequence(pw)) {
+            throw new IllegalArgumentException("비밀번호에 연속된 문자/숫자를 4개 이상 사용할 수 없습니다.");
+        }
+        if (hasRepeatedChars(pw)) {
+            throw new IllegalArgumentException("비밀번호에 동일한 문자/숫자를 4개 이상 연속 사용할 수 없습니다.");
+        }
+    }
+
+    private boolean hasConsecutiveSequence(String pw) {
+        String lower = pw.toLowerCase();
+        for (int i = 0; i <= lower.length() - 4; i++) {
+            boolean ascending = true;
+            boolean descending = true;
+            for (int j = i + 1; j < i + 4; j++) {
+                if (lower.charAt(j) != lower.charAt(j - 1) + 1) ascending = false;
+                if (lower.charAt(j) != lower.charAt(j - 1) - 1) descending = false;
+            }
+            if (ascending || descending) return true;
+        }
+        return false;
+    }
+
+    private boolean hasRepeatedChars(String pw) {
+        for (int i = 0; i <= pw.length() - 4; i++) {
+            char c = pw.charAt(i);
+            if (pw.charAt(i + 1) == c && pw.charAt(i + 2) == c && pw.charAt(i + 3) == c) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

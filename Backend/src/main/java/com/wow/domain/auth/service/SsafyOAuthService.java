@@ -132,6 +132,10 @@ public class SsafyOAuthService {
             throw new IllegalArgumentException("SSAFY 로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
         }
 
+        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
+        }
+
         if (userRepository.existsDuplicate(name, request.getGender(), request.getBirthDate(), request.getPhoneNumber())) {
             throw new IllegalArgumentException("이미 가입된 회원입니다.");
         }
@@ -153,6 +157,10 @@ public class SsafyOAuthService {
 
         if (name == null) {
             throw new IllegalArgumentException("SSAFY 로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
+        }
+
+        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
         }
 
         if (userRepository.existsDuplicate(name, request.getGender(), request.getBirthDate(), request.getPhoneNumber())) {
