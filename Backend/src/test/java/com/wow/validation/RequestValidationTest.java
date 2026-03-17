@@ -1,0 +1,103 @@
+package com.wow.validation;
+
+import com.wow.domain.auth.dto.TokenRefreshRequest;
+import com.wow.domain.auth.dto.UserCreateRequest;
+import com.wow.domain.user.dto.UpdateProfileRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.time.LocalDate;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class RequestValidationTest {
+
+    private static ValidatorFactory validatorFactory;
+    private static Validator validator;
+
+    @BeforeAll
+    static void setUpValidator() {
+        validatorFactory = Validation.buildDefaultValidatorFactory();
+        validator = validatorFactory.getValidator();
+    }
+
+    @AfterAll
+    static void tearDownValidator() {
+        validatorFactory.close();
+    }
+
+    @Test
+    void userCreateRequestRejectsNullUserId() {
+        /*
+         * 회귀 방지 목적:
+         * - userId에 @Pattern만 있을 때 null이 통과하던 문제를 다시 열지 않도록 검증합니다.
+         */
+        UserCreateRequest request = new UserCreateRequest();
+        ReflectionTestUtils.setField(request, "pw", "Password123!");
+        ReflectionTestUtils.setField(request, "name", "홍길동");
+        ReflectionTestUtils.setField(request, "gender", "M");
+        ReflectionTestUtils.setField(request, "phoneNumber", "01012345678");
+        ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
+        ReflectionTestUtils.setField(request, "termsAgreed", true);
+
+        Set<ConstraintViolation<UserCreateRequest>> violations = validator.validate(request);
+
+        assertThat(violations)
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .contains("userId");
+    }
+
+    @Test
+    void tokenRefreshRequestRejectsBlankRefreshToken() {
+        /*
+         * 회귀 방지 목적:
+         * - /refresh 입력 검증이 빠져 빈 refresh token이 서비스까지 전달되지 않도록 확인합니다.
+         */
+        TokenRefreshRequest request = new TokenRefreshRequest();
+        ReflectionTestUtils.setField(request, "refreshToken", "   ");
+
+        Set<ConstraintViolation<TokenRefreshRequest>> violations = validator.validate(request);
+
+        assertThat(violations)
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .contains("refreshToken");
+    }
+
+    @Test
+    void updateProfileRequestRejectsBlankOnlyName() {
+        /*
+         * 회귀 방지 목적:
+         * - 부분 수정 API에서는 null은 허용하되, 공백-only 이름은 막아야 합니다.
+         */
+        UpdateProfileRequest request = new UpdateProfileRequest();
+        ReflectionTestUtils.setField(request, "name", "   ");
+
+        Set<ConstraintViolation<UpdateProfileRequest>> violations = validator.validate(request);
+
+        assertThat(violations)
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .contains("name");
+    }
+
+    @Test
+    void updateProfileRequestAllowsNullNameForPartialUpdate() {
+        /*
+         * 회귀 방지 목적:
+         * - 프로필 수정은 부분 업데이트이므로 name이 null인 요청 자체는 유효해야 합니다.
+         */
+        UpdateProfileRequest request = new UpdateProfileRequest();
+
+        Set<ConstraintViolation<UpdateProfileRequest>> violations = validator.validate(request);
+
+        assertThat(violations)
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .doesNotContain("name");
+    }
+}
