@@ -6,6 +6,7 @@ import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.dto.UserProfileResponse;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
+import com.wow.domain.user.repository.UserTermRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserTermRepository userTermRepository;
     private final SmsService smsService;
 
     @Transactional(readOnly = true)
@@ -35,6 +37,10 @@ public class UserService {
                 .or(() -> userRepository.findBySsafyOauthId(identifier))
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
+        // 회원 동의 이력 삭제
+        userTermRepository.deleteByUser(user);
+
+        // 유저 삭제
         userRepository.delete(user);
     }
 
