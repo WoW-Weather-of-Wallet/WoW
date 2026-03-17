@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
@@ -47,8 +49,12 @@ public class TermService {
                 .signatureDuration(PRESIGN_DURATION)
                 .getObjectRequest(getObjectRequest)
                 .build();
-        PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
-        return presignedRequest.url().toString();
+        try {
+            PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
+            return presignedRequest.url().toString();
+        } catch (S3Exception | SdkClientException e) {
+            throw new IllegalStateException("약관 파일 URL 생성에 실패했습니다.", e);
+        }
     }
 
     private String resolveObjectKey(String s3Url) {
@@ -62,12 +68,12 @@ public class TermService {
             if (slash > 0) {
                 String bucketName = withoutScheme.substring(0, slash);
                 String key = withoutScheme.substring(slash + 1);
-                if (bucketName.equals(bucket)) {
-                    return key;
+                if (!bucketName.equals(bucket)) {
+                    throw new IllegalArgumentException("s3 url bucket mismatch");
                 }
                 return key;
             }
-            return withoutScheme;
+            throw new IllegalArgumentException("invalid s3 url format");
         }
         if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
             URI uri = URI.create(trimmed);
@@ -85,8 +91,15 @@ public class TermService {
             if (normalized.startsWith(bucketPrefix)) {
                 return normalized.substring(bucketPrefix.length());
             }
-            return normalized;
+            if (isS3Host(host)) {
+                throw new IllegalArgumentException("s3 url bucket mismatch");
+            }
+            throw new IllegalArgumentException("invalid s3 url format");
         }
         return trimmed;
+    }
+
+    private boolean isS3Host(String host) {
+        return host.contains("amazonaws.com") || host.contains(".s3.");
     }
 }
