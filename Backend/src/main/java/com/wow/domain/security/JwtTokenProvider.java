@@ -132,18 +132,4 @@ public class JwtTokenProvider {
         return accessTokenValidity.toSeconds();
     }
 
-    public Date getIssuedAtFromToken(String token) {
-        Claims claims = parseClaims(token);
-        return claims.getIssuedAt();
-    }
-
-    public boolean isTokenExpired(String token) {
-        try {
-            Date expiration = getExpirationFromToken(token);
-            return expiration.before(new Date());
-        } catch (JwtException e) {
-            return true;
-        }
-    }
-
 }
