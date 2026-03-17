@@ -1,8 +1,16 @@
 package com.wow.domain.auth.service;
 
-import com.wow.domain.auth.dto.*;
-import com.wow.global.util.PhoneNumberUtils;
-import com.wow.global.constant.RedisKeys;
+import com.wow.domain.auth.dto.ChangePasswordRequest;
+import com.wow.domain.auth.dto.FindIdRequest;
+import com.wow.domain.auth.dto.FindIdResponse;
+import com.wow.domain.auth.dto.FindPwRequest;
+import com.wow.domain.auth.dto.TokenRefreshResponse;
+import com.wow.domain.auth.dto.UserCreateRequest;
+import com.wow.domain.auth.dto.UserCreateResponse;
+import com.wow.domain.auth.dto.UserIdCheckResponse;
+import com.wow.domain.auth.dto.UserLoginRequest;
+import com.wow.domain.auth.dto.UserLoginResponse;
+import com.wow.domain.auth.dto.UserSummaryResponse;
 import com.wow.domain.security.CustomUserDetails;
 import com.wow.domain.security.CustomUserDetailsService;
 import com.wow.domain.security.JwtTokenProvider;
@@ -11,6 +19,8 @@ import com.wow.domain.user.entity.User;
 import com.wow.domain.user.entity.UserTerm;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.domain.user.repository.UserTermRepository;
+import com.wow.global.constant.RedisKeys;
+import com.wow.global.util.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -47,7 +57,6 @@ public class AuthService {
         String message = isAvailable ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다.";
 
         return new UserIdCheckResponse(isAvailable, message, userId);
-
     }
 
     @Transactional
@@ -56,7 +65,7 @@ public class AuthService {
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
 
         if (userRepository.existsByUserId(request.getUserId())) {
-            throw new IllegalArgumentException("이미 존재하는 회원입니다.");
+            throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
         }
 
         if (userRepository.existsByPhoneNumber(phoneNumber)) {
@@ -69,7 +78,6 @@ public class AuthService {
 
         validatePassword(request.getPw(), request.getUserId());
 
-        // SMS 검증 확인
         smsService.checkVerified(phoneNumber);
 
         User user = User.builder()
@@ -83,10 +91,8 @@ public class AuthService {
                 .role(Role.User)
                 .build();
 
-        // USER 저장
         userRepository.save(user);
 
-        // 회원 동의 이력 저장
         userTermRepository.save(UserTerm.builder()
                 .user(user)
                 .agreed(request.isTermsAgreed())
@@ -95,11 +101,9 @@ public class AuthService {
 
         UserCreateResponse response = UserCreateResponse.from(user);
 
-        // Redis에 인증 이력 삭제
         smsService.deleteVerified(phoneNumber);
 
         return response;
-
     }
 
     @Transactional
@@ -135,7 +139,6 @@ public class AuthService {
                 refreshToken,
                 UserSummaryResponse.from(userDetails.getUser())
         );
-
     }
 
     public TokenRefreshResponse refresh(String refreshToken) {
@@ -158,8 +161,8 @@ public class AuthService {
 
         /*
          * 수정 이유:
-         * - 기존에는 access token만 재발급해 탈취된 refresh token이 만료 전까지 재사용될 수 있었습니다.
-         * - refresh token도 새로 발급하고 Redis 저장값을 교체하는 rotation 방식으로 보안을 강화했습니다.
+         * - 기존에는 access token만 재발급해서 refresh token 탈취 시 같은 값을 계속 재사용할 수 있었습니다.
+         * - refresh token도 새로 발급하고 Redis 저장값을 교체하는 rotation 방식으로 보완했습니다.
          *
          * 수정 전 코드:
          * - String newAccessToken = jwtTokenProvider.createAccessToken(userId, roles);
@@ -183,9 +186,7 @@ public class AuthService {
     }
 
     public void logout(String userId) {
-
         redisTemplate.delete(RedisKeys.REFRESH_TOKEN_PREFIX + userId);
-
     }
 
     @Transactional(readOnly = true)
@@ -195,33 +196,23 @@ public class AuthService {
 
         /*
          * 수정 이유:
-         * - SSAFY 계정 여부를 안내하는 정책을 유지하는 대신, 조회 조건을 gender까지 포함해 본인 확인 강도를 높였습니다.
+         * - SSAFY 계정 여부를 안내하는 현재 정책을 유지하되, 조회 조건에 gender까지 포함해
+         *   name/gender/birthDate/phoneNumber 조합으로 본인 확인 강도를 높였습니다.
          *
          * 수정 전 코드:
          * - userRepository.findByNameAndBirthDateAndPhoneNumber(request.getName(), request.getBirthDate(), phoneNumber)
          */
         User user = userRepository.findByNameAndGenderAndBirthDateAndPhoneNumber(
-                request.getName(), request.getGender(), request.getBirthDate(), phoneNumber)
+                        request.getName(), request.getGender(), request.getBirthDate(), phoneNumber)
                 .orElseThrow(() -> new IllegalArgumentException("일치하는 회원 정보가 없습니다."));
 
         /*
          * 수정 이유:
-         * - 아이디 찾기 응답에서 "SSAFY 계정" 여부를 따로 알려주면 계정 유형 정보가 노출됩니다.
-         * - 찾기 실패 상황은 같은 메시지로 반환해 불필요한 정보 노출을 줄이도록 변경했습니다.
+         * - 최종 정책은 SSAFY 계정이면 계정 유형을 안내하는 것이므로, 상충되는 이전 주석을 제거하고
+         *   현재 의도를 한 블록으로만 남깁니다.
          *
          * 수정 전 코드:
-         * - if (user.getUserId() == null) {
-         * -     throw new IllegalArgumentException("SSAFY 계정으로 가입된 회원입니다.");
-         * - }
-         */
-        /*
-         * 수정 이유:
-         * - 정책 변경에 따라 SSAFY 계정 여부는 알려주되, 조회 조건을 gender까지 포함해 본인 확인 강도를 높였습니다.
-         *
-         * 수정 전 코드:
-         * - if (user.getUserId() == null) {
-         * -     throw new IllegalArgumentException("일치하는 회원 정보가 없습니다.");
-         * - }
+         * - 상반된 정책 설명 주석 두 개가 함께 남아 있었습니다.
          */
         if (user.getUserId() == null) {
             throw new IllegalArgumentException("SSAFY 계정으로 가입된 회원입니다.");
@@ -231,7 +222,6 @@ public class AuthService {
         smsService.deleteVerified(phoneNumber);
 
         return new FindIdResponse(user.getUserId());
-
     }
 
     @Transactional
@@ -240,7 +230,7 @@ public class AuthService {
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
 
         User user = userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(
-                request.getUserId(), request.getName(), request.getBirthDate(), phoneNumber)
+                        request.getUserId(), request.getName(), request.getBirthDate(), phoneNumber)
                 .orElseThrow(() -> new IllegalArgumentException("일치하는 회원 정보가 없습니다."));
 
         smsService.checkVerified(phoneNumber);
@@ -250,7 +240,6 @@ public class AuthService {
         user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
 
         smsService.deleteVerified(phoneNumber);
-
     }
 
     @Transactional
@@ -258,10 +247,10 @@ public class AuthService {
 
         User user = userRepository.findByUserId(userId)
                 .or(() -> userRepository.findBySsafyOauthId(userId))
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
 
         if (user.getPw() == null) {
-            throw new IllegalArgumentException("일반 회원만 비밀번호를 변경할 수 있습니다.");
+            throw new IllegalArgumentException("소셜 로그인 계정은 비밀번호 변경이 불가능합니다.");
         }
 
         if (!bCryptPasswordEncoder.matches(request.getCurrentPw(), user.getPw())) {
@@ -271,33 +260,32 @@ public class AuthService {
         validatePassword(request.getNewPw(), userId);
 
         user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
-
     }
 
     private void validatePassword(String pw, String userId) {
         if (pw == null || pw.length() < 8 || pw.length() > 20) {
-            throw new IllegalArgumentException("비밀번호는 8자 이상 20자 이하여야 합니다.");
+            throw new IllegalArgumentException("비밀번호는 8자 이상 20자 이하로 입력해야 합니다.");
         }
         if (!pw.matches(".*[A-Z].*")) {
-            throw new IllegalArgumentException("비밀번호에 영문 대문자가 1개 이상 포함되어야 합니다.");
+            throw new IllegalArgumentException("비밀번호에는 영문 대문자를 1자 이상 포함해야 합니다.");
         }
         if (!pw.matches(".*[a-z].*")) {
-            throw new IllegalArgumentException("비밀번호에 영문 소문자가 1개 이상 포함되어야 합니다.");
+            throw new IllegalArgumentException("비밀번호에는 영문 소문자를 1자 이상 포함해야 합니다.");
         }
         if (!pw.matches(".*[0-9].*")) {
-            throw new IllegalArgumentException("비밀번호에 숫자가 1개 이상 포함되어야 합니다.");
+            throw new IllegalArgumentException("비밀번호에는 숫자를 1자 이상 포함해야 합니다.");
         }
         if (!pw.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*")) {
-            throw new IllegalArgumentException("비밀번호에 특수문자가 1개 이상 포함되어야 합니다.");
+            throw new IllegalArgumentException("비밀번호에는 특수문자를 1자 이상 포함해야 합니다.");
         }
         if (userId != null && userId.equals(pw)) {
             throw new IllegalArgumentException("비밀번호는 아이디와 동일할 수 없습니다.");
         }
         if (hasConsecutiveSequence(pw)) {
-            throw new IllegalArgumentException("비밀번호에 연속된 문자/숫자를 4개 이상 사용할 수 없습니다.");
+            throw new IllegalArgumentException("비밀번호에 연속된 문자 또는 숫자 4자를 사용할 수 없습니다.");
         }
         if (hasRepeatedChars(pw)) {
-            throw new IllegalArgumentException("비밀번호에 동일한 문자/숫자를 4개 이상 연속 사용할 수 없습니다.");
+            throw new IllegalArgumentException("비밀번호에 동일한 문자 또는 숫자 4자를 반복할 수 없습니다.");
         }
     }
 
@@ -307,10 +295,16 @@ public class AuthService {
             boolean ascending = true;
             boolean descending = true;
             for (int j = i + 1; j < i + 4; j++) {
-                if (lower.charAt(j) != lower.charAt(j - 1) + 1) ascending = false;
-                if (lower.charAt(j) != lower.charAt(j - 1) - 1) descending = false;
+                if (lower.charAt(j) != lower.charAt(j - 1) + 1) {
+                    ascending = false;
+                }
+                if (lower.charAt(j) != lower.charAt(j - 1) - 1) {
+                    descending = false;
+                }
             }
-            if (ascending || descending) return true;
+            if (ascending || descending) {
+                return true;
+            }
         }
         return false;
     }
@@ -324,5 +318,4 @@ public class AuthService {
         }
         return false;
     }
-
 }

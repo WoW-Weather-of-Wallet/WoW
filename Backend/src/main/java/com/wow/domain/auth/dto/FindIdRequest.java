@@ -22,29 +22,28 @@ public class FindIdRequest {
     @Past(message = "생년월일은 오늘 이전 날짜여야 합니다.")
     private LocalDate birthDate;
 
-    @NotBlank(message = "전화번호를 입력해주세요.")
     /*
      * 수정 이유:
-     * - 아이디 찾기에서 SSAFY 계정 여부를 알려주기로 한 정책이라면, 본인 확인 조건을 더 강하게 가져가는 편이 안전합니다.
-     * - 기존 name/birthDate/phoneNumber 조합에 gender를 추가해 일치 조건을 강화했습니다.
+     * - 아이디 찾기에서 SSAFY 계정 여부를 알려주는 정책이라면, 본인 확인 강도를 높이기 위해
+     *   기존 name/birthDate/phoneNumber 조합에 gender까지 같이 검증해야 합니다.
      *
      * 수정 전 코드:
-     * - private String phoneNumber;
+     * - private String gender;
      */
     @NotBlank(message = "성별을 입력해주세요.")
     @Pattern(regexp = "^[MF]$", message = "성별은 M 또는 F로 입력해주세요.")
     private String gender;
 
-    @NotBlank(message = "전화번호를 입력해주세요.")
     /*
      * 수정 이유:
-     * - 아이디 찾기에도 같은 휴대폰 번호 형식 규칙을 적용해 입력 방어를 맞췄습니다.
+     * - 기존에는 전화번호용 @NotBlank가 주석 위에 있어 gender 필드에 잘못 적용될 수 있었습니다.
+     * - phoneNumber 필드에 직접 어노테이션을 붙여 검증 대상과 메시지를 정확히 맞춥니다.
      *
      * 수정 전 코드:
-     * - @NotBlank(...)
+     * - @NotBlank(message = "전화번호를 입력해주세요.")
      * - private String phoneNumber;
      */
+    @NotBlank(message = "전화번호를 입력해주세요.")
     @Pattern(regexp = "^01\\d-?\\d{3,4}-?\\d{4}$", message = "전화번호는 01012345678 또는 010-1234-5678 형식으로 입력해주세요.")
     private String phoneNumber;
-
 }

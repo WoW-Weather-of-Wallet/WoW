@@ -5,6 +5,7 @@ import com.wow.domain.auth.dto.UserCreateRequest;
 import com.wow.domain.auth.dto.FindIdRequest;
 import com.wow.domain.auth.dto.SmsSendRequest;
 import com.wow.domain.auth.dto.SmsVerifyRequest;
+import com.wow.domain.auth.dto.ssafy.SsafyCheckRequest;
 import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.dto.UpdatePhoneRequest;
 import jakarta.validation.ConstraintViolation;
@@ -186,5 +187,24 @@ class RequestValidationTest {
         assertThat(violations)
                 .extracting(violation -> violation.getPropertyPath().toString())
                 .contains("code");
+    }
+
+    @Test
+    void ssafyCheckRequestRejectsInvalidPhoneNumberFormat() {
+        /*
+         * 회귀 방지 목적:
+         * - SSAFY 가입 여부 확인 요청도 다른 전화번호 DTO와 같은 형식 검증을 유지해야 합니다.
+         */
+        SsafyCheckRequest request = new SsafyCheckRequest();
+        ReflectionTestUtils.setField(request, "ssafyOauthId", "ssafy-oauth-id");
+        ReflectionTestUtils.setField(request, "gender", "M");
+        ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
+        ReflectionTestUtils.setField(request, "phoneNumber", "invalid-phone");
+
+        Set<ConstraintViolation<SsafyCheckRequest>> violations = validator.validate(request);
+
+        assertThat(violations)
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .contains("phoneNumber");
     }
 }
