@@ -53,11 +53,18 @@ public class User {
     @Column(name = "alarm_enabled")
     private boolean alarmEnabled;
 
-    public void updateOnboarding(String gender, String phoneNumber, LocalDate birthDate, boolean alarmEnabled) {
-        this.gender = gender;
+    public void updateProfile(String name, String gender, LocalDate birthDate) {
+        if (name != null) this.name = name;
+        if (gender != null) this.gender = gender;
+        if (birthDate != null) this.birthDate = birthDate;
+    }
+
+    public void updatePw(String encodedPw) {
+        this.pw = encodedPw;
+    }
+
+    public void updatePhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
-        this.birthDate = birthDate;
-        this.alarmEnabled = alarmEnabled;
     }
 
     @CreatedDate

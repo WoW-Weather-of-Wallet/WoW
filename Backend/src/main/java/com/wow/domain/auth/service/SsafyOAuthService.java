@@ -2,29 +2,44 @@ package com.wow.domain.auth.service;
 
 import com.wow.domain.auth.dto.UserLoginResponse;
 import com.wow.domain.auth.dto.UserSummaryResponse;
+import com.wow.domain.auth.dto.ssafy.SsafyCheckRequest;
+import com.wow.domain.auth.dto.ssafy.SsafyRegisterRequest;
 import com.wow.domain.auth.dto.ssafy.SsafyTokenResponse;
 import com.wow.domain.auth.dto.ssafy.SsafyUserInfo;
 import com.wow.domain.security.JwtTokenProvider;
 import com.wow.domain.user.entity.Role;
 import com.wow.domain.user.entity.User;
+import com.wow.domain.user.entity.UserTerm;
 import com.wow.domain.user.repository.UserRepository;
+import com.wow.domain.user.repository.UserTermRepository;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import com.wow.global.util.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 @RequiredArgsConstructor
 public class SsafyOAuthService {
 
     private static final String REFRESH_KEY_PREFIX = "refresh:";
+    private static final String PENDING_KEY_PREFIX = "ssafy:pending:";
+    private static final String AUTH_CODE_KEY_PREFIX = "ssafy:code:";
+    private static final long PENDING_TTL_MINUTES = 30;
+    private static final long AUTH_CODE_TTL_SECONDS = 30;
 
     @Value("${sso.ssafy.client-id}")
     private String clientId;
@@ -39,6 +54,8 @@ public class SsafyOAuthService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final StringRedisTemplate redisTemplate;
+    private final SmsService smsService;
+    private final UserTermRepository userTermRepository;
 
     // 1. 인가코드 받기 URL 생성
     public String getLoginUrl() {
@@ -48,45 +65,133 @@ public class SsafyOAuthService {
                 + "&response_type=code";
     }
 
-    // 2. 인가코드로 로그인 전체 처리
-    public UserLoginResponse login(String code) {
+    // 2. 인가코드로 로그인 처리
+    public String login(String code) {
 
-        // 2-1. 인가코드 → SSAFY 액세스 토큰
         SsafyTokenResponse tokenResponse = getAccessToken(code);
 
-        // 2-2. 액세스 토큰 → SSAFY 사용자 정보
         SsafyUserInfo userInfo = getUserInfo(tokenResponse.getAccessToken());
 
-        // 2-3. DB 조회 → 있으면 로그인, 없으면 회원가입
-        User user = userRepository.findBySsafyOauthId(userInfo.getUserId())
-                .orElseGet(() -> registerUser(userInfo));
+        Optional<User> existingUser = userRepository.findBySsafyOauthId(userInfo.getUserId());
 
-        // 2-4. JWT 발급
-        String userId = user.getSsafyOauthId();
-        String accessToken = jwtTokenProvider.createAccessToken(
-                userId,
-                List.of("ROLE_" + user.getRole().name())
-        );
-        String refreshToken = jwtTokenProvider.createRefreshToken(userId);
+        // 기존 회원이면 일회성 code 발급 후 딥링크 URL 반환
+        if (existingUser.isPresent()) {
+            String authCode = UUID.randomUUID().toString();
+            redisTemplate.opsForValue().set(
+                    AUTH_CODE_KEY_PREFIX + authCode,
+                    userInfo.getUserId(),
+                    Duration.ofSeconds(AUTH_CODE_TTL_SECONDS)
+            );
+            return UriComponentsBuilder
+                    .fromUriString("wow://auth/ssafy/callback")
+                    .queryParam("code", authCode)
+                    .build()
+                    .encode()
+                    .toUriString();
+        }
 
-        // 2-5. RefreshToken redis에 저장
+        // 신규 회원 → 중복 검증 하기 전 Redis에 30분동안 ssafyOauthId 임시 저장
         redisTemplate.opsForValue().set(
-                REFRESH_KEY_PREFIX + userId,
-                refreshToken,
-                Duration.ofSeconds(jwtTokenProvider.getRefreshTokenValidityInSeconds())
+                PENDING_KEY_PREFIX + userInfo.getUserId(),
+                userInfo.getName(),
+                Duration.ofMinutes(PENDING_TTL_MINUTES)
         );
 
-        return UserLoginResponse.of(
-                accessToken,
-                jwtTokenProvider.getAccessTokenValidityInSeconds(),
-                refreshToken,
-                UserSummaryResponse.from(user)
-        );
+        // 신규 회원 정보 입력 딥링크 반환
+        return UriComponentsBuilder
+                .fromUriString("wow://auth/ssafy/register")
+                .queryParam("ssafyOauthId", userInfo.getUserId())
+                .build()
+                .encode()
+                .toUriString();
+    }
 
+    // 3. 신규 SSAFY 회원 중복 확인 (SMS 인증 전)
+    public void checkDuplicate(SsafyCheckRequest request) {
+
+        String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+
+        if (userRepository.existsBySsafyOauthId(request.getSsafyOauthId())) {
+            throw new IllegalArgumentException("이미 가입된 SSAFY 계정입니다.");
+        }
+
+        String name = redisTemplate.opsForValue().get(PENDING_KEY_PREFIX + request.getSsafyOauthId());
+
+        if (name == null) {
+            throw new IllegalArgumentException("SSAFY 로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
+        }
+
+        if (userRepository.existsByPhoneNumber(phoneNumber)) {
+            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
+        }
+
+        if (userRepository.existsDuplicate(name, request.getGender(), request.getBirthDate(), phoneNumber)) {
+            throw new IllegalArgumentException("이미 가입된 회원입니다.");
+        }
+
+    }
+
+    // 4. 신규 SSAFY 회원 SMS 인증 완료 후 회원가입 + JWT 발급
+    @Transactional
+    public UserLoginResponse register(SsafyRegisterRequest request) {
+
+        if (userRepository.existsBySsafyOauthId(request.getSsafyOauthId())) {
+            throw new IllegalArgumentException("이미 가입된 SSAFY 계정입니다.");
+        }
+
+        // redis에서 ssafyOauthId로 name 가져오기
+        String redisKey = PENDING_KEY_PREFIX + request.getSsafyOauthId();
+        String name = redisTemplate.opsForValue().get(redisKey);
+
+        if (name == null) {
+            throw new IllegalArgumentException("SSAFY 로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
+        }
+
+        String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+
+        if (userRepository.existsByPhoneNumber(phoneNumber)) {
+            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
+        }
+
+        if (userRepository.existsDuplicate(name, request.getGender(), request.getBirthDate(), phoneNumber)) {
+            throw new IllegalArgumentException("이미 가입된 회원입니다.");
+        }
+
+        // SMS 검증
+        smsService.checkVerified(phoneNumber);
+
+        User newUser = User.builder()
+                .ssafyOauthId(request.getSsafyOauthId())
+                .name(name)
+                .gender(request.getGender())
+                .alarmEnabled(request.isAlarmEnabled())
+                .birthDate(request.getBirthDate())
+                .phoneNumber(phoneNumber)
+                .role(Role.User)
+                .build();
+
+        // USER 저장
+        userRepository.save(newUser);
+
+        // 회원 동의 이력 저장
+        userTermRepository.save(UserTerm.builder()
+                .user(newUser)
+                .agreed(request.isTermsAgreed())
+                .agreedAt(LocalDateTime.now())
+                .build());
+
+        // redis에서 ssafyOauthId 삭제
+        redisTemplate.delete(PENDING_KEY_PREFIX + request.getSsafyOauthId());
+
+        // redis에서 sms 인증 완료 기록 삭제
+        smsService.deleteVerified(phoneNumber);
+
+        return issueToken(newUser);
     }
 
     // SSAFY 토큰 요청
     private SsafyTokenResponse getAccessToken(String code) {
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -106,10 +211,12 @@ public class SsafyOAuthService {
         );
 
         return response.getBody();
+
     }
 
     // SSAFY 사용자 정보 조회
     private SsafyUserInfo getUserInfo(String accessToken) {
+
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + accessToken);
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -124,15 +231,50 @@ public class SsafyOAuthService {
         );
 
         return response.getBody();
+
     }
 
-    // 신규 회원가입
-    private User registerUser(SsafyUserInfo userInfo) {
-        User newUser = User.builder()
-                .ssafyOauthId(userInfo.getUserId())
-                .name(userInfo.getName())
-                .role(Role.User)
-                .build();
-        return userRepository.save(newUser);
+    // 일회성 code로 JWT 교환
+    public UserLoginResponse exchangeToken(String code) {
+
+        String ssafyOauthId = redisTemplate.opsForValue().get(AUTH_CODE_KEY_PREFIX + code);
+
+        if (ssafyOauthId == null) {
+            throw new IllegalArgumentException("유효하지 않거나 만료된 코드입니다.");
+        }
+
+        redisTemplate.delete(AUTH_CODE_KEY_PREFIX + code);
+
+        User user = userRepository.findBySsafyOauthId(ssafyOauthId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        return issueToken(user);
+
     }
+
+    // JWT 발급 공통 로직
+    private UserLoginResponse issueToken(User user) {
+
+        String userId = user.getSsafyOauthId();
+        String accessToken = jwtTokenProvider.createAccessToken(
+                userId,
+                List.of("ROLE_" + user.getRole().name())
+        );
+        String refreshToken = jwtTokenProvider.createRefreshToken(userId);
+
+        redisTemplate.opsForValue().set(
+                REFRESH_KEY_PREFIX + userId,
+                refreshToken,
+                Duration.ofSeconds(jwtTokenProvider.getRefreshTokenValidityInSeconds())
+        );
+
+        return UserLoginResponse.of(
+                accessToken,
+                jwtTokenProvider.getAccessTokenValidityInSeconds(),
+                refreshToken,
+                UserSummaryResponse.from(user)
+        );
+
+    }
+
 }
