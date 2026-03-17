@@ -69,7 +69,7 @@ public class UserService {
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
 
         if (userRepository.existsByPhoneNumber(phoneNumber)) {
-            throw new IllegalArgumentException("이미 가입된 전화번호입니다.");
+            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
         }
 
         smsService.checkVerified(phoneNumber);
