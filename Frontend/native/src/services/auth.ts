@@ -100,18 +100,20 @@ export interface SmsVerifyRequest {
 
 export interface FindIdRequest {
   name: string;
+  birthDate: string;
   phoneNumber: string;
 }
 
 export interface FindIdResponse {
   userId: string;
-  userType: 'NORMAL' | 'SSAFY';
 }
 
 export interface FindPasswordRequest {
   userId: string;
   name: string;
+  birthDate: string;
   phoneNumber: string;
+  newPw: string;
 }
 
 export interface CheckUserIdResponse {
@@ -129,6 +131,9 @@ const nativeApi = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+export const normalizePhoneNumber = (phoneNumber: string) =>
+  phoneNumber.replace(/[^0-9]/g, '');
 
 nativeApi.interceptors.request.use((config) => {
   console.log('[API request]', config.method?.toUpperCase(), `${config.baseURL}${config.url}`);
@@ -180,13 +185,18 @@ export const setNativeAuthToken = (token: string | null) => {
 
 // 휴대폰 인증 단계에서 사용하는 SMS 발송 API
 export const sendSmsCode = async (payload: SmsSendRequest) => {
-  const response = await nativeApi.post('/api/v1/auth/sms/send', payload);
+  const response = await nativeApi.post('/api/v1/auth/sms/send', {
+    phoneNumber: normalizePhoneNumber(payload.phoneNumber),
+  });
   return response.data;
 };
 
 // VerifyCode 화면에서 사용하는 SMS 인증번호 검증 API
 export const verifySmsCode = async (payload: SmsVerifyRequest) => {
-  const response = await nativeApi.post('/api/v1/auth/sms/verify', payload);
+  const response = await nativeApi.post('/api/v1/auth/sms/verify', {
+    phoneNumber: normalizePhoneNumber(payload.phoneNumber),
+    code: payload.code.trim(),
+  });
   return response.data;
 };
 
@@ -206,7 +216,10 @@ export const checkUserId = async (userId: string): Promise<CheckUserIdResponse> 
 
 // 일반/SSAFY 회원가입 공용 signup API
 export const signup = async (payload: NativeSignupRequest) => {
-  const response = await nativeApi.post<NativeSignupResponse>('/api/v1/auth/signup', payload);
+  const response = await nativeApi.post<NativeSignupResponse>('/api/v1/auth/signup', {
+    ...payload,
+    phoneNumber: normalizePhoneNumber(payload.phoneNumber),
+  });
   return response.data;
 };
 
@@ -232,7 +245,9 @@ export const updateProfile = async (payload: NativeUpdateProfileRequest) => {
 };
 
 export const updatePhone = async (payload: NativeUpdatePhoneRequest) => {
-  const response = await nativeApi.patch('/api/v1/user/phone', payload);
+  const response = await nativeApi.patch('/api/v1/user/phone', {
+    phoneNumber: normalizePhoneNumber(payload.phoneNumber),
+  });
   return response.data;
 };
 
@@ -248,13 +263,19 @@ export const deleteAccount = async () => {
 
 // 아이디 찾기 API
 export const findUserId = async (payload: FindIdRequest): Promise<FindIdResponse> => {
-  const response = await nativeApi.post<FindIdResponse>('/api/v1/auth/find/id', payload);
+  const response = await nativeApi.post<FindIdResponse>('/api/v1/auth/find/id', {
+    ...payload,
+    phoneNumber: normalizePhoneNumber(payload.phoneNumber),
+  });
   return response.data;
 };
 
 // 비밀번호 찾기 (재설정 권한 확인) API
 export const findPassword = async (payload: FindPasswordRequest) => {
-  const response = await nativeApi.post('/api/v1/auth/find/password', payload);
+  const response = await nativeApi.post('/api/v1/auth/find/password', {
+    ...payload,
+    phoneNumber: normalizePhoneNumber(payload.phoneNumber),
+  });
   return response.data;
 };
 

@@ -33,6 +33,7 @@ import {
   updatePhone,
   updateProfile,
   verifySmsCode,
+  normalizePhoneNumber,
   type NativeUserProfileResponse,
 } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
@@ -165,7 +166,7 @@ export default function SettingsScreen() {
   };
 
   const handleSendPhoneCode = async () => {
-    const normalizedPhone = phoneNumber.replace(/[^0-9]/g, '');
+    const normalizedPhone = normalizePhoneNumber(phoneNumber);
 
     if (isSubmitting || normalizedPhone.length < 10) {
       return;
@@ -190,7 +191,7 @@ export default function SettingsScreen() {
   };
 
   const handleVerifyPhoneCode = async () => {
-    const normalizedPhone = phoneNumber.replace(/[^0-9]/g, '');
+    const normalizedPhone = normalizePhoneNumber(phoneNumber);
 
     if (isSubmitting || !isPhoneCodeSent || phoneCode.trim().length !== 6) {
       return;
@@ -244,8 +245,8 @@ export default function SettingsScreen() {
          * 현재 번호와 동일한 경우 백엔드에서 400 에러("이미 가입된 번호")를 낼 수 있으므로
          * 프론트엔드에서 미리 체크하여 불필요한 요청을 방지합니다.
          */
-        const normalizedNew = phoneNumber.replace(/[^0-9]/g, '');
-        const normalizedOld = profile?.phoneNumber?.replace(/[^0-9]/g, '') || '';
+        const normalizedNew = normalizePhoneNumber(phoneNumber);
+        const normalizedOld = normalizePhoneNumber(profile?.phoneNumber ?? '');
         
         if (normalizedNew === normalizedOld) {
           Alert.alert('정보 유지', '현재 등록된 번호와 동일해요.');

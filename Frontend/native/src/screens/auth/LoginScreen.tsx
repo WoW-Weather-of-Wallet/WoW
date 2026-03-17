@@ -174,7 +174,7 @@ export default function LoginScreen({ navigation }: any) {
   };
 
   const handleFindAccount = () => {
-    navigation.navigate('AccountRecovery');
+    navigation.navigate('AccountRecoveryEntry');
   };
 
   const handleSSAFYLogin = async () => {

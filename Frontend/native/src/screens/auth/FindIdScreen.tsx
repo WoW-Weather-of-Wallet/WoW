@@ -17,12 +17,8 @@ import { wp, hp, fp, COLORS, FONTS } from '../../constants/theme';
 import IdentityVerificationForm, { IdentityData } from '../../components/auth/IdentityVerificationForm';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import { sendSmsCode } from '../../services/auth';
+import { extractApiErrorMessage } from '../../utils/error';
 
-/**
- * FindIdScreen
- * 사용자의 이름을 포함한 본인인증 정보를 통해 아이디를 찾는 화면입니다.
- * 재사용 가능한 IdentityVerificationForm을 활용합니다.
- */
 export default function FindIdScreen() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
@@ -31,26 +27,31 @@ export default function FindIdScreen() {
   const [pendingData, setPendingData] = useState<IdentityData | null>(null);
 
   const handleComplete = (data: IdentityData) => {
-    // 폼 입력 완료 시 약관 동의 모달 노출
     setPendingData(data);
     setTermsVisible(true);
   };
 
   const handleTermsConfirm = async () => {
-    if (!pendingData) return;
-    
+    if (!pendingData) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // 1. 휴대폰 번호로 인증번호 발송 API 호출
+      // SMS verification is the common first step before calling the recovery API.
       await sendSmsCode({ phoneNumber: pendingData.phone });
-      
-      // 2. 인증번호 입력 화면으로 이동
+
+      // The next screen reuses this identity payload to call find-id safely.
       navigation.navigate('VerifyCode', {
         ...pendingData,
-        flow: 'FindId' // 아이디 찾기 흐름임을 명시
+        flow: 'FindId',
       });
     } catch (error) {
-      Alert.alert('오류', '인증번호 발송에 실패했습니다. 다시 시도해주세요.');
+      const message = extractApiErrorMessage(
+        error,
+        'Failed to send the verification code. Please try again.',
+      );
+      Alert.alert('Error', message);
     } finally {
       setIsSubmitting(false);
     }
@@ -59,16 +60,12 @@ export default function FindIdScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-      
-      {/* 헤더 */}
+
       <View style={[styles.header, { paddingTop: insets.top, height: hp(56) + insets.top }]}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>아이디 찾기</Text>
+        <Text style={styles.headerTitle}>Find ID</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -83,11 +80,13 @@ export default function FindIdScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.introContainer}>
-            <Text style={styles.introTitle}>아이디를 찾기 위해{"\n"}정보를 입력해주세요.</Text>
-            <Text style={styles.introSub}>본인 확인을 위한 절차입니다.</Text>
+            <Text style={styles.introTitle}>Verify your identity to find your ID.</Text>
+            <Text style={styles.introSub}>
+              The information entered here will be reused in the recovery step.
+            </Text>
           </View>
 
-          <IdentityVerificationForm 
+          <IdentityVerificationForm
             onComplete={handleComplete}
             isSubmitting={isSubmitting}
           />
@@ -151,4 +150,3 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
 });
-

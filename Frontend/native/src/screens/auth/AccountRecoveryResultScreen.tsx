@@ -14,31 +14,22 @@ import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 import { COLORS, FONTS, wp, hp, fp, RADIUS } from '../../constants/theme';
 import { getSsafyLoginUrl } from '../../services/auth';
 
-/**
- * RecoveryResultScreen
- * 아이디 찾기 인증 성공 후 결과를 보여주는 화면입니다.
- * - SSAFY 가입자: SSAFY 포털 안내
- * - 로컬 가입자: 아이디 표시 및 비밀번호 찾기 링크 제공
- * - 미가입자: 가입 안내
- */
-export default function RecoveryResultScreen() {
+export default function AccountRecoveryResultScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
   const { name, userId, userType } = route.params || {};
 
-  // userType: 'local', 'ssafy', 'none', 'fail'
   const isSsafy = userType === 'ssafy';
   const isLocal = userType === 'local';
-  const isNone = userType === 'none'; // Find ID result: Account doesn't exist
-  const isFail = userType === 'fail'; // Find PW result: ID and Info don't match
+  const isNone = userType === 'none';
+  const isFail = userType === 'fail';
 
   const handleSsafyLink = () => {
     Linking.openURL(getSsafyLoginUrl());
   };
 
   const handleGoToFindPw = () => {
-    // 찾은 아이디를 가지고 비밀번호 찾기 화면으로 이동 (수정 가능하게 전달)
     navigation.navigate('FindPw', { prefilledId: userId });
   };
 
@@ -51,13 +42,27 @@ export default function RecoveryResultScreen() {
   };
 
   const handleGoToSignup = () => {
-    navigation.navigate('PhoneAuth'); 
+    navigation.navigate('PhoneAuth');
   };
+
+  const title = isNone
+    ? `${name ?? 'No'} account found`
+    : isFail
+      ? 'Account information did not match'
+      : `${name ?? 'Account'} found`;
+
+  const subtitle = isLocal
+    ? 'We found a regular account that matches the information you entered.'
+    : isSsafy
+      ? 'We found an SSAFY account linked to the information you entered.'
+      : isNone
+        ? 'No account matched the information you entered.'
+        : 'The account details did not match. Please review the information and try again.';
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-      
+
       <View style={[styles.header, { paddingTop: insets.top, height: hp(56) + insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Login')}>
           <Ionicons name="close" size={wp(28)} color={COLORS.textPrimary} />
@@ -67,29 +72,22 @@ export default function RecoveryResultScreen() {
       <View style={styles.content}>
         <Animated.View entering={FadeInUp.duration(600)} style={styles.iconWrapper}>
           <View style={[styles.iconCircle, (isNone || isFail) && styles.iconCircleNone]}>
-            <Ionicons 
-              name={isNone || isFail ? "search-outline" : "person-circle"} 
-              size={wp(60)} 
-              color={isNone || isFail ? COLORS.textTertiary : COLORS.primary} 
+            <Ionicons
+              name={isNone || isFail ? 'search-outline' : 'person-circle'}
+              size={wp(60)}
+              color={isNone || isFail ? COLORS.textTertiary : COLORS.primary}
             />
           </View>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.textSection}>
-          <Text style={styles.title}>
-            {isNone ? `${name}님,` : isFail ? '죄송합니다.' : `${name}님의`}
-          </Text>
-          <Text style={styles.subtitle}>
-            {isLocal && '가입된 계정 정보를 확인해주세요.'}
-            {isSsafy && '계정 정보를 확인해주세요.'}
-            {isNone && '이름으로 가입된 계정이 없습니다.'}
-            {isFail && '일치하는 계정 정보가 없습니다.'}
-          </Text>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.subtitle}>{subtitle}</Text>
         </Animated.View>
 
         {isLocal && (
           <Animated.View entering={FadeInDown.delay(400).duration(600)} style={styles.resultBox}>
-            <Text style={styles.resultLabel}>아이디</Text>
+            <Text style={styles.resultLabel}>User ID</Text>
             <Text style={styles.resultValue}>{userId}</Text>
           </Animated.View>
         )}
@@ -97,13 +95,13 @@ export default function RecoveryResultScreen() {
         {isSsafy && (
           <Animated.View entering={FadeInDown.delay(400).duration(600)} style={styles.noticeBox}>
             <Text style={styles.noticeText}>
-              {name}님은 <Text style={styles.highlight}>SSAFY</Text>를 통해 가입하신 상태입니다.
+              This account uses <Text style={styles.highlight}>SSAFY login</Text>.
             </Text>
             <Text style={styles.noticeSubText}>
-              보안 정책상 아이디를 직접 보여드리지 않으며, 자세한 내용은 SSAFY 계정 관리 페이지를 참고해주세요.
+              Continue with the SSAFY sign-in flow instead of resetting a local password.
             </Text>
             <TouchableOpacity style={styles.linkButton} onPress={handleSsafyLink}>
-              <Text style={styles.linkButtonText}>SSAFY 계정 관리 바로가기</Text>
+              <Text style={styles.linkButtonText}>Go to SSAFY sign in</Text>
               <Ionicons name="chevron-forward" size={wp(14)} color={COLORS.primary} />
             </TouchableOpacity>
           </Animated.View>
@@ -112,7 +110,7 @@ export default function RecoveryResultScreen() {
         {isNone && (
           <Animated.View entering={FadeInDown.delay(400).duration(600)} style={styles.emptyBox}>
             <Text style={styles.emptyText}>
-              앗, 아직 회원이 아니신가요?{"\n"}지금 바로 회원가입을 진행해보세요.
+              If you do not have an account yet, you can continue to sign up.
             </Text>
           </Animated.View>
         )}
@@ -120,7 +118,7 @@ export default function RecoveryResultScreen() {
         {isFail && (
           <Animated.View entering={FadeInDown.delay(400).duration(600)} style={styles.emptyBox}>
             <Text style={styles.emptyText}>
-              입력하신 정보와 일치하는 계정을 찾을 수 없습니다.{"\n"}정보를 다시 확인하거나 아이디 찾기를 진행해주세요.
+              Please double-check the identity information and try the recovery flow again.
             </Text>
           </Animated.View>
         )}
@@ -128,28 +126,28 @@ export default function RecoveryResultScreen() {
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
           {isLocal && (
             <TouchableOpacity style={styles.secondaryButton} onPress={handleGoToFindPw}>
-              <Text style={styles.secondaryButtonText}>비밀번호도 잊으셨나요?</Text>
-              <Text style={styles.linkText}>비밀번호 찾기</Text>
+              <Text style={styles.secondaryButtonText}>Need to reset the password?</Text>
+              <Text style={styles.linkText}>Find Password</Text>
             </TouchableOpacity>
           )}
 
           {isFail && (
             <TouchableOpacity style={styles.secondaryButton} onPress={handleGoToFindId}>
-              <Text style={styles.secondaryButtonText}>아이디가 기억나지 않으시나요?</Text>
-              <Text style={styles.linkText}>아이디 찾기</Text>
+              <Text style={styles.secondaryButtonText}>Need to recover the user ID first?</Text>
+              <Text style={styles.linkText}>Find ID</Text>
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity 
-            style={styles.mainButton} 
+          <TouchableOpacity
+            style={styles.mainButton}
             onPress={
-              isNone ? handleGoToSignup : 
-              isFail ? handleRetry :
-              () => navigation.navigate('Login')
+              isNone ? handleGoToSignup
+                : isFail ? handleRetry
+                  : () => navigation.navigate('Login')
             }
           >
             <Text style={styles.mainButtonText}>
-              {isNone ? '회원가입 하러가기' : isFail ? '다시 시도하기' : '로그인하러 가기'}
+              {isNone ? 'Go to Sign Up' : isFail ? 'Try Again' : 'Go to Login'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -184,7 +182,7 @@ const styles = StyleSheet.create({
     width: wp(100),
     height: wp(100),
     borderRadius: wp(50),
-    backgroundColor: COLORS.primary + '10', // 10% opacity
+    backgroundColor: `${COLORS.primary}10`,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -199,12 +197,15 @@ const styles = StyleSheet.create({
     fontSize: fp(24),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    marginBottom: hp(4),
+    marginBottom: hp(8),
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    fontSize: fp(16),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: fp(24),
   },
   resultBox: {
     width: '100%',

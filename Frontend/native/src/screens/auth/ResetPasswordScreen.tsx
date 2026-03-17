@@ -13,62 +13,77 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, wp, hp, fp, RADIUS } from '../../constants/theme';
+import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import CustomTextInput from '../../components/common/CustomTextInput';
+import { findPassword } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 import { validatePassword } from '../../utils/validation';
 
-/**
- * ResetPasswordScreen
- * 본인인증 완료 후 새로운 비밀번호를 설정하는 화면입니다.
- */
 export default function ResetPasswordScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
-  const { userId } = route.params || {};
+  const { userId, name, ssnFront, ssnBack, phoneNumber } = route.params || {};
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  /**
-   * 비밀번호(PW) 보안 검증: 중앙화된 validatePassword 유틸리티를 사용합니다.
-   * 영문 대/소문자, 숫자, 특수문자 조합 및 연속성/반복성/아이디 대조 등을 모두 검사합니다.
-   */
   const passwordValidation = validatePassword(password, userId);
   const isPasswordValid = passwordValidation.isValid;
-  const isFormValid = 
-    isPasswordValid && 
-    confirmPassword.length >= 8 && 
+  const isFormValid =
+    isPasswordValid &&
+    confirmPassword.length >= 8 &&
     password === confirmPassword;
 
+  // Rebuild birthDate from the verified identity payload before calling the backend.
+  const getBirthDateFromIdentity = () => {
+    if (!ssnFront || !ssnBack || ssnFront.length !== 6) {
+      return null;
+    }
+
+    const centuryCode = ssnBack[0];
+    const century =
+      centuryCode === '1' || centuryCode === '2' || centuryCode === '5' || centuryCode === '6'
+        ? '19'
+        : '20';
+
+    return `${century}${ssnFront.slice(0, 2)}-${ssnFront.slice(2, 4)}-${ssnFront.slice(4, 6)}`;
+  };
+
   const handleReset = async () => {
-    if (!isFormValid) return;
+    if (!isFormValid) {
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      // TODO: 비밀번호 재설정 API 호출 연동 필요
-      console.log('비밀번호 재설정 요청:', { userId, password });
-      
-      // 시뮬레이션
-      setTimeout(() => {
-        Alert.alert(
-          '변경 완료',
-          '비밀번호가 성공적으로 변경되었습니다. 새로운 비밀번호로 로그인해주세요.',
-          [{ text: '확인', onPress: () => navigation.navigate('Login') }]
-        );
-      }, 1500);
+      const birthDate = getBirthDateFromIdentity();
+
+      if (!birthDate || !name || !phoneNumber) {
+        throw new Error('Verified identity data is missing.');
+      }
+
+      // Password reset is submitted only after the SMS verification step is complete.
+      await findPassword({
+        userId,
+        name,
+        birthDate,
+        phoneNumber,
+        newPw: password,
+      });
+
+      Alert.alert(
+        'Password updated',
+        'Your password has been changed. Please sign in again.',
+        [{ text: 'OK', onPress: () => navigation.navigate('Login') }],
+      );
     } catch (error: any) {
-      /**
-       * [Defense-Log] 백엔드 응답 지연이나 500 에러 발생 시를 대비해 
-       * 공통 에러 파서를 통해 사용자에게 안내합니다.
-       */
       const message = extractApiErrorMessage(
         error,
-        '비밀번호 변경 중 오류가 발생했습니다. 다시 시도해주세요.'
+        'Failed to update the password. Please try again.',
       );
-      Alert.alert('오류', message);
+      Alert.alert('Error', message);
       setIsSubmitting(false);
     }
   };
@@ -76,12 +91,12 @@ export default function ResetPasswordScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-      
+
       <View style={[styles.header, { paddingTop: insets.top, height: hp(56) + insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>비밀번호 재설정</Text>
+        <Text style={styles.headerTitle}>Reset Password</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -90,24 +105,26 @@ export default function ResetPasswordScreen() {
         style={styles.content}
         keyboardVerticalOffset={Platform.OS === 'ios' ? hp(20) : 0}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.introContainer}>
-            <Text style={styles.introTitle}>새로운 비밀번호를{"\n"}입력해주세요.</Text>
-            <Text style={styles.introSub}>대/소문자, 숫자, 특수문자 포함 8~20자로 설정해주세요.</Text>
+            <Text style={styles.introTitle}>Set a new password.</Text>
+            <Text style={styles.introSub}>
+              Use 8 to 20 characters including letters, numbers, and symbols.
+            </Text>
           </View>
 
           <View style={styles.formContainer}>
             <View style={styles.inputWrapper}>
               <CustomTextInput
-                label="새 비밀번호"
+                label="New Password"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-                placeholder="8~20자 입력 (조합 필수)"
+                placeholder="Enter a new password"
               />
               {password.length > 0 && !isPasswordValid && (
                 <Text style={styles.errorText}>* {passwordValidation.message}</Text>
@@ -116,14 +133,14 @@ export default function ResetPasswordScreen() {
 
             <View style={styles.inputWrapper}>
               <CustomTextInput
-                label="비밀번호 확인"
+                label="Confirm Password"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
-                placeholder="다시 한번 입력"
+                placeholder="Enter the password again"
               />
               {confirmPassword.length > 0 && password !== confirmPassword && (
-                <Text style={styles.errorText}>* 비밀번호가 일치하지 않습니다.</Text>
+                <Text style={styles.errorText}>* Passwords do not match.</Text>
               )}
             </View>
           </View>
@@ -131,11 +148,11 @@ export default function ResetPasswordScreen() {
           <View style={styles.footer}>
             <TouchableOpacity
               style={[styles.mainButton, !isFormValid && styles.disabledButton]}
-              onPress={handleReset}
+              onPress={() => void handleReset()}
               disabled={!isFormValid || isSubmitting}
             >
               <Text style={[styles.mainButtonText, !isFormValid && styles.disabledButtonText]}>
-                비밀번호 변경하기
+                Update Password
               </Text>
             </TouchableOpacity>
           </View>
