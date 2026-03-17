@@ -9,6 +9,7 @@ import {
   View,
   Alert,
   ScrollView,
+  TextInput,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -130,15 +131,21 @@ export default function FindPwScreen() {
 
           {/* 1단계: 아이디 입력 */}
           <View style={styles.inputSection}>
-            <CustomTextInput
-              label="아이디"
-              value={userId}
-              onChangeText={handleUserIdChange}
-              onSubmitEditing={handleIdSubmit}
-              returnKeyType="next"
-              autoFocus={!showVerification}
-              editable={!showVerification}
-            />
+            <Text style={styles.inputLabel}>아이디</Text>
+            <View style={styles.underlineContainer}>
+              <TextInput
+                style={[styles.bareInput, { letterSpacing: userId.length > 0 ? 1 : 0 }]}
+                value={userId}
+                onChangeText={handleUserIdChange}
+                placeholder="아이디를 입력해주세요"
+                placeholderTextColor={COLORS.textTertiary}
+                onSubmitEditing={handleIdSubmit}
+                returnKeyType="next"
+                autoFocus={!showVerification}
+                editable={!showVerification}
+                autoCapitalize="none"
+              />
+            </View>
             {!showVerification && (
               <>
                 <Text style={styles.helperText}>* 영문/숫자 혼합 4~20자 (특수문자 불가)</Text>
@@ -157,6 +164,9 @@ export default function FindPwScreen() {
                     확인
                   </Text>
                 </TouchableOpacity>
+
+                {/* [Premium-UI] 네비게이션 바와의 겹침 방지를 위해 동적 여백 추가 */}
+                <View style={{ height: Math.max(insets.bottom, hp(20)) }} />
               </>
             )}
           </View>
@@ -164,7 +174,6 @@ export default function FindPwScreen() {
           {/* 2단계: 신원 확인 폼 (아이디 입력 후 노출) */}
           {showVerification && (
             <Animated.View entering={FadeInDown.duration(500)} style={styles.formWrapper}>
-              <View style={styles.divider} />
               <IdentityVerificationForm 
                 onComplete={handleComplete}
                 isSubmitting={isSubmitting}
@@ -232,6 +241,27 @@ const styles = StyleSheet.create({
   },
   inputSection: {
     marginBottom: hp(24),
+  },
+  inputLabel: {
+    fontSize: fp(14),
+    fontFamily: FONTS.medium,
+    color: COLORS.textTertiary,
+    marginBottom: hp(10),
+    marginLeft: wp(4),
+  },
+  underlineContainer: {
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#1A1A1A',
+    paddingVertical: hp(8),
+    minHeight: hp(50),
+    justifyContent: 'center',
+  },
+  bareInput: {
+    fontSize: fp(24),
+    fontFamily: FONTS.bold,
+    color: '#1A1A1A',
+    padding: 0,
+    margin: 0,
   },
   helperText: {
     fontSize: fp(12),

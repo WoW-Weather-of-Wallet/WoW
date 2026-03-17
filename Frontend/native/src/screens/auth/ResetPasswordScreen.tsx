@@ -139,6 +139,9 @@ export default function ResetPasswordScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* [Premium-UI] 네비게이션 바와의 겹침 방지를 위해 동적 여백 추가 */}
+          <View style={{ height: Math.max(insets.bottom, hp(20)) }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -174,7 +177,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: wp(24),
     paddingTop: hp(32),
-    paddingBottom: hp(40),
+    paddingBottom: hp(24), // 기본 여백을 줄이고 동적 여백으로 처리
   },
   introContainer: {
     marginBottom: hp(40),

@@ -312,8 +312,8 @@ export default function CreateAccountScreen({ route, navigation }: any) {
         showsVerticalScrollIndicator={false}
       >
         <StepIndicator
-          currentStep={isSsafySignup ? 3 : (step === 1 ? 2 : 3)}
-          totalSteps={4}
+          currentStep={isSsafySignup ? (step === 1 ? 3 : 4) : (step === 1 ? 3 : 4)}
+          totalSteps={5}
         />
 
         <Text style={styles.title}>

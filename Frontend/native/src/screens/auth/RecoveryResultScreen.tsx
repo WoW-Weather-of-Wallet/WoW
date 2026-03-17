@@ -125,7 +125,7 @@ export default function RecoveryResultScreen() {
           </Animated.View>
         )}
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
           {isLocal && (
             <TouchableOpacity style={styles.secondaryButton} onPress={handleGoToFindPw}>
               <Text style={styles.secondaryButtonText}>비밀번호도 잊으셨나요?</Text>
