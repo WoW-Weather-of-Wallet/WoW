@@ -61,7 +61,7 @@ export default function ResetPasswordScreen() {
       const birthDate = getBirthDateFromIdentity();
 
       if (!birthDate || !name || !phoneNumber) {
-        throw new Error('Verified identity data is missing.');
+        throw new Error('본인 확인 정보가 누락되었어요.');
       }
 
       // Password reset is submitted only after the SMS verification step is complete.
@@ -74,16 +74,16 @@ export default function ResetPasswordScreen() {
       });
 
       Alert.alert(
-        'Password updated',
-        'Your password has been changed. Please sign in again.',
-        [{ text: 'OK', onPress: () => navigation.navigate('Login') }],
+        '비밀번호 변경 완료',
+        '새 비밀번호가 저장되었어요. 다시 로그인해 주세요.',
+        [{ text: '확인', onPress: () => navigation.navigate('Login') }],
       );
     } catch (error: any) {
       const message = extractApiErrorMessage(
         error,
-        'Failed to update the password. Please try again.',
+        '비밀번호 변경에 실패했어요. 다시 시도해 주세요.',
       );
-      Alert.alert('Error', message);
+      Alert.alert('오류', message);
       setIsSubmitting(false);
     }
   };
@@ -96,7 +96,7 @@ export default function ResetPasswordScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Reset Password</Text>
+        <Text style={styles.headerTitle}>비밀번호 재설정</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -111,20 +111,18 @@ export default function ResetPasswordScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.introContainer}>
-            <Text style={styles.introTitle}>Set a new password.</Text>
-            <Text style={styles.introSub}>
-              Use 8 to 20 characters including letters, numbers, and symbols.
-            </Text>
+            <Text style={styles.introTitle}>새 비밀번호를 입력해주세요.</Text>
+            <Text style={styles.introSub}>영문, 숫자, 특수문자를 포함한 8~20자로 설정해 주세요.</Text>
           </View>
 
           <View style={styles.formContainer}>
             <View style={styles.inputWrapper}>
               <CustomTextInput
-                label="New Password"
+                label="새 비밀번호"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-                placeholder="Enter a new password"
+                placeholder="새 비밀번호 입력"
               />
               {password.length > 0 && !isPasswordValid && (
                 <Text style={styles.errorText}>* {passwordValidation.message}</Text>
@@ -133,14 +131,14 @@ export default function ResetPasswordScreen() {
 
             <View style={styles.inputWrapper}>
               <CustomTextInput
-                label="Confirm Password"
+                label="비밀번호 확인"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
-                placeholder="Enter the password again"
+                placeholder="비밀번호를 다시 입력해주세요"
               />
               {confirmPassword.length > 0 && password !== confirmPassword && (
-                <Text style={styles.errorText}>* Passwords do not match.</Text>
+                <Text style={styles.errorText}>* 비밀번호가 일치하지 않아요.</Text>
               )}
             </View>
           </View>
@@ -152,7 +150,7 @@ export default function ResetPasswordScreen() {
               disabled={!isFormValid || isSubmitting}
             >
               <Text style={[styles.mainButtonText, !isFormValid && styles.disabledButtonText]}>
-                Update Password
+                비밀번호 변경하기
               </Text>
             </TouchableOpacity>
           </View>

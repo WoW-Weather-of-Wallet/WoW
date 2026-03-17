@@ -66,7 +66,7 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
     const birthDate = getBirthDateFromIdentity();
 
     if (!birthDate) {
-      throw new Error('Birth date information is missing.');
+      throw new Error('생년월일 정보가 누락되었어요.');
     }
 
     try {
@@ -85,7 +85,7 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
     } catch (error: any) {
       const message = extractApiErrorMessage(
         error,
-        'Unable to find an account with the provided information.',
+        '입력한 정보와 일치하는 계정을 찾지 못했어요.',
       );
 
       // Recovery result screens stay split between missing accounts and SSAFY accounts.
@@ -152,12 +152,12 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
         (route.params.flow === 'FindId' || route.params.flow === 'FindPw') &&
         error?.response?.status === 401
       ) {
-        message = 'No account matched the provided information.';
+        message = '입력한 정보와 일치하는 계정을 찾지 못했어요.';
       }
 
       setVerifyError(message);
       setCode('');
-      Alert.alert('Verification failed', message);
+      Alert.alert('인증 오류', message);
     } finally {
       setIsVerifying(false);
     }
@@ -185,10 +185,8 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
           <StepIndicator currentStep={2} totalSteps={5} />
         )}
         <Animated.View entering={FadeInDown.delay(100).duration(500)}>
-          <Text style={styles.title}>Enter the 6-digit code.</Text>
-          <Text style={styles.subtitle}>
-            We sent a verification code to your phone. Enter it to continue.
-          </Text>
+          <Text style={styles.title}>인증번호 6자리를 입력해주세요.</Text>
+          <Text style={styles.subtitle}>휴대폰으로 받은 인증번호를 입력하면 다음 단계로 이동해요.</Text>
         </Animated.View>
 
         <Animated.View
@@ -201,7 +199,7 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
         {isVerifying && (
           <View style={styles.loadingRow}>
             <ActivityIndicator color={COLORS.primary} />
-            <Text style={styles.loadingText}>Checking the verification code...</Text>
+            <Text style={styles.loadingText}>인증번호를 확인하고 있어요.</Text>
           </View>
         )}
 

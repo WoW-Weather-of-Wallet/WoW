@@ -49,9 +49,9 @@ export default function FindIdScreen() {
     } catch (error) {
       const message = extractApiErrorMessage(
         error,
-        'Failed to send the verification code. Please try again.',
+        '인증번호 발송에 실패했어요. 다시 시도해 주세요.',
       );
-      Alert.alert('Error', message);
+      Alert.alert('오류', message);
     } finally {
       setIsSubmitting(false);
     }
@@ -65,7 +65,7 @@ export default function FindIdScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Find ID</Text>
+        <Text style={styles.headerTitle}>아이디 찾기</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -79,12 +79,10 @@ export default function FindIdScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.introContainer}>
-            <Text style={styles.introTitle}>Verify your identity to find your ID.</Text>
-            <Text style={styles.introSub}>
-              The information entered here will be reused in the recovery step.
-            </Text>
-          </View>
+        <View style={styles.introContainer}>
+          <Text style={styles.introTitle}>본인 확인 후 아이디를 찾을 수 있어요.</Text>
+          <Text style={styles.introSub}>입력한 정보는 다음 단계의 계정 조회에 사용돼요.</Text>
+        </View>
 
           <IdentityVerificationForm
             onComplete={handleComplete}

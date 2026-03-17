@@ -33,7 +33,7 @@ export default function AccountRecoveryEntryScreen() {
       const url = getSsafyLoginUrl();
       await Linking.openURL(url);
     } catch (error) {
-      Alert.alert('Error', 'Failed to open the SSAFY sign-in page.');
+      Alert.alert('오류', 'SSAFY 로그인 페이지를 열지 못했어요.');
     }
   };
 
@@ -45,7 +45,7 @@ export default function AccountRecoveryEntryScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Account Recovery</Text>
+        <Text style={styles.headerTitle}>계정 찾기</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -54,22 +54,20 @@ export default function AccountRecoveryEntryScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.introContainer}>
-          <Text style={styles.introTitle}>Choose what you want to recover.</Text>
-          <Text style={styles.introSub}>
-            Start with either your user ID or your password.
-          </Text>
+          <Text style={styles.introTitle}>찾고 싶은 항목을 선택해주세요.</Text>
+          <Text style={styles.introSub}>아이디 찾기 또는 비밀번호 찾기부터 시작할 수 있어요.</Text>
         </View>
 
         <View style={styles.optionsContainer}>
           <RecoveryOption
-            title="Find ID"
-            description="Recover the login ID for a regular account."
+            title="아이디 찾기"
+            description="일반 계정의 로그인 아이디를 확인해요."
             icon="person-outline"
             onPress={handleFindId}
           />
           <RecoveryOption
-            title="Find Password"
-            description="Verify your identity and set a new password."
+            title="비밀번호 찾기"
+            description="본인 확인 후 새 비밀번호를 설정해요."
             icon="lock-closed-outline"
             onPress={handleFindPassword}
           />

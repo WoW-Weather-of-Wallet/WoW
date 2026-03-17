@@ -45,7 +45,7 @@ export default function FindPwScreen() {
       return;
     }
 
-    Alert.alert('Error', validation.message);
+    Alert.alert('오류', validation.message);
   };
 
   const handleComplete = (data: IdentityData) => {
@@ -60,10 +60,10 @@ export default function FindPwScreen() {
 
     setIsSubmitting(true);
     try {
-      // SMS verification must complete before the reset screen can submit a new password.
+      // 비밀번호 재설정 전 본인확인 완료 상태를 만들기 위해 SMS 인증을 먼저 시작합니다.
       await sendSmsCode({ phoneNumber: pendingData.phone });
 
-      // Keep the login id and identity data together for the verify screen.
+      // 인증 화면에서 userId와 본인확인 정보를 함께 사용하므로 한 번에 전달합니다.
       navigation.navigate('VerifyCode', {
         ...pendingData,
         userId: userId.trim(),
@@ -72,9 +72,9 @@ export default function FindPwScreen() {
     } catch (error: any) {
       const message = extractApiErrorMessage(
         error,
-        'Failed to send the verification code. Please try again.',
+        '인증번호 발송에 실패했어요. 잠시 후 다시 시도해 주세요.',
       );
-      Alert.alert('Error', message);
+      Alert.alert('오류', message);
     } finally {
       setIsSubmitting(false);
     }
@@ -93,7 +93,7 @@ export default function FindPwScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Find Password</Text>
+        <Text style={styles.headerTitle}>비밀번호 찾기</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -108,22 +108,22 @@ export default function FindPwScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.introContainer}>
-            <Text style={styles.introTitle}>Confirm the account to reset its password.</Text>
+            <Text style={styles.introTitle}>비밀번호를 찾기 위해 로그인 아이디를 먼저 입력해 주세요.</Text>
             <Text style={styles.introSub}>
               {showVerification
-                ? 'Finish identity verification to set a new password.'
-                : 'Enter your login ID first.'}
+                ? '본인 확인이 완료되면 새로운 비밀번호를 설정할 수 있어요.'
+                : '가입한 아이디를 확인한 뒤 본인인증을 진행할게요.'}
             </Text>
           </View>
 
           <View style={styles.inputSection}>
-            <Text style={styles.inputLabel}>User ID</Text>
+            <Text style={styles.inputLabel}>아이디</Text>
             <View style={styles.underlineContainer}>
               <TextInput
                 style={[styles.bareInput, { letterSpacing: userId.length > 0 ? 1 : 0 }]}
                 value={userId}
                 onChangeText={handleUserIdChange}
-                placeholder="Enter your login ID"
+                placeholder="로그인 아이디를 입력해 주세요"
                 placeholderTextColor={COLORS.textTertiary}
                 onSubmitEditing={handleIdSubmit}
                 returnKeyType="next"
@@ -134,7 +134,7 @@ export default function FindPwScreen() {
             </View>
             {!showVerification && (
               <>
-                <Text style={styles.helperText}>* 4 to 20 letters or numbers</Text>
+                <Text style={styles.helperText}>* 영문 또는 숫자 조합 4~20자로 입력해 주세요.</Text>
                 <TouchableOpacity
                   style={[
                     styles.idNextButton,
@@ -149,7 +149,7 @@ export default function FindPwScreen() {
                       userId.trim().length >= 4 && userId.trim().length <= 20 && styles.activeIdNextButtonText,
                     ]}
                   >
-                    Next
+                    다음
                   </Text>
                 </TouchableOpacity>
 
