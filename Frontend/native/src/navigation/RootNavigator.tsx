@@ -19,6 +19,7 @@ import AccountRecoveryResultScreen from '../screens/auth/AccountRecoveryResultSc
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import MainTabNavigator from './MainTabNavigator';
 import SettingsScreen from '../screens/mypage/SettingsScreen';
+import TermsPdfScreen from '../screens/common/TermsPdfScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -138,6 +139,15 @@ export default function RootNavigator() {
         <Stack.Screen
           name="Settings"
           component={SettingsScreen}
+          options={{
+            gestureEnabled: true,
+            animation: 'slide_from_right',
+          }}
+        />
+
+        <Stack.Screen
+          name="TermsPdf"
+          component={TermsPdfScreen}
           options={{
             gestureEnabled: true,
             animation: 'slide_from_right',
