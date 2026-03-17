@@ -71,6 +71,28 @@ export const COLORS = {
   // 그라데이션
   gradientStart: '#7B7BF5',
   gradientEnd: '#5252CC',
+
+  // 공통 그레이 스케일 (추가)
+  white: '#FFFFFF',
+  black: '#000000',
+  gray50: '#F9FAFB',
+  gray100: '#F3F4F6',
+  gray200: '#E5E7EB',
+  gray300: '#D1D5DB',
+  gray400: '#9CA3AF',
+  gray500: '#6B7280',
+  gray600: '#4B5563',
+  gray700: '#374151',
+  gray800: '#1F2937',
+  gray900: '#111827',
+
+  // 마이페이지 전용 악센트 컬러 (추가)
+  accentPrimaryLight: '#DCD8FF',
+  accentMintLight: '#D7F4E9',
+  accentGoldLight: '#F9EAC5',
+  cardOverlay1: '#DAD6FF',
+  cardOverlay2: '#E6E1FF',
+  cardOverlay3: '#F4F2FF',
 } as const;
 
 // =============================================

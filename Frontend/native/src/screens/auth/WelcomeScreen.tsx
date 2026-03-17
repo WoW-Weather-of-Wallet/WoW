@@ -154,7 +154,7 @@ export default function WelcomeScreen({ route, navigation }: any) {
             disabled={isConfirming}
           >
             {isConfirming ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={COLORS.textInverse} />
             ) : (
               <Text style={styles.confirmButtonText}>확인</Text>
             )}
@@ -177,7 +177,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.background,
   },
   mainLayout: {
     flex: 1,
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fp(30),
     fontFamily: FONTS.bold,
-    color: '#1A1A1A',
+    color: COLORS.textPrimary,
     textAlign: 'center',
   },
   subtitle: {
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     marginVertical: hp(24),
   },
   infoCard: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: COLORS.gray50,
     borderRadius: wp(18),
     paddingHorizontal: wp(20),
     paddingVertical: hp(20),
@@ -237,12 +237,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fp(17),
     fontFamily: FONTS.semiBold,
-    color: '#1A1A1A',
+    color: COLORS.textPrimary,
   },
   bottomSection: {
     paddingHorizontal: wp(28),
     paddingTop: hp(12),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.background,
   },
   confirmButton: {
     backgroundColor: COLORS.primary,
@@ -256,6 +256,6 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     fontSize: fp(20),
     fontFamily: FONTS.bold,
-    color: '#FFFFFF',
+    color: COLORS.textInverse,
   },
 });

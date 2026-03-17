@@ -216,7 +216,7 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.background,
   },
   content: {
     flex: 1,
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fp(28),
     fontFamily: FONTS.bold,
-    color: '#1A1A1A',
+    color: COLORS.textPrimary,
     lineHeight: fp(40),
     letterSpacing: -0.5,
     marginBottom: hp(12),
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     width: wp(16),
     height: wp(16),
     borderRadius: wp(8),
-    backgroundColor: '#E5E7EB',
+    backgroundColor: COLORS.gray200,
   },
   dotFilled: {
     backgroundColor: COLORS.primary,
@@ -266,9 +266,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: fp(14),
     fontFamily: FONTS.medium,
-    color: '#EF4444',
+    color: COLORS.error,
   },
   keypadWrapper: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.background,
   },
 });
