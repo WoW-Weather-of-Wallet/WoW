@@ -182,7 +182,7 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
       <View style={[styles.content, { paddingTop: insets.top + hp(60) }]}>
         {/* [Bug-Fix] 아이디/비밀번호 찾기 시에는 단계 표시기(StepIndicator)를 숨깁니다. */}
         {route.params.flow !== 'FindId' && route.params.flow !== 'FindPw' && (
-          <StepIndicator currentStep={1} totalSteps={4} />
+          <StepIndicator currentStep={2} totalSteps={5} />
         )}
         <Animated.View entering={FadeInDown.delay(100).duration(500)}>
           <Text style={styles.title}>인증번호 6자리를{`\n`}입력해주세요.</Text>

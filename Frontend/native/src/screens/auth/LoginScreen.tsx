@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   Linking,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -36,6 +37,7 @@ import { extractApiErrorMessage } from '../../utils/error';
  * 개발 중 빠른 화면 확인을 위한 테스트 진입 버튼은 그대로 유지합니다.
  */
 export default function LoginScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const loginToStore = useAuthStore((state) => state.login);
   const loginWithDevBypass = useAuthStore((state) => state.loginWithDevBypass);
   const [userId, setUserId] = useState('');
@@ -338,6 +340,9 @@ export default function LoginScreen({ navigation }: any) {
               </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
+
+          {/* 시스템 네비게이션 바와의 겹침 방지를 위한 동적 여백 추가 */}
+          <View style={{ height: Math.max(insets.bottom, hp(20)) }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -98,48 +99,55 @@ export default function WelcomeScreen({ route, navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <View
-        style={[
-          styles.mainLayout,
-          { paddingTop: insets.top + hp(44), paddingBottom: Math.max(insets.bottom, hp(24)) },
-        ]}
-      >
-        <View style={styles.headerSection}>
-          <View style={{ marginBottom: hp(40) }}>
-            <StepIndicator currentStep={4} totalSteps={4} />
+      <View style={styles.mainLayout}>
+        <ScrollView 
+          style={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContentContainer,
+            { paddingTop: insets.top + hp(44) }
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.headerSection}>
+            <View style={{ marginBottom: hp(16) }}>
+              <StepIndicator currentStep={5} totalSteps={5} />
+            </View>
+            <Animated.View entering={FadeInDown.duration(500)} style={styles.iconContainer}>
+              <Ionicons name="checkmark-circle" size={wp(84)} color={COLORS.primary} />
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(180).duration(500)} style={styles.titleBlock}>
+              <Text style={styles.title}>회원가입이 완료되었어요</Text>
+              <Text style={styles.subtitle}>
+                {routeParams.name ? `${routeParams.name}님 정보를 확인해주세요.` : '가입 정보를 확인해주세요.'}
+              </Text>
+            </Animated.View>
           </View>
-          <Animated.View entering={FadeInDown.duration(500)} style={styles.iconContainer}>
-            <Ionicons name="checkmark-circle" size={wp(84)} color={COLORS.primary} />
+
+          <Animated.View entering={FadeInDown.delay(280).duration(500)} style={styles.infoSection}>
+            {/* 회원가입 완료 직후 확인해야 하는 핵심 가입 정보를 요약해서 보여준다. */}
+            <View style={styles.infoCard}>
+              <InfoRow
+                label={isSsafySignup ? 'SSAFY ID' : '아이디'}
+                value={routeParams.ssafyOauthId ?? routeParams.userId ?? '-'}
+              />
+              <InfoRow label="이름" value={routeParams.name ?? '-'} />
+              <InfoRow label="생년월일" value={routeParams.birthDate ?? '-'} />
+              <InfoRow
+                label="성별"
+                value={routeParams.gender === 'M' ? '남성' : routeParams.gender === 'F' ? '여성' : '-'}
+              />
+              <InfoRow label="휴대폰" value={routeParams.phoneNumber ?? '-'} />
+              <InfoRow label="약관동의" value={routeParams.termsAgreed ? '완료' : '미완료'} />
+              <InfoRow label="알림" value={routeParams.alarmEnabled ? '허용' : '미허용'} />
+            </View>
           </Animated.View>
+        </ScrollView>
 
-          <Animated.View entering={FadeInDown.delay(180).duration(500)} style={styles.titleBlock}>
-            <Text style={styles.title}>회원가입이 완료되었어요</Text>
-            <Text style={styles.subtitle}>
-              {routeParams.name ? `${routeParams.name}님 정보를 확인해주세요.` : '가입 정보를 확인해주세요.'}
-            </Text>
-          </Animated.View>
-        </View>
-
-        <Animated.View entering={FadeInDown.delay(280).duration(500)} style={styles.infoSection}>
-          {/* 회원가입 완료 직후 확인해야 하는 핵심 가입 정보를 요약해서 보여준다. */}
-          <View style={styles.infoCard}>
-            <InfoRow
-              label={isSsafySignup ? 'SSAFY ID' : '아이디'}
-              value={routeParams.ssafyOauthId ?? routeParams.userId ?? '-'}
-            />
-            <InfoRow label="이름" value={routeParams.name ?? '-'} />
-            <InfoRow label="생년월일" value={routeParams.birthDate ?? '-'} />
-            <InfoRow
-              label="성별"
-              value={routeParams.gender === 'M' ? '남성' : routeParams.gender === 'F' ? '여성' : '-'}
-            />
-            <InfoRow label="휴대폰" value={routeParams.phoneNumber ?? '-'} />
-            <InfoRow label="약관동의" value={routeParams.termsAgreed ? '완료' : '미완료'} />
-            <InfoRow label="알림" value={routeParams.alarmEnabled ? '허용' : '미허용'} />
-          </View>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(380).duration(500)} style={styles.bottomSection}>
+        <Animated.View 
+          entering={FadeInDown.delay(380).duration(500)} 
+          style={[styles.bottomSection, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}
+        >
           <TouchableOpacity
             style={[styles.confirmButton, isConfirming && styles.confirmButtonDisabled]}
             onPress={() => void handleConfirm()}
@@ -173,15 +181,21 @@ const styles = StyleSheet.create({
   },
   mainLayout: {
     flex: 1,
-    justifyContent: 'space-between',
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  scrollContentContainer: {
     paddingHorizontal: wp(28),
+    paddingTop: hp(44),
+    paddingBottom: hp(24),
   },
   headerSection: {
     alignItems: 'center',
-    gap: hp(18),
+    gap: hp(12),
   },
   iconContainer: {
-    marginTop: hp(20),
+    marginTop: hp(10),
   },
   titleBlock: {
     alignItems: 'center',
@@ -226,8 +240,9 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   bottomSection: {
-    paddingBottom: hp(12),
-    marginTop: 'auto',
+    paddingHorizontal: wp(28),
+    paddingTop: hp(12),
+    backgroundColor: '#FFFFFF',
   },
   confirmButton: {
     backgroundColor: COLORS.primary,

@@ -46,6 +46,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
   const ssnFrontRef = useRef<TextInput>(null);
   const ssnBackRef = useRef<TextInput>(null);
   const phoneRef = useRef<TextInput>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const handleNameSubmit = () => {
     if (name.trim().length >= 2) {
@@ -159,7 +160,11 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         return {
           isActive: telecom !== TELECOM_PLACEHOLDER && phone.length >= 10 && !isSendingCode,
           text: isSendingCode ? '인증번호 발송 중...' : '다음',
-          onPress: () => setTermsVisible(true),
+          onPress: () => {
+            // [UX-Refinement] 약관 모달이 뜰 때 구슬 진행바가 노치에 가려지는 것을 방지하기 위해 최상단으로 스크롤
+            scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+            setTermsVisible(true);
+          },
         };
     }
   };
@@ -169,6 +174,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={[
           styles.scrollContent,
           { paddingTop: insets.top + hp(60), paddingBottom: insets.bottom + hp(40) },
@@ -176,7 +182,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <StepIndicator currentStep={1} totalSteps={4} />
+        <StepIndicator currentStep={1} totalSteps={5} />
 
         <Text style={styles.title}>
           본인 확인을 위해{'\n'}인증이 필요해요.
