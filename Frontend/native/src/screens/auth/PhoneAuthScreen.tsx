@@ -22,6 +22,7 @@ import StepIndicator from '../../components/common/StepIndicator';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { sendSmsCode } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
+import { validateName, validatePhone } from '../../utils/validation';
 
 const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 알뜰폰'];
 const TELECOM_PLACEHOLDER = '통신사를 선택해주세요';
@@ -93,15 +94,33 @@ export default function PhoneAuthScreen({ navigation }: any) {
     setIsSendingCode(true);
     setSubmitError('');
 
+    /**
+     * [Defense-Log] 백엔드 요청값 검증(P2) 부재에 대응
+     * SMS 발송 전 이름과 전화번호 형식을 프론트엔드에서 먼저 검증합니다.
+     */
+    const nameValidation = validateName(name);
+    if (!nameValidation.isValid) {
+      setSubmitError(nameValidation.message);
+      setIsSendingCode(false);
+      return;
+    }
+
+    const phoneValidation = validatePhone(phone);
+    if (!phoneValidation.isValid) {
+      setSubmitError(phoneValidation.message);
+      setIsSendingCode(false);
+      return;
+    }
+
     try {
-      await sendSmsCode({ phoneNumber: phone });
+      await sendSmsCode({ phoneNumber: phone.replace(/[^0-9]/g, '') });
 
       navigation.navigate('VerifyCode', {
-        name,
+        name: name.trim(),
         ssnFront,
         ssnBack,
         telecom,
-        phone,
+        phone: phone.replace(/[^0-9]/g, ''),
         termsAgreed,
       });
     } catch (error: any) {

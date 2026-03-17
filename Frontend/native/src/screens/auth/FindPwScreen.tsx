@@ -19,6 +19,8 @@ import CustomTextInput from '../../components/common/CustomTextInput';
 import IdentityVerificationForm, { IdentityData } from '../../components/auth/IdentityVerificationForm';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import { sendSmsCode } from '../../services/auth';
+import { extractApiErrorMessage } from '../../utils/error';
+import { validateId } from '../../utils/validation';
 
 /**
  * FindPwScreen
@@ -43,10 +45,15 @@ export default function FindPwScreen() {
   }, [route.params?.prefilledId]);
 
   const handleIdSubmit = () => {
-    if (userId.trim().length >= 4 && userId.trim().length <= 20) {
+    /**
+     * [Defense-Log] 백엔드 요청값 검증(P2) 부재에 대응
+     * 비밀번호 재설정을 위한 아이디 입력값의 형식을 프론트엔드에서 먼저 검증합니다.
+     */
+    const validation = validateId(userId.trim());
+    if (validation.isValid) {
       setShowVerification(true);
     } else {
-      Alert.alert('알림', '아이디는 4자 이상 20자 이하로 입력해주세요.');
+      Alert.alert('알림', validation.message);
     }
   };
 
@@ -66,11 +73,15 @@ export default function FindPwScreen() {
       // 2. 인증번호 입력 화면으로 이동
       navigation.navigate('VerifyCode', {
         ...pendingData,
-        userId: userId, // 비밀번호 찾기 시 아이디 정보 추가 전달
+        userId: userId.trim(), // 비밀번호 찾기 시 아이디 정보 추가 전달
         flow: 'FindPw'
       });
-    } catch (error) {
-      Alert.alert('오류', '인증번호 발송에 실패했습니다. 다시 시도해주세요.');
+    } catch (error: any) {
+      const message = extractApiErrorMessage(
+        error,
+        '인증번호 발송에 실패했습니다. 다시 시도해주세요.'
+      );
+      Alert.alert('오류', message);
     } finally {
       setIsSubmitting(false);
     }

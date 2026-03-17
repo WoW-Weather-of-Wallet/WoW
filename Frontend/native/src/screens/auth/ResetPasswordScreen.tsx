@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, wp, hp, fp, RADIUS } from '../../constants/theme';
 import CustomTextInput from '../../components/common/CustomTextInput';
+import { extractApiErrorMessage } from '../../utils/error';
 import { validatePassword } from '../../utils/validation';
 
 /**
@@ -58,8 +59,16 @@ export default function ResetPasswordScreen() {
           [{ text: '확인', onPress: () => navigation.navigate('Login') }]
         );
       }, 1500);
-    } catch (error) {
-      Alert.alert('오류', '비밀번호 변경 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } catch (error: any) {
+      /**
+       * [Defense-Log] 백엔드 응답 지연이나 500 에러 발생 시를 대비해 
+       * 공통 에러 파서를 통해 사용자에게 안내합니다.
+       */
+      const message = extractApiErrorMessage(
+        error,
+        '비밀번호 변경 중 오류가 발생했습니다. 다시 시도해주세요.'
+      );
+      Alert.alert('오류', message);
       setIsSubmitting(false);
     }
   };
