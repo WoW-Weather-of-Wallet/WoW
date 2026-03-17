@@ -36,7 +36,7 @@ public class SsafyOAuthController {
 
     @Operation(summary = "SSAFY 신규 회원 중복 확인", description = "SMS 인증 전 이름, 성별, 생년월일, 전화번호로 중복 여부를 확인합니다.")
     @PostMapping("/check")
-    public ResponseEntity<Void> checkDuplicate(@RequestBody SsafyCheckRequest request) {
+    public ResponseEntity<Void> checkDuplicate(@Valid @RequestBody SsafyCheckRequest request) {
         ssafyOAuthService.checkDuplicate(request);
         return ResponseEntity.ok().build();
     }
