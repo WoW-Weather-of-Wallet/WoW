@@ -48,6 +48,20 @@ export interface NativeLoginResponse {
   };
 }
 
+/**
+ * SSAFY OAuth callback result
+ * 백엔드가 앱 딥링크로 되돌려주는 대표 필드를 느슨하게 수용합니다.
+ */
+export interface NativeSsafyCallbackResult {
+  accessToken: string;
+  user: {
+    userId: string;
+    name?: string;
+    role?: string;
+  };
+  onboardingRequired: boolean;
+}
+
 export interface SmsSendRequest {
   phoneNumber: string;
 }
@@ -145,4 +159,57 @@ export const signup = async (payload: NativeSignupRequest) => {
 export const login = async (payload: NativeLoginRequest) => {
   const response = await nativeApi.post<NativeLoginResponse>('/api/v1/auth/login', payload);
   return response.data;
+};
+
+/**
+ * SSAFY 로그인 시작 URL
+ * OAuth 진입과 callback 처리는 백엔드가 담당하므로 프론트는 해당 진입점만 엽니다.
+ */
+export const getSsafyLoginUrl = () => `${BASE_URL}/sso/providers/ssafy/login`;
+
+const getSearchParamsFromUrl = (url: string) => {
+  const normalizedUrl = url.replace('#', '?');
+  return new URL(normalizedUrl).searchParams;
+};
+
+const getParamValue = (params: URLSearchParams, keys: string[]) => {
+  for (const key of keys) {
+    const value = params.get(key);
+    if (value) {
+      return value;
+    }
+  }
+
+  return null;
+};
+
+/**
+ * SSAFY callback URL 파싱
+ * access token 이 포함된 경우에만 로그인 완료로 간주합니다.
+ */
+export const parseSsafyCallbackUrl = (
+  url: string,
+): NativeSsafyCallbackResult | null => {
+  try {
+    const params = getSearchParamsFromUrl(url);
+    const accessToken = getParamValue(params, ['accessToken', 'token']);
+
+    if (!accessToken) {
+      return null;
+    }
+
+    return {
+      accessToken,
+      user: {
+        userId: getParamValue(params, ['userId', 'loginId', 'username']) || 'ssafy-user',
+        name: getParamValue(params, ['name', 'userName', 'nickname']) || undefined,
+        role: getParamValue(params, ['role']) || undefined,
+      },
+      onboardingRequired:
+        getParamValue(params, ['onboardingRequired', 'needsOnboarding']) === 'true',
+    };
+  } catch (error) {
+    console.log('[SSAFY callback parse failed]', error);
+    return null;
+  }
 };

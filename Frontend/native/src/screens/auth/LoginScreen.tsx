@@ -11,6 +11,7 @@ import {
   StatusBar,
   Alert,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -25,7 +26,7 @@ import CustomTextInput from '../../components/common/CustomTextInput';
 import GradientButton from '../../components/common/GradientButton';
 import { useAuthStore } from '../../store/authStore';
 import { COLORS, FONTS, RADIUS, wp, hp, fp } from '../../constants/theme';
-import { login } from '../../services/auth';
+import { getSsafyLoginUrl, login, parseSsafyCallbackUrl } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 
 /**
@@ -56,6 +57,47 @@ export default function LoginScreen({ navigation }: any) {
       withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }),
     );
   }, []);
+
+  useEffect(() => {
+    /**
+     * SSAFY 로그인 완료 후 앱 딥링크로 복귀한 경우를 처리합니다.
+     * access token 이 포함된 URL만 로그인 완료로 보고 store 와 화면 전환을 진행합니다.
+     */
+    const handleSsafyCallback = (url: string | null) => {
+      if (!url) {
+        return;
+      }
+
+      const parsed = parseSsafyCallbackUrl(url);
+
+      if (!parsed) {
+        return;
+      }
+
+      loginToStore({
+        accessToken: parsed.accessToken,
+        user: parsed.user,
+        autoLogin,
+      });
+
+      if (parsed.onboardingRequired) {
+        navigation.replace('JobSelection');
+        return;
+      }
+
+      navigation.replace('MainTabs');
+    };
+
+    Linking.getInitialURL().then(handleSsafyCallback);
+
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      handleSsafyCallback(url);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [autoLogin, loginToStore, navigation]);
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
@@ -112,8 +154,31 @@ export default function LoginScreen({ navigation }: any) {
     console.log('아이디/비밀번호 찾기 연결 예정');
   };
 
-  const handleSSAFYLogin = () => {
+  const handleSSAFYLogin = async () => {
     console.log('SSAFY OAuth 연결 예정');
+  };
+
+  /**
+   * SSAFY 로그인 버튼 액션
+   * 백엔드 OAuth 진입점을 열고, 이후 앱으로 돌아오는 딥링크는 useEffect 에서 처리합니다.
+   */
+  const handleSSAFYLoginPress = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    try {
+      setLoginError('');
+      await Linking.openURL(getSsafyLoginUrl());
+    } catch (error: any) {
+      const message = extractApiErrorMessage(
+        error,
+        'SSAFY 로그인 페이지를 여는 중 문제가 발생했습니다.',
+      );
+
+      setLoginError(message);
+      Alert.alert('SSAFY 로그인 오류', message);
+    }
   };
 
   return (
@@ -238,7 +303,7 @@ export default function LoginScreen({ navigation }: any) {
 
           <Animated.View entering={FadeInDown.delay(650).duration(500).springify()}>
             <TouchableOpacity
-              onPress={handleSSAFYLogin}
+              onPress={handleSSAFYLoginPress}
               style={styles.ssafyButton}
               activeOpacity={0.8}
             >
