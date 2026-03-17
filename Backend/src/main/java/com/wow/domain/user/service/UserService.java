@@ -9,6 +9,7 @@ import com.wow.domain.user.repository.UserRepository;
 import com.wow.domain.user.repository.UserTermRepository;
 import com.wow.global.util.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserService {
 
+    private static final String REFRESH_KEY_PREFIX = "refresh:";
+
     private final UserRepository userRepository;
     private final UserTermRepository userTermRepository;
     private final SmsService smsService;
+    private final StringRedisTemplate redisTemplate;
 
     @Transactional(readOnly = true)
     public UserProfileResponse getProfile(String userId) {
@@ -40,6 +44,10 @@ public class UserService {
 
         // 회원 동의 이력 삭제
         userTermRepository.deleteByUser(user);
+
+        // Redis refresh token 삭제
+        String redisKey = user.getUserId() != null ? user.getUserId() : user.getSsafyOauthId();
+        redisTemplate.delete(REFRESH_KEY_PREFIX + redisKey);
 
         // 유저 삭제
         userRepository.delete(user);
@@ -69,7 +77,7 @@ public class UserService {
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
 
         if (userRepository.existsByPhoneNumber(phoneNumber)) {
-            throw new IllegalArgumentException("이미 가입된 전화번호입니다.");
+            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
         }
 
         smsService.checkVerified(phoneNumber);
