@@ -58,6 +58,23 @@ Frontend/android/build/
 Frontend/ios/Pods/
 Frontend/ios/build/
 
+# Frontend (React / React Native / Node)
+############################################
+Frontend/react/node_modules/
+Frontend/react/dist/
+Frontend/react/.vite/
+
+Frontend/native/node_modules/
+Frontend/native/.expo/
+Frontend/native/android/.gradle/
+Frontend/native/android/app/build/
+Frontend/native/android/build/
+Frontend/native/ios/Pods/
+Frontend/native/ios/build/
+
+Frontend/shared/node_modules/
+
+
 ############################################
 # AI (Python / ML)
 ############################################
@@ -77,6 +94,8 @@ AI/.ipynb_checkpoints/
 ############################################
 Infra/.env
 Infra/*.env
+Infra/.env.prod
+
 
 ############################################
 # Temporary files
@@ -95,4 +114,9 @@ htmlcov/
 ############################################
 # Misc
 ############################################
+
 *.lock
+Infra/Docker/env.prod
+Backend/src/main/resources/application-local.yml
+Backend/src/main/resources/application-local.yaml
+
