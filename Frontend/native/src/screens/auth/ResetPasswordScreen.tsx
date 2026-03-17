@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, wp, hp, fp, RADIUS } from '../../constants/theme';
 import CustomTextInput from '../../components/common/CustomTextInput';
+import { validatePassword } from '../../utils/validation';
 
 /**
  * ResetPasswordScreen
@@ -30,8 +31,14 @@ export default function ResetPasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  /**
+   * 비밀번호(PW) 보안 검증: 중앙화된 validatePassword 유틸리티를 사용합니다.
+   * 영문 대/소문자, 숫자, 특수문자 조합 및 연속성/반복성/아이디 대조 등을 모두 검사합니다.
+   */
+  const passwordValidation = validatePassword(password, userId);
+  const isPasswordValid = passwordValidation.isValid;
   const isFormValid = 
-    password.length >= 8 && 
+    isPasswordValid && 
     confirmPassword.length >= 8 && 
     password === confirmPassword;
 
@@ -81,7 +88,7 @@ export default function ResetPasswordScreen() {
         >
           <View style={styles.introContainer}>
             <Text style={styles.introTitle}>새로운 비밀번호를{"\n"}입력해주세요.</Text>
-            <Text style={styles.introSub}>안전한 사용을 위해 8자 이상 입력을 권장합니다.</Text>
+            <Text style={styles.introSub}>대/소문자, 숫자, 특수문자 포함 8~20자로 설정해주세요.</Text>
           </View>
 
           <View style={styles.formContainer}>
@@ -91,8 +98,11 @@ export default function ResetPasswordScreen() {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-                placeholder="8자 이상 입력"
+                placeholder="8~20자 입력 (조합 필수)"
               />
+              {password.length > 0 && !isPasswordValid && (
+                <Text style={styles.errorText}>* {passwordValidation.message}</Text>
+              )}
             </View>
 
             <View style={styles.inputWrapper}>

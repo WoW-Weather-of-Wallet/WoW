@@ -19,6 +19,7 @@ import StepIndicator from '../../components/common/StepIndicator';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import { checkUserId, signup } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
+import { validateId, validatePassword } from '../../utils/validation';
 
 type CreateAccountRouteParams = {
   // 일반 회원가입/SSAFY 회원가입 공용 화면에서 분기 기준으로 사용
@@ -90,7 +91,16 @@ export default function CreateAccountScreen({ route, navigation }: any) {
   const handleCheckId = async () => {
     const trimmedId = id.trim();
 
-    if (trimmedId.length < 4 || isCheckingId || isSubmitting) {
+    // 1. 프론트엔드 단에서의 아이디 형식 검증 (중앙화된 유틸리티 사용)
+    // 보안 정책에 따라 영문 소문자 + 숫자 조합, 4~20자, 영문 소문자 필수 여부를 확인합니다.
+    const idValidation = validateId(trimmedId);
+    if (!idValidation.isValid) {
+      setSubmitError(idValidation.message);
+      setIsIdAvailable(false);
+      return;
+    }
+
+    if (isCheckingId || isSubmitting) {
       return;
     }
 
@@ -138,7 +148,12 @@ export default function CreateAccountScreen({ route, navigation }: any) {
     setConfirmPassword(filteredText);
   };
 
-  const isPasswordValid = password.length >= 8;
+  /**
+   * 비밀번호(PW) 보안 검증: 중앙화된 validatePassword 유틸리티를 사용합니다.
+   * 영문 대/소문자, 숫자, 특수문자 조합 및 연속성/반복성/아이디 대조 등을 모두 검사합니다.
+   */
+  const passwordValidation = validatePassword(password, signupMode === 'normal' ? id : undefined);
+  const isPasswordValid = passwordValidation.isValid;
   const isPasswordMatch = isPasswordValid && password === confirmPassword;
   const hasSignupIdentifier =
     isSsafySignup ? Boolean(routeParams.ssafyOauthId?.trim()) : Boolean(isIdAvailable);
@@ -415,8 +430,11 @@ export default function CreateAccountScreen({ route, navigation }: any) {
                 />
               </TouchableOpacity>
             </View>
-            {password.length > 0 && password.length < 8 && (
-              <Text style={styles.guideMessage}>비밀번호는 8자 이상 입력해주세요.</Text>
+            {/* 비밀번호 정책 위반 시 상세 안내 문구 표시 (복잡성, 연속성, 반복성 등) */}
+            {password.length > 0 && !isPasswordValid && (
+              <Animated.Text entering={FadeInDown.duration(300)} style={styles.errorMessage}>
+                {passwordValidation.message}
+              </Animated.Text>
             )}
           </Animated.View>
         )}
