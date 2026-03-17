@@ -1,9 +1,9 @@
 package com.wow.domain.auth.service;
 
-import net.nurigo.sdk.NurigoApp;
 import net.nurigo.sdk.message.model.Message;
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
 import net.nurigo.sdk.message.service.DefaultMessageService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -13,6 +13,7 @@ import java.security.SecureRandom;
 import java.time.Duration;
 
 @Service
+@RequiredArgsConstructor
 public class SmsService {
 
     private static final long CODE_TTL_MINUTES = 5;
@@ -26,16 +27,8 @@ public class SmsService {
 
     private final StringRedisTemplate redisTemplate;
     private final DefaultMessageService messageService;
-    private final String sender;
-
-    public SmsService(StringRedisTemplate redisTemplate,
-                      @Value("${solapi.api-key}") String apiKey,
-                      @Value("${solapi.api-secret}") String apiSecret,
-                      @Value("${solapi.sender}") String sender) {
-        this.redisTemplate = redisTemplate;
-        this.messageService = NurigoApp.INSTANCE.initialize(apiKey, apiSecret, "https://api.solapi.com");
-        this.sender = sender;
-    }
+    @Value("${solapi.sender}")
+    private String sender;
 
     public void sendCode(String phoneNumber) {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
