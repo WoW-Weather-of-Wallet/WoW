@@ -12,10 +12,10 @@ import VerifyCodeScreen from '../screens/auth/VerifyCodeScreen';
 import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
-import AccountRecoveryScreen from '../screens/auth/AccountRecoveryScreen';
+import AccountRecoveryEntryScreen from '../screens/auth/AccountRecoveryEntryScreen';
 import FindIdScreen from '../screens/auth/FindIdScreen';
 import FindPwScreen from '../screens/auth/FindPwScreen';
-import RecoveryResultScreen from '../screens/auth/RecoveryResultScreen';
+import AccountRecoveryResultScreen from '../screens/auth/AccountRecoveryResultScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import MainTabNavigator from './MainTabNavigator';
 import SettingsScreen from '../screens/mypage/SettingsScreen';
@@ -83,8 +83,8 @@ export default function RootNavigator() {
 
         {/* 계정 찾기 화면 */}
         <Stack.Screen
-          name="AccountRecovery"
-          component={AccountRecoveryScreen}
+          name="AccountRecoveryEntry"
+          component={AccountRecoveryEntryScreen}
           options={{
             gestureEnabled: true,
             animation: 'slide_from_right'
@@ -110,8 +110,8 @@ export default function RootNavigator() {
         />
 
         <Stack.Screen
-          name="RecoveryResult"
-          component={RecoveryResultScreen}
+          name="AccountRecoveryResult"
+          component={AccountRecoveryResultScreen}
           options={{
             gestureEnabled: false,
             animation: 'fade'
