@@ -16,8 +16,13 @@ import java.time.Duration;
 public class SmsService {
 
     private static final long CODE_TTL_MINUTES = 5;
+    private static final long SEND_COOLDOWN_SECONDS = 60;
+    private static final long SEND_LIMIT_WINDOW_MINUTES = 60;
+    private static final long MAX_SEND_COUNT_PER_WINDOW = 5;
     private static final String VERIFIED_KEY_PREFIX = "sms:verified:";
     private static final String CODE_KEY_PREFIX = "sms:code:";
+    private static final String SEND_COOLDOWN_KEY_PREFIX = "sms:cooldown:";
+    private static final String SEND_COUNT_KEY_PREFIX = "sms:count:";
 
     private final StringRedisTemplate redisTemplate;
     private final DefaultMessageService messageService;
@@ -34,6 +39,19 @@ public class SmsService {
 
     public void sendCode(String phoneNumber) {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
+
+        /*
+         * 수정 이유:
+         * - 같은 번호로 무제한 SMS 발송이 가능하면 스팸/비용 문제가 생깁니다.
+         * - 짧은 재전송 쿨다운과 시간당 발송 횟수 제한을 추가해 abuse를 줄이도록 변경했습니다.
+         *
+         * 수정 전 코드:
+         * - String code = generateCode();
+         * - redisTemplate.opsForValue().set(...)
+         * - messageService.sendOne(...)
+         */
+        validateSendRateLimit(normalized);
+
         String code = generateCode();
 
         redisTemplate.opsForValue().set(
@@ -80,6 +98,29 @@ public class SmsService {
 
     public void deleteVerified(String phoneNumber) {
         redisTemplate.delete(VERIFIED_KEY_PREFIX + PhoneNumberUtils.normalize(phoneNumber));
+    }
+
+    private void validateSendRateLimit(String phoneNumber) {
+        String cooldownKey = SEND_COOLDOWN_KEY_PREFIX + phoneNumber;
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(cooldownKey))) {
+            throw new IllegalArgumentException("인증번호는 1분 후에 다시 요청해주세요.");
+        }
+
+        String countKey = SEND_COUNT_KEY_PREFIX + phoneNumber;
+        Long sendCount = redisTemplate.opsForValue().increment(countKey);
+        if (sendCount != null && sendCount == 1L) {
+            redisTemplate.expire(countKey, Duration.ofMinutes(SEND_LIMIT_WINDOW_MINUTES));
+        }
+
+        if (sendCount != null && sendCount > MAX_SEND_COUNT_PER_WINDOW) {
+            throw new IllegalArgumentException("인증번호 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+        }
+
+        redisTemplate.opsForValue().set(
+                cooldownKey,
+                "true",
+                Duration.ofSeconds(SEND_COOLDOWN_SECONDS)
+        );
     }
 
     private String generateCode() {
