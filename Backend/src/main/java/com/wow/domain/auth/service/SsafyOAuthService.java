@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +38,9 @@ public class SsafyOAuthService {
 
     private static final String REFRESH_KEY_PREFIX = "refresh:";
     private static final String PENDING_KEY_PREFIX = "ssafy:pending:";
+    private static final String AUTH_CODE_KEY_PREFIX = "ssafy:code:";
     private static final long PENDING_TTL_MINUTES = 30;
+    private static final long AUTH_CODE_TTL_SECONDS = 30;
 
     @Value("${sso.ssafy.client-id}")
     private String clientId;
@@ -74,10 +77,21 @@ public class SsafyOAuthService {
 
         Optional<User> existingUser = userRepository.findBySsafyOauthId(userInfo.getUserId());
 
-        // 기존 회원이면 JWT 발급 후 딥링크 URL 반환
+        // 기존 회원이면 일회성 code 발급 후 딥링크 URL 반환
         if (existingUser.isPresent()) {
             log.info("기존 회원 로그인 - ssafyOauthId: {}", userInfo.getUserId());
-            return buildLoginRedirectUrl(issueToken(existingUser.get()));
+            String authCode = UUID.randomUUID().toString();
+            redisTemplate.opsForValue().set(
+                    AUTH_CODE_KEY_PREFIX + authCode,
+                    userInfo.getUserId(),
+                    Duration.ofSeconds(AUTH_CODE_TTL_SECONDS)
+            );
+            return UriComponentsBuilder
+                    .fromUriString("wow://auth/ssafy/callback")
+                    .queryParam("code", authCode)
+                    .build()
+                    .encode()
+                    .toUriString();
         }
 
         // 신규 회원 → 중복 검증 하기 전 Redis에 30분동안 ssafyOauthId 임시 저장
@@ -95,28 +109,6 @@ public class SsafyOAuthService {
                 .build()
                 .encode()
                 .toUriString();
-    }
-
-    private String buildLoginRedirectUrl(UserLoginResponse login) {
-        UriComponentsBuilder redirectBuilder = UriComponentsBuilder
-                .fromUriString("wow://auth/ssafy/callback")
-                .queryParam("accessToken", login.getAccessToken())
-                .queryParam("refreshToken", login.getRefreshToken())
-                .queryParam("expiresIn", login.getExpiresIn());
-
-        if (login.getUser() != null) {
-            if (login.getUser().getUserId() != null) {
-                redirectBuilder.queryParam("userId", login.getUser().getUserId());
-            }
-            if (login.getUser().getName() != null) {
-                redirectBuilder.queryParam("name", login.getUser().getName());
-            }
-            if (login.getUser().getLoginType() != null) {
-                redirectBuilder.queryParam("loginType", login.getUser().getLoginType());
-            }
-        }
-
-        return redirectBuilder.build().encode().toUriString();
     }
 
     // 3. 신규 SSAFY 회원 중복 확인 (SMS 인증 전)
@@ -226,6 +218,7 @@ public class SsafyOAuthService {
 
     // SSAFY 사용자 정보 조회
     private SsafyUserInfo getUserInfo(String accessToken) {
+
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + accessToken);
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -240,6 +233,27 @@ public class SsafyOAuthService {
         );
 
         return response.getBody();
+
+    }
+
+    // 일회성 code로 JWT 교환
+    public UserLoginResponse exchangeToken(String code) {
+
+        String ssafyOauthId = redisTemplate.opsForValue().get(AUTH_CODE_KEY_PREFIX + code);
+
+        if (ssafyOauthId == null) {
+            throw new IllegalArgumentException("유효하지 않거나 만료된 코드입니다.");
+        }
+
+        redisTemplate.delete(AUTH_CODE_KEY_PREFIX + code);
+
+        User user = userRepository.findBySsafyOauthId(ssafyOauthId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        log.info("code로 토큰 교환 - ssafyOauthId: {}", ssafyOauthId);
+
+        return issueToken(user);
+
     }
 
     // JWT 발급 공통 로직

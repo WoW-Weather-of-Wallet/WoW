@@ -34,6 +34,12 @@ public class SsafyOAuthController {
         response.sendRedirect(ssafyOAuthService.login(code));
     }
 
+    @Operation(summary = "SSAFY 로그인 토큰 교환", description = "딥링크로 받은 일회성 code를 JWT로 교환합니다.")
+    @GetMapping("/token")
+    public ResponseEntity<UserLoginResponse> exchangeToken(@RequestParam String code) {
+        return ResponseEntity.ok(ssafyOAuthService.exchangeToken(code));
+    }
+
     @Operation(summary = "SSAFY 신규 회원 중복 확인", description = "SMS 인증 전 이름, 성별, 생년월일, 전화번호로 중복 여부를 확인합니다.")
     @PostMapping("/check")
     public ResponseEntity<Void> checkDuplicate(@Valid @RequestBody SsafyCheckRequest request) {
