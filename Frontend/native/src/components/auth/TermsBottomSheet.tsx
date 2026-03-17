@@ -9,9 +9,10 @@ interface TermsBottomSheetProps {
   onClose: () => void;
   // 휴대폰 인증 단계에서 필수 약관 동의 완료 여부를 상위 화면으로 전달한다.
   onConfirm: (termsAgreed: boolean) => void;
+  flow?: 'FindId' | 'FindPw' | string;
 }
 
-export default function TermsBottomSheet({ visible, onClose, onConfirm }: TermsBottomSheetProps) {
+export default function TermsBottomSheet({ visible, onClose, onConfirm, flow }: TermsBottomSheetProps) {
   const insets = useSafeAreaInsets();
   
   const [allAgreed, setAllAgreed] = useState(false);
@@ -21,7 +22,12 @@ export default function TermsBottomSheet({ visible, onClose, onConfirm }: TermsB
     telecom: false,
   });
 
-  const isAllRequiredAgreed = agreements.service && agreements.privacy && agreements.telecom;
+  const isRecovery = flow === 'FindId' || flow === 'FindPw';
+
+  // 회원가입이면 3개 전부, 복구(ID/PW 찾기)면 서비스 약관 제외 2개만 필수
+  const isAllRequiredAgreed = isRecovery 
+    ? agreements.privacy && agreements.telecom 
+    : agreements.service && agreements.privacy && agreements.telecom;
 
   // 약관 바텀시트 내부 체크 상태를 기반으로 "전체 동의" 표시를 동기화한다.
   useEffect(() => {
@@ -32,7 +38,7 @@ export default function TermsBottomSheet({ visible, onClose, onConfirm }: TermsB
     const newValue = !allAgreed;
     setAllAgreed(newValue);
     setAgreements({
-      service: newValue,
+      service: isRecovery ? false : newValue,
       privacy: newValue,
       telecom: newValue,
     });
@@ -68,11 +74,13 @@ export default function TermsBottomSheet({ visible, onClose, onConfirm }: TermsB
           <View style={styles.divider} />
 
           <View style={styles.agreementsList}>
-            <AgreementRow 
-              title="(필수) WOW 서비스 이용약관 동의" 
-              checked={agreements.service} 
-              onToggle={() => toggleAgreement('service')} 
-            />
+            {!isRecovery && (
+              <AgreementRow 
+                title="(필수) WOW 서비스 이용약관 동의" 
+                checked={agreements.service} 
+                onToggle={() => toggleAgreement('service')} 
+              />
+            )}
             <AgreementRow 
               title="(필수) 개인정보 수집 및 이용 동의" 
               checked={agreements.privacy} 

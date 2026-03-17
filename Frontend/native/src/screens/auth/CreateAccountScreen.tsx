@@ -261,36 +261,6 @@ export default function CreateAccountScreen({ route, navigation }: any) {
     }
   };
 
-  // 개발 중 실제 signup API 없이 Welcome 화면과 이후 진입 흐름을 확인할 때 사용한다.
-  const handleDevSuccess = () => {
-    if (isSsafySignup) {
-      navigation.replace('Welcome', {
-        ...routeParams,
-        signupMode,
-        ssafyOauthId: routeParams.ssafyOauthId,
-        name: routeParams.name ?? '테스트 사용자',
-        birthDate: buildBirthDate(routeParams.ssnFront, routeParams.ssnBack),
-        gender: buildGender(routeParams.ssnBack),
-        phoneNumber: routeParams.phone ?? '01012345678',
-        termsAgreed: routeParams.termsAgreed === true,
-        alarmEnabled: true,
-      });
-      return;
-    }
-
-    navigation.replace('Welcome', {
-      ...routeParams,
-      signupMode,
-      userId: id.trim() || 'test-user',
-      pw: password || 'test1234',
-      name: routeParams.name ?? '테스트 사용자',
-      birthDate: buildBirthDate(routeParams.ssnFront, routeParams.ssnBack),
-      gender: buildGender(routeParams.ssnBack),
-      phoneNumber: routeParams.phone ?? '01012345678',
-      termsAgreed: routeParams.termsAgreed === true,
-      alarmEnabled: true,
-    });
-  };
 
   const handleIdChange = (text: string) => {
     setId(text);
@@ -506,12 +476,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
 
         {submitError.length > 0 && <Text style={styles.submitErrorText}>{submitError}</Text>}
 
-        {/* 회원가입 API 가 불안정할 때도 이후 화면 레이아웃 작업이 멈추지 않게 우회 진입을 둡니다. */}
-        <DevShortcutButton
-          label="TEST: 가입 성공 처리"
-          description="signup API 호출 없이 Welcome 화면으로 이동해 최종 진입 흐름을 확인합니다."
-          onPress={handleDevSuccess}
-        />
+        {/* [Defense-Log] 운영 환경 전환을 위해 하드코딩된 인증 우회 버튼(DevShortcutButton)을 제거했습니다. */}
       </ScrollView>
 
       {step >= 2 && (

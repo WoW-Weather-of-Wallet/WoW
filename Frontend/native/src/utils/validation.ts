@@ -46,6 +46,17 @@ export const validateId = (id: string): ValidationResult => {
     };
   }
 
+  /**
+   * [Bug-Fix] 아이디 숫자 필구 포함 규칙 추가
+   * 보안 강화를 위해 영문뿐만 아니라 숫자도 최소 1개 이상 포함하도록 검증을 강화합니다.
+   */
+  if (!/[0-9]/.test(trimmedId)) {
+    return {
+      isValid: false,
+      message: '아이디에 숫자를 최소 1개 이상 포함해야 합니다.',
+    };
+  }
+
   return { isValid: true, message: '사용 가능한 형식의 아이디입니다.' };
 };
 

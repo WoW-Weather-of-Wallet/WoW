@@ -12,7 +12,7 @@ import SecureKeypad from '../../components/common/SecureKeypad';
 import DevShortcutButton from '../../components/common/DevShortcutButton';
 import StepIndicator from '../../components/common/StepIndicator';
 import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
-import { verifySmsCode } from '../../services/auth';
+import { verifySmsCode, findUserId, findPassword } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 
 const MAX_CODE_LENGTH = 6;
@@ -64,38 +64,95 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
       console.log('인증 완료. 플로우:', route.params.flow);
       
       if (route.params.flow === 'FindId') {
-        // 아이디 찾기 성공: 결과 화면으로 이동
-        // TODO: 실제 API 결과(userType, userId) 연동 필요
-        // 현재는 시뮬레이션을 위해 이름에 따라 타입을 나눕니다.
-        let userType: 'local' | 'ssafy' | 'none' = 'local';
-        let foundId = 'ssafy_dummy';
+        /**
+         * [Defense-Log] 아이디 찾기 API 연동
+         * 하드코딩된 더미 데이터(ssafy_dummy)를 제거하고 실제 백엔드 결과를 조회합니다.
+         */
+        try {
+          const recoveryResult = await findUserId({
+            name: route.params.name,
+            phoneNumber: route.params.phone,
+          });
 
-        if (route.params.name.includes('싸피')) {
-          userType = 'ssafy';
-        } else if (route.params.name.includes('미가입')) {
-          userType = 'none';
+          navigation.navigate('RecoveryResult', {
+            name: route.params.name,
+            userId: recoveryResult.userId,
+            userType: recoveryResult.userType === 'SSAFY' ? 'ssafy' : 'local'
+          });
+        } catch (recoveryError: any) {
+          /**
+           * [Bug-Fix] 아이디 찾기 시 가입 내역이 없는 경우(401)
+           * 알림창 대신 '조회 결과 없음(none)' 화면으로 이동하여 가입 유도를 진행합니다.
+           */
+          if (recoveryError?.response?.status === 401) {
+            navigation.navigate('RecoveryResult', {
+              name: route.params.name,
+              userType: 'none'
+            });
+            return;
+          }
+
+          const recoveryMsg = extractApiErrorMessage(
+            recoveryError,
+            '아이디 정보를 찾는 중 오류가 발생했습니다.'
+          );
+          Alert.alert('조회 실패', recoveryMsg);
         }
-
-        navigation.navigate('RecoveryResult', {
-          name: route.params.name,
-          userId: foundId,
-          userType: userType
-        });
       } else if (route.params.flow === 'FindPw') {
-        // 비밀번호 찾기 성공: 비밀번호 재설정 화면으로 이동
-        navigation.navigate('ResetPassword', {
-          userId: route.params.userId || 'dummy_id'
-        });
+        /**
+         * [Defense-Log] 비밀번호 재설정 권한 확인 API 연동
+         * 단순히 인증번호만 맞다고 넘어가는 것이 아니라, 입력한 아이디와 정보가 일치하는지 서버에서 확인합니다.
+         */
+        try {
+          await findPassword({
+            userId: route.params.userId,
+            name: route.params.name,
+            phoneNumber: route.params.phone,
+          });
+
+          navigation.navigate('ResetPassword', {
+            userId: route.params.userId
+          });
+        } catch (pwRecoveryError: any) {
+          /**
+           * [Bug-Fix] 비밀번호 찾기 시 아이디와 이름/번호 정보가 불일치하는 경우(401)
+           * 알림창 대신 '정보 불일치(fail)' 화면으로 이동하여 아이디 찾기 제안 등을 수행합니다.
+           */
+          if (pwRecoveryError?.response?.status === 401) {
+            navigation.navigate('RecoveryResult', {
+              name: route.params.name,
+              userId: route.params.userId,
+              userType: 'fail'
+            });
+            return;
+          }
+
+          const pwRecoveryMsg = extractApiErrorMessage(
+            pwRecoveryError,
+            '계정 정보를 확인할 수 없습니다. 입력하신 정보를 다시 확인해주세요.'
+          );
+          Alert.alert('확인 실패', pwRecoveryMsg);
+        }
       } else {
         // 기본 플로우 (회원가입)
         navigation.replace('CreateAccount', route.params);
       }
     } catch (error: any) {
       // 인증번호 검증도 공통 파서를 사용해 message 필드 차이를 화면에서 숨깁니다.
-      const message = extractApiErrorMessage(
+      let message = extractApiErrorMessage(
         error,
         '인증번호 확인에 실패했어요. 다시 입력해주세요.',
       );
+
+      /**
+       * [Bug-Fix] 계정 찾기 플로우에서의 401 에러 대응
+       * 전역 에러 핸들러가 401을 "아이디/비번 오류"로만 번역하므로, 
+       * 찾기 플로우에서는 "등록된 정보 없음"으로 문구를 재검색하여 보여줍니다.
+       */
+      const isRecovery = route.params.flow === 'FindId' || route.params.flow === 'FindPw';
+      if (isRecovery && (error as any)?.response?.status === 401) {
+        message = '일치하는 계정 정보를 찾을 수 없습니다. 정보를 다시 확인해주세요.';
+      }
 
       setVerifyError(message);
       setCode('');
@@ -123,7 +180,10 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={[styles.content, { paddingTop: insets.top + hp(60) }]}>
-        <StepIndicator currentStep={1} totalSteps={4} />
+        {/* [Bug-Fix] 아이디/비밀번호 찾기 시에는 단계 표시기(StepIndicator)를 숨깁니다. */}
+        {route.params.flow !== 'FindId' && route.params.flow !== 'FindPw' && (
+          <StepIndicator currentStep={1} totalSteps={4} />
+        )}
         <Animated.View entering={FadeInDown.delay(100).duration(500)}>
           <Text style={styles.title}>인증번호 6자리를{`\n`}입력해주세요.</Text>
           <Text style={styles.subtitle}>문자로 전송된 6자리 인증번호를 입력하면 다음 단계로 넘어갑니다.</Text>
@@ -145,42 +205,7 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
 
         {verifyError.length > 0 && <Text style={styles.errorText}>{verifyError}</Text>}
 
-        {/* 인증 서버 상태와 무관하게 계정 생성 화면 개발을 이어갈 수 있도록 우회 버튼을 둡니다. */}
-        <DevShortcutButton
-          label="TEST: 인증 성공 처리"
-          description="인증 절차를 건너뛰고 다음 화면으로 이동합니다."
-          onPress={() => {
-             if (route.params.flow === 'FindId') {
-               // 아이디 찾기 결과 화면으로 시뮬레이션 이동 (이름에 따라 분기 가능)
-               let userType: 'local' | 'ssafy' | 'none' = 'local';
-               if (route.params.name.includes('싸피')) userType = 'ssafy';
-               if (route.params.name.includes('미가입')) userType = 'none';
-
-               navigation.navigate('RecoveryResult', {
-                 name: route.params.name,
-                 userId: 'test_user_id',
-                 userType: userType
-               });
-             } else if (route.params.flow === 'FindPw') {
-               // 비밀번호 찾기 시나리오
-               if (route.params.name.includes('미가입')) {
-                 // 일치하는 계정 정보가 없는 경우 시뮬레이션
-                 navigation.navigate('RecoveryResult', {
-                   name: route.params.name,
-                   userId: '',
-                   userType: 'fail'
-                 });
-               } else {
-                 // 비밀번호 재설정 화면으로 이동
-                 navigation.navigate('ResetPassword', {
-                   userId: route.params.userId || 'test_user_id'
-                 });
-               }
-             } else {
-               navigation.replace('CreateAccount', route.params);
-             }
-          }}
-        />
+        {/* [Defense-Log] 운영 환경 전환을 위해 하드코딩된 인증 우회 버튼(DevShortcutButton)을 제거했습니다. */}
       </View>
 
       <View style={[styles.keypadWrapper, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
