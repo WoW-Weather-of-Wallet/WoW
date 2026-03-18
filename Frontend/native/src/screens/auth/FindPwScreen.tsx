@@ -3,7 +3,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -15,7 +14,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { COLORS, FONTS, wp, hp, fp, RADIUS } from '../../constants/theme';
+import { styles } from './FindPwScreen.styles';
+import { COLORS, wp, hp } from '../../constants/theme';
 import IdentityVerificationForm, { IdentityData } from '../../components/auth/IdentityVerificationForm';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import { sendSmsCode } from '../../services/auth';
@@ -180,108 +180,4 @@ export default function FindPwScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(16),
-    height: hp(56),
-  },
-  backButton: {
-    padding: wp(4),
-  },
-  headerTitle: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-  headerRight: {
-    width: wp(32),
-  },
-  content: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: wp(24),
-    paddingTop: hp(32),
-    paddingBottom: hp(40),
-  },
-  introContainer: {
-    marginBottom: hp(32),
-  },
-  introTitle: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    lineHeight: fp(34),
-    marginBottom: hp(8),
-  },
-  introSub: {
-    fontSize: fp(15),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  inputSection: {
-    marginBottom: hp(24),
-  },
-  inputLabel: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: COLORS.textTertiary,
-    marginBottom: hp(10),
-    marginLeft: wp(4),
-  },
-  underlineContainer: {
-    borderBottomWidth: 1.5,
-    borderBottomColor: '#1A1A1A',
-    paddingVertical: hp(8),
-    minHeight: hp(50),
-    justifyContent: 'center',
-  },
-  bareInput: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: '#1A1A1A',
-    padding: 0,
-    margin: 0,
-  },
-  helperText: {
-    fontSize: fp(12),
-    color: COLORS.textTertiary,
-    marginTop: hp(6),
-    marginLeft: wp(4),
-  },
-  idNextButton: {
-    marginTop: hp(16),
-    backgroundColor: '#F3F4F6',
-    paddingVertical: hp(14),
-    borderRadius: RADIUS.xl,
-    alignItems: 'center',
-  },
-  activeIdNextButton: {
-    backgroundColor: COLORS.primary50,
-    borderWidth: 1,
-    borderColor: COLORS.primarySoft,
-  },
-  idNextButtonText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.bold,
-    color: COLORS.textTertiary,
-  },
-  activeIdNextButtonText: {
-    color: COLORS.primary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#F3F4F6',
-    marginVertical: hp(24),
-  },
-  formWrapper: {
-    flex: 1,
-  },
-});
+

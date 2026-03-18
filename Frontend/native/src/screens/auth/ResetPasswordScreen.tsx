@@ -3,7 +3,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -13,7 +12,8 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
+import { styles } from './ResetPasswordScreen.styles';
+import { COLORS, wp, hp } from '../../constants/theme';
 import CustomTextInput from '../../components/common/CustomTextInput';
 import { findPassword } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
@@ -163,83 +163,4 @@ export default function ResetPasswordScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(16),
-    height: hp(56),
-  },
-  backButton: {
-    padding: wp(4),
-  },
-  headerTitle: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-  headerRight: {
-    width: wp(32),
-  },
-  content: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: wp(24),
-    paddingTop: hp(32),
-    paddingBottom: hp(24), // 기본 여백을 줄이고 동적 여백으로 처리
-  },
-  introContainer: {
-    marginBottom: hp(40),
-  },
-  introTitle: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    lineHeight: fp(34),
-    marginBottom: hp(8),
-  },
-  introSub: {
-    fontSize: fp(15),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  formContainer: {
-    gap: hp(24),
-  },
-  inputWrapper: {
-    width: '100%',
-  },
-  errorText: {
-    fontSize: fp(12),
-    color: '#EF4444',
-    marginTop: hp(6),
-    marginLeft: wp(4),
-    fontFamily: FONTS.medium,
-  },
-  footer: {
-    marginTop: hp(60),
-  },
-  mainButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: wp(30),
-    paddingVertical: hp(18),
-    alignItems: 'center',
-  },
-  disabledButton: {
-    backgroundColor: '#F3F4F6',
-  },
-  mainButtonText: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: '#FFFFFF',
-  },
-  disabledButtonText: {
-    color: COLORS.textTertiary,
-  },
-});
+

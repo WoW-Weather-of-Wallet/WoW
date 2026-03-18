@@ -4,7 +4,6 @@ import {
   Platform,
   ScrollView,
   StatusBar,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -13,7 +12,8 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { wp, hp, fp, COLORS, FONTS } from '../../constants/theme';
+import { styles } from './FindIdScreen.styles';
+import { COLORS, wp, hp } from '../../constants/theme';
 import IdentityVerificationForm, { IdentityData } from '../../components/auth/IdentityVerificationForm';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import { sendSmsCode } from '../../services/auth';
@@ -101,50 +101,4 @@ export default function FindIdScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(16),
-    height: hp(56),
-  },
-  backButton: {
-    padding: wp(4),
-  },
-  headerTitle: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-  headerRight: {
-    width: wp(32),
-  },
-  content: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: wp(24),
-    paddingTop: hp(32),
-    paddingBottom: hp(40),
-  },
-  introContainer: {
-    marginBottom: hp(40),
-  },
-  introTitle: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    lineHeight: fp(34),
-    marginBottom: hp(8),
-  },
-  introSub: {
-    fontSize: fp(15),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-});
+

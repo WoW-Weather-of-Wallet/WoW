@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -12,7 +11,8 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
-import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
+import { styles } from './TermsPdfScreen.styles';
+import { COLORS, hp, wp } from '../../constants/theme';
 
 type TermsPdfRouteParams = {
   TermsPdf: {
@@ -89,48 +89,4 @@ export default function TermsPdfScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(12),
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-    backgroundColor: COLORS.background,
-  },
-  iconButton: {
-    width: wp(36),
-    height: wp(36),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    marginHorizontal: wp(12),
-    fontSize: fp(16),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    textAlign: 'center',
-  },
-  content: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    gap: hp(10),
-  },
-  loadingText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-});
+

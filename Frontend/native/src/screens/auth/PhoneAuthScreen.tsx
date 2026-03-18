@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TextInput,
-  StyleSheet,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -17,9 +16,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
-import DevShortcutButton from '../../components/common/DevShortcutButton';
 import StepIndicator from '../../components/common/StepIndicator';
-import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
+import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
+import { COLORS, wp, hp } from '../../constants/theme';
 import { sendSmsCode } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 import { validateName, validatePhone } from '../../utils/validation';
@@ -177,7 +176,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         ref={scrollViewRef}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: insets.top + hp(60), paddingBottom: insets.bottom + hp(40) },
+          { paddingTop: insets.top + CONSTANTS.scrollContentPaddingTop, paddingBottom: insets.bottom + CONSTANTS.scrollContentPaddingBottom },
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -224,7 +223,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
             <View style={[styles.underlineContainer, styles.ssnBackContainer]}>
               <TextInput
                 ref={ssnBackRef}
-                style={[styles.bareInput, { width: wp(30), textAlign: 'center', letterSpacing: 4 }]}
+                style={[styles.bareInput, { width: CONSTANTS.ssnBackInputWidth, textAlign: 'center', letterSpacing: 4 }]}
                 value={ssnBack}
                 onChangeText={handleSsnBackChange}
                 keyboardType="number-pad"
@@ -241,7 +240,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
               <Text style={[styles.telecomText, telecom === TELECOM_PLACEHOLDER && styles.placeholderText]}>
                 {telecom}
               </Text>
-              <Ionicons name="chevron-down" size={wp(24)} color="#1A1A1A" />
+              <Ionicons name="chevron-down" size={CONSTANTS.chevronIconSize} color={COLORS.textPrimary} />
             </TouchableOpacity>
 
             <View style={[styles.underlineContainer, { marginTop: hp(32) }]}>
@@ -267,14 +266,14 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         {/* [Defense-Log] 운영 환경 전환을 위해 하드코딩된 인증 우회 버튼(DevShortcutButton)을 제거했습니다. */}
       </ScrollView>
 
-      <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
+      <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, CONSTANTS.bottomMinPadding) }]}>
         <TouchableOpacity
           style={[styles.confirmButton, btnState.isActive && styles.activeButton]}
           disabled={!btnState.isActive}
           onPress={btnState.onPress}
         >
           {isSendingCode ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color={COLORS.textInverse} />
           ) : (
             <Text style={[styles.confirmButtonText, btnState.isActive && styles.activeButtonText]}>
               {btnState.text}
@@ -314,80 +313,4 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  scrollContent: { paddingHorizontal: wp(28) },
-  title: {
-    fontSize: fp(28),
-    fontFamily: FONTS.bold,
-    color: '#1A1A1A',
-    lineHeight: fp(40),
-    marginBottom: hp(40),
-    letterSpacing: -0.5,
-  },
-  inputSection: { marginBottom: hp(32) },
-  underlineContainer: {
-    borderBottomWidth: 1.5,
-    borderBottomColor: '#1A1A1A',
-    paddingVertical: hp(8),
-    minHeight: hp(50),
-    justifyContent: 'center',
-  },
-  bareInput: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: '#1A1A1A',
-    padding: 0,
-    margin: 0,
-  },
-  ssnSection: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: hp(32) },
-  dash: {
-    fontSize: fp(20),
-    fontFamily: FONTS.regular,
-    color: '#1A1A1A',
-    marginHorizontal: wp(12),
-    marginBottom: hp(16),
-  },
-  ssnBackContainer: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  ssnMasking: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: '#1A1A1A',
-    letterSpacing: wp(6),
-    marginTop: Platform.OS === 'ios' ? hp(4) : 0,
-  },
-  telecomSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1.5,
-    borderBottomColor: '#1A1A1A',
-    paddingVertical: hp(8),
-  },
-  telecomText: { fontSize: fp(24), fontFamily: FONTS.bold, color: '#1A1A1A' },
-  placeholderText: { color: COLORS.textTertiary },
-  errorText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: '#EF4444',
-    marginTop: hp(12),
-  },
-  bottomContainer: { paddingHorizontal: wp(28), backgroundColor: '#FFFFFF', paddingTop: hp(12) },
-  confirmButton: { backgroundColor: '#E5E7EB', borderRadius: wp(30), paddingVertical: hp(16), alignItems: 'center' },
-  activeButton: { backgroundColor: COLORS.primary },
-  confirmButtonText: { fontSize: fp(20), fontFamily: FONTS.bold, color: '#1A1A1A' },
-  activeButtonText: { color: '#FFFFFF' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: wp(24),
-    borderTopRightRadius: wp(24),
-    paddingHorizontal: wp(24),
-    paddingTop: hp(24),
-    paddingBottom: hp(16),
-  },
-  modalHeader: { marginBottom: hp(16), alignItems: 'center' },
-  modalTitle: { fontSize: fp(18), fontFamily: FONTS.bold, color: '#1A1A1A' },
-  modalItem: { paddingVertical: hp(18), borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  modalItemText: { fontSize: fp(18), fontFamily: FONTS.medium, color: '#1A1A1A', textAlign: 'center' },
-});
+

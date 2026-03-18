@@ -5,7 +5,6 @@ import {
   Linking,
   ScrollView,
   StatusBar,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -24,7 +23,8 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import PermissionCard from '../../components/auth/PermissionCard';
 import GradientButton from '../../components/common/GradientButton';
-import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
+import { styles } from './AccessPermissionScreen.styles';
+import { COLORS, hp, wp } from '../../constants/theme';
 import { PermissionMeta } from '../../constants/auth/permissionConfig';
 import { getPermissionItems } from '../../constants/auth/permissionConfig';
 import { PermissionKey, useAppPermissions } from '../../hooks';
@@ -214,77 +214,4 @@ export default function AccessPermissionScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    paddingHorizontal: wp(24),
-  },
-  scrollContent: {
-    paddingBottom: hp(40),
-  },
-  titleContainer: {
-    marginTop: hp(40),
-    marginBottom: hp(32),
-  },
-  titleText: {
-    fontSize: fp(26),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    lineHeight: fp(36),
-    letterSpacing: -0.6,
-  },
-  subtitleText: {
-    marginTop: hp(12),
-    fontSize: fp(15),
-    lineHeight: fp(22),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  sectionContainer: {
-    width: '100%',
-  },
-  marginTop24: {
-    marginTop: hp(24),
-  },
-  sectionHeader: {
-    fontSize: fp(14),
-    fontFamily: FONTS.bold,
-    color: COLORS.primary,
-    marginBottom: hp(12),
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  listContainer: {
-    gap: hp(12),
-  },
-  footer: {
-    marginTop: hp(40),
-  },
-  refreshRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: wp(6),
-    marginBottom: hp(24),
-  },
-  refreshText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.primary,
-  },
-  buttonGap: {
-    gap: hp(12),
-  },
-  retryButton: {
-    paddingVertical: hp(12),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  retryText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: COLORS.textTertiary,
-    textDecorationLine: 'underline',
-  },
-});
+

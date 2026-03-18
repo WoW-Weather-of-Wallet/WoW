@@ -93,6 +93,16 @@ export const COLORS = {
   cardOverlay1: '#DAD6FF',
   cardOverlay2: '#E6E1FF',
   cardOverlay3: '#F4F2FF',
+
+  // SSAFY 로그인 그라데이션 (추가)
+  blue500: '#3B82F6',
+  blue600: '#2563EB',
+
+  // Switch 비활성 상태 컬러 (추가)
+  switchThumbInactive: '#F4F3F4',
+
+  // 모달 오버레이 (추가)
+  modalOverlay: 'rgba(0,0,0,0.35)',
 } as const;
 
 // =============================================

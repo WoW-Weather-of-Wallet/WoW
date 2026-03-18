@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Image, StyleSheet, StatusBar, TouchableOpacity, Text } from 'react-native';
+import { View, Image, StatusBar, TouchableOpacity, Text } from 'react-native';
+import { styles } from './SplashScreen.styles';
 
 import Animated, {
   useSharedValue,
@@ -93,7 +94,7 @@ export default function SplashScreen() {
         backgroundColor="transparent"
         translucent
       />
-      <View style={[styles.gradient, { backgroundColor: '#FFFFFF' }]}>
+      <View style={styles.gradient}>
         <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
           <Image
             source={splashLogo}
@@ -106,21 +107,4 @@ export default function SplashScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  gradient: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoImage: {
-    width: wp(200),
-    height: wp(200),
-  },
-});
+

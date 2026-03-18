@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StatusBar, StyleSheet, View } from 'react-native';
+import { ScrollView, StatusBar, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   mockHomeInsights,
@@ -8,7 +8,8 @@ import {
   mockSpendingCategories,
 } from '../../mock/dashboard';
 import { mockHomeCalendarPreview } from '../../mock/calendar';
-import { COLORS, hp, wp } from '../../constants/theme';
+import { COLORS, hp } from '../../constants/theme';
+import { styles } from './MainHomeScreen.styles';
 import { useModalState } from '../../hooks/useModalState';
 import {
   HomeBudgetReportCard,
@@ -64,13 +65,4 @@ export default function MainHomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.backgroundSecondary,
-  },
-  contentContainer: {
-    paddingHorizontal: wp(20),
-    gap: hp(18),
-  },
-});
+

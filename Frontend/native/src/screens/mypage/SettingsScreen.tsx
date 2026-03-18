@@ -6,7 +6,6 @@ import {
   Pressable,
   ScrollView,
   StatusBar,
-  StyleSheet,
   Switch,
   Text,
   TextInput,
@@ -17,7 +16,8 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import { styles } from './SettingsScreen.styles';
+import { COLORS, fp, hp, wp } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
 import ProfileEditHeader from '../../components/mypage/ProfileEditHeader';
 import SettingSection from '../../components/mypage/SettingSection';
@@ -403,8 +403,8 @@ export default function SettingsScreen() {
             <Switch
               value={isPushEnabled}
               disabled
-              trackColor={{ false: '#E5E7EB', true: COLORS.primary }}
-              thumbColor="#FFFFFF"
+              thumbColor={COLORS.textInverse}
+              trackColor={{ false: COLORS.border, true: COLORS.primary }}
             />
           </View>
         </SettingSection>
@@ -623,195 +623,4 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.backgroundSecondary,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(16),
-    height: hp(56) + 20,
-    backgroundColor: COLORS.background,
-    borderBottomWidth: 1,
-    borderColor: '#F3F4F6',
-  },
-  backButton: {
-    padding: wp(4),
-  },
-  headerTitle: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-  headerRight: {
-    width: wp(32),
-  },
-  scrollContent: {
-    paddingBottom: hp(20),
-  },
-  loadingCard: {
-    marginTop: hp(20),
-    paddingVertical: hp(20),
-    alignItems: 'center',
-    gap: hp(10),
-    backgroundColor: COLORS.background,
-  },
-  loadingText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(20),
-    paddingBottom: hp(16),
-    backgroundColor: COLORS.background,
-    gap: wp(12),
-  },
-  toggleDescription: {
-    flex: 1,
-    fontSize: fp(12),
-    lineHeight: fp(18),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    justifyContent: 'center',
-    paddingHorizontal: wp(20),
-  },
-  modalCard: {
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.xl,
-    padding: wp(20),
-    gap: hp(12),
-  },
-  modalTitle: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    marginBottom: hp(4),
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: wp(14),
-    paddingVertical: hp(12),
-    fontSize: fp(15),
-    fontFamily: FONTS.medium,
-    color: COLORS.textPrimary,
-    backgroundColor: '#FFFFFF',
-  },
-  helperText: {
-    fontSize: fp(12),
-    lineHeight: fp(18),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  readOnlyInput: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: RADIUS.md,
-    paddingHorizontal: wp(14),
-    paddingVertical: hp(12),
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: hp(4),
-  },
-  readOnlyLabel: {
-    fontSize: fp(14),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textTertiary,
-  },
-  readOnlyValue: {
-    fontSize: fp(15),
-    fontFamily: FONTS.medium,
-    color: COLORS.textPrimary,
-  },
-  readOnlyHint: {
-    fontSize: fp(12),
-    fontFamily: FONTS.medium,
-    color: COLORS.textTertiary,
-    marginTop: hp(4),
-    paddingHorizontal: wp(4),
-  },
-  inlineActionButton: {
 
-    borderRadius: RADIUS.md,
-    paddingVertical: hp(12),
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.primary,
-  },
-  secondaryInlineActionButton: {
-    backgroundColor: COLORS.backgroundSecondary,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  verifiedInlineActionButton: {
-    backgroundColor: COLORS.success,
-  },
-  inlineActionText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.semiBold,
-    color: '#FFFFFF',
-  },
-  secondaryInlineActionText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textPrimary,
-  },
-  modalButtonRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: wp(10),
-    marginTop: hp(8),
-  },
-  secondaryButton: {
-    paddingHorizontal: wp(14),
-    paddingVertical: hp(10),
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.backgroundSecondary,
-  },
-  secondaryButtonText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textPrimary,
-  },
-  primaryButton: {
-    paddingHorizontal: wp(14),
-    paddingVertical: hp(10),
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary,
-  },
-  primaryButtonText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.semiBold,
-    color: '#FFFFFF',
-  },
-  errorMessage: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: '#EF4444',
-    marginTop: hp(8),
-  },
-  passwordInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  inputEyeIcon: {
-    position: 'absolute',
-    right: wp(12),
-    padding: wp(4),
-  },
-});
