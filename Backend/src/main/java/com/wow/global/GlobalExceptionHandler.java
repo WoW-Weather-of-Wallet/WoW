@@ -1,4 +1,4 @@
-﻿package com.wow.global;
+package com.wow.global;
 
 import com.wow.global.common.ErrorResponse;
 import org.springframework.dao.DataIntegrityViolationException;
