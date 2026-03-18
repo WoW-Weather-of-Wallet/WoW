@@ -34,8 +34,8 @@ public class SmsService {
 
         /*
          * 수정 이유:
-         * - 같은 번호로 무제한 SMS 발송이 가능하면 스팸/비용 문제가 생깁니다.
-         * - 짧은 재전송 쿨다운과 시간당 발송 횟수 제한을 추가해 abuse를 줄이도록 변경했습니다.
+         * - 같은 번호로 무제한 SMS 발송이 가능하면 스팸과 비용 문제가 생깁니다.
+         * - 짧은 재전송 쿨다운과 시간당 발송 횟수 제한을 함께 적용해 abuse를 줄이도록 변경했습니다.
          *
          * 수정 전 코드:
          * - String code = generateCode();
@@ -62,7 +62,8 @@ public class SmsService {
         } catch (RuntimeException e) {
             /*
              * 수정 이유:
-             * - 외부 SMS 발송이 실패했는데 Redis의 code/cooldown/count가 남으면 사용자는 문자를 못 받았는데도 재시도가 막힐 수 있습니다.
+             * - 외부 SMS 발송이 실패했는데도 Redis에 code/cooldown/count가 남으면
+             *   사용자는 문자를 못 받았는데 재시도까지 막히게 됩니다.
              * - 전송 실패 시 발송 관련 상태를 롤백해 정합성을 맞추도록 변경했습니다.
              *
              * 수정 전 코드:
@@ -84,7 +85,7 @@ public class SmsService {
         /*
          * 수정 이유:
          * - 기존에는 인증번호 검증 실패 횟수 제한이 없어 코드 유효 시간 동안 반복 대입이 가능했습니다.
-         * - 실패 횟수를 Redis에 누적하고 제한 초과 시 인증번호를 폐기해 brute-force 가능성을 줄입니다.
+         * - 실패 횟수를 Redis에 누적하고 제한 초과 시 인증번호를 폐기해 brute-force 가능성을 줄였습니다.
          *
          * 수정 전 코드:
          * - if (!savedCode.equals(code)) {
@@ -109,7 +110,7 @@ public class SmsService {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
         String verified = redisTemplate.opsForValue().get(RedisKeys.SMS_VERIFIED_PREFIX + normalized);
         if (!"true".equals(verified)) {
-            throw new IllegalArgumentException("휴대폰 인증이 필요합니다.");
+            throw new IllegalArgumentException("본인 인증이 필요합니다.");
         }
     }
 
