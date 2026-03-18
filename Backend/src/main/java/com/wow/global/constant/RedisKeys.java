@@ -15,4 +15,5 @@ public final class RedisKeys {
 
     public static final String SSAFY_PENDING_PREFIX = "ssafy:pending:";
     public static final String SSAFY_AUTH_CODE_PREFIX = "ssafy:code:";
+    public static final String SSAFY_STATE_PREFIX = "ssafy:state:";
 }

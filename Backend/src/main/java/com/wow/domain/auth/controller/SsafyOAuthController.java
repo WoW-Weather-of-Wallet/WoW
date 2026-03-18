@@ -10,7 +10,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 
@@ -30,8 +35,10 @@ public class SsafyOAuthController {
 
     @Operation(summary = "SSAFY 로그인 콜백", description = "기존 회원이면 JWT 발급 후 앱 딥링크로 리다이렉트, 신규 회원이면 전화번호 입력 화면으로 리다이렉트합니다.")
     @GetMapping("/callback")
-    public void callback(@RequestParam String code, HttpServletResponse response) throws IOException {
-        response.sendRedirect(ssafyOAuthService.login(code));
+    public void callback(@RequestParam String code,
+                         @RequestParam String state,
+                         HttpServletResponse response) throws IOException {
+        response.sendRedirect(ssafyOAuthService.login(code, state));
     }
 
     @Operation(summary = "SSAFY 로그인 토큰 교환", description = "딥링크로 받은 일회성 code를 JWT로 교환합니다.")
@@ -52,5 +59,4 @@ public class SsafyOAuthController {
     public ResponseEntity<UserLoginResponse> register(@Valid @RequestBody SsafyRegisterRequest request) {
         return ResponseEntity.ok(ssafyOAuthService.register(request));
     }
-
 }
