@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Firebase ###
+weatherofwallet-firebase-adminsdk-fbsvc-e8c69339db.json
