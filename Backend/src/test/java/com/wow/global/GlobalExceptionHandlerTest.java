@@ -21,9 +21,9 @@ class GlobalExceptionHandlerTest {
                 handler.handleAuthenticationException(new BadCredentialsException("bad credentials"));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getHttpStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-        assertThat(response.getBody().getErrorMessage()).isEqualTo("아이디 또는 비밀번호가 올바르지 않습니다.");
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .isEqualTo(ErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), "아이디 또는 비밀번호가 올바르지 않습니다."));
     }
 
     @Test
@@ -33,8 +33,9 @@ class GlobalExceptionHandlerTest {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getErrorMessage()).isEqualTo("이미 사용 중인 전화번호입니다.");
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .isEqualTo(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 사용 중인 전화번호입니다."));
     }
 
     @Test
@@ -44,8 +45,9 @@ class GlobalExceptionHandlerTest {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getErrorMessage()).isEqualTo("이미 가입된 SSAFY 계정입니다.");
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .isEqualTo(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 가입된 SSAFY 계정입니다."));
     }
 
     @Test
@@ -55,8 +57,9 @@ class GlobalExceptionHandlerTest {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getErrorMessage()).isEqualTo("이미 사용 중인 값입니다.");
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .isEqualTo(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 사용 중인 값입니다."));
     }
 
     @Test
@@ -66,7 +69,8 @@ class GlobalExceptionHandlerTest {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getErrorMessage()).isEqualTo("서버 오류가 발생했습니다.");
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .isEqualTo(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "서버 오류가 발생했습니다."));
     }
 }
