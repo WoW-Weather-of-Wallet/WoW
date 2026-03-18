@@ -3,7 +3,6 @@ import {
   Modal,
   ScrollView,
   StatusBar,
-  StyleSheet,
   Switch,
   Text,
   TouchableOpacity,
@@ -11,7 +10,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, hp, wp } from '../../constants/theme';
+import { styles } from './FixedExpenseManageModal.styles';
 
 interface ManageFixedExpenseItem {
   id: string;
@@ -35,7 +35,7 @@ interface FixedExpenseManageModalProps {
 }
 
 function getIconColor(iconTone: string) {
-  return iconTone === '#111111' ? '#FFFFFF' : COLORS.textPrimary;
+  return iconTone === '#111111' ? COLORS.white : COLORS.textPrimary;
 }
 
 /**
@@ -133,8 +133,8 @@ export default function FixedExpenseManageModal({
                   <Text style={styles.switchLabel}>{item.isEnabled ? '활성' : '비활성'}</Text>
                   <Switch
                     value={item.isEnabled}
-                    trackColor={{ false: '#DDDCF0', true: '#B8B1FF' }}
-                    thumbColor="#FFFFFF"
+                    trackColor={{ false: COLORS.border, true: COLORS.primaryLight }}
+                    thumbColor={COLORS.white}
                     onValueChange={(nextValue) => onToggleItem(item.id, nextValue)}
                   />
                 </View>
@@ -147,182 +147,3 @@ export default function FixedExpenseManageModal({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.backgroundSecondary,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: wp(12),
-    backgroundColor: COLORS.gradientStart,
-    paddingHorizontal: wp(20),
-    paddingBottom: 4,
-  },
-  backButton: {
-    width: wp(30),
-    height: wp(30),
-    borderRadius: wp(15),
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF1E',
-  },
-  headerTitle: {
-    fontSize: fp(19),
-    fontFamily: FONTS.bold,
-    color: COLORS.textInverse,
-  },
-  summaryCard: {
-    marginHorizontal: wp(20),
-    marginTop: hp(8),
-    marginBottom: hp(22),
-    borderRadius: RADIUS.xxl,
-    backgroundColor: '#8E84F5',
-    paddingHorizontal: wp(18),
-    paddingVertical: hp(16),
-  },
-  summaryTopRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: wp(12),
-  },
-  summaryTextBlock: {
-    flex: 1,
-  },
-  summaryLabel: {
-    fontSize: fp(13),
-    fontFamily: FONTS.medium,
-    color: '#E4E0FF',
-    marginBottom: hp(8),
-  },
-  summaryAmount: {
-    fontSize: fp(28),
-    fontFamily: FONTS.bold,
-    color: COLORS.textInverse,
-  },
-  summaryHint: {
-    marginTop: hp(6),
-    fontSize: fp(12),
-    fontFamily: FONTS.medium,
-    color: '#ECE8FF',
-  },
-  contentContainer: {
-    paddingHorizontal: wp(20),
-    paddingTop: hp(6),
-    gap: hp(14),
-  },
-  addButton: {
-    borderRadius: RADIUS.full,
-    backgroundColor: '#FFFFFF26',
-    paddingHorizontal: wp(16),
-    paddingVertical: hp(9),
-    shadowColor: COLORS.gradientStart,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  addButtonText: {
-    fontSize: fp(13),
-    fontFamily: FONTS.bold,
-    color: COLORS.textInverse,
-  },
-  itemCard: {
-    borderRadius: RADIUS.xl,
-    backgroundColor: COLORS.background,
-    paddingHorizontal: wp(16),
-    paddingVertical: hp(14),
-    gap: hp(10),
-  },
-  itemTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: wp(12),
-  },
-  itemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: wp(12),
-  },
-  iconWrap: {
-    width: wp(46),
-    height: wp(46),
-    borderRadius: wp(17),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  itemTextBlock: {
-    flex: 1,
-  },
-  itemTitle: {
-    fontSize: fp(17),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    marginBottom: hp(4),
-  },
-  itemSubtitle: {
-    fontSize: fp(13),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  itemAmount: {
-    fontSize: fp(16),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-  itemAmountBlock: {
-    minWidth: wp(82),
-    alignItems: 'flex-end',
-  },
-  controlRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: wp(12),
-    paddingTop: hp(2),
-  },
-  controlActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: wp(8),
-  },
-  editChip: {
-    borderRadius: RADIUS.full,
-    backgroundColor: '#EFEEFF',
-    paddingHorizontal: wp(12),
-    paddingVertical: hp(7),
-  },
-  editChipText: {
-    fontSize: fp(12),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.primary,
-  },
-  deleteChip: {
-    borderRadius: RADIUS.full,
-    backgroundColor: '#FDECEC',
-    paddingHorizontal: wp(12),
-    paddingVertical: hp(7),
-  },
-  deleteChipText: {
-    fontSize: fp(12),
-    fontFamily: FONTS.semiBold,
-    color: '#D87272',
-  },
-  switchWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: wp(6),
-    flexShrink: 0,
-  },
-  switchLabel: {
-    fontSize: fp(12),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textSecondary,
-    minWidth: wp(34),
-    textAlign: 'right',
-  },
-});

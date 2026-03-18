@@ -1,9 +1,10 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SectionHeader from '../common/SectionHeader';
 import SurfaceCard from '../common/SurfaceCard';
-import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, wp } from '../../constants/theme';
+import { styles } from './HomeWeeklyPreviewCard.styles';
 import type { CalendarDayItem } from '../../mock/calendar';
 
 const previewWeatherIcons = {
@@ -57,20 +58,3 @@ export default function HomeWeeklyPreviewCard({ items }: HomeWeeklyPreviewCardPr
   );
 }
 
-const styles = StyleSheet.create({
-  previewStrip: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderRadius: wp(20),
-    backgroundColor: COLORS.backgroundSecondary,
-    paddingHorizontal: wp(10),
-    paddingVertical: hp(12),
-  },
-  previewDayColumn: { alignItems: 'center', flex: 1, gap: hp(3) },
-  previewWeekday: { fontSize: fp(10), fontFamily: FONTS.bold, color: COLORS.textTertiary },
-  previewWeekdaySunday: { color: '#E17272' },
-  previewWeekdaySaturday: { color: COLORS.primary },
-  previewDayNumber: { fontSize: fp(16), fontFamily: FONTS.bold, color: COLORS.textPrimary },
-  previewPlaceholder: { height: hp(14) },
-  previewAmount: { fontSize: fp(10), fontFamily: FONTS.medium, color: '#6FC48A' },
-});

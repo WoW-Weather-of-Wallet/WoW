@@ -34,8 +34,6 @@ type CreateAccountRouteParams = {
 
 /**
  * 주민등록번호 앞/뒷자리를 기반으로 생년월일을 YYYY-MM-DD 형태로 만듭니다.
- * 현재 회원가입 화면은 생년월일 입력을 따로 받지 않기 때문에,
- * 휴대폰 인증 단계에서 수집한 값을 회원가입 요청으로 변환합니다.
  */
 const buildBirthDate = (ssnFront?: string, ssnBack?: string) => {
   if (!ssnFront || ssnFront.length !== 6 || !ssnBack) {
@@ -62,7 +60,6 @@ const buildBirthDate = (ssnFront?: string, ssnBack?: string) => {
 
 /**
  * 주민등록번호 뒷자리 첫 숫자를 성별 값으로 변환합니다.
- * 홀수 [1, 3, 5, 7, 9]는 남성(M), 짝수 [2, 4, 6, 8, 0]은 여성(F)입니다.
  */
 const buildGender = (ssnBack?: string) => {
   if (!ssnBack) {
@@ -209,10 +206,10 @@ export default function CreateAccountScreen({ route, navigation }: any) {
     try {
       await signup(signupPayload);
       navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Welcome', params: { name: signupPayload.name, userId: id } }],
-        }),
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Welcome', params: { name: signupPayload.name, userId: id } }],
+          }),
       );
     } catch (error: any) {
       const message = extractApiErrorMessage(error, '회원가입 처리 중 문제가 발생했어요.');
@@ -222,6 +219,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
       setIsSubmitting(false);
     }
   };
+
 
   const handleIdChange = (text: string) => {
     setId(text);

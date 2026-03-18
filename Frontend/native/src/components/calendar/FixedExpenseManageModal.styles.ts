@@ -1,0 +1,182 @@
+import { StyleSheet } from 'react-native';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.backgroundSecondary,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(12),
+    backgroundColor: COLORS.gradientStart,
+    paddingHorizontal: wp(20),
+    paddingBottom: 4,
+  },
+  backButton: {
+    width: wp(30),
+    height: wp(30),
+    borderRadius: wp(15),
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.headerButtonBackground,
+  },
+  headerTitle: {
+    fontSize: fp(19),
+    fontFamily: FONTS.bold,
+    color: COLORS.textInverse,
+  },
+  summaryCard: {
+    marginHorizontal: wp(20),
+    marginTop: hp(8),
+    marginBottom: hp(22),
+    borderRadius: RADIUS.xxl,
+    backgroundColor: COLORS.fixedExpenseSummaryBackground,
+    paddingHorizontal: wp(18),
+    paddingVertical: hp(16),
+  },
+  summaryTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: wp(12),
+  },
+  summaryTextBlock: {
+    flex: 1,
+  },
+  summaryLabel: {
+    fontSize: fp(13),
+    fontFamily: FONTS.medium,
+    color: COLORS.summaryTextLight,
+    marginBottom: hp(8),
+  },
+  summaryAmount: {
+    fontSize: fp(28),
+    fontFamily: FONTS.bold,
+    color: COLORS.textInverse,
+  },
+  summaryHint: {
+    marginTop: hp(6),
+    fontSize: fp(12),
+    fontFamily: FONTS.medium,
+    color: COLORS.summaryTextHint,
+  },
+  contentContainer: {
+    paddingHorizontal: wp(20),
+    paddingTop: hp(6),
+    gap: hp(14),
+  },
+  addButton: {
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.addButtonBackground,
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(9),
+    shadowColor: COLORS.gradientStart,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  addButtonText: {
+    fontSize: fp(13),
+    fontFamily: FONTS.bold,
+    color: COLORS.textInverse,
+  },
+  itemCard: {
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.background,
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(14),
+    gap: hp(10),
+  },
+  itemTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: wp(12),
+  },
+  itemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: wp(12),
+  },
+  iconWrap: {
+    width: wp(46),
+    height: wp(46),
+    borderRadius: wp(17),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemTextBlock: {
+    flex: 1,
+  },
+  itemTitle: {
+    fontSize: fp(17),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: hp(4),
+  },
+  itemSubtitle: {
+    fontSize: fp(13),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  itemAmount: {
+    fontSize: fp(16),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  itemAmountBlock: {
+    minWidth: wp(82),
+    alignItems: 'flex-end',
+  },
+  controlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: wp(12),
+    paddingTop: hp(2),
+  },
+  controlActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(8),
+  },
+  editChip: {
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.stepperButtonBackground,
+    paddingHorizontal: wp(12),
+    paddingVertical: hp(7),
+  },
+  editChipText: {
+    fontSize: fp(12),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.primary,
+  },
+  deleteChip: {
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.deleteChipBackground,
+    paddingHorizontal: wp(12),
+    paddingVertical: hp(7),
+  },
+  deleteChipText: {
+    fontSize: fp(12),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.spentRed,
+  },
+  switchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(6),
+    flexShrink: 0,
+  },
+  switchLabel: {
+    fontSize: fp(12),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textSecondary,
+    minWidth: wp(34),
+    textAlign: 'right',
+  },
+});

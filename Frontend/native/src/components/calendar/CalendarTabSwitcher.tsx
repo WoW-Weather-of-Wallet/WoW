@@ -1,8 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CALENDAR_TAB_OPTIONS } from '../../constants/calendar/ui';
-import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, wp } from '../../constants/theme';
+import { styles } from './CalendarTabSwitcher.styles';
 
 type CalendarTabKey = (typeof CALENDAR_TAB_OPTIONS)[number]['key'];
 
@@ -42,36 +43,3 @@ export default function CalendarTabSwitcher({
   );
 }
 
-const styles = StyleSheet.create({
-  tabSwitcher: {
-    flexDirection: 'row',
-    backgroundColor: '#F5F4FA',
-    borderRadius: RADIUS.xl,
-    padding: wp(4),
-  },
-  tabButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: wp(6),
-    paddingVertical: hp(12),
-    borderRadius: RADIUS.lg,
-  },
-  tabButtonActive: {
-    backgroundColor: COLORS.primary,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  tabLabel: {
-    fontSize: fp(14),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textSecondary,
-  },
-  tabLabelActive: {
-    color: COLORS.textInverse,
-  },
-});

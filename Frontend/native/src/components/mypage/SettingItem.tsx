@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, Switch } from 'react-native';
+import { Text, TouchableOpacity, View, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, wp } from '../../constants/theme';
+import { styles } from './SettingItem.styles';
 
 interface SettingItemProps {
   label: string;
@@ -46,8 +47,8 @@ export default function SettingItem({
           <Switch
             value={isToggled}
             onValueChange={onToggle}
-            trackColor={{ false: '#E5E7EB', true: COLORS.primary }}
-            thumbColor="#FFFFFF"
+            trackColor={{ false: COLORS.switchTrackFalse, true: COLORS.primary }}
+            thumbColor={COLORS.white}
           />
         )}
       </View>
@@ -69,34 +70,3 @@ export default function SettingItem({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: hp(16),
-    paddingHorizontal: wp(20),
-    backgroundColor: COLORS.background,
-  },
-  label: {
-    fontSize: fp(16),
-    fontFamily: FONTS.medium,
-    color: COLORS.textPrimary,
-  },
-  dangerLabel: {
-    color: '#EF4444',
-  },
-  rightContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  valueText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: COLORS.textTertiary,
-    marginRight: wp(4),
-  },
-  chevron: {
-    marginLeft: wp(4),
-  },
-});

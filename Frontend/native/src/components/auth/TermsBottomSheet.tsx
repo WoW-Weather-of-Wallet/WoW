@@ -3,7 +3,6 @@ import {
   Alert,
   Modal,
   Pressable,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -11,8 +10,9 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, hp, wp } from '../../constants/theme';
 import { TERM_DOCUMENTS, TermDocumentKey } from '../../constants/terms';
+import { styles } from './TermsBottomSheet.styles';
 
 interface TermsBottomSheetProps {
   visible: boolean;
@@ -83,7 +83,7 @@ export default function TermsBottomSheet({
           <View style={styles.header}>
             <Text style={styles.title}>약관 동의</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={wp(28)} color="#1A1A1A" />
+              <Ionicons name="close" size={wp(28)} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -179,104 +179,3 @@ function AgreementRow({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  content: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: wp(24),
-    borderTopRightRadius: wp(24),
-    paddingHorizontal: wp(24),
-    paddingTop: hp(24),
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: hp(28),
-  },
-  title: {
-    fontSize: fp(22),
-    fontFamily: FONTS.bold,
-    color: '#1A1A1A',
-  },
-  closeButton: {
-    padding: wp(4),
-  },
-  allAgreeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    padding: wp(16),
-    borderRadius: wp(12),
-    marginBottom: hp(24),
-  },
-  allAgreeText: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: '#1A1A1A',
-    marginLeft: wp(12),
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E5E7EB',
-    marginBottom: hp(24),
-  },
-  agreementsList: {
-    gap: hp(20),
-    marginBottom: hp(40),
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  rowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  checkIcon: {
-    marginRight: wp(12),
-  },
-  rowText: {
-    fontSize: fp(16),
-    fontFamily: FONTS.medium,
-    color: '#4B5563',
-    flex: 1,
-  },
-  viewButton: {
-    padding: wp(4),
-    paddingLeft: wp(12),
-  },
-  viewText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: '#9CA3AF',
-    textDecorationLine: 'underline',
-  },
-  buttonContainer: {
-    width: '100%',
-    marginTop: hp(10),
-  },
-  confirmButton: {
-    backgroundColor: '#E5E7EB',
-    borderRadius: wp(30),
-    paddingVertical: hp(18),
-    alignItems: 'center',
-  },
-  activeButton: {
-    backgroundColor: COLORS.primary,
-  },
-  confirmButtonText: {
-    fontSize: fp(20),
-    fontFamily: FONTS.bold,
-    color: '#1A1A1A',
-  },
-  activeButtonText: {
-    color: '#FFFFFF',
-  },
-});

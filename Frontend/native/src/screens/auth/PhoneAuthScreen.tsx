@@ -263,7 +263,6 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
           </Animated.View>
         )}
 
-        {/* [Defense-Log] 운영 환경 전환을 위해 하드코딩된 인증 우회 버튼(DevShortcutButton)을 제거했습니다. */}
       </ScrollView>
 
       <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, CONSTANTS.bottomMinPadding) }]}>

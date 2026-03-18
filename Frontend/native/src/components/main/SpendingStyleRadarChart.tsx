@@ -1,15 +1,15 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import Svg, { Circle, Line, Polygon } from 'react-native-svg';
-import { COLORS, wp } from '../../constants/theme';
+import { COLORS } from '../../constants/theme';
 import type { SpendingStyleMetric } from '../../constants/main/types';
+import { styles, DEFAULT_SIZE } from './SpendingStyleRadarChart.styles';
 
 interface SpendingStyleRadarChartProps {
   metrics: SpendingStyleMetric[];
   size?: number;
 }
 
-const DEFAULT_SIZE = wp(164);
 const GRID_LEVELS = 4;
 const START_ANGLE = -Math.PI / 2;
 
@@ -60,7 +60,7 @@ export default function SpendingStyleRadarChart({
             key={`grid-${index}`}
             points={toPointString(polygon)}
             fill="none"
-            stroke={index === GRID_LEVELS - 1 ? '#D7D4F7' : '#ECE9FB'}
+            stroke={index === GRID_LEVELS - 1 ? COLORS.radarGridOuter : COLORS.radarGridInner}
             strokeWidth={1}
           />
         ))}
@@ -72,14 +72,14 @@ export default function SpendingStyleRadarChart({
             y1={center}
             x2={point.x}
             y2={point.y}
-            stroke="#E6E3FA"
+            stroke={COLORS.radarAxis}
             strokeWidth={1}
           />
         ))}
 
         <Polygon
           points={toPointString(dataPoints)}
-          fill="#8C82F733"
+          fill={COLORS.radarFill}
           stroke={COLORS.primary}
           strokeWidth={3}
           strokeLinejoin="round"
@@ -98,11 +98,3 @@ export default function SpendingStyleRadarChart({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    width: DEFAULT_SIZE,
-    height: DEFAULT_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
