@@ -59,13 +59,12 @@ public class SsafyOAuthService {
     private final SmsService smsService;
     private final UserTermRepository userTermRepository;
 
-    // 1. 인가코드 받기 URL 생성
+    // 1. 인가 코드 요청 URL 생성
     public String getLoginUrl() {
         /*
          * 수정 이유:
          * - redirect_uri를 문자열로 직접 붙이면 인코딩이 보장되지 않습니다.
-         * - OAuth 쿼리 파라미터는 UriComponentsBuilder로 조합해 안전하게 인코딩하도록 변경했습니다.
-         * - 로그인 시작 요청과 콜백을 묶기 위한 state 값을 함께 발급해 Redis에 짧게 저장합니다.
+         * - OAuth 시작 요청과 콜백 요청을 묶기 위한 state 값을 함께 발급해야 합니다.
          *
          * 수정 전 코드:
          * - return "https://project.ssafy.com/oauth/sso-check"
@@ -90,7 +89,7 @@ public class SsafyOAuthService {
                 .toUriString();
     }
 
-    // 2. 인가코드로 로그인 처리
+    // 2. 인가 코드로 로그인 처리
     public String login(String code, String state) {
         validateState(state);
 
@@ -128,7 +127,7 @@ public class SsafyOAuthService {
                 .toUriString();
     }
 
-    // 3. 신규 SSAFY 회원 중복 확인 (SMS 인증 전)
+    // 3. 신규 SSAFY 회원 중복 확인
     public void checkDuplicate(SsafyCheckRequest request) {
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
 
@@ -151,10 +150,9 @@ public class SsafyOAuthService {
         }
     }
 
-    // 4. 신규 SSAFY 회원 SMS 인증 완료 후 회원가입 + JWT 발급
+    // 4. 신규 SSAFY 회원가입 + JWT 발급
     @Transactional
     public UserLoginResponse register(SsafyRegisterRequest request) {
-
         if (userRepository.existsBySsafyOauthId(request.getSsafyOauthId())) {
             throw new IllegalArgumentException("이미 가입된 SSAFY 계정입니다.");
         }
@@ -179,7 +177,7 @@ public class SsafyOAuthService {
         /*
          * 수정 이유:
          * - SSAFY 신규 가입도 마지막에만 인증 상태를 지우면 DB 예외 시 같은 인증을 재사용할 수 있습니다.
-         * - 인증 확인 이후에는 finally 에서 상태를 정리해 실패 케이스까지 일회성으로 소비되게 변경합니다.
+         * - 인증 확인 뒤에는 finally 에서 상태를 정리해 실패 케이스까지 일회성으로 소비되게 했습니다.
          *
          * 수정 전 코드:
          * - smsService.checkVerified(phoneNumber);
@@ -191,10 +189,11 @@ public class SsafyOAuthService {
             User newUser = User.builder()
                     /*
                      * 수정 이유:
-                     * - SSAFY 회원은 ssafyOauthId만 가지고, 일반 로그인용 userId/pw는 null이라는 정책을 생성 시점에 명시합니다.
+                     * - SSAFY 회원은 ssafyOauthId만 가지고 일반 로그인용 userId/pw는 null이라는 정책을
+                     *   생성 시점 코드에서 바로 보이게 하기 위해 명시했습니다.
                      *
                      * 수정 전 코드:
-                     * - builder 기본값에 맡겨 null이 들어갔지만, SSAFY 전용 계정이라는 의도가 코드에서 바로 드러나지 않았습니다.
+                     * - builder 기본값에 의존해 userId/pw가 암묵적으로 null 이었습니다.
                      */
                     .userId(null)
                     .pw(null)
@@ -225,7 +224,6 @@ public class SsafyOAuthService {
 
     // SSAFY 토큰 요청
     private SsafyTokenResponse getAccessToken(String code) {
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -246,8 +244,8 @@ public class SsafyOAuthService {
 
         /*
          * 수정 이유:
-         * - 외부 API 응답 body가 비어 있으면 이후 getAccessToken() 호출 시 NPE가 발생할 수 있습니다.
-         * - 응답 구조를 먼저 검증하고, 비정상 응답이면 명확한 예외를 던지도록 변경했습니다.
+         * - 외부 API 응답 body가 비어 있으면 이후 getAccessToken() 호출 지점에서 NPE가 발생할 수 있습니다.
+         * - 응답 구조를 먼저 검증하고 비정상 응답이면 명확한 예외를 던지도록 변경했습니다.
          *
          * 수정 전 코드:
          * - return response.getBody();
@@ -262,7 +260,6 @@ public class SsafyOAuthService {
 
     // SSAFY 사용자 정보 조회
     private SsafyUserInfo getUserInfo(String accessToken) {
-
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + accessToken);
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -292,9 +289,8 @@ public class SsafyOAuthService {
         return body;
     }
 
-    // 일회성 code로 JWT 교환
+    // 1회용 code로 JWT 교환
     public UserLoginResponse exchangeToken(String code) {
-
         String ssafyOauthId = redisTemplate.opsForValue().get(RedisKeys.SSAFY_AUTH_CODE_PREFIX + code);
 
         if (ssafyOauthId == null) {
@@ -313,7 +309,7 @@ public class SsafyOAuthService {
         /*
          * 수정 이유:
          * - OAuth 콜백이 로그인 시작 요청과 묶이지 않으면 로그인 CSRF나 계정 혼선 위험이 있습니다.
-         * - 로그인 URL 발급 시 저장한 state를 콜백에서 검증하고, 1회 사용 후 즉시 삭제합니다.
+         * - 로그인 URL 발급 시 저장한 state를 콜백에서 검증하고 1회 사용 후 즉시 삭제합니다.
          *
          * 수정 전 코드:
          * - callback에서 code만 받아 별도의 시작점 검증 없이 로그인 처리를 진행했습니다.
@@ -330,7 +326,6 @@ public class SsafyOAuthService {
 
     // JWT 발급 공통 로직
     private UserLoginResponse issueToken(User user) {
-
         String userId = user.getSsafyOauthId();
         String accessToken = jwtTokenProvider.createAccessToken(
                 userId,
