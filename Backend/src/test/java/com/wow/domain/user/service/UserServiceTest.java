@@ -19,6 +19,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,13 +45,9 @@ class UserServiceTest {
 
     @Test
     void updatePhoneRejectsCurrentPhoneNumberEvenWhenFormatDiffers() {
-        /*
-         * 회귀 방지 목적:
-         * - 현재 번호를 하이픈만 다르게 넣어도 같은 번호로 인식해 중복 변경을 막아야 합니다.
-         */
         User user = User.builder()
                 .userId("wowuser")
-                .name("홍길동")
+                .name("tester")
                 .gender("M")
                 .birthDate(LocalDate.of(1999, 1, 1))
                 .phoneNumber("01012345678")
@@ -69,13 +67,9 @@ class UserServiceTest {
 
     @Test
     void updatePhoneUsesNormalizedPhoneNumberWhenChangingToNewNumber() {
-        /*
-         * 회귀 방지 목적:
-         * - 새 번호 변경 시에는 정규화된 번호로 중복 검사와 SMS 검증이 이뤄져야 합니다.
-         */
         User user = User.builder()
                 .userId("wowuser")
-                .name("홍길동")
+                .name("tester")
                 .gender("M")
                 .birthDate(LocalDate.of(1999, 1, 1))
                 .phoneNumber("01012345678")
@@ -93,5 +87,44 @@ class UserServiceTest {
         verify(userRepository).existsByPhoneNumber("01099998888");
         verify(smsService).checkVerified("01099998888");
         verify(smsService).deleteVerified("01099998888");
+    }
+
+    @Test
+    void updatePhoneDeletesVerifiedStateWhenUpdateFails() {
+        User user = mock(User.class);
+        UpdatePhoneRequest request = new UpdatePhoneRequest();
+        ReflectionTestUtils.setField(request, "phoneNumber", "010-9999-8888");
+
+        when(userRepository.findByUserId("wowuser")).thenReturn(Optional.of(user));
+        when(user.getPhoneNumber()).thenReturn("01012345678");
+        when(userRepository.existsByPhoneNumber("01099998888")).thenReturn(false);
+        doThrow(new RuntimeException("update failure")).when(user).updatePhoneNumber("01099998888");
+
+        assertThatThrownBy(() -> userService.updatePhone("wowuser", request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("update failure");
+
+        verify(smsService).checkVerified("01099998888");
+        verify(smsService).deleteVerified("01099998888");
+    }
+
+    @Test
+    void deleteUserDeletesRefreshTokenAndUserOnly() {
+        User user = User.builder()
+                .userId("wowuser")
+                .name("tester")
+                .gender("M")
+                .birthDate(LocalDate.of(1999, 1, 1))
+                .phoneNumber("01012345678")
+                .role(Role.User)
+                .build();
+
+        when(userRepository.findByUserId("wowuser")).thenReturn(Optional.of(user));
+
+        userService.deleteUser("wowuser");
+
+        verify(redisTemplate).delete("refresh:wowuser");
+        verify(userRepository).delete(user);
+        verify(userTermRepository, never()).deleteByUser(user);
     }
 }

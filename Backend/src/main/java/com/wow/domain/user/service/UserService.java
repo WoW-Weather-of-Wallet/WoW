@@ -42,7 +42,6 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         // 회원 동의 이력 삭제
-        userTermRepository.deleteByUser(user);
 
         // Redis refresh token 삭제
         String redisKey = user.getUserId() != null ? user.getUserId() : user.getSsafyOauthId();
