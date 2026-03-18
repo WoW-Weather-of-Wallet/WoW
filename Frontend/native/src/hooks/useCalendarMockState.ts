@@ -1,58 +1,73 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  mockCalendarDays,
   mockCalendarDayDetails,
-  mockCalendarOverview,
+  mockCalendarDays,
   mockCalendarTransactions,
   mockFixedExpenses,
   mockManageFixedExpenses,
   mockSelectableTransactions,
+  type CalendarDayDetail,
+  type CalendarDayItem,
   type CalendarTransactionGroup,
   type FixedExpenseItem,
 } from '../mock/calendar';
+import type { ManualCalendarEntryDraft } from '../types/calendar';
 import {
-  buildFallbackDetail,
   buildMonthDays,
-  CATEGORY_META,
+  buildFallbackDetail,
   createDisplayedMonth,
   extractCategoryFromSubtitle,
   formatMonthLabel,
   type ManageFixedExpenseItem,
+  CATEGORY_META,
 } from '../constants/calendar/state';
+import {
+  buildManualEntryPatch,
+  mergeCalendarDayDetails,
+  mergeCalendarDaySource,
+  mergeTransactionGroups,
+} from '../constants/calendar/mutations';
 
 type CalendarTab = 'calendar' | 'history';
 
-/**
- * 캘린더 화면 전체에서 공유하는 mock 상태를 한곳에서 관리합니다.
- * API가 붙기 전까지는 월 이동, 날짜 선택, 고정지출 관리 흐름을 모두 여기서 조합합니다.
- */
+const BASE_OVERVIEW = {
+  title: '캘린더',
+  weatherTitle: '구름 · 주의',
+  weatherHint: '외식 지출 패턴 감지됨',
+  savingsAmount: 101000,
+  goalLabel: '목표 달성 중',
+};
+
 export function useCalendarMockState() {
-  const sourceDaysByKey = useMemo(
-    () => new Map(mockCalendarDays.map((day) => [day.dateKey, day])),
-    [],
-  );
   const today = useMemo(() => new Date(2025, 5, 12), []);
 
   const [displayedMonthOffset, setDisplayedMonthOffset] = useState(0);
   const [activeTab, setActiveTab] = useState<CalendarTab>('calendar');
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [memoValue, setMemoValue] = useState('');
+  const [calendarDaySource, setCalendarDaySource] = useState<CalendarDayItem[]>(mockCalendarDays);
+  const [calendarDayDetails, setCalendarDayDetails] =
+    useState<Record<string, CalendarDayDetail>>(mockCalendarDayDetails);
   const [fixedExpenseItems, setFixedExpenseItems] = useState<FixedExpenseItem[]>(mockFixedExpenses);
   const [manageItems, setManageItems] = useState<ManageFixedExpenseItem[]>(
-    () =>
-      mockManageFixedExpenses.map((item) => ({
-        ...item,
-        category: extractCategoryFromSubtitle(item.subtitle),
-      })),
+    mockManageFixedExpenses.map((item) => ({
+      ...item,
+      category: extractCategoryFromSubtitle(item.subtitle),
+    })),
   );
   const [transactionGroups, setTransactionGroups] =
     useState<CalendarTransactionGroup[]>(mockCalendarTransactions);
   const [isManageModalVisible, setIsManageModalVisible] = useState(false);
   const [isPickerVisible, setIsPickerVisible] = useState(false);
   const [isDetailSheetVisible, setIsDetailSheetVisible] = useState(false);
+  const [isAddEntryVisible, setIsAddEntryVisible] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>('pick-3');
   const [editingManageId, setEditingManageId] = useState<string | null>(null);
 
+  const sourceDaysByKey = useMemo(
+    () => new Map(calendarDaySource.map((day) => [day.dateKey, day])),
+    [calendarDaySource],
+  );
   const displayedMonth = useMemo(
     () => createDisplayedMonth(displayedMonthOffset),
     [displayedMonthOffset],
@@ -68,27 +83,16 @@ export function useCalendarMockState() {
     [displayedMonth],
   );
 
-  const overview = useMemo(() => {
-    if (historyMonthKey === '2025-06') {
-      return {
-        ...mockCalendarOverview,
-        monthLabel,
-      };
-    }
-
-    return {
-      ...mockCalendarOverview,
+  const overview = useMemo(
+    () => ({
+      ...BASE_OVERVIEW,
       monthLabel,
-      weatherTitle: '소비 기록 확인',
       weatherSubtitle: monthLabel,
-      weatherHint: '이 달의 소비 내역과 메모를 미리 정리해둘 수 있어요.',
-      savingsAmount: 0,
-      goalLabel: '기록 준비 중',
-    };
-  }, [historyMonthKey, monthLabel]);
+    }),
+    [monthLabel],
+  );
 
   useEffect(() => {
-    // 월이 바뀌면 이전 달에서 열어둔 상세 시트는 닫아 현재 월에만 집중시킵니다.
     setSelectedDateKey(null);
   }, [displayedMonthOffset]);
 
@@ -97,18 +101,19 @@ export function useCalendarMockState() {
       return null;
     }
 
-    return mockCalendarDayDetails[selectedDateKey] ?? buildFallbackDetail(selectedDateKey);
-  }, [selectedDateKey]);
+    return calendarDayDetails[selectedDateKey] ?? buildFallbackDetail(selectedDateKey);
+  }, [calendarDayDetails, selectedDateKey]);
 
   useEffect(() => {
-    if (selectedDetail) {
-      setMemoValue(selectedDetail.memo);
+    if (!selectedDetail) {
+      return;
     }
+
+    setMemoValue(selectedDetail.memo);
   }, [selectedDetail]);
 
   const selectedTransaction = useMemo(
-    () =>
-      mockSelectableTransactions.find((item) => item.id === selectedTransactionId) ?? null,
+    () => mockSelectableTransactions.find((item) => item.id === selectedTransactionId) ?? null,
     [selectedTransactionId],
   );
   const editingManageItem = useMemo(
@@ -123,6 +128,20 @@ export function useCalendarMockState() {
     () => fixedExpenseItems.reduce((sum, item) => sum + item.amount, 0),
     [fixedExpenseItems],
   );
+  const defaultAddEntryDateKey = useMemo(() => {
+    if (selectedDateKey) {
+      return selectedDateKey;
+    }
+
+    const lastDate = new Date(
+      displayedMonth.getFullYear(),
+      displayedMonth.getMonth() + 1,
+      0,
+    ).getDate();
+    const defaultDay = displayedMonthOffset === 0 ? Math.min(today.getDate(), lastDate) : 1;
+
+    return `${displayedMonth.getFullYear()}-${String(displayedMonth.getMonth() + 1).padStart(2, '0')}-${String(defaultDay).padStart(2, '0')}`;
+  }, [displayedMonth, displayedMonthOffset, selectedDateKey, today]);
 
   function handleMoveMonth(direction: 'prev' | 'next') {
     setDisplayedMonthOffset((current) => current + (direction === 'next' ? 1 : -1));
@@ -133,13 +152,13 @@ export function useCalendarMockState() {
       return;
     }
 
-    const categoryMeta = CATEGORY_META[payload.category] ?? CATEGORY_META['기타'];
+    const categoryMeta = CATEGORY_META[payload.category] ?? CATEGORY_META.기타;
 
     setManageItems((current) => {
       const nextItem: ManageFixedExpenseItem = {
         id: editingManageId ?? `manage-${selectedTransaction.id}`,
         title: selectedTransaction.title,
-        subtitle: `매월 ${payload.paymentDay}일 · ${payload.category}`,
+        subtitle: `매월 ${payload.paymentDay}일 ${payload.category}`,
         amount: selectedTransaction.amount,
         icon: selectedTransaction.icon,
         iconTone: selectedTransaction.iconTone,
@@ -161,13 +180,13 @@ export function useCalendarMockState() {
           {
             id: `fixed-${selectedTransaction.id}`,
             title: payload.category,
-            subtitle: '1개 항목',
+            subtitle: '1건',
             amount: selectedTransaction.amount,
             statusLabel: `D-${payload.paymentDay}`,
             statusTone: 'countdown',
             icon: categoryMeta.icon,
             iconTone: categoryMeta.iconTone,
-            countLabel: '1개 항목',
+            countLabel: '1건',
             isExpanded: true,
             isEnabled: true,
           },
@@ -185,8 +204,8 @@ export function useCalendarMockState() {
         return {
           ...item,
           amount: item.amount + selectedTransaction.amount,
-          subtitle: `${nextCount}개 항목`,
-          countLabel: `${nextCount}개 항목`,
+          subtitle: `${nextCount}건`,
+          countLabel: `${nextCount}건`,
           statusLabel: `D-${payload.paymentDay}`,
           statusTone: 'countdown',
           isExpanded: true,
@@ -199,11 +218,7 @@ export function useCalendarMockState() {
       current.map((group) => ({
         ...group,
         items: group.items.map((item) =>
-          item.title === selectedTransaction.title &&
-          item.category === selectedTransaction.category &&
-          item.amount === selectedTransaction.amount
-            ? { ...item, isFixedExpense: true }
-            : item,
+          item.id === selectedTransaction.id ? { ...item, isFixedExpense: true } : item,
         ),
       })),
     );
@@ -241,8 +256,8 @@ export function useCalendarMockState() {
           return {
             ...item,
             amount: nextAmount,
-            subtitle: `${nextCount}개 항목`,
-            countLabel: `${nextCount}개 항목`,
+            subtitle: `${nextCount}건`,
+            countLabel: `${nextCount}건`,
             isEnabled: nextCount > 0 ? item.isEnabled : false,
           };
         })
@@ -275,6 +290,18 @@ export function useCalendarMockState() {
     setIsDetailSheetVisible(true);
   }
 
+  function handleSaveManualEntries(entries: ManualCalendarEntryDraft[]) {
+    if (entries.length === 0) {
+      return;
+    }
+
+    const patch = buildManualEntryPatch(entries);
+    setTransactionGroups((current) => mergeTransactionGroups(current, patch));
+    setCalendarDaySource((current) => mergeCalendarDaySource(current, patch));
+    setCalendarDayDetails((current) => mergeCalendarDayDetails(current, patch));
+    setIsAddEntryVisible(false);
+  }
+
   return {
     overview,
     monthLabel,
@@ -288,26 +315,30 @@ export function useCalendarMockState() {
     isManageModalVisible,
     isPickerVisible,
     isDetailSheetVisible,
+    isAddEntryVisible,
+    defaultAddEntryDateKey,
     selectedTransactionId,
     selectedDetail,
     selectedTransaction,
     editingManageItem,
     fixedExpensesTotal,
-    handleMoveMonth,
     historyTitle: monthLabel,
-    emptyHistoryTitle: `${monthLabel} 내역이 없습니다`,
-    emptyHistoryDescription: `${monthLabel}에는 아직 등록된 소비 내역이 없습니다.`,
+    emptyHistoryTitle: `${monthLabel} 내역이 아직 없어요.`,
+    emptyHistoryDescription: `${monthLabel}에 추가한 소비 내역이 여기에 표시됩니다.`,
+    handleMoveMonth,
     setActiveTab,
     setSelectedDateKey,
     setMemoValue,
     setIsManageModalVisible,
     setIsPickerVisible,
     setIsDetailSheetVisible,
+    setIsAddEntryVisible,
     setSelectedTransactionId,
     setEditingManageId,
     handleRegisterFixedExpense,
     handleToggleManageItem,
     handleDeleteManageItem,
     handleEditManageItem,
+    handleSaveManualEntries,
   };
 }

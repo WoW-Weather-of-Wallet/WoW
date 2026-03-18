@@ -11,10 +11,6 @@ interface CalendarTabSwitcherProps {
   onChange: (tab: CalendarTabKey) => void;
 }
 
-/**
- * 캘린더 / 전체내역 전환 탭.
- * 공통 탭 구조는 유지하되, 와이어프레임처럼 현재 탭이 더 분명히 보이도록 톤을 고정한다.
- */
 export default function CalendarTabSwitcher({
   activeTab,
   onChange,
@@ -49,7 +45,7 @@ export default function CalendarTabSwitcher({
 const styles = StyleSheet.create({
   tabSwitcher: {
     flexDirection: 'row',
-    backgroundColor: '#F3F2FB',
+    backgroundColor: '#F5F4FA',
     borderRadius: RADIUS.xl,
     padding: wp(4),
   },
@@ -58,7 +54,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: wp(5),
+    gap: wp(6),
     paddingVertical: hp(12),
     borderRadius: RADIUS.lg,
   },
@@ -66,9 +62,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    elevation: 3,
   },
   tabLabel: {
     fontSize: fp(14),

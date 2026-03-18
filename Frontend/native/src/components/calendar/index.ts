@@ -1,3 +1,4 @@
+export { default as CalendarAddEntrySheet } from './CalendarAddEntrySheet';
 export { default as CalendarDayDetailSheet } from './CalendarDayDetailSheet';
 export { default as CalendarHeroCard } from './CalendarHeroCard';
 export { default as CalendarMonthCard } from './CalendarMonthCard';

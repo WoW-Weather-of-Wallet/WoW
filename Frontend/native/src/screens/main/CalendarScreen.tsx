@@ -5,6 +5,7 @@ import { mockSelectableTransactions } from '../../mock/calendar';
 import { COLORS, RADIUS, hp, wp } from '../../constants/theme';
 import { useCalendarMockState } from '../../hooks/useCalendarMockState';
 import {
+  CalendarAddEntrySheet,
   CalendarDayDetailSheet,
   FixedExpenseDetailSheet,
   CalendarHeroCard,
@@ -16,10 +17,6 @@ import {
   TransactionHistorySection,
 } from '../../components/calendar';
 
-/**
- * 캘린더 화면은 조립 역할만 담당한다.
- * 실제 상태 변경과 mock 기반 플로우는 전용 훅으로 분리해 화면 파일을 최대한 얇게 유지한다.
- */
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
   const {
@@ -35,6 +32,8 @@ export default function CalendarScreen() {
     isManageModalVisible,
     isPickerVisible,
     isDetailSheetVisible,
+    isAddEntryVisible,
+    defaultAddEntryDateKey,
     selectedTransactionId,
     selectedDetail,
     selectedTransaction,
@@ -50,12 +49,14 @@ export default function CalendarScreen() {
     setIsManageModalVisible,
     setIsPickerVisible,
     setIsDetailSheetVisible,
+    setIsAddEntryVisible,
     setSelectedTransactionId,
     setEditingManageId,
     handleRegisterFixedExpense,
     handleToggleManageItem,
     handleDeleteManageItem,
     handleEditManageItem,
+    handleSaveManualEntries,
   } = useCalendarMockState();
 
   return (
@@ -77,6 +78,7 @@ export default function CalendarScreen() {
           monthLabel={monthLabel}
           onPressPrevMonth={() => handleMoveMonth('prev')}
           onPressNextMonth={() => handleMoveMonth('next')}
+          onPressAdd={() => setIsAddEntryVisible(true)}
         />
 
         <View style={styles.tabWrap}>
@@ -105,6 +107,13 @@ export default function CalendarScreen() {
           />
         )}
       </ScrollView>
+
+      <CalendarAddEntrySheet
+        visible={isAddEntryVisible}
+        defaultDateKey={defaultAddEntryDateKey}
+        onClose={() => setIsAddEntryVisible(false)}
+        onCompleteManualEntries={handleSaveManualEntries}
+      />
 
       <CalendarDayDetailSheet
         detail={selectedDetail}
@@ -142,7 +151,7 @@ export default function CalendarScreen() {
         item={selectedTransaction}
         initialCategory={editingManageItem?.category}
         initialPaymentDay={editingManageItem?.paymentDay}
-        submitLabel={editingManageItem ? '고정지출 수정하기' : '고정지출로 등록하기'}
+        submitLabel={editingManageItem ? '고정지출 정보 수정하기' : '고정지출로 등록하기'}
         onClose={() => {
           setIsDetailSheetVisible(false);
           setEditingManageId(null);
@@ -165,6 +174,6 @@ const styles = StyleSheet.create({
   tabWrap: {
     backgroundColor: COLORS.background,
     borderRadius: RADIUS.xxl,
-    padding: wp(12),
+    padding: wp(8),
   },
 });
