@@ -34,7 +34,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/sms/verify",
                                 "/api/v1/auth/check-user-id",
                                 "/api/v1/auth/refresh",
-                                "/api/v1/auth/find/**"
+                                "/api/v1/auth/find/**",
+                                "/api/v1/calendar/transactions/csv"
                         ).permitAll()
                         .requestMatchers(
                                 "/sso/providers/ssafy/**"
