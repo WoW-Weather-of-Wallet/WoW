@@ -37,3 +37,13 @@ solapi:
   api-key: test-api-key
   api-secret: test-api-secret
   sender: "01000000000"
+
+cloud:
+  aws:
+    credentials:
+      access-key: test-access-key
+      secret-key: test-secret-key
+    region:
+      static: ap-northeast-2
+    s3:
+      bucket: test-bucket
