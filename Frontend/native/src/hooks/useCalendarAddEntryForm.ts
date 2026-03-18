@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CalendarEntryCategoryKey } from '../constants/calendar/addEntry';
-import type { ManualCalendarEntryDraft } from '../types/calendar';
+import type { CalendarUploadFile, ManualCalendarEntryDraft } from '../types/calendar';
 
 type EntryMode = 'direct' | 'excel';
 
@@ -19,6 +19,7 @@ export function useCalendarAddEntryForm({
   const [merchantName, setMerchantName] = useState('');
   const [amountInput, setAmountInput] = useState('');
   const [draftEntries, setDraftEntries] = useState<ManualCalendarEntryDraft[]>([]);
+  const [selectedExcelFile, setSelectedExcelFile] = useState<CalendarUploadFile | null>(null);
 
   useEffect(() => {
     if (!visible) {
@@ -31,6 +32,7 @@ export function useCalendarAddEntryForm({
     setMerchantName('');
     setAmountInput('');
     setDraftEntries([]);
+    setSelectedExcelFile(null);
   }, [defaultDateKey, visible]);
 
   const isAddEnabled = useMemo(() => {
@@ -67,12 +69,14 @@ export function useCalendarAddEntryForm({
     merchantName,
     amountInput,
     draftEntries,
+    selectedExcelFile,
     isAddEnabled,
     setActiveMode,
     setDateKey,
     setSelectedCategory,
     setMerchantName,
     setAmountInput,
+    setSelectedExcelFile,
     addDraftEntry,
     removeDraftEntry,
   };

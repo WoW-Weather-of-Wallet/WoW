@@ -113,6 +113,7 @@ export default function CalendarScreen() {
         defaultDateKey={defaultAddEntryDateKey}
         onClose={() => setIsAddEntryVisible(false)}
         onCompleteManualEntries={handleSaveManualEntries}
+        onCompleteExcelEntries={handleSaveManualEntries}
       />
 
       <CalendarDayDetailSheet
