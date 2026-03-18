@@ -2,6 +2,7 @@ package com.wow.domain.user.service;
 
 import com.wow.domain.auth.service.SmsService;
 import com.wow.domain.user.dto.UpdatePhoneRequest;
+import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.entity.Role;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
@@ -126,5 +127,25 @@ class UserServiceTest {
         verify(redisTemplate).delete("refresh:wowuser");
         verify(userRepository).delete(user);
         verify(userTermRepository, never()).deleteByUser(user);
+    }
+
+    @Test
+    void updateProfileTrimsNameBeforeSaving() {
+        User user = User.builder()
+                .userId("wowuser")
+                .name("old")
+                .gender("M")
+                .birthDate(LocalDate.of(1999, 1, 1))
+                .phoneNumber("01012345678")
+                .role(Role.User)
+                .build();
+        UpdateProfileRequest request = new UpdateProfileRequest();
+        ReflectionTestUtils.setField(request, "name", " tester ");
+
+        when(userRepository.findByUserId("wowuser")).thenReturn(Optional.of(user));
+
+        userService.updateProfile("wowuser", request);
+
+        assertThat(user.getName()).isEqualTo("tester");
     }
 }

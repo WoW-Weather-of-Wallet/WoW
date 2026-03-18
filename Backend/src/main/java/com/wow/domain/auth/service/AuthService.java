@@ -63,6 +63,7 @@ public class AuthService {
     public UserCreateResponse signup(UserCreateRequest request) {
 
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+        String normalizedName = request.getName().trim();
 
         if (userRepository.existsByUserId(request.getUserId())) {
             throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
@@ -72,7 +73,7 @@ public class AuthService {
             throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
         }
 
-        if (userRepository.existsDuplicate(request.getName(), request.getGender(), request.getBirthDate(), phoneNumber)) {
+        if (userRepository.existsDuplicate(normalizedName, request.getGender(), request.getBirthDate(), phoneNumber)) {
             throw new IllegalArgumentException("이미 가입된 회원입니다.");
         }
 
@@ -101,7 +102,7 @@ public class AuthService {
                      */
                     .ssafyOauthId(null)
                     .pw(bCryptPasswordEncoder.encode(request.getPw()))
-                    .name(request.getName())
+                    .name(normalizedName)
                     .gender(request.getGender())
                     .phoneNumber(phoneNumber)
                     .birthDate(request.getBirthDate())
@@ -210,6 +211,7 @@ public class AuthService {
     public FindIdResponse findId(FindIdRequest request) {
 
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+        String normalizedName = request.getName().trim();
 
         /*
          * 수정 이유:
@@ -220,7 +222,7 @@ public class AuthService {
          * - userRepository.findByNameAndBirthDateAndPhoneNumber(request.getName(), request.getBirthDate(), phoneNumber)
          */
         User user = userRepository.findByNameAndGenderAndBirthDateAndPhoneNumber(
-                        request.getName(), request.getGender(), request.getBirthDate(), phoneNumber)
+                        normalizedName, request.getGender(), request.getBirthDate(), phoneNumber)
                 .orElseThrow(() -> new IllegalArgumentException("일치하는 회원 정보가 없습니다."));
 
         /*
@@ -245,9 +247,10 @@ public class AuthService {
     public void findPassword(FindPwRequest request) {
 
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+        String normalizedName = request.getName().trim();
 
         User user = userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(
-                        request.getUserId(), request.getName(), request.getBirthDate(), phoneNumber)
+                        request.getUserId(), normalizedName, request.getBirthDate(), phoneNumber)
                 .orElseThrow(() -> new IllegalArgumentException("일치하는 회원 정보가 없습니다."));
 
         smsService.checkVerified(phoneNumber);

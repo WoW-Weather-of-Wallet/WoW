@@ -60,7 +60,7 @@ public class User {
     private List<UserTerm> userTerms = new ArrayList<>();
 
     public void updateProfile(String name, String gender, LocalDate birthDate) {
-        if (name != null) this.name = name;
+        if (name != null) this.name = name.trim();
         if (gender != null) this.gender = gender;
         if (birthDate != null) this.birthDate = birthDate;
     }

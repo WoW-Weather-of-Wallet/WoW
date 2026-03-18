@@ -113,7 +113,7 @@ class AuthServiceTest {
     @Test
     void findIdUsesGenderAndNormalizedPhoneNumber() {
         FindIdRequest request = new FindIdRequest();
-        ReflectionTestUtils.setField(request, "name", "tester");
+        ReflectionTestUtils.setField(request, "name", " tester ");
         ReflectionTestUtils.setField(request, "gender", "M");
         ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
         ReflectionTestUtils.setField(request, "phoneNumber", "010-1234-5678");
@@ -226,6 +226,7 @@ class AuthServiceTest {
 
         verify(smsService).checkVerified("01012345678");
         verify(smsService).deleteVerified("01012345678");
+        verify(userRepository).existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678");
     }
 
     @Test
