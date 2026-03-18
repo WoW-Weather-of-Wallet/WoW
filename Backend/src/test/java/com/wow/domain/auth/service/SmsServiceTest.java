@@ -13,9 +13,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -107,6 +107,55 @@ class SmsServiceTest {
         verify(redisTemplate).delete("sms:cooldown:01012345678");
         verify(redisTemplate).delete("sms:count:01012345678");
         verify(redisTemplate).delete("sms:code:01012345678");
+        verify(redisTemplate).delete("sms:verify:count:01012345678");
         verify(valueOperations).decrement("sms:count:01012345678");
+    }
+
+    @Test
+    void verifyCodeThrowsWhenCodeDoesNotMatch() {
+        /*
+         * 회귀 방지 목적:
+         * - 인증번호가 틀리면 검증 실패 횟수를 올리고 일반 실패 메시지를 반환해야 합니다.
+         */
+        when(valueOperations.get("sms:code:01012345678")).thenReturn("123456");
+        when(valueOperations.increment("sms:verify:count:01012345678")).thenReturn(1L);
+
+        assertThatThrownBy(() -> smsService.verifyCode("010-1234-5678", "654321"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("올바르지");
+
+        verify(redisTemplate).expire("sms:verify:count:01012345678", Duration.ofMinutes(5));
+    }
+
+    @Test
+    void verifyCodeThrowsAndDeletesCodeWhenVerifyLimitExceeded() {
+        /*
+         * 회귀 방지 목적:
+         * - 인증번호 검증 실패가 누적되면 코드를 폐기하고 재요청을 유도해야 합니다.
+         */
+        when(valueOperations.get("sms:code:01012345678")).thenReturn("123456");
+        when(valueOperations.increment("sms:verify:count:01012345678")).thenReturn(5L);
+
+        assertThatThrownBy(() -> smsService.verifyCode("01012345678", "654321"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("다시 요청");
+
+        verify(redisTemplate).delete("sms:code:01012345678");
+        verify(redisTemplate).delete("sms:verify:count:01012345678");
+    }
+
+    @Test
+    void verifyCodeClearsVerifyCountWhenSucceeded() {
+        /*
+         * 회귀 방지 목적:
+         * - 인증 성공 시 실패 횟수 카운트가 남지 않아야 다음 흐름에 영향을 주지 않습니다.
+         */
+        when(valueOperations.get("sms:code:01012345678")).thenReturn("123456");
+
+        smsService.verifyCode("01012345678", "123456");
+
+        verify(redisTemplate).delete("sms:code:01012345678");
+        verify(redisTemplate).delete("sms:verify:count:01012345678");
+        verify(valueOperations).set("sms:verified:01012345678", "true", Duration.ofMinutes(30));
     }
 }

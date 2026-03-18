@@ -1,15 +1,15 @@
 package com.wow.domain.auth.service;
 
 import com.wow.global.constant.RedisKeys;
+import com.wow.global.util.PhoneNumberUtils;
+import lombok.RequiredArgsConstructor;
 import net.nurigo.sdk.message.model.Message;
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
 import net.nurigo.sdk.message.service.DefaultMessageService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import com.wow.global.util.PhoneNumberUtils;
 import java.security.SecureRandom;
 import java.time.Duration;
 
@@ -21,8 +21,11 @@ public class SmsService {
     private static final long SEND_COOLDOWN_SECONDS = 60;
     private static final long SEND_LIMIT_WINDOW_MINUTES = 60;
     private static final long MAX_SEND_COUNT_PER_WINDOW = 5;
+    private static final long MAX_VERIFY_ATTEMPTS = 5;
+
     private final StringRedisTemplate redisTemplate;
     private final DefaultMessageService messageService;
+
     @Value("${solapi.sender}")
     private String sender;
 
@@ -77,11 +80,23 @@ public class SmsService {
         if (savedCode == null) {
             throw new IllegalArgumentException("인증번호가 만료되었습니다.");
         }
+
+        /*
+         * 수정 이유:
+         * - 기존에는 인증번호 검증 실패 횟수 제한이 없어 코드 유효 시간 동안 반복 대입이 가능했습니다.
+         * - 실패 횟수를 Redis에 누적하고 제한 초과 시 인증번호를 폐기해 brute-force 가능성을 줄입니다.
+         *
+         * 수정 전 코드:
+         * - if (!savedCode.equals(code)) {
+         * -     throw new IllegalArgumentException("인증번호가 올바르지 않습니다.");
+         * - }
+         */
         if (!savedCode.equals(code)) {
-            throw new IllegalArgumentException("인증번호가 올바르지 않습니다.");
+            handleVerifyFailure(normalized);
         }
 
         redisTemplate.delete(RedisKeys.SMS_CODE_PREFIX + normalized);
+        redisTemplate.delete(RedisKeys.SMS_VERIFY_COUNT_PREFIX + normalized);
 
         redisTemplate.opsForValue().set(
                 RedisKeys.SMS_VERIFIED_PREFIX + normalized,
@@ -125,13 +140,32 @@ public class SmsService {
         );
     }
 
+    private void handleVerifyFailure(String phoneNumber) {
+        String verifyCountKey = RedisKeys.SMS_VERIFY_COUNT_PREFIX + phoneNumber;
+        Long verifyCount = redisTemplate.opsForValue().increment(verifyCountKey);
+
+        if (verifyCount != null && verifyCount == 1L) {
+            redisTemplate.expire(verifyCountKey, Duration.ofMinutes(CODE_TTL_MINUTES));
+        }
+
+        if (verifyCount != null && verifyCount >= MAX_VERIFY_ATTEMPTS) {
+            redisTemplate.delete(RedisKeys.SMS_CODE_PREFIX + phoneNumber);
+            redisTemplate.delete(verifyCountKey);
+            throw new IllegalArgumentException("인증번호 입력 횟수를 초과했습니다. 인증번호를 다시 요청해주세요.");
+        }
+
+        throw new IllegalArgumentException("인증번호가 올바르지 않습니다.");
+    }
+
     private void rollbackSendState(String phoneNumber) {
         String countKey = RedisKeys.SMS_COUNT_PREFIX + phoneNumber;
         String cooldownKey = RedisKeys.SMS_COOLDOWN_PREFIX + phoneNumber;
         String codeKey = RedisKeys.SMS_CODE_PREFIX + phoneNumber;
+        String verifyCountKey = RedisKeys.SMS_VERIFY_COUNT_PREFIX + phoneNumber;
 
         redisTemplate.delete(codeKey);
         redisTemplate.delete(cooldownKey);
+        redisTemplate.delete(verifyCountKey);
 
         Long updatedCount = redisTemplate.opsForValue().decrement(countKey);
         if (updatedCount != null && updatedCount <= 0) {
@@ -143,5 +177,4 @@ public class SmsService {
         SecureRandom random = new SecureRandom();
         return String.format("%06d", random.nextInt(1000000));
     }
-
 }
