@@ -40,24 +40,34 @@ docker compose up -d
 
 ## 로컬 실행 시 주의사항
 
-[application.yaml](/C:/Users/SSAFY/Desktop/S14P21D106/Backend/src/main/resources/application.yaml) 기준으로 현재 기본 설정은 다음과 같습니다.
+로컬 실행은 기본적으로 [application-local.yml](/C:/Users/SSAFY/Desktop/S14P21D106/Backend/src/main/resources/application-local.yml) 기준으로 동작합니다.
+
+로컬 DB/Redis 설정은 다음과 같습니다.
 
 ```yaml
 spring:
-  profiles:
-    active: local
   datasource:
-    url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+    url: jdbc:postgresql://localhost:5432/wowdb
+  data:
+    redis:
+      host: localhost
 ```
 
-즉 기본 local 프로필에서도 DB 호스트를 `postgres`로 바라보고 있습니다.
+즉 로컬 compose로 PostgreSQL/Redis를 띄운 뒤 IDE 또는 터미널에서 백엔드를 바로 실행하는 흐름을 기준으로 맞춰져 있습니다.
 
-그래서 IDE에서 백엔드를 호스트 머신에서 바로 실행하면:
-- `postgres` 호스트명이 바로 해석되지 않을 수 있고
-- 이 경우 datasource 호스트를 `localhost`로 바꾸거나
-- 백엔드도 같은 Docker 네트워크 안에서 실행해야 합니다.
+현재 로컬 compose는 DB/Redis만 띄우고, 백엔드 애플리케이션은 함께 띄우지 않습니다.
 
-현재 로컬 compose는 DB/Redis만 띄우고, 백엔드 애플리케이션은 같이 띄우지 않습니다.
+## 로컬 민감정보 설정
+
+다음 값들은 [application-local.yml](/C:/Users/SSAFY/Desktop/S14P21D106/Backend/src/main/resources/application-local.yml) 에 직접 넣지 않고 환경변수로 주입하는 것을 기준으로 합니다.
+
+- `JWT_SECRET`
+- `SSO_SSAFY_CLIENT_ID`
+- `SSO_SSAFY_CLIENT_SECRET`
+- `SSO_SSAFY_REDIRECT_URI`
+- `SOLAPI_API_KEY`
+- `SOLAPI_API_SECRET`
+- `SOLAPI_SENDER`
 
 ## 환경변수
 

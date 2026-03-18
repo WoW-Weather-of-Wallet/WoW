@@ -43,10 +43,7 @@ Backend/.classpath
 Backend/.project
 Backend/.settings/
 
-<<<<<<< HEAD
-=======
 ############################################
->>>>>>> df52922a37f476f7a445a77d074666e20dcb29f2
 # Frontend (React / React Native / Node)
 ############################################
 Frontend/react/node_modules/
