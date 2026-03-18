@@ -49,32 +49,35 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException e) {
         Throwable cause = e.getRootCause();
         if (cause instanceof SQLException sqlException && "23505".equals(sqlException.getSQLState())) {
-            String message = sqlException.getMessage();
-
-            /*
-             * 수정 이유:
-             * - 기존에는 phone_number, user_id만 분기해서 SSAFY 계정 중복 같은 다른 unique 제약은 일반 메시지로 뭉개졌습니다.
-             * - 자주 발생할 수 있는 ssafy_oauth_id도 함께 분기해 사용자 메시지와 로그 해석을 조금 더 명확히 합니다.
-             *
-             * 수정 전 코드:
-             * - phone_number, user_id만 개별 분기
-             */
-            if (message != null && message.contains("phone_number")) {
-                return ResponseEntity.badRequest()
-                        .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 사용 중인 전화번호입니다."));
-            }
-            if (message != null && message.contains("user_id")) {
-                return ResponseEntity.badRequest()
-                        .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 사용 중인 아이디입니다."));
-            }
-            if (message != null && message.contains("ssafy_oauth_id")) {
-                return ResponseEntity.badRequest()
-                        .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 가입된 SSAFY 계정입니다."));
-            }
             return ResponseEntity.badRequest()
-                    .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 사용 중인 값입니다."));
+                    .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), resolveDuplicateMessage(sqlException.getMessage())));
         }
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "서버 오류가 발생했습니다."));
+    }
+
+    /*
+     * 수정 이유:
+     * - unique 제약 위반 메시지 분기가 늘어나면서 if 블록만 길어져 읽기 어려워졌습니다.
+     * - 제약조건명과 사용자 메시지 매핑을 한 곳에 모아두면 이후 컬럼이 추가돼도 정리하기 쉽습니다.
+     *
+     * 수정 전 코드:
+     * - handleDataIntegrityViolation 내부에서 phone_number, user_id, ssafy_oauth_id를 직접 분기했습니다.
+     */
+    private String resolveDuplicateMessage(String message) {
+        if (message == null) {
+            return "이미 사용 중인 값입니다.";
+        }
+        if (message.contains("phone_number")) {
+            return "이미 사용 중인 전화번호입니다.";
+        }
+        if (message.contains("user_id")) {
+            return "이미 사용 중인 아이디입니다.";
+        }
+        if (message.contains("ssafy_oauth_id")) {
+            return "이미 가입된 SSAFY 계정입니다.";
+        }
+        return "이미 사용 중인 값입니다.";
     }
 }
