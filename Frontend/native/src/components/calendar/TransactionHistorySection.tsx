@@ -12,9 +12,6 @@ interface TransactionHistorySectionProps {
   emptyDescription: string;
 }
 
-/**
- * 월별 전체내역은 선택한 월의 거래가 없을 때 빈 상태 카드로 자연스럽게 안내합니다.
- */
 export default function TransactionHistorySection({
   monthLabel,
   groups,
@@ -58,6 +55,7 @@ export default function TransactionHistorySection({
                           color={COLORS.textPrimary}
                         />
                       </View>
+
                       <View style={styles.textBlock}>
                         <View style={styles.itemTitleRow}>
                           <Text style={styles.itemTitle}>{item.title}</Text>
