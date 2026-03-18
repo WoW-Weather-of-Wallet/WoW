@@ -52,7 +52,7 @@ class UserServiceTest {
                 .gender("M")
                 .birthDate(LocalDate.of(1999, 1, 1))
                 .phoneNumber("01012345678")
-                .role(Role.User)
+                .role(Role.USER)
                 .build();
         UpdatePhoneRequest request = new UpdatePhoneRequest();
         ReflectionTestUtils.setField(request, "phoneNumber", "010-1234-5678");
@@ -74,7 +74,7 @@ class UserServiceTest {
                 .gender("M")
                 .birthDate(LocalDate.of(1999, 1, 1))
                 .phoneNumber("01012345678")
-                .role(Role.User)
+                .role(Role.USER)
                 .build();
         UpdatePhoneRequest request = new UpdatePhoneRequest();
         ReflectionTestUtils.setField(request, "phoneNumber", "010-9999-8888");
@@ -117,7 +117,7 @@ class UserServiceTest {
                 .gender("M")
                 .birthDate(LocalDate.of(1999, 1, 1))
                 .phoneNumber("01012345678")
-                .role(Role.User)
+                .role(Role.USER)
                 .build();
 
         when(userRepository.findByUserId("wowuser")).thenReturn(Optional.of(user));
@@ -137,7 +137,7 @@ class UserServiceTest {
                 .gender("M")
                 .birthDate(LocalDate.of(1999, 1, 1))
                 .phoneNumber("01012345678")
-                .role(Role.User)
+                .role(Role.USER)
                 .build();
         UpdateProfileRequest request = new UpdateProfileRequest();
         ReflectionTestUtils.setField(request, "name", " tester ");

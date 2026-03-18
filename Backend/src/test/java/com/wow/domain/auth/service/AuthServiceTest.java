@@ -76,7 +76,7 @@ class AuthServiceTest {
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                 "wowuser",
                 "pw",
-                List.of(new SimpleGrantedAuthority("ROLE_User"))
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
         );
 
         when(jwtTokenProvider.validateToken("refresh-token")).thenReturn(true);
@@ -84,7 +84,7 @@ class AuthServiceTest {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get("refresh:wowuser")).thenReturn("refresh-token");
         when(customUserDetailsService.loadUserByUsername("wowuser")).thenReturn(userDetails);
-        when(jwtTokenProvider.createAccessToken("wowuser", List.of("ROLE_User"))).thenReturn("new-access-token");
+        when(jwtTokenProvider.createAccessToken("wowuser", List.of("ROLE_USER"))).thenReturn("new-access-token");
         when(jwtTokenProvider.createRefreshToken("wowuser")).thenReturn("new-refresh-token");
         when(jwtTokenProvider.getAccessTokenValidityInSeconds()).thenReturn(1800L);
         when(jwtTokenProvider.getRefreshTokenValidityInSeconds()).thenReturn(1209600L);
@@ -124,7 +124,7 @@ class AuthServiceTest {
                 .gender("M")
                 .birthDate(LocalDate.of(1999, 1, 1))
                 .phoneNumber("01012345678")
-                .role(Role.User)
+                .role(Role.USER)
                 .build();
 
         when(userRepository.findByNameAndGenderAndBirthDateAndPhoneNumber(
@@ -154,7 +154,7 @@ class AuthServiceTest {
                 .gender("F")
                 .birthDate(LocalDate.of(2000, 2, 2))
                 .phoneNumber("01000001111")
-                .role(Role.User)
+                .role(Role.USER)
                 .build();
 
         when(userRepository.findByNameAndGenderAndBirthDateAndPhoneNumber(
@@ -185,7 +185,7 @@ class AuthServiceTest {
                 .gender("M")
                 .birthDate(LocalDate.of(1999, 1, 1))
                 .phoneNumber("01012345678")
-                .role(Role.User)
+                .role(Role.USER)
                 .build();
 
         when(userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(
@@ -245,7 +245,7 @@ class AuthServiceTest {
                 .gender("M")
                 .birthDate(LocalDate.of(1999, 1, 1))
                 .phoneNumber("01012345678")
-                .role(Role.User)
+                .role(Role.USER)
                 .build();
 
         when(userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(

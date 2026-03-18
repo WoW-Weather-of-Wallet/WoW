@@ -107,7 +107,7 @@ public class AuthService {
                     .phoneNumber(phoneNumber)
                     .birthDate(request.getBirthDate())
                     .alarmEnabled(request.isAlarmEnabled())
-                    .role(Role.User)
+                    .role(Role.USER)
                     .build();
 
             userRepository.save(user);

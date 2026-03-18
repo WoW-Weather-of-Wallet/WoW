@@ -204,7 +204,7 @@ public class SsafyOAuthService {
                     .alarmEnabled(request.isAlarmEnabled())
                     .birthDate(request.getBirthDate())
                     .phoneNumber(phoneNumber)
-                    .role(Role.User)
+                    .role(Role.USER)
                     .build();
 
             userRepository.save(newUser);
