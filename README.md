@@ -1,91 +1,53 @@
 # WoW
 
-Weather Of Wallet 프로젝트 워크스페이스입니다.
+Weather Of Wallet backend/frontend monorepo입니다.
 
-## Backend 실행 가이드
+## Backend Quick Start
 
-Backend 루트 경로: `Backend`
+- Backend 경로: `Backend`
+- 주요 스택: Spring Boot 3.5, Java 21, PostgreSQL, Redis, JWT, SSAFY OAuth, Solapi SMS
 
-기술 스택:
-- Spring Boot 3.5
-- Java 21
-- PostgreSQL
-- Redis
-- JWT
-- SSAFY OAuth
-- Solapi SMS
+## Backend Profiles
 
-## 사전 준비
+백엔드는 기본적으로 `spring.profiles.default=local`로 설정되어 있습니다.
 
-- Java 21 설치
-- Docker / Docker Compose 설치
-- PostgreSQL 및 Redis 실행
-- 필수 환경변수 설정
+- `local`
+  - 아무 프로필도 지정하지 않았을 때 사용하는 기본 프로필입니다.
+  - 로컬 실행용 설정을 사용합니다.
+- `test`
+  - 자동 테스트에서 사용하는 프로필입니다.
+  - [application-test.yml](/C:/Users/SSAFY/Desktop/S14P21D106/Backend/src/test/resources/application-test.yml) 기준으로 H2 in-memory DB와 테스트용 값을 사용합니다.
+- `prod`
+  - 운영 배포에서 사용하는 프로필입니다.
+  - [application-prod.yml](/C:/Users/SSAFY/Desktop/S14P21D106/Backend/src/main/resources/application-prod.yml) 기준으로 실제 환경변수를 사용합니다.
 
-## 로컬 인프라 실행
+정리하면:
+- 로컬에서 프로필을 따로 주지 않으면 `local`
+- 테스트는 `test`
+- 서버 배포는 `prod`
 
-DB 및 Redis compose 파일:
-[docker-compose.yml](/C:/Users/SSAFY/Desktop/S14P21D106/Infra/Docker/docker-compose.yml)
+## Required Environment Variables
 
-실행 방법:
+공통 설정은 [application.yaml](/C:/Users/SSAFY/Desktop/S14P21D106/Backend/src/main/resources/application.yaml)에서 읽습니다.
+
+### Local and Docker DB
+
+로컬 기본 설정과 Docker compose에서 주로 사용하는 값입니다.
+
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+
+로컬 DB와 Redis는 [docker-compose.yml](/C:/Users/SSAFY/Desktop/S14P21D106/Infra/Docker/docker-compose.yml)로 띄울 수 있습니다.
 
 ```bash
 cd Infra/Docker
 docker compose up -d
 ```
 
-이 compose 파일은 아래 서비스를 띄웁니다.
+기본 포트:
 - PostgreSQL: `5432`
 - Redis: `6379`
-
-## 로컬 실행 시 주의사항
-
-로컬 실행은 기본적으로 [application-local.yml](/C:/Users/SSAFY/Desktop/S14P21D106/Backend/src/main/resources/application-local.yml) 기준으로 동작합니다.
-
-로컬 DB/Redis 설정은 다음과 같습니다.
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/wowdb
-  data:
-    redis:
-      host: localhost
-```
-
-즉 로컬 compose로 PostgreSQL/Redis를 띄운 뒤 IDE 또는 터미널에서 백엔드를 바로 실행하는 흐름을 기준으로 맞춰져 있습니다.
-
-현재 로컬 compose는 DB/Redis만 띄우고, 백엔드 애플리케이션은 함께 띄우지 않습니다.
-
-## 로컬 민감정보 설정
-
-다음 값들은 [application-local.yml](/C:/Users/SSAFY/Desktop/S14P21D106/Backend/src/main/resources/application-local.yml) 에 직접 넣지 않고 환경변수로 주입하는 것을 기준으로 합니다.
-
-- `JWT_SECRET`
-- `SSO_SSAFY_CLIENT_ID`
-- `SSO_SSAFY_CLIENT_SECRET`
-- `SSO_SSAFY_REDIRECT_URI`
-- `SOLAPI_API_KEY`
-- `SOLAPI_API_SECRET`
-- `SOLAPI_SENDER`
-
-## 환경변수
-
-Backend 실행 시 아래 환경변수가 필요합니다.
-
-### Database
-
-- `POSTGRES_DB`
-- `POSTGRES_USER`
-- `POSTGRES_PASSWORD`
-- `DB_URL`
-- `DB_USERNAME`
-- `DB_PASSWORD`
-
-### Redis
-
-- `REDIS_HOST`
-- `REDIS_PORT`
 
 ### JWT
 
@@ -103,7 +65,22 @@ Backend 실행 시 아래 환경변수가 필요합니다.
 - `SOLAPI_API_SECRET`
 - `SOLAPI_SENDER`
 
-## Backend 실행
+### Production Only
+
+운영에서는 아래 값도 필요합니다.
+
+- `DB_URL`
+- `DB_USERNAME`
+- `DB_PASSWORD`
+- `REDIS_HOST`
+- `REDIS_PORT`
+- `SERVER_PORT`
+
+운영용 설정은 [application-prod.yml](/C:/Users/SSAFY/Desktop/S14P21D106/Backend/src/main/resources/application-prod.yml)을 기준으로 적용됩니다.
+
+## Local Run
+
+macOS/Linux:
 
 ```bash
 cd Backend
@@ -117,7 +94,21 @@ cd Backend
 .\gradlew.bat bootRun
 ```
 
-## 테스트 실행
+특정 프로필로 직접 실행하고 싶으면 아래처럼 명시하면 됩니다.
+
+```bash
+./gradlew bootRun --args='--spring.profiles.active=prod'
+```
+
+## Test Run
+
+테스트는 `test` 프로필을 사용합니다.
+
+- DB: H2 in-memory
+- JWT/SSAFY/Solapi/AWS: 테스트용 값 사용
+- 목적: 로컬 PostgreSQL 없이도 테스트가 바로 돌도록 유지
+
+macOS/Linux:
 
 ```bash
 cd Backend
@@ -131,20 +122,24 @@ cd Backend
 .\gradlew.bat test
 ```
 
-## 운영 설정
+## Test Structure
 
-[application-prod.yml](/C:/Users/SSAFY/Desktop/S14P21D106/Backend/src/main/resources/application-prod.yml) 은 아래 값을 사용합니다.
-- 외부 DB URL: `DB_URL`
-- Redis 호스트/포트: 환경변수 사용
-- `ddl-auto: validate`
+현재 백엔드 테스트는 아래처럼 나뉩니다.
 
-주의할 점:
-- 운영에서는 스키마 검증만 수행합니다.
-- 현재 저장소에는 migration 도구 사용 방법이 정리되어 있지 않습니다.
-- 새 환경에서는 DB 스키마가 미리 맞춰져 있지 않으면 기동 실패 가능성이 있습니다.
+- 단위 테스트
+  - 서비스/유틸/필터의 개별 동작 검증
+- MockMvc 테스트
+  - 컨트롤러 요청 검증과 `ErrorResponse` 응답 형식 검증
+- 통합 테스트
+  - Spring Security 체인, `test` 프로필, H2 기반 동작 검증
 
-## 현재 참고사항
+테스트 작성 시 권장 규칙:
 
-- Backend CI 테스트 강제는 별도 논의 중입니다.
-- 네트워크 제한 환경에서는 Gradle 의존성 다운로드 때문에 테스트 실행이 막힐 수 있습니다.
-- 이 README는 팀원 빠른 실행용 가이드이며, 운영 매뉴얼 전체를 대체하지는 않습니다.
+- 통합 테스트는 `@BackendIntegrationTest` 사용
+- 보안/엔드포인트 응답 형식은 MockMvc 또는 통합 테스트로 검증
+- 로컬 전용 값에 의존하지 않도록 `application-test.yml` 기준 유지
+
+## Notes
+
+- `application-local.yml`은 로컬 전용 파일로 관리하고, 비밀값은 저장소에 직접 넣지 않는 것을 권장합니다.
+- CI에서 백엔드 테스트 선행 실행은 별도 인프라 협의 후 적용 예정입니다.
