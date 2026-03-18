@@ -82,7 +82,7 @@ export const mockCalendarDays: CalendarDayItem[] = [
   { dateKey: '2025-06-04', dayNumber: 4, amount: 6000, tone: 'mint', weatherTone: 'cloudy', isCurrentMonth: true },
   { dateKey: '2025-06-05', dayNumber: 5, amount: 28000, tone: 'mint', weatherTone: 'cloudy', isCurrentMonth: true },
   { dateKey: '2025-06-06', dayNumber: 6, amount: 15000, tone: 'gold', weatherTone: 'sunny', isCurrentMonth: true },
-  { dateKey: '2025-06-07', dayNumber: 7, amount: 87000, tone: 'mint', weatherTone: 'gold', isCurrentMonth: true as any },
+  { dateKey: '2025-06-07', dayNumber: 7, amount: 87000, tone: 'mint', weatherTone: 'sunny', isCurrentMonth: true },
   { dateKey: '2025-06-08', dayNumber: 8, amount: 10000, tone: 'primary', weatherTone: 'rainy', isCurrentMonth: true },
   { dateKey: '2025-06-09', dayNumber: 9, amount: 55000, tone: 'gold', weatherTone: 'cloudy', isCurrentMonth: true },
   { dateKey: '2025-06-10', dayNumber: 10, amount: 27300, tone: 'rose', weatherTone: 'sunny', isCurrentMonth: true },
