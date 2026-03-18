@@ -116,17 +116,6 @@ public class JwtTokenProvider {
         return claims.getSubject();
     }
 
-    @SuppressWarnings("unchecked")
-    public List<String> getRolesFromToken(String token) {
-        Claims claims = parseClaims(token);
-        return claims.get("roles", List.class);
-    }
-
-    public Date getExpirationFromToken(String token) {
-        Claims claims = parseClaims(token);
-        return claims.getExpiration();
-    }
-
     // 설정된 토큰의 유효 기간(Duration) 반환
     public long getAccessTokenValidityInSeconds() {
         return accessTokenValidity.toSeconds();

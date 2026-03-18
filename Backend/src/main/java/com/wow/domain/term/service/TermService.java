@@ -18,6 +18,7 @@ import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -37,6 +38,12 @@ public class TermService {
         return termRepository.findAllByOrderByIdAsc().stream()
                 .map(term -> TermResponse.from(term, presignUrl(term)))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Term getCurrentRequiredTerm() {
+        return termRepository.findFirstByRequiredTrueAndEffectiveAtLessThanEqualOrderByEffectiveAtDescIdDesc(LocalDate.now())
+                .orElseThrow(() -> new IllegalStateException("현재 유효한 필수 약관이 존재하지 않습니다."));
     }
 
     private String presignUrl(Term term) {
@@ -59,7 +66,7 @@ public class TermService {
 
     private String resolveObjectKey(String s3Url) {
         if (s3Url == null || s3Url.isBlank()) {
-            throw new IllegalArgumentException("s3 url is empty");
+            throw new IllegalArgumentException("S3 URL이 비어있습니다.");
         }
         String trimmed = s3Url.trim();
         if (trimmed.startsWith("s3://")) {
@@ -69,17 +76,17 @@ public class TermService {
                 String bucketName = withoutScheme.substring(0, slash);
                 String key = withoutScheme.substring(slash + 1);
                 if (!bucketName.equals(bucket)) {
-                    throw new IllegalArgumentException("s3 url bucket mismatch");
+                    throw new IllegalArgumentException("S3 URL의 버킷이 일치하지 않습니다.");
                 }
                 return key;
             }
-            throw new IllegalArgumentException("invalid s3 url format");
+            throw new IllegalArgumentException("올바르지 않은 S3 URL 형식입니다.");
         }
         if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
             URI uri = URI.create(trimmed);
             String path = uri.getPath();
             if (path == null || path.isBlank()) {
-                throw new IllegalArgumentException("s3 url path is empty");
+                throw new IllegalArgumentException("S3 URL 경로가 비어있습니다.");
             }
             String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
             String normalized = decodedPath.startsWith("/") ? decodedPath.substring(1) : decodedPath;
@@ -92,9 +99,9 @@ public class TermService {
                 return normalized.substring(bucketPrefix.length());
             }
             if (isS3Host(host)) {
-                throw new IllegalArgumentException("s3 url bucket mismatch");
+                throw new IllegalArgumentException("S3 URL의 버킷이 일치하지 않습니다.");
             }
-            throw new IllegalArgumentException("invalid s3 url format");
+            throw new IllegalArgumentException("올바르지 않은 S3 URL 형식입니다.");
         }
         return trimmed;
     }

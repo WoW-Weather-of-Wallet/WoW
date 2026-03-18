@@ -1,5 +1,6 @@
 package com.wow.domain.user.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,6 +34,7 @@ public class User {
     @Column(name = "ssafy_oauth_id", unique = true, length = 50)
     private String ssafyOauthId;
 
+    @JsonIgnore
     @Column
     private String pw;
 
@@ -49,7 +51,7 @@ public class User {
     private LocalDate birthDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 5)
+    @Column(length = 10)
     private Role role;
 
     @Column(name = "alarm_enabled")

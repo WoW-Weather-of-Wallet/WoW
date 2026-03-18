@@ -1,15 +1,19 @@
 package com.wow.global;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.wow.global.common.ErrorResponse;
+import java.sql.SQLException;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
-
-import java.sql.SQLException;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 class GlobalExceptionHandlerTest {
 
@@ -27,6 +31,17 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void handleIllegalStateReturnsInternalServerError() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleIllegalState(new IllegalStateException("state error"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .isEqualTo(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "state error"));
+    }
+
+    @Test
     void handleAuthenticationExceptionReturnsUnauthorized() {
         ResponseEntity<ErrorResponse> response =
                 handler.handleAuthenticationException(new BadCredentialsException("bad credentials"));
@@ -34,7 +49,42 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody())
                 .usingRecursiveComparison()
-                .isEqualTo(ErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), "아이디 또는 비밀번호가 올바르지 않습니다."));
+                .isEqualTo(ErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), "인증 정보가 올바르지 않습니다."));
+    }
+
+    @Test
+    void handleHttpMessageNotReadableReturnsBadRequest() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleHttpMessageNotReadable(
+                        new HttpMessageNotReadableException("invalid body", org.mockito.Mockito.mock(HttpInputMessage.class))
+                );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .isEqualTo(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "잘못된 요청 본문입니다."));
+    }
+
+    @Test
+    void handleMethodNotSupportedReturnsMethodNotAllowed() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleMethodNotSupported(new HttpRequestMethodNotSupportedException("PATCH"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .isEqualTo(ErrorResponse.of(HttpStatus.METHOD_NOT_ALLOWED.value(), "지원하지 않는 HTTP 메서드입니다."));
+    }
+
+    @Test
+    void handleNoResourceFoundReturnsNotFound() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleNoResourceFound(new NoResourceFoundException(HttpMethod.GET, "/missing"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .isEqualTo(ErrorResponse.of(HttpStatus.NOT_FOUND.value(), "요청한 리소스를 찾을 수 없습니다."));
     }
 
     @Test
@@ -58,7 +108,7 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody())
                 .usingRecursiveComparison()
-                .isEqualTo(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 가입된 SSAFY 계정입니다."));
+                .isEqualTo(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 등록된 SSAFY 계정입니다."));
     }
 
     @Test
@@ -82,6 +132,16 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody())
                 .usingRecursiveComparison()
-                .isEqualTo(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "서버 오류가 발생했습니다."));
+                .isEqualTo(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "데이터 처리 중 오류가 발생했습니다."));
+    }
+
+    @Test
+    void handleUnexpectedReturnsInternalServerError() {
+        ResponseEntity<ErrorResponse> response = handler.handleUnexpected(new RuntimeException("boom"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .isEqualTo(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "서버 내부 오류가 발생했습니다."));
     }
 }

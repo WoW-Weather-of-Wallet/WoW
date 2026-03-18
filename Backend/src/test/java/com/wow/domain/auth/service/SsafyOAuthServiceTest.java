@@ -1,32 +1,5 @@
 package com.wow.domain.auth.service;
 
-import com.wow.domain.auth.dto.UserLoginResponse;
-import com.wow.domain.auth.dto.ssafy.SsafyRegisterRequest;
-import com.wow.domain.security.JwtTokenProvider;
-import com.wow.domain.term.entity.Term;
-import com.wow.domain.term.repository.TermRepository;
-import com.wow.domain.user.entity.Role;
-import com.wow.domain.user.entity.User;
-import com.wow.domain.user.entity.UserTerm;
-import com.wow.domain.user.repository.UserRepository;
-import com.wow.domain.user.repository.UserTermRepository;
-import com.wow.global.constant.RedisKeys;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.RestTemplate;
-
-import java.time.Duration;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,6 +9,29 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import com.wow.domain.auth.dto.UserLoginResponse;
+import com.wow.domain.auth.dto.ssafy.SsafyRegisterRequest;
+import com.wow.domain.security.JwtTokenProvider;
+import com.wow.domain.term.entity.Term;
+import com.wow.domain.term.service.TermService;
+import com.wow.domain.user.entity.User;
+import com.wow.domain.user.entity.UserTerm;
+import com.wow.domain.user.repository.UserRepository;
+import com.wow.domain.user.repository.UserTermRepository;
+import com.wow.global.constant.RedisKeys;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestTemplate;
 
 @ExtendWith(MockitoExtension.class)
 class SsafyOAuthServiceTest {
@@ -59,7 +55,7 @@ class SsafyOAuthServiceTest {
     private UserTermRepository userTermRepository;
 
     @Mock
-    private TermRepository termRepository;
+    private TermService termService;
 
     @Mock
     private ValueOperations<String, String> valueOperations;
@@ -77,8 +73,7 @@ class SsafyOAuthServiceTest {
         when(userRepository.existsBySsafyOauthId("ssafy@example.com")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termRepository.findFirstByRequiredTrueAndEffectiveAtLessThanEqualOrderByEffectiveAtDescIdDesc(any(LocalDate.class)))
-                .thenReturn(Optional.of(currentTerm));
+        when(termService.getCurrentRequiredTerm()).thenReturn(currentTerm);
         when(jwtTokenProvider.createAccessToken("ssafy@example.com", List.of("ROLE_USER"))).thenReturn("access-token");
         when(jwtTokenProvider.createRefreshToken("ssafy@example.com")).thenReturn("refresh-token");
         when(jwtTokenProvider.getAccessTokenValidityInSeconds()).thenReturn(1800L);
@@ -106,8 +101,7 @@ class SsafyOAuthServiceTest {
         when(userRepository.existsBySsafyOauthId("ssafy@example.com")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termRepository.findFirstByRequiredTrueAndEffectiveAtLessThanEqualOrderByEffectiveAtDescIdDesc(any(LocalDate.class)))
-                .thenReturn(Optional.of(createCurrentTerm()));
+        when(termService.getCurrentRequiredTerm()).thenReturn(createCurrentTerm());
         doThrow(new RuntimeException("db failure")).when(userRepository).save(any(User.class));
 
         assertThatThrownBy(() -> ssafyOAuthService.register(request))
@@ -129,8 +123,8 @@ class SsafyOAuthServiceTest {
         when(userRepository.existsBySsafyOauthId("ssafy@example.com")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termRepository.findFirstByRequiredTrueAndEffectiveAtLessThanEqualOrderByEffectiveAtDescIdDesc(any(LocalDate.class)))
-                .thenReturn(Optional.empty());
+        when(termService.getCurrentRequiredTerm())
+                .thenThrow(new IllegalStateException("현재 유효한 필수 약관이 존재하지 않습니다."));
 
         assertThatThrownBy(() -> ssafyOAuthService.register(request))
                 .isInstanceOf(IllegalStateException.class);
@@ -149,8 +143,7 @@ class SsafyOAuthServiceTest {
         when(userRepository.existsBySsafyOauthId("ssafy@example.com")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termRepository.findFirstByRequiredTrueAndEffectiveAtLessThanEqualOrderByEffectiveAtDescIdDesc(any(LocalDate.class)))
-                .thenReturn(Optional.of(createCurrentTerm()));
+        when(termService.getCurrentRequiredTerm()).thenReturn(createCurrentTerm());
         doThrow(new IllegalArgumentException("sms verification required"))
                 .when(smsService).checkVerified("01012345678");
 

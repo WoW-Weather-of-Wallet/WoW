@@ -6,7 +6,6 @@ import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.entity.Role;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
-import com.wow.domain.user.repository.UserTermRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,9 +30,6 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
-
-    @Mock
-    private UserTermRepository userTermRepository;
 
     @Mock
     private SmsService smsService;
@@ -126,7 +122,6 @@ class UserServiceTest {
 
         verify(redisTemplate).delete("refresh:wowuser");
         verify(userRepository).delete(user);
-        verify(userTermRepository, never()).deleteByUser(user);
     }
 
     @Test

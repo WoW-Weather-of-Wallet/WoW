@@ -6,7 +6,6 @@ import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.dto.UserProfileResponse;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
-import com.wow.domain.user.repository.UserTermRepository;
 import com.wow.global.constant.RedisKeys;
 import com.wow.global.util.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final UserTermRepository userTermRepository;
     private final SmsService smsService;
     private final StringRedisTemplate redisTemplate;
 

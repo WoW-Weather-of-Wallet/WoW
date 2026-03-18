@@ -1,5 +1,15 @@
 package com.wow.domain.auth.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.wow.domain.auth.dto.FindIdRequest;
 import com.wow.domain.auth.dto.FindIdResponse;
 import com.wow.domain.auth.dto.FindPwRequest;
@@ -8,12 +18,16 @@ import com.wow.domain.auth.dto.UserCreateRequest;
 import com.wow.domain.security.CustomUserDetailsService;
 import com.wow.domain.security.JwtTokenProvider;
 import com.wow.domain.term.entity.Term;
-import com.wow.domain.term.repository.TermRepository;
+import com.wow.domain.term.service.TermService;
 import com.wow.domain.user.entity.Role;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.entity.UserTerm;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.domain.user.repository.UserTermRepository;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,21 +40,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.time.Duration;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -73,7 +72,7 @@ class AuthServiceTest {
     private CustomUserDetailsService customUserDetailsService;
 
     @Mock
-    private TermRepository termRepository;
+    private TermService termService;
 
     @InjectMocks
     private AuthService authService;
@@ -152,8 +151,6 @@ class AuthServiceTest {
         FindIdResponse response = authService.findId(request);
 
         assertThat(response.getUserId()).isEqualTo("wowuser");
-        verify(userRepository).findByNameAndGenderAndBirthDateAndPhoneNumber(
-                "tester", "M", LocalDate.of(1999, 1, 1), "01012345678");
         verify(smsService).checkVerified("01012345678");
         verify(smsService).deleteVerified("01012345678");
     }
@@ -214,36 +211,18 @@ class AuthServiceTest {
         authService.findPassword(request);
 
         assertThat(user.getPw()).isEqualTo("encoded-password");
-        verify(userRepository).findByUserIdAndNameAndBirthDateAndPhoneNumber(
-                "wowuser", "tester", LocalDate.of(1999, 1, 1), "01012345678");
         verify(smsService).checkVerified("01012345678");
         verify(smsService).deleteVerified("01012345678");
-        verify(bCryptPasswordEncoder).encode("Valid1!A");
     }
 
     @Test
     void signupDeletesVerifiedStateWhenSaveFails() {
-        UserCreateRequest request = new UserCreateRequest();
-        ReflectionTestUtils.setField(request, "userId", "wowuser");
-        ReflectionTestUtils.setField(request, "pw", "Valid1!A");
-        ReflectionTestUtils.setField(request, "name", "tester");
-        ReflectionTestUtils.setField(request, "gender", "M");
-        ReflectionTestUtils.setField(request, "phoneNumber", "010-1234-5678");
-        ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
-        ReflectionTestUtils.setField(request, "termsAgreed", true);
+        UserCreateRequest request = createSignupRequest();
 
         when(userRepository.existsByUserId("wowuser")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termRepository.findFirstByRequiredTrueAndEffectiveAtLessThanEqualOrderByEffectiveAtDescIdDesc(any(LocalDate.class)))
-                .thenReturn(Optional.of(Term.builder()
-                        .id(1L)
-                        .title("service terms")
-                        .version("v1")
-                        .effectiveAt(LocalDate.of(2025, 1, 1))
-                        .required(true)
-                        .s3Url("s3://bucket/terms.pdf")
-                        .build()));
+        when(termService.getCurrentRequiredTerm()).thenReturn(createCurrentTerm());
         when(bCryptPasswordEncoder.encode("Valid1!A")).thenReturn("encoded-password");
         doThrow(new RuntimeException("db failure")).when(userRepository).save(any(User.class));
 
@@ -253,34 +232,17 @@ class AuthServiceTest {
 
         verify(smsService).checkVerified("01012345678");
         verify(smsService).deleteVerified("01012345678");
-        verify(userRepository).existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678");
     }
 
     @Test
     void signupSavesUserTermWithCurrentRequiredTerm() {
-        UserCreateRequest request = new UserCreateRequest();
-        ReflectionTestUtils.setField(request, "userId", "wowuser");
-        ReflectionTestUtils.setField(request, "pw", "Valid1!A");
-        ReflectionTestUtils.setField(request, "name", "tester");
-        ReflectionTestUtils.setField(request, "gender", "M");
-        ReflectionTestUtils.setField(request, "phoneNumber", "010-1234-5678");
-        ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
-        ReflectionTestUtils.setField(request, "termsAgreed", true);
-
-        Term currentTerm = Term.builder()
-                .id(1L)
-                .title("service terms")
-                .version("v1")
-                .effectiveAt(LocalDate.of(2025, 1, 1))
-                .required(true)
-                .s3Url("s3://bucket/terms.pdf")
-                .build();
+        UserCreateRequest request = createSignupRequest();
+        Term currentTerm = createCurrentTerm();
 
         when(userRepository.existsByUserId("wowuser")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termRepository.findFirstByRequiredTrueAndEffectiveAtLessThanEqualOrderByEffectiveAtDescIdDesc(any(LocalDate.class)))
-                .thenReturn(Optional.of(currentTerm));
+        when(termService.getCurrentRequiredTerm()).thenReturn(currentTerm);
         when(bCryptPasswordEncoder.encode("Valid1!A")).thenReturn("encoded-password");
 
         authService.signup(request);
@@ -294,20 +256,13 @@ class AuthServiceTest {
 
     @Test
     void signupThrowsWhenRequiredTermIsMissing() {
-        UserCreateRequest request = new UserCreateRequest();
-        ReflectionTestUtils.setField(request, "userId", "wowuser");
-        ReflectionTestUtils.setField(request, "pw", "Valid1!A");
-        ReflectionTestUtils.setField(request, "name", "tester");
-        ReflectionTestUtils.setField(request, "gender", "M");
-        ReflectionTestUtils.setField(request, "phoneNumber", "010-1234-5678");
-        ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
-        ReflectionTestUtils.setField(request, "termsAgreed", true);
+        UserCreateRequest request = createSignupRequest();
 
         when(userRepository.existsByUserId("wowuser")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termRepository.findFirstByRequiredTrueAndEffectiveAtLessThanEqualOrderByEffectiveAtDescIdDesc(any(LocalDate.class)))
-                .thenReturn(Optional.empty());
+        when(termService.getCurrentRequiredTerm())
+                .thenThrow(new IllegalStateException("현재 유효한 필수 약관이 존재하지 않습니다."));
 
         assertThatThrownBy(() -> authService.signup(request))
                 .isInstanceOf(IllegalStateException.class);
@@ -319,27 +274,12 @@ class AuthServiceTest {
 
     @Test
     void signupStopsBeforeSaveWhenSmsVerificationFails() {
-        UserCreateRequest request = new UserCreateRequest();
-        ReflectionTestUtils.setField(request, "userId", "wowuser");
-        ReflectionTestUtils.setField(request, "pw", "Valid1!A");
-        ReflectionTestUtils.setField(request, "name", "tester");
-        ReflectionTestUtils.setField(request, "gender", "M");
-        ReflectionTestUtils.setField(request, "phoneNumber", "010-1234-5678");
-        ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
-        ReflectionTestUtils.setField(request, "termsAgreed", true);
+        UserCreateRequest request = createSignupRequest();
 
         when(userRepository.existsByUserId("wowuser")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termRepository.findFirstByRequiredTrueAndEffectiveAtLessThanEqualOrderByEffectiveAtDescIdDesc(any(LocalDate.class)))
-                .thenReturn(Optional.of(Term.builder()
-                        .id(1L)
-                        .title("service terms")
-                        .version("v1")
-                        .effectiveAt(LocalDate.of(2025, 1, 1))
-                        .required(true)
-                        .s3Url("s3://bucket/terms.pdf")
-                        .build()));
+        when(termService.getCurrentRequiredTerm()).thenReturn(createCurrentTerm());
         doThrow(new IllegalArgumentException("sms verification required"))
                 .when(smsService).checkVerified("01012345678");
 
@@ -416,5 +356,28 @@ class AuthServiceTest {
         assertThat(user.getPw()).isEqualTo("old-password");
         verify(bCryptPasswordEncoder, never()).encode(anyString());
         verify(smsService, never()).deleteVerified("01012345678");
+    }
+
+    private UserCreateRequest createSignupRequest() {
+        UserCreateRequest request = new UserCreateRequest();
+        ReflectionTestUtils.setField(request, "userId", "wowuser");
+        ReflectionTestUtils.setField(request, "pw", "Valid1!A");
+        ReflectionTestUtils.setField(request, "name", "tester");
+        ReflectionTestUtils.setField(request, "gender", "M");
+        ReflectionTestUtils.setField(request, "phoneNumber", "010-1234-5678");
+        ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
+        ReflectionTestUtils.setField(request, "termsAgreed", true);
+        return request;
+    }
+
+    private Term createCurrentTerm() {
+        return Term.builder()
+                .id(1L)
+                .title("service terms")
+                .version("v1")
+                .effectiveAt(LocalDate.of(2025, 1, 1))
+                .required(true)
+                .s3Url("s3://bucket/terms.pdf")
+                .build();
     }
 }
