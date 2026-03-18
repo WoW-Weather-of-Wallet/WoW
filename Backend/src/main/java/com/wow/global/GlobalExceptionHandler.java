@@ -50,6 +50,15 @@ public class GlobalExceptionHandler {
         Throwable cause = e.getRootCause();
         if (cause instanceof SQLException sqlException && "23505".equals(sqlException.getSQLState())) {
             String message = sqlException.getMessage();
+
+            /*
+             * 수정 이유:
+             * - 기존에는 phone_number, user_id만 분기해서 SSAFY 계정 중복 같은 다른 unique 제약은 일반 메시지로 뭉개졌습니다.
+             * - 자주 발생할 수 있는 ssafy_oauth_id도 함께 분기해 사용자 메시지와 로그 해석을 조금 더 명확히 합니다.
+             *
+             * 수정 전 코드:
+             * - phone_number, user_id만 개별 분기
+             */
             if (message != null && message.contains("phone_number")) {
                 return ResponseEntity.badRequest()
                         .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 사용 중인 전화번호입니다."));
@@ -57,6 +66,10 @@ public class GlobalExceptionHandler {
             if (message != null && message.contains("user_id")) {
                 return ResponseEntity.badRequest()
                         .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 사용 중인 아이디입니다."));
+            }
+            if (message != null && message.contains("ssafy_oauth_id")) {
+                return ResponseEntity.badRequest()
+                        .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 가입된 SSAFY 계정입니다."));
             }
             return ResponseEntity.badRequest()
                     .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 사용 중인 값입니다."));

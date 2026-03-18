@@ -17,11 +17,14 @@ import java.time.LocalDate;
 @Getter
 public class UserCreateRequest {
 
-    @Pattern(regexp = "^(?=.*[a-z])[a-z0-9]{4,20}$", message = "아이디는 영문 소문자 필수 포함, 영문 소문자와 숫자만 사용 가능하며 특수문자는 사용 불가, 4자 이상 20자 이하여야 합니다.")
+    @Pattern(
+            regexp = "^(?=.*[a-z])[a-z0-9]{4,20}$",
+            message = "아이디는 영문 소문자와 숫자를 포함한 4자 이상 20자 이하만 사용할 수 있습니다."
+    )
     /*
      * 수정 이유:
-     * - @Pattern만 있으면 null은 검증에서 통과합니다.
-     * - 일반 회원가입에서 userId가 null로 저장되는 것을 막기 위해 @NotBlank를 추가했습니다.
+     * - @Pattern만 있으면 null은 통과하므로 @NotBlank를 함께 둡니다.
+     * - 일반 회원은 이메일 형식이 아닌 서비스 전용 아이디를 사용한다는 정책을 DTO에서 분명히 드러냅니다.
      *
      * 수정 전 코드:
      * - @Pattern(...)
@@ -34,32 +37,23 @@ public class UserCreateRequest {
     private String pw;
 
     @NotBlank(message = "이름을 입력해주세요.")
-    @Size(max = 10, message = "이름은 10자 이하여야 합니다.")
+    @Size(max = 10, message = "이름은 10자 이하만 가능합니다.")
     private String name;
 
     @NotBlank(message = "성별을 입력해주세요.")
-    @Pattern(regexp = "^[MF]$", message = "성별은 M 또는 F여야 합니다.")
+    @Pattern(regexp = "^[MF]$", message = "성별은 M 또는 F만 가능합니다.")
     private String gender;
 
     @NotBlank(message = "전화번호를 입력해주세요.")
-    /*
-     * 수정 이유:
-     * - 회원가입에서도 전화번호 형식을 DTO 단계에서 먼저 검증하도록 보강했습니다.
-     *
-     * 수정 전 코드:
-     * - @NotBlank(...)
-     * - private String phoneNumber;
-     */
     @Pattern(regexp = "^01\\d-?\\d{3,4}-?\\d{4}$", message = "전화번호는 01012345678 또는 010-1234-5678 형식으로 입력해주세요.")
     private String phoneNumber;
 
     @NotNull(message = "생년월일을 입력해주세요.")
-    @Past(message = "생년월일은 오늘 이전 날짜여야 합니다.")
+    @Past(message = "생년월일은 과거 날짜만 가능합니다.")
     private LocalDate birthDate;
 
-    @AssertTrue(message = "필수 약관에 동의해야 합니다.")
+    @AssertTrue(message = "약관에 동의해야 합니다.")
     private boolean termsAgreed;
 
     private boolean alarmEnabled;
-
 }

@@ -92,6 +92,14 @@ public class AuthService {
         try {
             User user = User.builder()
                     .userId(request.getUserId())
+                    /*
+                     * 수정 이유:
+                     * - 일반 회원은 userId만 가지고, ssafyOauthId는 null이라는 정책을 생성 시점에 명시합니다.
+                     *
+                     * 수정 전 코드:
+                     * - builder 기본값에 맡겨 null이 들어갔지만, 의도가 코드에서 바로 드러나지 않았습니다.
+                     */
+                    .ssafyOauthId(null)
                     .pw(bCryptPasswordEncoder.encode(request.getPw()))
                     .name(request.getName())
                     .gender(request.getGender())

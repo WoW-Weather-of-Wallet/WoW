@@ -189,6 +189,15 @@ public class SsafyOAuthService {
         smsService.checkVerified(phoneNumber);
         try {
             User newUser = User.builder()
+                    /*
+                     * 수정 이유:
+                     * - SSAFY 회원은 ssafyOauthId만 가지고, 일반 로그인용 userId/pw는 null이라는 정책을 생성 시점에 명시합니다.
+                     *
+                     * 수정 전 코드:
+                     * - builder 기본값에 맡겨 null이 들어갔지만, SSAFY 전용 계정이라는 의도가 코드에서 바로 드러나지 않았습니다.
+                     */
+                    .userId(null)
+                    .pw(null)
                     .ssafyOauthId(request.getSsafyOauthId())
                     .name(name)
                     .gender(request.getGender())
