@@ -78,32 +78,41 @@ public class AuthService {
 
         validatePassword(request.getPw(), request.getUserId());
 
+        /*
+         * 수정 이유:
+         * - 기존에는 인증 완료 상태를 마지막에만 삭제해서, DB 저장 중 예외가 나면 같은 SMS 인증을 다시 재사용할 수 있었습니다.
+         * - 인증 확인 이후에는 성공/실패와 관계없이 finally 에서 상태를 정리해 일회성으로 소비되도록 변경합니다.
+         *
+         * 수정 전 코드:
+         * - smsService.checkVerified(phoneNumber);
+         * - ... DB/JPA 작업 ...
+         * - smsService.deleteVerified(phoneNumber);
+         */
         smsService.checkVerified(phoneNumber);
+        try {
+            User user = User.builder()
+                    .userId(request.getUserId())
+                    .pw(bCryptPasswordEncoder.encode(request.getPw()))
+                    .name(request.getName())
+                    .gender(request.getGender())
+                    .phoneNumber(phoneNumber)
+                    .birthDate(request.getBirthDate())
+                    .alarmEnabled(request.isAlarmEnabled())
+                    .role(Role.User)
+                    .build();
 
-        User user = User.builder()
-                .userId(request.getUserId())
-                .pw(bCryptPasswordEncoder.encode(request.getPw()))
-                .name(request.getName())
-                .gender(request.getGender())
-                .phoneNumber(phoneNumber)
-                .birthDate(request.getBirthDate())
-                .alarmEnabled(request.isAlarmEnabled())
-                .role(Role.User)
-                .build();
+            userRepository.save(user);
 
-        userRepository.save(user);
+            userTermRepository.save(UserTerm.builder()
+                    .user(user)
+                    .agreed(request.isTermsAgreed())
+                    .agreedAt(LocalDateTime.now())
+                    .build());
 
-        userTermRepository.save(UserTerm.builder()
-                .user(user)
-                .agreed(request.isTermsAgreed())
-                .agreedAt(LocalDateTime.now())
-                .build());
-
-        UserCreateResponse response = UserCreateResponse.from(user);
-
-        smsService.deleteVerified(phoneNumber);
-
-        return response;
+            return UserCreateResponse.from(user);
+        } finally {
+            smsService.deleteVerified(phoneNumber);
+        }
     }
 
     @Transactional
@@ -234,12 +243,12 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("일치하는 회원 정보가 없습니다."));
 
         smsService.checkVerified(phoneNumber);
-
-        validatePassword(request.getNewPw(), request.getUserId());
-
-        user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
-
-        smsService.deleteVerified(phoneNumber);
+        try {
+            validatePassword(request.getNewPw(), request.getUserId());
+            user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
+        } finally {
+            smsService.deleteVerified(phoneNumber);
+        }
     }
 
     @Transactional

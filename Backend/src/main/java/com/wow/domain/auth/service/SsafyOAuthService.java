@@ -176,30 +176,42 @@ public class SsafyOAuthService {
             throw new IllegalArgumentException("이미 가입된 회원입니다.");
         }
 
+        /*
+         * 수정 이유:
+         * - SSAFY 신규 가입도 마지막에만 인증 상태를 지우면 DB 예외 시 같은 인증을 재사용할 수 있습니다.
+         * - 인증 확인 이후에는 finally 에서 상태를 정리해 실패 케이스까지 일회성으로 소비되게 변경합니다.
+         *
+         * 수정 전 코드:
+         * - smsService.checkVerified(phoneNumber);
+         * - ... DB/JPA 작업 ...
+         * - smsService.deleteVerified(phoneNumber);
+         */
         smsService.checkVerified(phoneNumber);
+        try {
+            User newUser = User.builder()
+                    .ssafyOauthId(request.getSsafyOauthId())
+                    .name(name)
+                    .gender(request.getGender())
+                    .alarmEnabled(request.isAlarmEnabled())
+                    .birthDate(request.getBirthDate())
+                    .phoneNumber(phoneNumber)
+                    .role(Role.User)
+                    .build();
 
-        User newUser = User.builder()
-                .ssafyOauthId(request.getSsafyOauthId())
-                .name(name)
-                .gender(request.getGender())
-                .alarmEnabled(request.isAlarmEnabled())
-                .birthDate(request.getBirthDate())
-                .phoneNumber(phoneNumber)
-                .role(Role.User)
-                .build();
+            userRepository.save(newUser);
 
-        userRepository.save(newUser);
+            userTermRepository.save(UserTerm.builder()
+                    .user(newUser)
+                    .agreed(request.isTermsAgreed())
+                    .agreedAt(LocalDateTime.now())
+                    .build());
 
-        userTermRepository.save(UserTerm.builder()
-                .user(newUser)
-                .agreed(request.isTermsAgreed())
-                .agreedAt(LocalDateTime.now())
-                .build());
+            redisTemplate.delete(RedisKeys.SSAFY_PENDING_PREFIX + request.getSsafyOauthId());
 
-        redisTemplate.delete(RedisKeys.SSAFY_PENDING_PREFIX + request.getSsafyOauthId());
-        smsService.deleteVerified(phoneNumber);
-
-        return issueToken(newUser);
+            return issueToken(newUser);
+        } finally {
+            smsService.deleteVerified(phoneNumber);
+        }
     }
 
     // SSAFY 토큰 요청

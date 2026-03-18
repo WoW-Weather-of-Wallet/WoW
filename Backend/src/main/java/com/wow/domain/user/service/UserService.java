@@ -94,11 +94,22 @@ public class UserService {
             throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
         }
 
+        /*
+         * 수정 이유:
+         * - 전화번호 변경 중 예외가 발생해도 인증 완료 상태가 남아 있으면 같은 인증을 재사용할 수 있습니다.
+         * - 인증 확인 후에는 finally 에서 상태를 지워 실패 케이스까지 일회성으로 소비되도록 변경합니다.
+         *
+         * 수정 전 코드:
+         * - smsService.checkVerified(phoneNumber);
+         * - user.updatePhoneNumber(phoneNumber);
+         * - smsService.deleteVerified(phoneNumber);
+         */
         smsService.checkVerified(phoneNumber);
-
-        user.updatePhoneNumber(phoneNumber);
-
-        smsService.deleteVerified(phoneNumber);
+        try {
+            user.updatePhoneNumber(phoneNumber);
+        } finally {
+            smsService.deleteVerified(phoneNumber);
+        }
 
     }
 
