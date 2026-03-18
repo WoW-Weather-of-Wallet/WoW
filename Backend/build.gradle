@@ -61,6 +61,9 @@ dependencies {
 
 	// aws s3 presigner
 	implementation 'software.amazon.awssdk:s3:2.28.29'
+
+	implementation 'org.apache.poi:poi-ooxml:5.2.3'
+	implementation 'org.apache.poi:poi:5.2.3'
 }
 
 tasks.named('test') {
