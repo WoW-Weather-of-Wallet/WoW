@@ -92,4 +92,37 @@ class JwtAuthenticationFilterTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         verify(filterChain).doFilter(request, response);
     }
+
+    @Test
+    void doFilterContinuesWhenAuthorizationHeaderDoesNotUseBearerScheme() throws Exception {
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtTokenProvider, jwtAuthenticationEntryPoint);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        request.addHeader("Authorization", "Token access-token");
+
+        filter.doFilter(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(jwtTokenProvider, never()).validateToken("access-token");
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    void doFilterContinuesWithoutAuthenticationWhenTokenIsExpiredOrInvalid() throws Exception {
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtTokenProvider, jwtAuthenticationEntryPoint);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        request.addHeader("Authorization", "Bearer expired-token");
+        when(jwtTokenProvider.validateToken("expired-token")).thenReturn(false);
+
+        filter.doFilter(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(response.getContentAsString()).isEmpty();
+        verify(jwtTokenProvider).validateToken("expired-token");
+        verify(jwtTokenProvider, never()).getAuthentication("expired-token");
+        verify(filterChain).doFilter(request, response);
+    }
 }

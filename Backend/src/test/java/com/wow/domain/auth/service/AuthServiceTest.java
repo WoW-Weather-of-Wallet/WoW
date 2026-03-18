@@ -118,6 +118,17 @@ class AuthServiceTest {
     }
 
     @Test
+    void refreshThrowsWhenRefreshTokenIsInvalid() {
+        when(jwtTokenProvider.validateToken("refresh-token")).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.refresh("refresh-token"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("refresh token");
+
+        verify(redisTemplate, never()).opsForValue();
+    }
+
+    @Test
     void findIdUsesGenderAndNormalizedPhoneNumber() {
         FindIdRequest request = new FindIdRequest();
         ReflectionTestUtils.setField(request, "name", " tester ");
@@ -282,6 +293,66 @@ class AuthServiceTest {
     }
 
     @Test
+    void signupThrowsWhenRequiredTermIsMissing() {
+        UserCreateRequest request = new UserCreateRequest();
+        ReflectionTestUtils.setField(request, "userId", "wowuser");
+        ReflectionTestUtils.setField(request, "pw", "Valid1!A");
+        ReflectionTestUtils.setField(request, "name", "tester");
+        ReflectionTestUtils.setField(request, "gender", "M");
+        ReflectionTestUtils.setField(request, "phoneNumber", "010-1234-5678");
+        ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
+        ReflectionTestUtils.setField(request, "termsAgreed", true);
+
+        when(userRepository.existsByUserId("wowuser")).thenReturn(false);
+        when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
+        when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
+        when(termRepository.findFirstByRequiredTrueAndEffectiveAtLessThanEqualOrderByEffectiveAtDescIdDesc(any(LocalDate.class)))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.signup(request))
+                .isInstanceOf(IllegalStateException.class);
+
+        verify(smsService, never()).checkVerified(anyString());
+        verify(smsService, never()).deleteVerified(anyString());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void signupStopsBeforeSaveWhenSmsVerificationFails() {
+        UserCreateRequest request = new UserCreateRequest();
+        ReflectionTestUtils.setField(request, "userId", "wowuser");
+        ReflectionTestUtils.setField(request, "pw", "Valid1!A");
+        ReflectionTestUtils.setField(request, "name", "tester");
+        ReflectionTestUtils.setField(request, "gender", "M");
+        ReflectionTestUtils.setField(request, "phoneNumber", "010-1234-5678");
+        ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
+        ReflectionTestUtils.setField(request, "termsAgreed", true);
+
+        when(userRepository.existsByUserId("wowuser")).thenReturn(false);
+        when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
+        when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
+        when(termRepository.findFirstByRequiredTrueAndEffectiveAtLessThanEqualOrderByEffectiveAtDescIdDesc(any(LocalDate.class)))
+                .thenReturn(Optional.of(Term.builder()
+                        .id(1L)
+                        .title("service terms")
+                        .version("v1")
+                        .effectiveAt(LocalDate.of(2025, 1, 1))
+                        .required(true)
+                        .s3Url("s3://bucket/terms.pdf")
+                        .build()));
+        doThrow(new IllegalArgumentException("sms verification required"))
+                .when(smsService).checkVerified("01012345678");
+
+        assertThatThrownBy(() -> authService.signup(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("sms verification");
+
+        verify(userRepository, never()).save(any(User.class));
+        verify(userTermRepository, never()).save(any(UserTerm.class));
+        verify(smsService, never()).deleteVerified("01012345678");
+    }
+
+    @Test
     void findPasswordDeletesVerifiedStateWhenPasswordEncodingFails() {
         FindPwRequest request = new FindPwRequest();
         ReflectionTestUtils.setField(request, "userId", "wowuser");
@@ -311,5 +382,39 @@ class AuthServiceTest {
 
         verify(smsService).checkVerified("01012345678");
         verify(smsService).deleteVerified("01012345678");
+    }
+
+    @Test
+    void findPasswordStopsWhenSmsVerificationFails() {
+        FindPwRequest request = new FindPwRequest();
+        ReflectionTestUtils.setField(request, "userId", "wowuser");
+        ReflectionTestUtils.setField(request, "name", "tester");
+        ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
+        ReflectionTestUtils.setField(request, "phoneNumber", "010-1234-5678");
+        ReflectionTestUtils.setField(request, "newPw", "Valid1!A");
+
+        User user = User.builder()
+                .userId("wowuser")
+                .pw("old-password")
+                .name("tester")
+                .gender("M")
+                .birthDate(LocalDate.of(1999, 1, 1))
+                .phoneNumber("01012345678")
+                .role(Role.USER)
+                .build();
+
+        when(userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(
+                "wowuser", "tester", LocalDate.of(1999, 1, 1), "01012345678"))
+                .thenReturn(Optional.of(user));
+        doThrow(new IllegalArgumentException("sms verification required"))
+                .when(smsService).checkVerified("01012345678");
+
+        assertThatThrownBy(() -> authService.findPassword(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("sms verification");
+
+        assertThat(user.getPw()).isEqualTo("old-password");
+        verify(bCryptPasswordEncoder, never()).encode(anyString());
+        verify(smsService, never()).deleteVerified("01012345678");
     }
 }
