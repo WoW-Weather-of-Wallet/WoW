@@ -7,6 +7,8 @@ import com.wow.domain.auth.dto.ssafy.SsafyRegisterRequest;
 import com.wow.domain.auth.dto.ssafy.SsafyTokenResponse;
 import com.wow.domain.auth.dto.ssafy.SsafyUserInfo;
 import com.wow.domain.security.JwtTokenProvider;
+import com.wow.domain.term.entity.Term;
+import com.wow.domain.term.repository.TermRepository;
 import com.wow.domain.user.entity.Role;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.entity.UserTerm;
@@ -30,6 +32,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -58,9 +61,12 @@ public class SsafyOAuthService {
     private final StringRedisTemplate redisTemplate;
     private final SmsService smsService;
     private final UserTermRepository userTermRepository;
+    private final TermRepository termRepository;
 
     // 1. 인가 코드 요청 URL 생성
     public String getLoginUrl() {
+
+
         /*
          * 수정 이유:
          * - redirect_uri를 문자열로 직접 붙이면 인코딩이 보장되지 않습니다.
@@ -184,6 +190,8 @@ public class SsafyOAuthService {
          * - ... DB/JPA 작업 ...
          * - smsService.deleteVerified(phoneNumber);
          */
+        Term currentRequiredTerm = getCurrentRequiredTerm();
+
         smsService.checkVerified(phoneNumber);
         try {
             User newUser = User.builder()
@@ -210,6 +218,7 @@ public class SsafyOAuthService {
 
             userTermRepository.save(UserTerm.builder()
                     .user(newUser)
+                    .term(currentRequiredTerm)
                     .agreed(request.isTermsAgreed())
                     .agreedAt(LocalDateTime.now())
                     .build());
@@ -345,5 +354,22 @@ public class SsafyOAuthService {
                 refreshToken,
                 UserSummaryResponse.from(user)
         );
+    }
+
+    private Term getCurrentRequiredTerm() {
+        /*
+         * 수정 이유:
+         * - UserTerm.term 은 nullable = false 이므로 SSAFY 가입 시에도 현재 유효한 필수 약관을 반드시 함께 저장해야 합니다.
+         * - 일반 가입과 동일한 기준으로 필수 약관을 조회해 term_id 누락 저장을 방지합니다.
+         *
+         * 수정 전 코드:
+         * - UserTerm.builder()
+         * -         .user(newUser)
+         * -         .agreed(...)
+         * -         .agreedAt(...)
+         * -         .build();
+         */
+        return termRepository.findFirstByRequiredTrueAndEffectiveAtLessThanEqualOrderByEffectiveAtDescIdDesc(LocalDate.now())
+                .orElseThrow(() -> new IllegalStateException("현재 유효한 필수 약관이 존재하지 않습니다."));
     }
 }

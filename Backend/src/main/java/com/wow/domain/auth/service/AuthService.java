@@ -14,6 +14,8 @@ import com.wow.domain.auth.dto.UserSummaryResponse;
 import com.wow.domain.security.CustomUserDetails;
 import com.wow.domain.security.CustomUserDetailsService;
 import com.wow.domain.security.JwtTokenProvider;
+import com.wow.domain.term.entity.Term;
+import com.wow.domain.term.repository.TermRepository;
 import com.wow.domain.user.entity.Role;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.entity.UserTerm;
@@ -33,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -48,6 +51,7 @@ public class AuthService {
     private final SmsService smsService;
     private final StringRedisTemplate redisTemplate;
     private final CustomUserDetailsService customUserDetailsService;
+    private final TermRepository termRepository;
 
     @Transactional(readOnly = true)
     public UserIdCheckResponse checkUserId(String userId) {
@@ -74,6 +78,7 @@ public class AuthService {
         }
 
         validatePassword(request.getPw(), request.getUserId());
+        Term currentRequiredTerm = getCurrentRequiredTerm();
 
         /*
          * 수정 이유:
@@ -113,6 +118,7 @@ public class AuthService {
 
             userTermRepository.save(UserTerm.builder()
                     .user(user)
+                    .term(currentRequiredTerm)
                     .agreed(request.isTermsAgreed())
                     .agreedAt(LocalDateTime.now())
                     .build());
@@ -331,5 +337,22 @@ public class AuthService {
             }
         }
         return false;
+    }
+
+    private Term getCurrentRequiredTerm() {
+        /*
+         * 수정 이유:
+         * - UserTerm.term 은 nullable = false 이므로 가입 시 현재 유효한 필수 약관을 반드시 함께 저장해야 합니다.
+         * - 저장 직전에 약관을 조회해 일반 가입과 SSAFY 가입 모두 동일한 기준으로 term 을 연결합니다.
+         *
+         * 수정 전 코드:
+         * - UserTerm.builder()
+         * -         .user(user)
+         * -         .agreed(...)
+         * -         .agreedAt(...)
+         * -         .build();
+         */
+        return termRepository.findFirstByRequiredTrueAndEffectiveAtLessThanEqualOrderByEffectiveAtDescIdDesc(LocalDate.now())
+                .orElseThrow(() -> new IllegalStateException("현재 유효한 필수 약관이 존재하지 않습니다."));
     }
 }
