@@ -1,6 +1,7 @@
 package com.wow.domain.auth.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.wow.domain.user.dto.UserIdentityResolver;
 import com.wow.domain.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,25 +24,13 @@ public class UserSummaryResponse {
 
     public static UserSummaryResponse from(User user) {
         return new UserSummaryResponse(
-                resolveUserId(user),
+                UserIdentityResolver.resolveUserId(user),
                 user.getName(),
                 user.getGender(),
                 user.getPhoneNumber(),
                 user.getBirthDate(),
-                resolveLoginType(user)
+                UserIdentityResolver.resolveLoginType(user)
         );
 
     }
-
-    private static String resolveUserId(User user) {
-        if (user.getUserId() != null) return user.getUserId();
-        return null;
-    }
-
-    private static String resolveLoginType(User user) {
-        if (user.getUserId() != null) return "NORMAL";
-        if (user.getSsafyOauthId() != null) return "SSAFY";
-        return null;
-    }
-
 }
