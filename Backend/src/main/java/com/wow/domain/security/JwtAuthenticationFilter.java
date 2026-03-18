@@ -14,9 +14,12 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
+                                   JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
     }
 
     @Override
@@ -36,7 +39,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } catch (UsernameNotFoundException e) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "존재하지 않는 사용자입니다.");
+                SecurityContextHolder.clearContext();
+                jwtAuthenticationEntryPoint.commence(request, response, e);
                 return;
             }
 
