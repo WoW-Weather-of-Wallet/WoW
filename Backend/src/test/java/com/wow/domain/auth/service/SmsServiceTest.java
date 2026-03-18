@@ -15,7 +15,9 @@ import java.time.Duration;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,7 +40,7 @@ class SmsServiceTest {
     void setUp() {
         smsService = new SmsService(redisTemplate, messageService);
         ReflectionTestUtils.setField(smsService, "sender", "01012345678");
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
     @Test
@@ -85,7 +87,7 @@ class SmsServiceTest {
 
         verify(redisTemplate).expire("sms:count:01012345678", Duration.ofMinutes(60));
         verify(valueOperations).set("sms:cooldown:01012345678", "true", Duration.ofSeconds(60));
-        verify(valueOperations).set(anyString(), anyString(), any(Duration.class));
+        verify(valueOperations).set(eq("sms:code:01012345678"), anyString(), eq(Duration.ofMinutes(5)));
         verify(messageService).sendOne(any());
     }
 
