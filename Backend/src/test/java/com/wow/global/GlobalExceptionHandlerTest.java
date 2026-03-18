@@ -16,6 +16,17 @@ class GlobalExceptionHandlerTest {
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
     @Test
+    void handleIllegalArgumentReturnsBadRequest() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleIllegalArgument(new IllegalArgumentException("bad request"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .isEqualTo(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "bad request"));
+    }
+
+    @Test
     void handleAuthenticationExceptionReturnsUnauthorized() {
         ResponseEntity<ErrorResponse> response =
                 handler.handleAuthenticationException(new BadCredentialsException("bad credentials"));

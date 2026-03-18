@@ -92,6 +92,17 @@ class SmsServiceTest {
     }
 
     @Test
+    void sendCodeDoesNotResetHourlyWindowWhenSendCountAlreadyExists() {
+        when(redisTemplate.hasKey("sms:cooldown:01012345678")).thenReturn(false);
+        when(valueOperations.increment("sms:count:01012345678")).thenReturn(2L);
+
+        smsService.sendCode("010-1234-5678");
+
+        verify(redisTemplate, never()).expire("sms:count:01012345678", Duration.ofMinutes(60));
+        verify(messageService).sendOne(any());
+    }
+
+    @Test
     void sendCodeRollsBackRedisStateWhenMessageSendFails() {
         /*
          * 회귀 방지 목적:
@@ -130,6 +141,16 @@ class SmsServiceTest {
     }
 
     @Test
+    void verifyCodeThrowsWhenCodeIsMissingOrExpired() {
+        when(valueOperations.get("sms:code:01012345678")).thenReturn(null);
+
+        assertThatThrownBy(() -> smsService.verifyCode("010-1234-5678", "123456"))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verify(valueOperations, never()).increment("sms:verify:count:01012345678");
+    }
+
+    @Test
     void verifyCodeThrowsAndDeletesCodeWhenVerifyLimitExceeded() {
         /*
          * 회귀 방지 목적:
@@ -159,5 +180,13 @@ class SmsServiceTest {
         verify(redisTemplate).delete("sms:code:01012345678");
         verify(redisTemplate).delete("sms:verify:count:01012345678");
         verify(valueOperations).set("sms:verified:01012345678", "true", Duration.ofMinutes(30));
+    }
+
+    @Test
+    void checkVerifiedThrowsWhenPhoneNumberIsNotVerified() {
+        when(valueOperations.get("sms:verified:01012345678")).thenReturn(null);
+
+        assertThatThrownBy(() -> smsService.checkVerified("010-1234-5678"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }
