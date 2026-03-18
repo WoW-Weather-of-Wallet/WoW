@@ -9,21 +9,24 @@ import {
   type CalendarDayDetail,
   type CalendarDayItem,
   type CalendarTransactionGroup,
-  type CalendarTransactionItem,
   type FixedExpenseItem,
 } from '../mock/calendar';
+import type { ManualCalendarEntryDraft } from '../types/calendar';
 import {
-  buildFallbackDetail,
   buildMonthDays,
-  CATEGORY_META,
+  buildFallbackDetail,
   createDisplayedMonth,
   extractCategoryFromSubtitle,
   formatMonthLabel,
-  formatDateTitle,
   type ManageFixedExpenseItem,
+  CATEGORY_META,
 } from '../constants/calendar/state';
-import type { CalendarEntryCategoryKey } from '../constants/calendar/addEntry';
-import type { ManualCalendarEntryDraft } from '../components/calendar/CalendarAddEntrySheet';
+import {
+  buildManualEntryPatch,
+  mergeCalendarDayDetails,
+  mergeCalendarDaySource,
+  mergeTransactionGroups,
+} from '../constants/calendar/mutations';
 
 type CalendarTab = 'calendar' | 'history';
 
@@ -47,11 +50,10 @@ export function useCalendarMockState() {
     useState<Record<string, CalendarDayDetail>>(mockCalendarDayDetails);
   const [fixedExpenseItems, setFixedExpenseItems] = useState<FixedExpenseItem[]>(mockFixedExpenses);
   const [manageItems, setManageItems] = useState<ManageFixedExpenseItem[]>(
-    () =>
-      mockManageFixedExpenses.map((item) => ({
-        ...item,
-        category: extractCategoryFromSubtitle(item.subtitle),
-      })),
+    mockManageFixedExpenses.map((item) => ({
+      ...item,
+      category: extractCategoryFromSubtitle(item.subtitle),
+    })),
   );
   const [transactionGroups, setTransactionGroups] =
     useState<CalendarTransactionGroup[]>(mockCalendarTransactions);
@@ -81,13 +83,14 @@ export function useCalendarMockState() {
     [displayedMonth],
   );
 
-  const overview = useMemo(() => {
-    return {
+  const overview = useMemo(
+    () => ({
       ...BASE_OVERVIEW,
       monthLabel,
       weatherSubtitle: monthLabel,
-    };
-  }, [monthLabel]);
+    }),
+    [monthLabel],
+  );
 
   useEffect(() => {
     setSelectedDateKey(null);
@@ -102,14 +105,15 @@ export function useCalendarMockState() {
   }, [calendarDayDetails, selectedDateKey]);
 
   useEffect(() => {
-    if (selectedDetail) {
-      setMemoValue(selectedDetail.memo);
+    if (!selectedDetail) {
+      return;
     }
+
+    setMemoValue(selectedDetail.memo);
   }, [selectedDetail]);
 
   const selectedTransaction = useMemo(
-    () =>
-      mockSelectableTransactions.find((item) => item.id === selectedTransactionId) ?? null,
+    () => mockSelectableTransactions.find((item) => item.id === selectedTransactionId) ?? null,
     [selectedTransactionId],
   );
   const editingManageItem = useMemo(
@@ -129,8 +133,13 @@ export function useCalendarMockState() {
       return selectedDateKey;
     }
 
-    const lastDate = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth() + 1, 0).getDate();
+    const lastDate = new Date(
+      displayedMonth.getFullYear(),
+      displayedMonth.getMonth() + 1,
+      0,
+    ).getDate();
     const defaultDay = displayedMonthOffset === 0 ? Math.min(today.getDate(), lastDate) : 1;
+
     return `${displayedMonth.getFullYear()}-${String(displayedMonth.getMonth() + 1).padStart(2, '0')}-${String(defaultDay).padStart(2, '0')}`;
   }, [displayedMonth, displayedMonthOffset, selectedDateKey, today]);
 
@@ -143,7 +152,7 @@ export function useCalendarMockState() {
       return;
     }
 
-    const categoryMeta = CATEGORY_META[payload.category] ?? CATEGORY_META['기타'];
+    const categoryMeta = CATEGORY_META[payload.category] ?? CATEGORY_META.기타;
 
     setManageItems((current) => {
       const nextItem: ManageFixedExpenseItem = {
@@ -286,91 +295,10 @@ export function useCalendarMockState() {
       return;
     }
 
-    const nextItemsByDate = new Map<string, CalendarTransactionItem[]>();
-    const nextAmountByDate = new Map<string, number>();
-
-    entries.forEach((entry, index) => {
-      const categoryMeta = CATEGORY_META[entry.category] ?? CATEGORY_META['기타'];
-      const transactionItem: CalendarTransactionItem = {
-        id: `manual-${entry.dateKey}-${Date.now()}-${index}`,
-        title: entry.merchantName,
-        category: entry.category,
-        amount: entry.amount,
-        time: '직접 입력',
-        icon: categoryMeta.icon,
-        iconTone: categoryMeta.iconTone,
-      };
-
-      nextItemsByDate.set(entry.dateKey, [...(nextItemsByDate.get(entry.dateKey) ?? []), transactionItem]);
-      nextAmountByDate.set(entry.dateKey, (nextAmountByDate.get(entry.dateKey) ?? 0) + entry.amount);
-    });
-
-    setTransactionGroups((current) => {
-      const grouped = new Map(current.map((group) => [group.id, group]));
-
-      nextItemsByDate.forEach((items, dateKey) => {
-        const existingGroup = grouped.get(dateKey);
-        const nextDailySpent = (existingGroup?.dailySpent ?? 0) + items.reduce((sum, item) => sum + item.amount, 0);
-
-        grouped.set(dateKey, {
-          id: dateKey,
-          dateLabel: formatDateTitle(dateKey),
-          dailySpent: nextDailySpent,
-          items: [...items, ...(existingGroup?.items ?? [])],
-        });
-      });
-
-      return Array.from(grouped.values()).sort((a, b) => (a.id < b.id ? 1 : -1));
-    });
-
-    setCalendarDaySource((current) => {
-      const dayMap = new Map(current.map((day) => [day.dateKey, day]));
-
-      nextAmountByDate.forEach((amount, dateKey) => {
-        const existingDay = dayMap.get(dateKey);
-        const [, , dayNumberRaw] = dateKey.split('-');
-        const dayNumber = Number(dayNumberRaw);
-
-        if (existingDay) {
-          dayMap.set(dateKey, {
-            ...existingDay,
-            amount: (existingDay.amount ?? 0) + amount,
-            isFuture: false,
-          });
-          return;
-        }
-
-        dayMap.set(dateKey, {
-          dateKey,
-          dayNumber,
-          amount,
-          tone: 'primary',
-          weatherTone: 'cloudy',
-          isCurrentMonth: true,
-          isFuture: false,
-        });
-      });
-
-      return Array.from(dayMap.values());
-    });
-
-    setCalendarDayDetails((current) => {
-      const nextDetails = { ...current };
-
-      nextItemsByDate.forEach((items, dateKey) => {
-        const existingDetail = nextDetails[dateKey] ?? buildFallbackDetail(dateKey);
-        nextDetails[dateKey] = {
-          ...existingDetail,
-          title: formatDateTitle(dateKey),
-          spentAmount: (existingDetail.spentAmount ?? 0) + items.reduce((sum, item) => sum + item.amount, 0),
-          transactionCount: (existingDetail.transactionCount ?? 0) + items.length,
-          items: [...items, ...existingDetail.items],
-        };
-      });
-
-      return nextDetails;
-    });
-
+    const patch = buildManualEntryPatch(entries);
+    setTransactionGroups((current) => mergeTransactionGroups(current, patch));
+    setCalendarDaySource((current) => mergeCalendarDaySource(current, patch));
+    setCalendarDayDetails((current) => mergeCalendarDayDetails(current, patch));
     setIsAddEntryVisible(false);
   }
 
@@ -394,10 +322,10 @@ export function useCalendarMockState() {
     selectedTransaction,
     editingManageItem,
     fixedExpensesTotal,
-    handleMoveMonth,
     historyTitle: monthLabel,
-    emptyHistoryTitle: `${monthLabel} 내역이 없어요`,
-    emptyHistoryDescription: `${monthLabel}에는 아직 추가된 거래 내역이 없습니다.`,
+    emptyHistoryTitle: `${monthLabel} 내역이 아직 없어요.`,
+    emptyHistoryDescription: `${monthLabel}에 추가한 소비 내역이 여기에 표시됩니다.`,
+    handleMoveMonth,
     setActiveTab,
     setSelectedDateKey,
     setMemoValue,

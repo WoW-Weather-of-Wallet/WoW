@@ -36,16 +36,21 @@ export function extractCategoryFromSubtitle(subtitle: string) {
 
 export function formatDateTitle(dateKey: string) {
   const [year, month, day] = dateKey.split('-').map(Number);
-  const weekday = ['일', '월', '화', '수', '목', '금', '토'][new Date(year, month - 1, day).getDay()];
+  const weekday = ['일', '월', '화', '수', '목', '금', '토'][
+    new Date(year, month - 1, day).getDay()
+  ];
   return `${month}월 ${day}일 (${weekday})`;
 }
 
-export function buildFallbackDetail(dateKey: string, items: CalendarDayDetail['items'] = []): CalendarDayDetail {
+export function buildFallbackDetail(
+  dateKey: string,
+  items: CalendarDayDetail['items'] = [],
+): CalendarDayDetail {
   return {
     dateKey,
     title: formatDateTitle(dateKey),
-    weatherLabel: '기록 없음',
-    weatherHint: '아직 등록된 소비 내역이 없어요.',
+    weatherLabel: '소비 예정 없음',
+    weatherHint: '등록된 거래 내역이 없어요.',
     weatherTemperature: '--',
     spentAmount: items.length > 0 ? items.reduce((sum, item) => sum + Math.max(item.amount, 0), 0) : null,
     transactionCount: items.length > 0 ? items.length : null,
@@ -55,16 +60,16 @@ export function buildFallbackDetail(dateKey: string, items: CalendarDayDetail['i
 }
 
 const BASE_MONTH_DATE = new Date(2025, 5, 1);
-const MONTH_NAMES = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
-const TONE_SEQUENCE: CalendarDayItem['tone'][] = ['rose', 'mint', 'gold', 'primary'];
 
 export function createDisplayedMonth(offset: number) {
   return new Date(BASE_MONTH_DATE.getFullYear(), BASE_MONTH_DATE.getMonth() + offset, 1);
 }
 
 export function formatMonthLabel(date: Date) {
-  return `${date.getFullYear()}년 ${MONTH_NAMES[date.getMonth()]}`;
+  return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
 }
+
+const TONE_SEQUENCE: CalendarDayItem['tone'][] = ['rose', 'mint', 'gold', 'primary'];
 
 export function buildMonthDays(
   displayedMonth: Date,

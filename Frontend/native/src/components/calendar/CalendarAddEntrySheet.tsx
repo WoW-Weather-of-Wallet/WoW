@@ -1,28 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import BottomSheetModal from '../common/BottomSheetModal';
 import {
   CALENDAR_ENTRY_CATEGORIES,
   CALENDAR_EXCEL_BANKS,
-  type CalendarEntryCategoryKey,
 } from '../../constants/calendar/addEntry';
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
-
-export type ManualCalendarEntryDraft = {
-  id: string;
-  dateKey: string;
-  merchantName: string;
-  category: CalendarEntryCategoryKey;
-  amount: number;
-};
+import { useCalendarAddEntryForm } from '../../hooks/useCalendarAddEntryForm';
+import type { ManualCalendarEntryDraft } from '../../types/calendar';
 
 interface CalendarAddEntrySheetProps {
   visible: boolean;
@@ -48,52 +34,25 @@ export default function CalendarAddEntrySheet({
   onClose,
   onCompleteManualEntries,
 }: CalendarAddEntrySheetProps) {
-  const [activeMode, setActiveMode] = useState<EntryMode>('direct');
-  const [dateKey, setDateKey] = useState(defaultDateKey);
-  const [selectedCategory, setSelectedCategory] = useState<CalendarEntryCategoryKey>('식비');
-  const [merchantName, setMerchantName] = useState('');
-  const [amountInput, setAmountInput] = useState('');
-  const [draftEntries, setDraftEntries] = useState<ManualCalendarEntryDraft[]>([]);
-
-  useEffect(() => {
-    if (!visible) {
-      return;
-    }
-
-    setActiveMode('direct');
-    setDateKey(defaultDateKey);
-    setSelectedCategory('식비');
-    setMerchantName('');
-    setAmountInput('');
-    setDraftEntries([]);
-  }, [defaultDateKey, visible]);
-
-  const isAddEnabled = useMemo(() => {
-    return dateKey.trim().length > 0 && merchantName.trim().length > 0 && Number(amountInput) > 0;
-  }, [amountInput, dateKey, merchantName]);
-
-  const handleAddDraft = () => {
-    if (!isAddEnabled) {
-      return;
-    }
-
-    setDraftEntries((current) => [
-      ...current,
-      {
-        id: `draft-${Date.now()}-${current.length}`,
-        dateKey,
-        merchantName: merchantName.trim(),
-        category: selectedCategory,
-        amount: Number(amountInput),
-      },
-    ]);
-    setMerchantName('');
-    setAmountInput('');
-  };
-
-  const handleRemoveDraft = (draftId: string) => {
-    setDraftEntries((current) => current.filter((draft) => draft.id !== draftId));
-  };
+  const {
+    activeMode,
+    dateKey,
+    selectedCategory,
+    merchantName,
+    amountInput,
+    draftEntries,
+    isAddEnabled,
+    setActiveMode,
+    setDateKey,
+    setSelectedCategory,
+    setMerchantName,
+    setAmountInput,
+    addDraftEntry,
+    removeDraftEntry,
+  } = useCalendarAddEntryForm({
+    defaultDateKey,
+    visible,
+  });
 
   const handleComplete = () => {
     if (draftEntries.length === 0) {
@@ -173,7 +132,7 @@ export default function CalendarAddEntrySheet({
 
                       <TouchableOpacity
                         activeOpacity={0.8}
-                        onPress={() => handleRemoveDraft(draft.id)}
+                        onPress={() => removeDraftEntry(draft.id)}
                       >
                         <Ionicons name="close" size={wp(16)} color={COLORS.textTertiary} />
                       </TouchableOpacity>
@@ -200,7 +159,9 @@ export default function CalendarAddEntrySheet({
                       size={wp(14)}
                       color={isActive ? '#FFFFFF' : COLORS.textSecondary}
                     />
-                    <Text style={[styles.categoryChipText, isActive && styles.categoryChipTextActive]}>
+                    <Text
+                      style={[styles.categoryChipText, isActive && styles.categoryChipTextActive]}
+                    >
                       {category.label}
                     </Text>
                   </TouchableOpacity>
@@ -233,14 +194,17 @@ export default function CalendarAddEntrySheet({
               activeOpacity={0.9}
               style={[styles.primaryButton, !isAddEnabled && styles.primaryButtonDisabled]}
               disabled={!isAddEnabled}
-              onPress={handleAddDraft}
+              onPress={addDraftEntry}
             >
               <Text style={styles.primaryButtonText}>+ 추가</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               activeOpacity={0.9}
-              style={[styles.secondaryButton, draftEntries.length === 0 && styles.secondaryButtonDisabled]}
+              style={[
+                styles.secondaryButton,
+                draftEntries.length === 0 && styles.secondaryButtonDisabled,
+              ]}
               disabled={draftEntries.length === 0}
               onPress={handleComplete}
             >
@@ -267,7 +231,8 @@ export default function CalendarAddEntrySheet({
               <View style={styles.excelTextWrap}>
                 <Text style={styles.excelTitle}>엑셀 파일 업로드</Text>
                 <Text style={styles.excelDescription}>
-                  은행 앱에서 내보낸 .xlsx / .csv 파일을 선택하면 오늘 날짜 거래내역만 자동으로 가져와요.
+                  은행 앱에서 내보낸 `.xlsx` 또는 `.csv` 파일을 선택하면 오늘 날짜 거래내역만
+                  자동으로 가져와요.
                 </Text>
               </View>
             </View>
@@ -291,7 +256,9 @@ export default function CalendarAddEntrySheet({
 
             <View style={styles.noticeBox}>
               <Ionicons name="bulb-outline" size={wp(14)} color="#D2A645" />
-              <Text style={styles.noticeText}>이미 같은 날짜 내역이 있으면 중복 추가되지 않아요.</Text>
+              <Text style={styles.noticeText}>
+                이미 같은 날짜 내역이 있으면 중복 추가되지 않아요.
+              </Text>
             </View>
           </ScrollView>
         )}
