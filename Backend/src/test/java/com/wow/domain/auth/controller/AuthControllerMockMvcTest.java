@@ -1,6 +1,9 @@
 package com.wow.domain.auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wow.domain.auth.dto.FindIdResponse;
+import com.wow.domain.auth.dto.TokenRefreshResponse;
+import com.wow.domain.auth.dto.UserCreateResponse;
 import com.wow.domain.auth.service.AuthService;
 import com.wow.domain.auth.service.SmsService;
 import com.wow.global.GlobalExceptionHandler;
@@ -14,7 +17,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.web.servlet.ResultActions;
 
+import java.time.LocalDate;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -27,6 +32,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(MockitoExtension.class)
 class AuthControllerMockMvcTest {
+
+    private static final String AUTH_BASE_URL = "/api/v1/auth";
+    private static final String DEFAULT_PHONE_NUMBER = "010-1234-5678";
+    private static final String DEFAULT_BIRTH_DATE = "1999-01-01";
 
     private MockMvc mockMvc;
 
@@ -52,20 +61,7 @@ class AuthControllerMockMvcTest {
 
     @Test
     void signupReturnsBadRequestErrorResponseWhenValidationFails() throws Exception {
-        Map<String, Object> request = Map.of(
-                "userId", "",
-                "pw", "Valid1!A",
-                "name", "tester",
-                "gender", "M",
-                "phoneNumber", "010-1234-5678",
-                "birthDate", "1999-01-01",
-                "termsAgreed", true,
-                "alarmEnabled", true
-        );
-
-        mockMvc.perform(post("/api/v1/auth/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        performPost("/signup", signupRequest(Map.of("userId", "")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.BAD_REQUEST.value()))
                 .andExpect(jsonPath("$.errorMessage").isNotEmpty());
@@ -73,25 +69,13 @@ class AuthControllerMockMvcTest {
 
     @Test
     void signupReturnsSuccessResponseWhenRequestIsValid() throws Exception {
-        Map<String, Object> request = Map.of(
-                "userId", "wowuser",
-                "pw", "Valid1!A",
-                "name", "tester",
-                "gender", "M",
-                "phoneNumber", "010-1234-5678",
-                "birthDate", "1999-01-01",
-                "termsAgreed", true,
-                "alarmEnabled", true
-        );
         when(authService.signup(any())).thenReturn(
-                new com.wow.domain.auth.dto.UserCreateResponse(
-                        "wowuser", "tester", "M", "01012345678", java.time.LocalDate.of(1999, 1, 1), true
+                new UserCreateResponse(
+                        "wowuser", "tester", "M", "01012345678", LocalDate.of(1999, 1, 1), true
                 )
         );
 
-        mockMvc.perform(post("/api/v1/auth/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        performPost("/signup", signupRequest(Map.of()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value("wowuser"))
                 .andExpect(jsonPath("$.name").value("tester"));
@@ -102,11 +86,7 @@ class AuthControllerMockMvcTest {
         when(authService.refresh("invalid-refresh-token"))
                 .thenThrow(new IllegalArgumentException("invalid refresh token"));
 
-        mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                Map.of("refreshToken", "invalid-refresh-token")
-                        )))
+        performPost("/refresh", Map.of("refreshToken", "invalid-refresh-token"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.BAD_REQUEST.value()))
                 .andExpect(jsonPath("$.errorMessage").value("invalid refresh token"));
@@ -115,15 +95,11 @@ class AuthControllerMockMvcTest {
     @Test
     void refreshReturnsSuccessResponseWhenRequestIsValid() throws Exception {
         when(authService.refresh("refresh-token"))
-                .thenReturn(new com.wow.domain.auth.dto.TokenRefreshResponse(
+                .thenReturn(new TokenRefreshResponse(
                         "new-access-token", 1800L, "new-refresh-token", 1209600L
                 ));
 
-        mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                Map.of("refreshToken", "refresh-token")
-                        )))
+        performPost("/refresh", Map.of("refreshToken", "refresh-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("new-access-token"))
                 .andExpect(jsonPath("$.refreshToken").value("new-refresh-token"));
@@ -131,11 +107,7 @@ class AuthControllerMockMvcTest {
 
     @Test
     void refreshReturnsBadRequestErrorResponseWhenRefreshTokenIsBlank() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                Map.of("refreshToken", "")
-                        )))
+        performPost("/refresh", Map.of("refreshToken", ""))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.BAD_REQUEST.value()))
                 .andExpect(jsonPath("$.errorMessage").isNotEmpty());
@@ -143,11 +115,7 @@ class AuthControllerMockMvcTest {
 
     @Test
     void sendSmsReturnsBadRequestErrorResponseWhenPhoneNumberValidationFails() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/sms/send")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                Map.of("phoneNumber", "01012")
-                        )))
+        performPost("/sms/send", Map.of("phoneNumber", "01012"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.BAD_REQUEST.value()))
                 .andExpect(jsonPath("$.errorMessage").isNotEmpty());
@@ -155,27 +123,16 @@ class AuthControllerMockMvcTest {
 
     @Test
     void sendSmsReturnsOkWhenRequestIsValid() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/sms/send")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                Map.of("phoneNumber", "010-1234-5678")
-                        )))
+        performPost("/sms/send", Map.of("phoneNumber", DEFAULT_PHONE_NUMBER))
                 .andExpect(status().isOk())
                 .andExpect(content().string(""));
 
-        verify(smsService).sendCode("010-1234-5678");
+        verify(smsService).sendCode(DEFAULT_PHONE_NUMBER);
     }
 
     @Test
     void verifySmsReturnsBadRequestErrorResponseWhenCodeValidationFails() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/sms/verify")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                Map.of(
-                                        "phoneNumber", "010-1234-5678",
-                                        "code", "12345"
-                                )
-                        )))
+        performPost("/sms/verify", smsVerifyRequest(Map.of("code", "12345")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.BAD_REQUEST.value()))
                 .andExpect(jsonPath("$.errorMessage").isNotEmpty());
@@ -183,32 +140,16 @@ class AuthControllerMockMvcTest {
 
     @Test
     void verifySmsReturnsOkWhenRequestIsValid() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/sms/verify")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                Map.of(
-                                        "phoneNumber", "010-1234-5678",
-                                        "code", "123456"
-                                )
-                        )))
+        performPost("/sms/verify", smsVerifyRequest(Map.of()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(""));
 
-        verify(smsService).verifyCode("010-1234-5678", "123456");
+        verify(smsService).verifyCode(DEFAULT_PHONE_NUMBER, "123456");
     }
 
     @Test
     void findIdReturnsBadRequestErrorResponseWhenValidationFails() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/find/id")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                Map.of(
-                                        "name", "",
-                                        "birthDate", "1999-01-01",
-                                        "gender", "M",
-                                        "phoneNumber", "010-1234-5678"
-                                )
-                        )))
+        performPost("/find/id", findIdRequest(Map.of("name", "")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.BAD_REQUEST.value()))
                 .andExpect(jsonPath("$.errorMessage").isNotEmpty());
@@ -216,35 +157,16 @@ class AuthControllerMockMvcTest {
 
     @Test
     void findIdReturnsSuccessResponseWhenRequestIsValid() throws Exception {
-        when(authService.findId(any())).thenReturn(new com.wow.domain.auth.dto.FindIdResponse("wowuser"));
+        when(authService.findId(any())).thenReturn(new FindIdResponse("wowuser"));
 
-        mockMvc.perform(post("/api/v1/auth/find/id")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                Map.of(
-                                        "name", "tester",
-                                        "birthDate", "1999-01-01",
-                                        "gender", "M",
-                                        "phoneNumber", "010-1234-5678"
-                                )
-                        )))
+        performPost("/find/id", findIdRequest(Map.of()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value("wowuser"));
     }
 
     @Test
     void findPasswordReturnsBadRequestErrorResponseWhenValidationFails() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/find/password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                Map.of(
-                                        "userId", "wowuser",
-                                        "name", "",
-                                        "birthDate", "1999-01-01",
-                                        "phoneNumber", "010-1234-5678",
-                                        "newPw", "Valid1!A"
-                                )
-                        )))
+        performPost("/find/password", findPasswordRequest(Map.of("name", "")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.BAD_REQUEST.value()))
                 .andExpect(jsonPath("$.errorMessage").isNotEmpty());
@@ -252,20 +174,61 @@ class AuthControllerMockMvcTest {
 
     @Test
     void findPasswordReturnsNoContentWhenRequestIsValid() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/find/password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                Map.of(
-                                        "userId", "wowuser",
-                                        "name", "tester",
-                                        "birthDate", "1999-01-01",
-                                        "phoneNumber", "010-1234-5678",
-                                        "newPw", "Valid1!A"
-                                )
-                        )))
+        performPost("/find/password", findPasswordRequest(Map.of()))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
 
         verify(authService).findPassword(any());
+    }
+
+    private ResultActions performPost(String path, Map<String, Object> requestBody) throws Exception {
+        return mockMvc.perform(post(AUTH_BASE_URL + path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody)));
+    }
+
+    private Map<String, Object> signupRequest(Map<String, Object> overrides) {
+        return merge(Map.of(
+                "userId", "wowuser",
+                "pw", "Valid1!A",
+                "name", "tester",
+                "gender", "M",
+                "phoneNumber", DEFAULT_PHONE_NUMBER,
+                "birthDate", DEFAULT_BIRTH_DATE,
+                "termsAgreed", true,
+                "alarmEnabled", true
+        ), overrides);
+    }
+
+    private Map<String, Object> smsVerifyRequest(Map<String, Object> overrides) {
+        return merge(Map.of(
+                "phoneNumber", DEFAULT_PHONE_NUMBER,
+                "code", "123456"
+        ), overrides);
+    }
+
+    private Map<String, Object> findIdRequest(Map<String, Object> overrides) {
+        return merge(Map.of(
+                "name", "tester",
+                "birthDate", DEFAULT_BIRTH_DATE,
+                "gender", "M",
+                "phoneNumber", DEFAULT_PHONE_NUMBER
+        ), overrides);
+    }
+
+    private Map<String, Object> findPasswordRequest(Map<String, Object> overrides) {
+        return merge(Map.of(
+                "userId", "wowuser",
+                "name", "tester",
+                "birthDate", DEFAULT_BIRTH_DATE,
+                "phoneNumber", DEFAULT_PHONE_NUMBER,
+                "newPw", "Valid1!A"
+        ), overrides);
+    }
+
+    private Map<String, Object> merge(Map<String, Object> defaults, Map<String, Object> overrides) {
+        java.util.LinkedHashMap<String, Object> merged = new java.util.LinkedHashMap<>(defaults);
+        merged.putAll(overrides);
+        return merged;
     }
 }
