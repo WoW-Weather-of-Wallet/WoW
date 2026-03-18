@@ -25,43 +25,37 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserProfileResponse getProfile(String userId) {
-
         User user = userRepository.findByUserId(userId)
                 .or(() -> userRepository.findBySsafyOauthId(userId))
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         return UserProfileResponse.from(user);
-
     }
 
     @Transactional
     public void deleteUser(String identifier) {
-
         User user = userRepository.findByUserId(identifier)
                 .or(() -> userRepository.findBySsafyOauthId(identifier))
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-
-        // 회원 동의 이력 삭제
 
         // Redis refresh token 삭제
         String redisKey = user.getUserId() != null ? user.getUserId() : user.getSsafyOauthId();
         redisTemplate.delete(RedisKeys.REFRESH_TOKEN_PREFIX + redisKey);
 
-        // 유저 삭제
+        // User 엔티티 삭제 시 연관된 userTerms는 cascade/orphanRemoval로 함께 정리됩니다.
         userRepository.delete(user);
-
     }
 
     @Transactional
     public UserProfileResponse updateProfile(String userId, UpdateProfileRequest request) {
-
         User user = userRepository.findByUserId(userId)
                 .or(() -> userRepository.findBySsafyOauthId(userId))
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         /*
          * 수정 이유:
-         * - DTO 검증이 있더라도 서비스에서 한 번 더 막아두면 다른 진입 경로나 future refactor에서도 안전합니다.
+         * - DTO 검증이 있어도 서비스에서 한 번 더 방어하면,
+         *   다른 진입 경로나 이후 리팩터링에서도 공백 이름 저장을 막을 수 있습니다.
          *
          * 수정 전 코드:
          * - user.updateProfile(request.getName(), request.getGender(), request.getBirthDate());
@@ -71,14 +65,11 @@ public class UserService {
         }
 
         user.updateProfile(request.getName(), request.getGender(), request.getBirthDate());
-
         return UserProfileResponse.from(user);
-
     }
 
     @Transactional
     public void updatePhone(String userId, UpdatePhoneRequest request) {
-
         User user = userRepository.findByUserId(userId)
                 .or(() -> userRepository.findBySsafyOauthId(userId))
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
@@ -95,8 +86,9 @@ public class UserService {
 
         /*
          * 수정 이유:
-         * - 전화번호 변경 중 예외가 발생해도 인증 완료 상태가 남아 있으면 같은 인증을 재사용할 수 있습니다.
-         * - 인증 확인 후에는 finally 에서 상태를 지워 실패 케이스까지 일회성으로 소비되도록 변경합니다.
+         * - 전화번호 변경 중 예외가 나도 SMS 인증 완료 상태가 남아 있으면
+         *   같은 인증을 재사용할 수 있습니다.
+         * - 인증 확인 뒤에는 finally 에서 상태를 지워 실패 케이스까지 일회성으로 소비되게 했습니다.
          *
          * 수정 전 코드:
          * - smsService.checkVerified(phoneNumber);
@@ -109,7 +101,5 @@ public class UserService {
         } finally {
             smsService.deleteVerified(phoneNumber);
         }
-
     }
-
 }

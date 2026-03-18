@@ -51,17 +51,13 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public UserIdCheckResponse checkUserId(String userId) {
-
         boolean isAvailable = !userRepository.existsByUserId(userId);
-
         String message = isAvailable ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다.";
-
         return new UserIdCheckResponse(isAvailable, message, userId);
     }
 
     @Transactional
     public UserCreateResponse signup(UserCreateRequest request) {
-
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
         String normalizedName = request.getName().trim();
 
@@ -81,8 +77,10 @@ public class AuthService {
 
         /*
          * 수정 이유:
-         * - 기존에는 인증 완료 상태를 마지막에만 삭제해서, DB 저장 중 예외가 나면 같은 SMS 인증을 다시 재사용할 수 있었습니다.
-         * - 인증 확인 이후에는 성공/실패와 관계없이 finally 에서 상태를 정리해 일회성으로 소비되도록 변경합니다.
+         * - 기존에는 SMS 인증 완료 상태를 메서드 마지막에만 삭제해서,
+         *   DB 저장 중 예외가 나면 같은 인증 상태를 다시 재사용할 수 있었습니다.
+         * - 인증 확인 뒤에는 성공/실패와 관계없이 finally 에서 상태를 정리해
+         *   SMS 인증을 일회성으로 소비하도록 변경했습니다.
          *
          * 수정 전 코드:
          * - smsService.checkVerified(phoneNumber);
@@ -95,10 +93,11 @@ public class AuthService {
                     .userId(request.getUserId())
                     /*
                      * 수정 이유:
-                     * - 일반 회원은 userId만 가지고, ssafyOauthId는 null이라는 정책을 생성 시점에 명시합니다.
+                     * - 일반 회원은 userId만 가지고, ssafyOauthId는 null 이라는 정책을
+                     *   생성 시점 코드에서 바로 보이게 하기 위해 명시했습니다.
                      *
                      * 수정 전 코드:
-                     * - builder 기본값에 맡겨 null이 들어갔지만, 의도가 코드에서 바로 드러나지 않았습니다.
+                     * - builder 기본값에 의존해 ssafyOauthId가 암묵적으로 null 이었습니다.
                      */
                     .ssafyOauthId(null)
                     .pw(bCryptPasswordEncoder.encode(request.getPw()))
@@ -126,7 +125,6 @@ public class AuthService {
 
     @Transactional
     public UserLoginResponse login(UserLoginRequest request) {
-
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUserId(),
@@ -160,7 +158,6 @@ public class AuthService {
     }
 
     public TokenRefreshResponse refresh(String refreshToken) {
-
         if (!jwtTokenProvider.validateToken(refreshToken)) {
             throw new IllegalArgumentException("유효하지 않은 refresh token입니다.");
         }
@@ -179,7 +176,8 @@ public class AuthService {
 
         /*
          * 수정 이유:
-         * - 기존에는 access token만 재발급해서 refresh token 탈취 시 같은 값을 계속 재사용할 수 있었습니다.
+         * - 기존에는 access token만 재발급하고 refresh token은 그대로 유지해서,
+         *   탈취된 refresh token이 계속 재사용될 수 있었습니다.
          * - refresh token도 새로 발급하고 Redis 저장값을 교체하는 rotation 방식으로 보완했습니다.
          *
          * 수정 전 코드:
@@ -209,14 +207,13 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public FindIdResponse findId(FindIdRequest request) {
-
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
         String normalizedName = request.getName().trim();
 
         /*
          * 수정 이유:
-         * - SSAFY 계정 여부를 안내하는 현재 정책을 유지하되, 조회 조건에 gender까지 포함해
-         *   name/gender/birthDate/phoneNumber 조합으로 본인 확인 강도를 높였습니다.
+         * - SSAFY 계정 여부를 안내하는 현재 정책을 유지하되,
+         *   본인 확인 강도를 높이기 위해 gender까지 조회 조건에 포함했습니다.
          *
          * 수정 전 코드:
          * - userRepository.findByNameAndBirthDateAndPhoneNumber(request.getName(), request.getBirthDate(), phoneNumber)
@@ -227,11 +224,11 @@ public class AuthService {
 
         /*
          * 수정 이유:
-         * - 최종 정책은 SSAFY 계정이면 계정 유형을 안내하는 것이므로, 상충되는 이전 주석을 제거하고
-         *   현재 의도를 한 블록으로만 남깁니다.
+         * - 최종 정책은 SSAFY 계정이면 계정 유형을 안내하는 것이므로,
+         *   이전에 남아 있던 상충 주석을 제거하고 현재 정책만 남겼습니다.
          *
          * 수정 전 코드:
-         * - 상반된 정책 설명 주석 두 개가 함께 남아 있었습니다.
+         * - 서로 반대 의미의 정책 주석이 함께 남아 있었습니다.
          */
         if (user.getUserId() == null) {
             throw new IllegalArgumentException("SSAFY 계정으로 가입된 회원입니다.");
@@ -245,7 +242,6 @@ public class AuthService {
 
     @Transactional
     public void findPassword(FindPwRequest request) {
-
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
         String normalizedName = request.getName().trim();
 
@@ -264,7 +260,6 @@ public class AuthService {
 
     @Transactional
     public void changePassword(String userId, ChangePasswordRequest request) {
-
         User user = userRepository.findByUserId(userId)
                 .or(() -> userRepository.findBySsafyOauthId(userId))
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
@@ -278,7 +273,6 @@ public class AuthService {
         }
 
         validatePassword(request.getNewPw(), userId);
-
         user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
     }
 
@@ -302,10 +296,10 @@ public class AuthService {
             throw new IllegalArgumentException("비밀번호는 아이디와 동일할 수 없습니다.");
         }
         if (hasConsecutiveSequence(pw)) {
-            throw new IllegalArgumentException("비밀번호에 연속된 문자 또는 숫자 4자를 사용할 수 없습니다.");
+            throw new IllegalArgumentException("비밀번호에 연속된 문자 또는 숫자 4자 이상은 사용할 수 없습니다.");
         }
         if (hasRepeatedChars(pw)) {
-            throw new IllegalArgumentException("비밀번호에 동일한 문자 또는 숫자 4자를 반복할 수 없습니다.");
+            throw new IllegalArgumentException("비밀번호에 동일한 문자 또는 숫자 4자 이상 반복은 사용할 수 없습니다.");
         }
     }
 
