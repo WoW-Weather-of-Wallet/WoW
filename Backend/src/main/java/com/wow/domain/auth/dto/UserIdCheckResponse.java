@@ -9,5 +9,6 @@ public class UserIdCheckResponse {
 
     private boolean isAvailable;
     private String message;
+    private String userId;
 
 }

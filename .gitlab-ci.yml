@@ -2,19 +2,31 @@ stages:
   - build
   - deploy
 
-build:
+build-front:
   stage: build
   tags:
-    - deploy
+    - build
   rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
-    - if: '$CI_COMMIT_BRANCH == "dev"'
-    - if: '$CI_COMMIT_BRANCH == "front"'
-    - if: '$CI_COMMIT_BRANCH == "back"'
-    - if: '$CI_COMMIT_BRANCH == "ai"'
-    - if: '$CI_COMMIT_BRANCH == "infra"'
+    - if: '$CI_COMMIT_BRANCH'
+      changes:
+        - Frontend/react/**/*
+        - Frontend/native/**/*
+        - Frontend/shared/**/*
   script:
-    - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN
+    - docker run --rm --user $(id -u):$(id -g) -e HOME=/tmp -e npm_config_cache=/tmp/.npm -v $CI_PROJECT_DIR/Frontend/react:/app -w /app node:20-alpine sh -c "npm ci && npm run build"
+    - docker run --rm --user $(id -u):$(id -g) -e HOME=/tmp -e npm_config_cache=/tmp/.npm -v $CI_PROJECT_DIR/Frontend:/app -w /app/shared node:20-alpine sh -c "npm ci && npx tsc -p tsconfig.json --noEmit"
+    - docker run --rm --user $(id -u):$(id -g) -e HOME=/tmp -e npm_config_cache=/tmp/.npm -v $CI_PROJECT_DIR/Frontend:/app -w /app/native node:20-alpine sh -c "npm ci && npx tsc -p tsconfig.json --noEmit"
+
+build-back:
+  stage: build
+  tags:
+    - build
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+      changes:
+        - Backend/**/*
+  script:
+    - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
     - docker build -t $DOCKERHUB_USERNAME/wow-backend:latest $CI_PROJECT_DIR/Backend
     - docker push $DOCKERHUB_USERNAME/wow-backend:latest
 
@@ -39,6 +51,14 @@ deploy:
       REDIS_HOST=${REDIS_HOST}
       REDIS_PORT=${REDIS_PORT}
       SPRING_PROFILES_ACTIVE=prod
+      JWT_SECRET=${JWT_SECRET}
+      SSO_SSAFY_CLIENT_ID=${SSO_SSAFY_CLIENT_ID}
+      SSO_SSAFY_CLIENT_SECRET=${SSO_SSAFY_CLIENT_SECRET}
+      SSO_SSAFY_REDIRECT_URI=${SSO_SSAFY_REDIRECT_URI}
+      SOLAPI_API_KEY=${SOLAPI_API_KEY}
+      SOLAPI_API_SECRET=${SOLAPI_API_SECRET}
+      SOLAPI_SENDER=${SOLAPI_SENDER}
       ENV
     - docker-compose -f docker-compose.prod.yml down
     - docker-compose -f docker-compose.prod.yml up -d
+

@@ -9,6 +9,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -53,11 +55,22 @@ public class User {
     @Column(name = "alarm_enabled")
     private boolean alarmEnabled;
 
-    public void updateOnboarding(String gender, String phoneNumber, LocalDate birthDate, boolean alarmEnabled) {
-        this.gender = gender;
+    @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<UserTerm> userTerms = new ArrayList<>();
+
+    public void updateProfile(String name, String gender, LocalDate birthDate) {
+        if (name != null) this.name = name;
+        if (gender != null) this.gender = gender;
+        if (birthDate != null) this.birthDate = birthDate;
+    }
+
+    public void updatePw(String encodedPw) {
+        this.pw = encodedPw;
+    }
+
+    public void updatePhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
-        this.birthDate = birthDate;
-        this.alarmEnabled = alarmEnabled;
     }
 
     @CreatedDate

@@ -24,17 +24,20 @@ public class JwtTokenProvider {
 
     private final SecretKey key;
     private final Duration accessTokenValidity;
+    private final Duration refreshTokenValidity;
     private final String issuer;
     private final UserDetailsService userDetailsService;
 
     public JwtTokenProvider(
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.access-exp-min}") long accessTokenExpMin,
+            @Value("${jwt.refresh-exp-day}") long refreshTokenExpDay,
             @Value("${jwt.issuer}") String issuer,
             UserDetailsService userDetailsService
     ) {
         this.key = createKey(secret);
         this.accessTokenValidity = Duration.ofMinutes(accessTokenExpMin);
+        this.refreshTokenValidity = Duration.ofDays(refreshTokenExpDay);
         this.issuer = issuer;
         this.userDetailsService = userDetailsService;
     }
@@ -57,6 +60,24 @@ public class JwtTokenProvider {
                 .claim("roles", roles)
                 .signWith(key)
                 .compact();
+    }
+
+    // Refresh Token 생성
+    public String createRefreshToken(String userId) {
+        Instant now = Instant.now();
+        Instant expiry = now.plus(refreshTokenValidity);
+
+        return Jwts.builder()
+                .subject(userId)
+                .issuer(issuer)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiry))
+                .signWith(key)
+                .compact();
+    }
+
+    public long getRefreshTokenValidityInSeconds() {
+        return refreshTokenValidity.toSeconds();
     }
 
     private Claims parseClaims(String token) {
