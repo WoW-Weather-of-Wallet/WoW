@@ -1,5 +1,6 @@
 package com.wow.global;
 
+import com.wow.global.common.ErrorResponse;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,15 +10,14 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.sql.SQLException;
-import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException e) {
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity.badRequest()
-                .body(Map.of("message", e.getMessage()));
+                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
     }
 
     /*
@@ -30,37 +30,38 @@ public class GlobalExceptionHandler {
      * - AuthenticationException 처리 핸들러가 없었습니다.
      */
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<Map<String, String>> handleAuthenticationException(AuthenticationException e) {
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("message", "아이디 또는 비밀번호가 올바르지 않습니다."));
+                .body(ErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), "아이디 또는 비밀번호가 올바르지 않습니다."));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException e) {
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getDefaultMessage())
                 .findFirst()
                 .orElse("입력값이 올바르지 않습니다.");
         return ResponseEntity.badRequest()
-                .body(Map.of("message", message));
+                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), message));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<Map<String, String>> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException e) {
         Throwable cause = e.getRootCause();
         if (cause instanceof SQLException sqlException && "23505".equals(sqlException.getSQLState())) {
             String message = sqlException.getMessage();
             if (message != null && message.contains("phone_number")) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("message", "이미 사용 중인 전화번호입니다."));
-            } else if (message != null && message.contains("user_id")) {
+                        .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 사용 중인 전화번호입니다."));
+            }
+            if (message != null && message.contains("user_id")) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("message", "이미 사용 중인 아이디입니다."));
+                        .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 사용 중인 아이디입니다."));
             }
             return ResponseEntity.badRequest()
-                    .body(Map.of("message", "이미 사용 중인 값입니다."));
+                    .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 사용 중인 값입니다."));
         }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("message", "서버 오류가 발생했습니다."));
+                .body(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "서버 오류가 발생했습니다."));
     }
 }
