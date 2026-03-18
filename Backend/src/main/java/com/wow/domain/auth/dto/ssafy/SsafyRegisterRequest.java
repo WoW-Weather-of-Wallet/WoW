@@ -1,5 +1,6 @@
 package com.wow.domain.auth.dto.ssafy;
 
+import com.wow.global.constant.ValidationPatterns;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -28,11 +29,11 @@ public class SsafyRegisterRequest {
     private String ssafyOauthId;
 
     @NotBlank(message = "전화번호를 입력해주세요.")
-    @Pattern(regexp = "^01\\d-?\\d{3,4}-?\\d{4}$", message = "전화번호는 01012345678 또는 010-1234-5678 형식으로 입력해주세요.")
+    @Pattern(regexp = ValidationPatterns.PHONE_NUMBER, message = "전화번호는 01012345678 또는 010-1234-5678 형식으로 입력해주세요.")
     private String phoneNumber;
 
     @NotBlank(message = "성별을 입력해주세요.")
-    @Pattern(regexp = "^[MF]$", message = "성별은 M 또는 F만 가능합니다.")
+    @Pattern(regexp = ValidationPatterns.GENDER, message = "성별은 M 또는 F만 가능합니다.")
     private String gender;
 
     @NotNull(message = "생년월일을 입력해주세요.")
