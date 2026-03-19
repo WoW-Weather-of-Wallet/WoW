@@ -32,7 +32,7 @@ public class Calendar {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "calendar_goal_id", nullable = false)
+    @Column(name = "calendar_id", nullable = false)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -41,8 +41,8 @@ public class Calendar {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "calendar_weather_id")
-    private CalendarWeather calendarWeather;
+    @JoinColumn(name = "spending_weather_id", nullable = false)
+    private SpendingWeather spendingWeather;
 
     @Column(nullable = false)
     private LocalDate date;
@@ -59,6 +59,9 @@ public class Calendar {
 
     @Column(columnDefinition = "TEXT")
     private String memo;
+
+    @Column(length = 100)
+    private String description;
 
     @Column(name = "is_forecast")
     private Boolean isForecast;
