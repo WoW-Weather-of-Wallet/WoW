@@ -196,10 +196,6 @@ public class CalendarService {
     }
 
     // ③ 최종 확정 후 DB 저장
-//    @Transactional
-//    public void confirmTransactions(List<TransactionConfirmDto> items) {
-//        // TODO: Repository 연결 후 DB 저장 로직 구현
-//    }
     @Transactional
     public TransactionConfirmResponse confirmTransactions(
             Long userId, TransactionConfirmRequest request) {
@@ -210,21 +206,17 @@ public class CalendarService {
             throw new BusinessException(ErrorCode.INVALID_STAGE_ID);
         }
 
-        // userId로 User 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 대표 날짜 기준 중복 체크 (날짜 전체 범위로 검색)
         LocalDate representativeDate = items.get(0).getTransactionDate();
         LocalDateTime dayStart = representativeDate.atStartOfDay();
         LocalDateTime dayEnd = representativeDate.atTime(23, 59, 59);
 
-        if (transactionRepository.existsByUser_IdAndTransactionAtBetween(
-                userId, dayStart, dayEnd)) {
-            throw new BusinessException(ErrorCode.DUPLICATE_TRANSACTION);
-        }
+        // ← 기존 409 에러 대신 해당 날짜 데이터 전부 삭제 (덮어쓰기)
+        transactionRepository.deleteByUser_IdAndTransactionAtBetween(
+                userId, dayStart, dayEnd);
 
-        // 엔티티 변환 및 저장
         List<Transaction> entities = items.stream()
                 .map(item -> {
                     ExpenseCategory category = expenseCategoryRepository
@@ -243,9 +235,54 @@ public class CalendarService {
                 .toList();
 
         transactionRepository.saveAll(entities);
-
         return new TransactionConfirmResponse(entities.size(), representativeDate);
     }
+//    @Transactional
+//    public TransactionConfirmResponse confirmTransactions(
+//            Long userId, TransactionConfirmRequest request) {
+//
+//        List<TransactionConfirmRequest.TransactionItem> items = request.getItems();
+//
+//        if (items == null || items.isEmpty()) {
+//            throw new BusinessException(ErrorCode.INVALID_STAGE_ID);
+//        }
+//
+//        // userId로 User 조회
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+//
+//        // 대표 날짜 기준 중복 체크 (날짜 전체 범위로 검색)
+//        LocalDate representativeDate = items.get(0).getTransactionDate();
+//        LocalDateTime dayStart = representativeDate.atStartOfDay();
+//        LocalDateTime dayEnd = representativeDate.atTime(23, 59, 59);
+//
+//        if (transactionRepository.existsByUser_IdAndTransactionAtBetween(
+//                userId, dayStart, dayEnd)) {
+//            throw new BusinessException(ErrorCode.DUPLICATE_TRANSACTION);
+//        }
+//
+//        // 엔티티 변환 및 저장
+//        List<Transaction> entities = items.stream()
+//                .map(item -> {
+//                    ExpenseCategory category = expenseCategoryRepository
+//                            .findById(item.getCategoryId())
+//                            .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_STAGE_ID));
+//
+//                    return Transaction.builder()
+//                            .user(user)
+//                            .category(category)
+//                            .amount(BigDecimal.valueOf(item.getAmount()))
+//                            .merchantName(item.getMerchantName())
+//                            .transactionAt(item.getTransactionDate().atStartOfDay())
+//                            .createdAt(LocalDateTime.now())
+//                            .build();
+//                })
+//                .toList();
+//
+//        transactionRepository.saveAll(entities);
+//
+//        return new TransactionConfirmResponse(entities.size(), representativeDate);
+//    }
 
     // xls/xlsx → csv 변환
     private String convertXlsToCsv(MultipartFile file) throws Exception {

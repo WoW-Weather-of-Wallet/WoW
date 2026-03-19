@@ -2,9 +2,11 @@ package com.wow.domain.calendar.controller;
 
 import com.wow.domain.calendar.dto.*;
 import com.wow.domain.calendar.service.CalendarService;
+import com.wow.domain.security.CustomUserDetails;
 import com.wow.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -100,9 +102,10 @@ public class CalendarController {
     // ③ 최종 확정 후 DB 저장
     @PostMapping("/transactions/csv/confirm")
     public ResponseEntity<ApiResponse<TransactionConfirmResponse>> confirmTransactions(
+            @AuthenticationPrincipal CustomUserDetails userDetails,  // ← 토큰에서 자동 추출
             @RequestBody TransactionConfirmRequest request) {
 
-        Long userId = 2L;  // 1L → 2L 로 변경
+        Long userId = userDetails.getId();  // ← 하드코딩 제거
 
         TransactionConfirmResponse response =
                 calendarService.confirmTransactions(userId, request);

@@ -9,4 +9,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     // User 객체의 id 필드로 접근 → User_Id
     boolean existsByUser_IdAndTransactionAtBetween(
             Long userId, LocalDateTime start, LocalDateTime end);
-}
+
+    void deleteByUser_IdAndTransactionAtBetween(
+            Long userId, LocalDateTime start, LocalDateTime end);}
