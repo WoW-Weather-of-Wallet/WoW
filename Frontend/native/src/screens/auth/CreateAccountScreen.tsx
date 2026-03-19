@@ -208,7 +208,21 @@ export default function CreateAccountScreen({ route, navigation }: any) {
       navigation.dispatch(
           CommonActions.reset({
             index: 0,
-            routes: [{ name: 'Welcome', params: { name: signupPayload.name, userId: id } }],
+            routes: [{
+              name: 'Welcome',
+              params: {
+                signupMode,
+                name: signupPayload.name,
+                userId: id,
+                pw: signupPayload.pw,
+                birthDate: signupPayload.birthDate,
+                gender: signupPayload.gender,
+                phoneNumber: signupPayload.phoneNumber,
+                termsAgreed: signupPayload.termsAgreed,
+                alarmEnabled: signupPayload.alarmEnabled,
+                ssafyOauthId: signupPayload.ssafyOauthId,
+              },
+            }],
           }),
       );
     } catch (error: any) {
