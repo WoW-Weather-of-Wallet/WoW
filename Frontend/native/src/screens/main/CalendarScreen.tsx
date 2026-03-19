@@ -40,6 +40,9 @@ export default function CalendarScreen() {
     selectedTransaction,
     editingManageItem,
     fixedExpensesTotal,
+    headerFetchState,
+    headerErrorMessage,
+    weatherIconName,
     handleMoveMonth,
     historyTitle,
     emptyHistoryTitle,
@@ -77,6 +80,9 @@ export default function CalendarScreen() {
         <CalendarHeroCard
           overview={overview}
           monthLabel={monthLabel}
+          weatherIconName={weatherIconName}
+          headerFetchState={headerFetchState}
+          headerErrorMessage={headerErrorMessage}
           onPressPrevMonth={() => handleMoveMonth('prev')}
           onPressNextMonth={() => handleMoveMonth('next')}
           onPressAdd={() => setIsAddEntryVisible(true)}

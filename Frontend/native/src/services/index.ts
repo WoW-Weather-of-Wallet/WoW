@@ -1,6 +1,2 @@
-// =============================================
-// services/ - API 서비스 디렉토리
-// 백엔드 연결 시 여기에 API 호출 함수를 작성
-// 예: authService.ts, userService.ts 등
-// =============================================
-export {};
+export * from './auth';
+export * from './calendar';

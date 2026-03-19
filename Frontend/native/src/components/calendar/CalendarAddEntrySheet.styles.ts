@@ -326,6 +326,87 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
   },
+  backendSummaryCard: {
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(14),
+    gap: hp(12),
+  },
+  backendSummaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(8),
+  },
+  backendSummaryTitle: {
+    fontSize: fp(16),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  backendSummaryDescription: {
+    fontSize: fp(13),
+    lineHeight: fp(19),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  backendSummaryStatsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: wp(10),
+  },
+  summaryStatCard: {
+    width: '47%',
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.backgroundSecondary,
+    paddingHorizontal: wp(12),
+    paddingVertical: hp(12),
+    gap: hp(6),
+  },
+  summaryStatLabel: {
+    fontSize: fp(12),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  summaryStatValue: {
+    fontSize: fp(15),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  summaryListSection: {
+    gap: hp(10),
+  },
+  summarySectionLabel: {
+    fontSize: fp(14),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  summaryListRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: wp(12),
+  },
+  summaryListTextWrap: {
+    flex: 1,
+    gap: hp(3),
+  },
+  summaryListLabel: {
+    fontSize: fp(13),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
+  },
+  summaryListReason: {
+    fontSize: fp(11),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  summaryListValue: {
+    fontSize: fp(12),
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+  },
   uploadResultSection: {
     gap: hp(10),
   },
