@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, wp } from '../../constants/theme';
+import { styles } from './SsafyRecoveryNotice.styles';
 
 interface SsafyRecoveryNoticeProps {
   onLinkPress: () => void;
@@ -34,38 +35,4 @@ export default function SsafyRecoveryNotice({ onLinkPress }: SsafyRecoveryNotice
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginTop: hp(24),
-    paddingHorizontal: wp(4),
-  },
-  infoBox: {
-    flexDirection: 'row',
-    backgroundColor: '#F9FAFB',
-    padding: wp(16),
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  infoIcon: {
-    marginRight: wp(10),
-    marginTop: hp(2),
-  },
-  textWrapper: {
-    flex: 1,
-  },
-  noticeText: {
-    fontSize: fp(13),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-    lineHeight: fp(19),
-    marginBottom: hp(6),
-  },
-  linkText: {
-    fontSize: fp(13),
-    fontFamily: FONTS.bold,
-    color: COLORS.primary,
-    textDecorationLine: 'underline',
-  },
-});
 

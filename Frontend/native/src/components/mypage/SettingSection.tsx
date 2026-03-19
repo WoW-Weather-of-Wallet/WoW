@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
+import { Text, View } from 'react-native';
+import { styles } from './SettingSection.styles';
 
 interface SettingSectionProps {
   title?: string;
@@ -21,21 +21,3 @@ export default function SettingSection({ title, children }: SettingSectionProps)
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginTop: hp(20),
-  },
-  sectionTitle: {
-    fontSize: fp(13),
-    fontFamily: FONTS.bold,
-    color: COLORS.textTertiary,
-    marginLeft: wp(22),
-    marginBottom: hp(8),
-    textTransform: 'uppercase',
-  },
-  content: {
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#F3F4F6',
-  },
-});

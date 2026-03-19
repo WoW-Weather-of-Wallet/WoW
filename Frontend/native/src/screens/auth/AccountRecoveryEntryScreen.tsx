@@ -3,7 +3,6 @@ import {
   Linking,
   ScrollView,
   StatusBar,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -11,7 +10,8 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
+import { styles } from './AccountRecoveryEntryScreen.styles';
+import { COLORS, wp, hp } from '../../constants/theme';
 import { getSsafyLoginUrl } from '../../services/auth';
 import RecoveryOption from '../../components/auth/RecoveryOption';
 import SsafyRecoveryNotice from '../../components/auth/SsafyRecoveryNotice';
@@ -80,52 +80,4 @@ export default function AccountRecoveryEntryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(16),
-    height: hp(56),
-    borderBottomWidth: 1,
-    borderColor: '#F3F4F6',
-  },
-  backButton: {
-    padding: wp(4),
-  },
-  headerTitle: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-  headerRight: {
-    width: wp(32),
-  },
-  scrollContent: {
-    paddingHorizontal: wp(24),
-    paddingTop: hp(32),
-    paddingBottom: hp(24),
-  },
-  introContainer: {
-    marginBottom: hp(32),
-  },
-  introTitle: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    lineHeight: fp(34),
-    marginBottom: hp(8),
-  },
-  introSub: {
-    fontSize: fp(15),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  optionsContainer: {
-    gap: hp(8),
-  },
-});
+

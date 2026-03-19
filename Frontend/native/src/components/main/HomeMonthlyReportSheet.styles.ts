@@ -1,0 +1,91 @@
+import { StyleSheet } from 'react-native';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+
+export const styles = StyleSheet.create({
+  compareRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: wp(12),
+    marginBottom: hp(20),
+  },
+  compareColumn: { flex: 1, alignItems: 'center' },
+  compareChipPrimary: {
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primarySoft,
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(8),
+    marginBottom: hp(14),
+  },
+  compareChipPrimaryText: {
+    fontSize: fp(13),
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+  },
+  compareChipMuted: {
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.mutedBackground,
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(8),
+    marginBottom: hp(14),
+  },
+  compareChipMutedText: {
+    fontSize: fp(13),
+    fontFamily: FONTS.bold,
+    color: COLORS.textSecondary,
+  },
+  reportRing: {
+    width: wp(140),
+    height: wp(140),
+    borderRadius: wp(70),
+    borderWidth: wp(14),
+    borderTopColor: COLORS.chartRed,
+    borderRightColor: COLORS.chartBlue,
+    borderBottomColor: COLORS.chartYellow,
+    borderLeftColor: COLORS.chartGreen,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.white,
+  },
+  reportRingMuted: {
+    borderTopColor: COLORS.chartRedMuted,
+    borderRightColor: COLORS.chartBlueMuted,
+    borderBottomColor: COLORS.chartYellowMuted,
+    borderLeftColor: COLORS.chartGreenMuted,
+  },
+  reportRingCenter: {
+    width: wp(88),
+    height: wp(88),
+    borderRadius: wp(44),
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.background,
+  },
+  reportRingAmount: {
+    fontSize: fp(18),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: hp(4),
+  },
+  reportRingLabel: {
+    fontSize: fp(12),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  insightCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(12),
+    backgroundColor: COLORS.insightBackground,
+    borderRadius: RADIUS.xl,
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(16),
+    marginTop: hp(18),
+  },
+  insightText: {
+    flex: 1,
+    fontSize: fp(15),
+    lineHeight: fp(22),
+    fontFamily: FONTS.bold,
+    color: COLORS.insightText,
+  },
+});

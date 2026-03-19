@@ -1,8 +1,9 @@
 import React from 'react';
-import { ScrollView, StatusBar, StyleSheet, View } from 'react-native';
+import { ScrollView, StatusBar, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mockSelectableTransactions } from '../../mock/calendar';
-import { COLORS, RADIUS, hp, wp } from '../../constants/theme';
+import { COLORS, hp } from '../../constants/theme';
+import { styles } from './CalendarScreen.styles';
 import { useCalendarMockState } from '../../hooks/useCalendarMockState';
 import {
   CalendarAddEntrySheet,
@@ -163,18 +164,4 @@ export default function CalendarScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.backgroundSecondary,
-  },
-  contentContainer: {
-    paddingHorizontal: wp(20),
-    gap: hp(18),
-  },
-  tabWrap: {
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.xxl,
-    padding: wp(8),
-  },
-});
+

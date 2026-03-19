@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   StatusBar,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -11,7 +10,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
-import { COLORS, FONTS, wp, hp, fp, RADIUS } from '../../constants/theme';
+import { styles } from './AccountRecoveryResultScreen.styles';
+import { COLORS, wp, hp } from '../../constants/theme';
 import { getSsafyLoginUrl } from '../../services/auth';
 
 export default function AccountRecoveryResultScreen() {
@@ -156,152 +156,4 @@ export default function AccountRecoveryResultScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    height: hp(56),
-    justifyContent: 'center',
-    paddingHorizontal: wp(16),
-  },
-  backButton: {
-    padding: wp(4),
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: wp(24),
-    alignItems: 'center',
-    paddingTop: hp(40),
-  },
-  iconWrapper: {
-    marginBottom: hp(32),
-  },
-  iconCircle: {
-    width: wp(100),
-    height: wp(100),
-    borderRadius: wp(50),
-    backgroundColor: `${COLORS.primary}10`,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconCircleNone: {
-    backgroundColor: '#F3F4F6',
-  },
-  textSection: {
-    alignItems: 'center',
-    marginBottom: hp(48),
-  },
-  title: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    marginBottom: hp(8),
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: fp(16),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: fp(24),
-  },
-  resultBox: {
-    width: '100%',
-    backgroundColor: '#F9FAFB',
-    borderRadius: RADIUS.xl,
-    padding: wp(20),
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  resultLabel: {
-    fontSize: fp(16),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  resultValue: {
-    fontSize: fp(20),
-    fontFamily: FONTS.bold,
-    color: COLORS.primary,
-  },
-  noticeBox: {
-    width: '100%',
-    backgroundColor: '#F9FAFB',
-    borderRadius: RADIUS.xl,
-    padding: wp(24),
-  },
-  noticeText: {
-    fontSize: fp(16),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    marginBottom: hp(12),
-  },
-  highlight: {
-    color: COLORS.primary,
-  },
-  noticeSubText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-    lineHeight: fp(22),
-    marginBottom: hp(20),
-  },
-  linkButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  linkButtonText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.bold,
-    color: COLORS.primary,
-    marginRight: wp(4),
-    textDecorationLine: 'underline',
-  },
-  emptyBox: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: fp(16),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: fp(24),
-  },
-  footer: {
-    marginTop: 'auto',
-    width: '100%',
-    paddingBottom: hp(24),
-  },
-  secondaryButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: hp(20),
-    gap: wp(8),
-  },
-  secondaryButtonText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  linkText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.bold,
-    color: COLORS.primary,
-    textDecorationLine: 'underline',
-  },
-  mainButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: wp(30),
-    paddingVertical: hp(18),
-    alignItems: 'center',
-  },
-  mainButtonText: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: '#FFFFFF',
-  },
-});
+

@@ -1,12 +1,13 @@
-﻿import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React from 'react';
+import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MainHomeScreen from '../screens/main/MainHomeScreen';
 import CalendarScreen from '../screens/main/CalendarScreen';
 import MyPageScreen from '../screens/main/MyPageScreen';
-import { COLORS, FONTS, RADIUS, hp, wp, fp } from '../constants/theme';
+import { styles } from './MainTabNavigator.styles';
+import { COLORS, hp } from '../constants/theme';
 
 const Tab = createBottomTabNavigator();
 
@@ -75,47 +76,5 @@ export default function MainTabNavigator() {
   );
 }
 
-const styles = StyleSheet.create({
-  tabBar: {
-    position: 'absolute',
-    left: wp(12),
-    right: wp(12),
-    bottom: hp(2),
-    borderRadius: RADIUS.lg,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 0,
-    paddingTop: hp(4),
-    paddingHorizontal: wp(8),
-    shadowColor: '#1A1A2E',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.02,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  tabBarItem: {
-    paddingVertical: hp(1),
-  },
-  tabBarIcon: {
-    marginTop: hp(1),
-  },
-  tabBarLabel: {
-    fontFamily: FONTS.semiBold,
-    fontSize: fp(11),
-    marginTop: hp(1),
-  },
-  iconWrapper: {
-    width: wp(30),
-    height: wp(30),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  activeIconWrapper: {
-    width: wp(30),
-    height: wp(30),
-    borderRadius: wp(15),
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.primary50,
-  },
-});
+
 

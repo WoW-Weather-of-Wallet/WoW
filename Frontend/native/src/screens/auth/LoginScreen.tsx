@@ -4,7 +4,6 @@ import {
   Text,
   Switch,
   TouchableOpacity,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -26,7 +25,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import CustomTextInput from '../../components/common/CustomTextInput';
 import GradientButton from '../../components/common/GradientButton';
 import { useAuthStore } from '../../store/authStore';
-import { COLORS, FONTS, RADIUS, wp, hp, fp } from '../../constants/theme';
+import { styles } from './LoginScreen.styles';
+import { COLORS, hp } from '../../constants/theme';
 import { getSsafyLoginUrl, login, parseSsafyCallbackUrl } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 
@@ -310,7 +310,7 @@ export default function LoginScreen({ navigation }: any) {
                 false: COLORS.border,
                 true: COLORS.primarySoft,
               }}
-              thumbColor={autoLogin ? COLORS.primary : '#f4f3f4'}
+              thumbColor={autoLogin ? COLORS.primary : COLORS.switchThumbInactive}
               ios_backgroundColor={COLORS.border}
             />
           </Animated.View>
@@ -331,7 +331,7 @@ export default function LoginScreen({ navigation }: any) {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={['#3B82F6', '#2563EB']}
+                colors={[COLORS.blue500, COLORS.blue600]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.ssafyGradient}
@@ -349,137 +349,4 @@ export default function LoginScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: wp(28),
-    paddingTop: hp(80),
-    paddingBottom: hp(40),
-  },
-  headerContainer: {
-    alignItems: 'center',
-    marginBottom: hp(32),
-  },
-  headerTitle: {
-    fontSize: fp(28),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    letterSpacing: -0.5,
-  },
-  headerLine: {
-    width: wp(40),
-    height: 3,
-    backgroundColor: COLORS.primary,
-    borderRadius: 2,
-    marginTop: hp(12),
-  },
-  devEntryCard: {
-    marginBottom: hp(18),
-    padding: wp(16),
-    borderRadius: RADIUS.xl,
-    backgroundColor: COLORS.primary50,
-    borderWidth: 1,
-    borderColor: COLORS.primarySoft,
-  },
-  devEntryTitle: {
-    fontSize: fp(16),
-    fontFamily: FONTS.bold,
-    color: COLORS.primaryDark,
-    marginBottom: hp(6),
-  },
-  devEntryDescription: {
-    fontSize: fp(13),
-    lineHeight: fp(19),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-    marginBottom: hp(12),
-  },
-  formContainer: {
-    marginBottom: hp(8),
-  },
-  inputSpacing: {
-    marginBottom: hp(14),
-  },
-  errorText: {
-    fontSize: fp(13),
-    lineHeight: fp(19),
-    fontFamily: FONTS.medium,
-    color: '#EF4444',
-    marginBottom: hp(10),
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    marginTop: hp(8),
-  },
-  buttonHalf: {
-    flex: 1,
-  },
-  buttonGap: {
-    width: wp(12),
-  },
-  loadingRow: {
-    alignItems: 'center',
-    marginTop: hp(14),
-  },
-  findAccountButton: {
-    alignItems: 'center',
-    paddingVertical: hp(16),
-  },
-  findAccountText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  autoLoginContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingVertical: hp(8),
-    marginBottom: hp(16),
-  },
-  autoLoginText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textPrimary,
-    marginRight: wp(10),
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(24),
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: COLORS.border,
-  },
-  dividerText: {
-    marginHorizontal: wp(16),
-    fontSize: fp(13),
-    fontFamily: FONTS.regular,
-    color: COLORS.textTertiary,
-  },
-  ssafyButton: {
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-  },
-  ssafyGradient: {
-    paddingVertical: hp(18),
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: RADIUS.xl,
-  },
-  ssafyButtonText: {
-    color: COLORS.textInverse,
-    fontSize: fp(16),
-    fontFamily: FONTS.semiBold,
-    letterSpacing: 0.3,
-  },
-});
+

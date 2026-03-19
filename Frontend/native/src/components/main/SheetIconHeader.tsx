@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, wp } from '../../constants/theme';
+import { styles } from './SheetIconHeader.styles';
 
 interface SheetIconHeaderProps {
   iconName: React.ComponentProps<typeof Ionicons>['name'];
@@ -31,30 +32,3 @@ export default function SheetIconHeader({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: wp(14),
-  },
-  iconWrap: {
-    width: wp(50),
-    height: wp(50),
-    borderRadius: wp(18),
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#EEEBFF',
-  },
-  textBlock: { flex: 1 },
-  eyebrow: {
-    fontSize: fp(13),
-    fontFamily: FONTS.medium,
-    color: COLORS.primary,
-    marginBottom: hp(8),
-  },
-  title: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-});

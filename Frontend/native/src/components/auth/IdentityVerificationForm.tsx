@@ -3,17 +3,16 @@ import {
   View,
   Text,
   TextInput,
-  StyleSheet,
   TouchableOpacity,
   Modal,
   Pressable,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, FONTS, wp, hp, fp, RADIUS } from '../../constants/theme';
+import { COLORS, wp, hp } from '../../constants/theme';
+import { styles } from './IdentityVerificationForm.styles';
 
 const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 알뜰폰'];
 const TELECOM_PLACEHOLDER = '통신사를 선택해주세요';
@@ -171,7 +170,7 @@ export default function IdentityVerificationForm({
             <Text style={[styles.telecomText, telecom === TELECOM_PLACEHOLDER && styles.placeholderText]}>
               {telecom}
             </Text>
-            <Ionicons name="chevron-down" size={wp(24)} color="#1A1A1A" />
+            <Ionicons name="chevron-down" size={wp(24)} color={COLORS.textPrimary} />
           </TouchableOpacity>
 
           <View style={[styles.underlineContainer, { marginTop: hp(32) }]}>
@@ -198,7 +197,7 @@ export default function IdentityVerificationForm({
           onPress={handleSubmit}
         >
           {isSubmitting ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color={COLORS.white} />
           ) : (
             <Text style={[styles.confirmButtonText, isFormValid() && styles.activeButtonText]}>
               {step < 3 ? '다음' : '인증번호 받기'}
@@ -227,126 +226,3 @@ export default function IdentityVerificationForm({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  inputSection: {
-    marginBottom: hp(32),
-  },
-  underlineContainer: {
-    borderBottomWidth: 1.5,
-    borderBottomColor: '#1A1A1A',
-    paddingVertical: hp(8),
-    minHeight: hp(50),
-    justifyContent: 'center',
-  },
-  bareInput: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: '#1A1A1A',
-    padding: 0,
-    margin: 0,
-  },
-  ssnSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    marginBottom: hp(32),
-  },
-  dash: {
-    fontSize: fp(20),
-    fontFamily: FONTS.regular,
-    color: '#1A1A1A',
-    marginHorizontal: wp(12),
-    marginBottom: hp(16),
-  },
-  ssnBackContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ssnMasking: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: '#1A1A1A',
-    letterSpacing: wp(6),
-    marginTop: Platform.OS === 'ios' ? hp(4) : 0,
-  },
-  telecomSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1.5,
-    borderBottomColor: '#1A1A1A',
-    paddingVertical: hp(8),
-  },
-  telecomText: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: '#1A1A1A',
-  },
-  placeholderText: {
-    color: COLORS.textTertiary,
-  },
-  errorText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: '#EF4444',
-    marginTop: hp(12),
-    textAlign: 'center',
-  },
-  buttonWrapper: {
-    marginTop: 'auto',
-    paddingTop: hp(20),
-  },
-  confirmButton: {
-    backgroundColor: '#E5E7EB',
-    borderRadius: wp(30),
-    paddingVertical: hp(16),
-    alignItems: 'center',
-  },
-  activeButton: {
-    backgroundColor: COLORS.primary,
-  },
-  confirmButtonText: {
-    fontSize: fp(20),
-    fontFamily: FONTS.bold,
-    color: '#1A1A1A',
-  },
-  activeButtonText: {
-    color: '#FFFFFF',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: wp(24),
-    borderTopRightRadius: wp(24),
-    paddingHorizontal: wp(24),
-    paddingTop: hp(24),
-    paddingBottom: hp(16),
-  },
-  modalHeader: {
-    marginBottom: hp(16),
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: '#1A1A1A',
-  },
-  modalItem: {
-    paddingVertical: hp(18),
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  modalItemText: {
-    fontSize: fp(18),
-    fontFamily: FONTS.medium,
-    color: '#1A1A1A',
-    textAlign: 'center',
-  },
-});

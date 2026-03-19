@@ -1,12 +1,12 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import BottomSheetModal from '../common/BottomSheetModal';
-import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import { spendingTypeLegend } from '../../constants/main/homeSheetData';
 import LegendList from './LegendList';
 import ReasonHighlightCard from './ReasonHighlightCard';
 import SheetIconHeader from './SheetIconHeader';
 import SpendingStyleRadarChart from './SpendingStyleRadarChart';
+import { styles } from './HomeSpendingTypeSheet.styles';
 
 interface HomeSpendingTypeSheetProps {
   visible: boolean;
@@ -62,33 +62,3 @@ export default function HomeSpendingTypeSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  sheetHeader: { marginBottom: hp(2) },
-  introBox: {
-    borderRadius: RADIUS.xl,
-    backgroundColor: '#F4F2FF',
-    paddingHorizontal: wp(16),
-    paddingVertical: hp(16),
-    marginBottom: hp(18),
-  },
-  introText: {
-    fontSize: fp(15),
-    lineHeight: fp(24),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  accent: { color: COLORS.primary, fontFamily: FONTS.bold },
-  sheetSectionTitle: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    marginBottom: hp(14),
-  },
-  styleMapCard: {
-    flexDirection: 'row',
-    gap: wp(18),
-    marginBottom: hp(20),
-    alignItems: 'center',
-  },
-  styleLegend: { flex: 1, justifyContent: 'center' },
-});

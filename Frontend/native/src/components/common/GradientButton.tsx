@@ -2,7 +2,6 @@ import React from 'react';
 import {
   TouchableOpacity,
   Text,
-  StyleSheet,
   ViewStyle,
   TextStyle,
 } from 'react-native';
@@ -12,7 +11,8 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
-import { COLORS, FONTS, RADIUS, wp, hp, fp } from '../../constants/theme';
+import { COLORS } from '../../constants/theme';
+import { styles } from './GradientButton.styles';
 
 interface GradientButtonProps {
   title: string;
@@ -88,32 +88,3 @@ export default function GradientButton({
   );
 }
 
-const styles = StyleSheet.create({
-  solidButton: {
-    paddingVertical: hp(16),
-    borderRadius: RADIUS.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  solidText: {
-    color: COLORS.textInverse,
-    fontSize: fp(16),
-    fontFamily: FONTS.semiBold,
-    letterSpacing: 0.3,
-  },
-  outlineButton: {
-    paddingVertical: hp(16),
-    borderRadius: RADIUS.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
-  },
-  outlineText: {
-    color: COLORS.textPrimary,
-    fontSize: fp(16),
-    fontFamily: FONTS.semiBold,
-    letterSpacing: 0.3,
-  },
-});

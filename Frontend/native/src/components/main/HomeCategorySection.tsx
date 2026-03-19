@@ -1,8 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import SectionHeader from '../common/SectionHeader';
 import SurfaceCard from '../common/SurfaceCard';
-import { COLORS, FONTS, RADIUS, fp, hp } from '../../constants/theme';
+import { styles } from './HomeCategorySection.styles';
 import type { HomeSpendingCategory } from '../../mock/dashboard';
 
 interface HomeCategorySectionProps {
@@ -40,30 +40,3 @@ export default function HomeCategorySection({
   );
 }
 
-const styles = StyleSheet.create({
-  rowBetween: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  categoryBlock: { gap: hp(8) },
-  categoryTitle: {
-    fontSize: fp(15),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textPrimary,
-  },
-  categoryAmount: {
-    fontSize: fp(13),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  categoryBarTrack: {
-    width: '100%',
-    height: hp(8),
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.backgroundTertiary,
-    overflow: 'hidden',
-  },
-  categoryBarFill: { height: '100%', borderRadius: RADIUS.full },
-});

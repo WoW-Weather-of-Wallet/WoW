@@ -4,14 +4,14 @@ import {
   Modal,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, wp } from '../../constants/theme';
+import { styles } from './WithdrawConfirmationModal.styles';
 
 interface WithdrawConfirmationModalProps {
   visible: boolean;
@@ -95,108 +95,3 @@ export default function WithdrawConfirmationModal({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    paddingHorizontal: wp(24),
-  },
-  keyboardView: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  content: {
-    width: '100%',
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.xl,
-    padding: wp(24),
-    gap: hp(24),
-  },
-  header: {
-    alignItems: 'center',
-    gap: hp(12),
-  },
-  warningIconContainer: {
-    width: wp(64),
-    height: wp(64),
-    borderRadius: wp(32),
-    backgroundColor: '#FEF2F2',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: hp(4),
-  },
-  title: {
-    fontSize: fp(22),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    textAlign: 'center',
-  },
-  description: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: fp(22),
-  },
-  inputSection: {
-    gap: hp(12),
-  },
-  inputLabel: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: COLORS.textPrimary,
-    textAlign: 'center',
-  },
-  boldText: {
-    fontFamily: FONTS.bold,
-    color: COLORS.error,
-  },
-  input: {
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
-    paddingVertical: hp(14),
-    paddingHorizontal: wp(16),
-    fontSize: fp(16),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textPrimary,
-    textAlign: 'center',
-  },
-  inputActive: {
-    borderColor: COLORS.error,
-    backgroundColor: '#FEF2F2',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: wp(12),
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: COLORS.backgroundSecondary,
-    paddingVertical: hp(16),
-    borderRadius: RADIUS.full,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: fp(16),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-  confirmButton: {
-    flex: 1,
-    backgroundColor: COLORS.error,
-    paddingVertical: hp(16),
-    borderRadius: RADIUS.full,
-    alignItems: 'center',
-  },
-  confirmButtonText: {
-    fontSize: fp(16),
-    fontFamily: FONTS.bold,
-    color: '#FFFFFF',
-  },
-  disabledButton: {
-    backgroundColor: '#E5E7EB',
-  },
-});

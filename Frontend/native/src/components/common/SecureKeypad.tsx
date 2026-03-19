@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
+import { COLORS, wp } from '../../constants/theme';
+import { styles } from './SecureKeypad.styles';
 
 interface SecureKeypadProps {
   onPressNumber: (num: string) => void;
@@ -73,7 +74,7 @@ export default function SecureKeypad({ onPressNumber, onPressDelete }: SecureKey
           disabled={isRefreshing}
         >
           <Animated.View style={animatedIconStyle}>
-            <Ionicons name="refresh-outline" size={wp(32)} color="#1A1A1A" />
+            <Ionicons name="refresh-outline" size={wp(32)} color={COLORS.textPrimary} />
           </Animated.View>
         </TouchableOpacity>
       );
@@ -82,7 +83,7 @@ export default function SecureKeypad({ onPressNumber, onPressDelete }: SecureKey
       // 우하단 지우기 버튼
       return (
         <TouchableOpacity style={styles.cell} onPress={onPressDelete} activeOpacity={0.6} key="delete">
-          <Ionicons name="backspace-outline" size={wp(32)} color="#1A1A1A" />
+          <Ionicons name="backspace-outline" size={wp(32)} color={COLORS.textPrimary} />
         </TouchableOpacity>
       );
     }
@@ -120,26 +121,4 @@ export default function SecureKeypad({ onPressNumber, onPressDelete }: SecureKey
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    paddingVertical: hp(16),
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: hp(16),
-  },
-  cell: {
-    flex: 1,
-    height: hp(60),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  numberText: {
-    fontSize: fp(28),
-    fontFamily: FONTS.semiBold,
-    color: '#1A1A1A',
-  },
-});
+

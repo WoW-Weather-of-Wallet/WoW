@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from 'react';
-import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { COLORS, RADIUS, hp, wp } from '../../constants/theme';
+import { StyleProp, View, ViewStyle } from 'react-native';
+import { styles } from './SurfaceCard.styles';
 
 interface SurfaceCardProps extends PropsWithChildren {
   style?: StyleProp<ViewStyle>;
@@ -15,13 +15,3 @@ export default function SurfaceCard({ children, style }: SurfaceCardProps) {
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.xxl,
-    padding: wp(18),
-    borderWidth: 1,
-    borderColor: '#E7EAFA',
-    gap: hp(12),
-  },
-});

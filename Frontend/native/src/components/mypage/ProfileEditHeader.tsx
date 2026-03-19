@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, wp } from '../../constants/theme';
+import { styles } from './ProfileEditHeader.styles';
 
 interface ProfileEditHeaderProps {
   name: string;
@@ -24,7 +25,7 @@ export default function ProfileEditHeader({ name, onEditPress }: ProfileEditHead
           activeOpacity={0.7}
           onPress={onEditPress}
         >
-          <Ionicons name="camera" size={wp(14)} color="#FFFFFF" />
+          <Ionicons name="camera" size={wp(14)} color={COLORS.white} />
         </TouchableOpacity>
       </View>
       <Text style={styles.nameText}>{name}님</Text>
@@ -33,51 +34,3 @@ export default function ProfileEditHeader({ name, onEditPress }: ProfileEditHead
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    paddingVertical: hp(24),
-    backgroundColor: COLORS.background,
-  },
-  avatarWrapper: {
-    position: 'relative',
-    marginBottom: hp(16),
-  },
-  avatarCircle: {
-    width: wp(86),
-    height: wp(86),
-    borderRadius: wp(43),
-    backgroundColor: COLORS.primary50,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: fp(34),
-    fontFamily: FONTS.bold,
-    color: COLORS.primary,
-  },
-  editBadge: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    width: wp(28),
-    height: wp(28),
-    borderRadius: wp(14),
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  nameText: {
-    fontSize: fp(20),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    marginBottom: hp(4),
-  },
-  emailText: {
-    fontSize: fp(13),
-    fontFamily: FONTS.medium,
-    color: COLORS.textTertiary,
-  },
-});
