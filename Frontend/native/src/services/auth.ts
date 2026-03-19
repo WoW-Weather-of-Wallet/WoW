@@ -101,6 +101,7 @@ export interface SmsVerifyRequest {
 export interface FindIdRequest {
   name: string;
   birthDate: string;
+  gender: string;
   phoneNumber: string;
 }
 
@@ -119,6 +120,7 @@ export interface FindPasswordRequest {
   userId: string;
   name: string;
   birthDate: string;
+  gender: string;
   phoneNumber: string;
   newPw: string;
 }

@@ -51,6 +51,14 @@ export default function ResetPasswordScreen() {
     return `${century}${ssnFront.slice(0, 2)}-${ssnFront.slice(2, 4)}-${ssnFront.slice(4, 6)}`;
   };
 
+  const getGenderFromIdentity = () => {
+    if (!ssnBack || ssnBack.length === 0) {
+      return null;
+    }
+
+    return parseInt(ssnBack[0], 10) % 2 !== 0 ? 'M' : 'F';
+  };
+
   const handleReset = async () => {
     if (!isFormValid) {
       return;
@@ -59,8 +67,9 @@ export default function ResetPasswordScreen() {
     setIsSubmitting(true);
     try {
       const birthDate = getBirthDateFromIdentity();
+      const gender = getGenderFromIdentity();
 
-      if (!birthDate || !name || !phoneNumber) {
+      if (!birthDate || !gender || !name || !phoneNumber) {
         throw new Error('본인 확인 정보가 누락되었어요.');
       }
 
@@ -69,6 +78,7 @@ export default function ResetPasswordScreen() {
         userId,
         name,
         birthDate,
+        gender,
         phoneNumber,
         newPw: password,
       });
