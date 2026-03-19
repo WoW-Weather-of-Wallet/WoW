@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MainHomeScreen from '../screens/main/MainHomeScreen';
 import CalendarScreen from '../screens/main/CalendarScreen';
 import MyPageScreen from '../screens/main/MyPageScreen';
+import AiFeedbackHomeScreen from '../screens/ai/AiFeedbackHomeScreen';
 import { styles } from './MainTabNavigator.styles';
 import { COLORS, hp } from '../constants/theme';
 
@@ -45,6 +46,8 @@ export default function MainTabNavigator() {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'Calendar') {
             iconName = focused ? 'calendar' : 'calendar-outline';
+          } else if (route.name === 'AiFeedback') {
+            iconName = focused ? 'sparkles' : 'sparkles-outline';
           } else if (route.name === 'MyPage') {
             iconName = focused ? 'person' : 'person-outline';
           }
@@ -66,6 +69,11 @@ export default function MainTabNavigator() {
         name="Calendar"
         component={CalendarScreen}
         options={{ tabBarLabel: '캘린더' }}
+      />
+      <Tab.Screen
+        name="AiFeedback"
+        component={AiFeedbackHomeScreen}
+        options={{ tabBarLabel: 'AI 피드백' }}
       />
       <Tab.Screen
         name="MyPage"
