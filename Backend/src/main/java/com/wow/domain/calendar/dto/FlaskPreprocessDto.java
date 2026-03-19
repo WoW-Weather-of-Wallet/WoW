@@ -8,7 +8,7 @@ import java.util.List;
 
 @Getter
 @NoArgsConstructor
-public class FlaskPreprocessDto { // 켈린더 거래내역 불러오는 파트 사용
+public class FlaskPreprocessDto {
 
     private String message;
     private List<RecordDto> records;
@@ -32,18 +32,18 @@ public class FlaskPreprocessDto { // 켈린더 거래내역 불러오는 파트 
     @NoArgsConstructor
     public static class RecordDto {
         @JsonProperty("card_tpbuz_nm_2")
-        private String category;   // 카테고리명
-        private int amt;           // 금액
-        private int cnt;           // 건수
+        private String category;
+        private int amt;
+        private int cnt;
     }
 
     @Getter
     @NoArgsConstructor
     public static class ExcludedDto {
         @JsonProperty("merchant_name")
-        private String merchantName;           // 가맹점명
+        private String merchantName;
         @JsonProperty("classification_reason")
-        private String classificationReason;   // 미분류 이유
+        private String classificationReason;
         private int amount;
         private int cnt;
     }

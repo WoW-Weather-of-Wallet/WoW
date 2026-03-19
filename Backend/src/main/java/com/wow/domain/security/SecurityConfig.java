@@ -36,6 +36,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/find/**",
                                 "/api/v1/calendar/transactions/csv",
+                                "/api/v1/calendar/transactions/csv/confirm",
                                 "/api/v1/terms"
                         ).permitAll()
                         .requestMatchers(
