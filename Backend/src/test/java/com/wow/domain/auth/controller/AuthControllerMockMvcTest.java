@@ -16,6 +16,7 @@ import com.wow.domain.auth.dto.UserCreateResponse;
 import com.wow.domain.auth.service.AuthService;
 import com.wow.domain.auth.service.SmsService;
 import com.wow.global.GlobalExceptionHandler;
+import com.wow.global.exception.BadRequestException;
 import com.wow.global.exception.InvalidTokenException;
 import java.time.LocalDate;
 import java.util.Map;
@@ -80,6 +81,18 @@ class AuthControllerMockMvcTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.userId").value("wowuser"))
                 .andExpect(jsonPath("$.name").value("tester"));
+    }
+
+    @Test
+    void checkUserIdReturnsBadRequestErrorResponseWhenServiceRejectsInvalidFormat() throws Exception {
+        when(authService.checkUserId("INVALID-ID"))
+                .thenThrow(new BadRequestException("invalid userId"));
+
+        mockMvc.perform(get(AUTH_BASE_URL + "/check-user-id")
+                        .param("userId", "INVALID-ID"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.errorMessage").value("invalid userId"));
     }
 
     @Test
@@ -249,6 +262,7 @@ class AuthControllerMockMvcTest {
         return merge(Map.of(
                 "userId", "wowuser",
                 "name", "tester",
+                "gender", "M",
                 "birthDate", DEFAULT_BIRTH_DATE,
                 "phoneNumber", DEFAULT_PHONE_NUMBER,
                 "newPw", "Valid1!A"

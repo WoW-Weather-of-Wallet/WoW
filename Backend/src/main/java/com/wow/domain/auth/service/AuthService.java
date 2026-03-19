@@ -22,6 +22,7 @@ import com.wow.domain.user.entity.UserTerm;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.domain.user.repository.UserTermRepository;
 import com.wow.global.constant.RedisKeys;
+import com.wow.global.constant.ValidationPatterns;
 import com.wow.global.exception.BadRequestException;
 import com.wow.global.exception.DuplicateException;
 import com.wow.global.exception.InvalidTokenException;
@@ -82,15 +83,22 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public UserIdCheckResponse checkUserId(String userId) {
+        String normalizedUserId = userId == null ? "" : userId.trim();
+        if (normalizedUserId.isBlank()) {
+            throw new BadRequestException("?ê¾©ì” ?ë¶¾? ?ë‚…ì °?ëŒï¼œ?ëª„ìŠ‚.");
+        }
+        if (!normalizedUserId.matches(ValidationPatterns.USER_ID)) {
+            throw new BadRequestException("?ê¾©ì” ?ë¶¾ë’— ?ê³·Ð¦ ?ëš®Ð¦?ë¨¯? ?ãƒ¬ì˜„ç‘œ??Ñ‹ë¸¿??4???ëŒê¸½ 20???ëŒ„ë¸¯ï§??ÑŠìŠœ?????ë‰ë’¿?ëˆë–Ž.");
+        }
         enforcePublicRateLimit(
                 RedisKeys.USER_ID_CHECK_ATTEMPT_PREFIX,
                 RedisKeys.USER_ID_CHECK_BLOCK_PREFIX,
-                userId,
+                normalizedUserId,
                 "아이디 중복 확인 요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
         );
-        boolean isAvailable = !userRepository.existsByUserIdOrSsafyOauthId(userId, userId);
+        boolean isAvailable = !userRepository.existsByUserIdOrSsafyOauthId(normalizedUserId, normalizedUserId);
         String message = isAvailable ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다.";
-        return new UserIdCheckResponse(isAvailable, message, userId);
+        return new UserIdCheckResponse(isAvailable, message, normalizedUserId);
     }
 
     @Transactional
