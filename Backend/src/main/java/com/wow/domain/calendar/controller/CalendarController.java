@@ -3,9 +3,18 @@ package com.wow.domain.calendar.controller;
 import com.wow.domain.calendar.dto.CalendarHeaderResponse;
 import com.wow.domain.calendar.dto.TransactionConfirmDto;
 import com.wow.domain.calendar.service.CalendarService;
+import com.wow.domain.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -20,16 +29,19 @@ public class CalendarController {
 
     @GetMapping("/header")
     public ResponseEntity<CalendarHeaderResponse> getCalendarHeader(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam int year,
             @RequestParam int month
-            // @AuthenticationPrincipal CustomUserDetails userDetails // Security 연동 시 추가
     ) {
-        // 임시로 userId 1L 전달 (나중에 토큰에서 가져오도록 수정)
-        CalendarHeaderResponse response = calendarService.getCalendarHeader(1L, year, month);
+        if (userDetails == null || userDetails.getUser() == null) {
+            throw new AuthenticationCredentialsNotFoundException("Authentication is required.");
+        }
+
+        Long userId = userDetails.getUser().getId();
+        CalendarHeaderResponse response = calendarService.getCalendarHeader(userId, year, month);
         return ResponseEntity.ok(response);
     }
 
-    // ① 파일 업로드 + 전처리 + 분류
     @PostMapping("/transactions/csv")
     public ResponseEntity<?> uploadTransactions(
             @RequestPart(value = "bank_file", required = false) MultipartFile bankFile,
@@ -38,22 +50,16 @@ public class CalendarController {
         return ResponseEntity.ok(calendarService.preprocessTransactions(bankFile, cardFile));
     }
 
-    // ⑤ 미분류 항목 재분류 저장
     @PostMapping("/transactions/overrides")
-    public ResponseEntity<?> saveOverrides(
-            @RequestBody Map<String, Object> body
-    ) {
+    public ResponseEntity<?> saveOverrides(@RequestBody Map<String, Object> body) {
         List<Map<String, String>> rows = (List<Map<String, String>>) body.get("rows");
         calendarService.saveOverrides(rows);
-        return ResponseEntity.ok("재분류 저장 완료");
+        return ResponseEntity.ok("overrides saved");
     }
 
-    // ⑦ 최종 확정 후 DB 저장
     @PostMapping("/transactions/confirm")
-    public ResponseEntity<?> confirmTransactions(
-            @RequestBody List<TransactionConfirmDto> items
-    ) {
+    public ResponseEntity<?> confirmTransactions(@RequestBody List<TransactionConfirmDto> items) {
         calendarService.confirmTransactions(items);
-        return ResponseEntity.ok("저장 완료");
+        return ResponseEntity.ok("transactions confirmed");
     }
 }
