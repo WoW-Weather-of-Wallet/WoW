@@ -46,7 +46,8 @@ public class SmsService {
 
     public void sendCode(String phoneNumber) {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
-        validateSendRateLimit(normalized);
+        // TEMP: 비밀번호 찾기 로컬 테스트를 위해 SMS 발송 쿨타임/시간당 제한을 잠시 비활성화한다.
+        // validateSendRateLimit(normalized);
 
         String code = generateCode();
         redisTemplate.opsForValue().set(
