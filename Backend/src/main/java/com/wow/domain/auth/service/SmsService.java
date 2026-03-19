@@ -46,7 +46,7 @@ public class SmsService {
 
     public void sendCode(String phoneNumber) {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
-        validateSendRateLimit(normalized);
+        // validateSendRateLimit(normalized); // TODO: 테스트 후 주석 해제
 
         String code = generateCode();
         redisTemplate.opsForValue().set(
