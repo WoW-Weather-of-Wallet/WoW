@@ -45,7 +45,7 @@ public class CalendarService {
                 .build();
     }
 
-    private int calculateSavedAmount(Long userId, int year, int month) {
+    public int calculateSavedAmount(Long userId, int year, int month) {
         YearMonth targetMonth = YearMonth.of(year, month);
         YearMonth currentMonth = YearMonth.from(LocalDate.now());
 
