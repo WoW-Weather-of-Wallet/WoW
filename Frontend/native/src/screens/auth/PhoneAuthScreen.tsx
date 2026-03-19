@@ -86,7 +86,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
    * 이 단계가 성공해야만 다음 VerifyCode 화면과 CreateAccount 화면이 의미가 있습니다.
    * 수집한 이름/주민번호 일부/휴대폰/약관동의 여부를 다음 스텝 route param으로 넘깁니다.
    */
-  const handleSendCode = async () => {
+  const handleSendCode = async (agreedTerms = termsAgreed) => {
     if (isSendingCode) {
       return;
     }
@@ -121,7 +121,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         ssnBack,
         telecom,
         phone: phone.replace(/[^0-9]/g, ''),
-        termsAgreed,
+        termsAgreed: agreedTerms,
       });
     } catch (error: any) {
       // SMS 발송 실패도 다른 auth 화면과 같은 규칙으로 에러 메시지를 정리합니다.
@@ -305,7 +305,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
           // 필수 약관 동의가 끝난 시점의 값을 회원가입 플로우 전체에서 재사용한다.
           setTermsAgreed(agreed);
           setTermsVisible(false);
-          handleSendCode();
+          handleSendCode(agreed);
         }}
       />
     </KeyboardAvoidingView>
