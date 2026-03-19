@@ -5,6 +5,7 @@ import com.wow.domain.expensecategory.entity.ExpenseCategory;
 import com.wow.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,6 +19,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -27,6 +30,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+// [added] 이유: createdAt을 JPA Auditing으로 자동 설정하기 위해 AuditingEntityListener 등록
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "transactions")
 public class Transaction {
 
@@ -57,7 +62,9 @@ public class Transaction {
     @Column(length = 255)
     private String memo;
 
-    @Column(name = "created_at")
+    // [added] 이유: 수동 주입 없이 레코드 생성 시각이 자동으로 설정되도록 @CreatedDate 추가
+    @CreatedDate
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "transaction_at", nullable = false)

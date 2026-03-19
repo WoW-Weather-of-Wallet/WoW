@@ -1,6 +1,7 @@
 package com.wow.validation;
 
 import com.wow.domain.auth.dto.FindIdRequest;
+import com.wow.domain.auth.dto.FindPwRequest;
 import com.wow.domain.auth.dto.SmsSendRequest;
 import com.wow.domain.auth.dto.SmsVerifyRequest;
 import com.wow.domain.auth.dto.TokenRefreshRequest;
@@ -131,6 +132,22 @@ class RequestValidationTest {
         ReflectionTestUtils.setField(request, "gender", "X");
 
         Set<ConstraintViolation<FindIdRequest>> violations = validator.validate(request);
+
+        assertThat(violations)
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .contains("gender");
+    }
+
+    @Test
+    void findPasswordRequestRejectsNullGender() {
+        FindPwRequest request = new FindPwRequest();
+        ReflectionTestUtils.setField(request, "userId", "wowuser");
+        ReflectionTestUtils.setField(request, "name", "tester");
+        ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
+        ReflectionTestUtils.setField(request, "phoneNumber", "01012345678");
+        ReflectionTestUtils.setField(request, "newPw", "Valid1!A");
+
+        Set<ConstraintViolation<FindPwRequest>> violations = validator.validate(request);
 
         assertThat(violations)
                 .extracting(violation -> violation.getPropertyPath().toString())

@@ -4,6 +4,7 @@ import com.wow.domain.auth.dto.ChangePasswordRequest;
 import com.wow.domain.auth.dto.FindIdRequest;
 import com.wow.domain.auth.dto.FindIdResponse;
 import com.wow.domain.auth.dto.FindPwRequest;
+import com.wow.domain.auth.dto.SignupIdentityCheckRequest;
 import com.wow.domain.auth.dto.SmsSendRequest;
 import com.wow.domain.auth.dto.SmsVerifyRequest;
 import com.wow.domain.auth.dto.TokenRefreshRequest;
@@ -45,6 +46,13 @@ public class AuthController {
     @GetMapping("/check-user-id")
     public ResponseEntity<UserIdCheckResponse> checkUserId(@RequestParam String userId) {
         return ResponseEntity.ok(authService.checkUserId(userId));
+    }
+
+    @Operation(summary = "회원가입 동일인 중복 확인", description = "이름, 성별, 생년월일, 휴대폰번호로 기존 가입 여부를 확인합니다.")
+    @PostMapping("/check-signup-identity")
+    public ResponseEntity<Void> checkSignupIdentity(@Valid @RequestBody SignupIdentityCheckRequest request) {
+        authService.checkSignupIdentity(request);
+        return ResponseEntity.ok().build();
     }
 
     // [fix] 수정 전: ResponseEntity.ok() → 200 OK | 이유: 리소스 생성 시 201 Created가 HTTP 표준

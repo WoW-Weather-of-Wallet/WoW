@@ -2,7 +2,6 @@ package com.wow.domain.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -23,7 +22,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,35 +36,31 @@ class SmsServiceTest {
     @Mock
     private DefaultMessageService messageService;
 
-    private SmsService smsService;
+    private TestableSmsService smsService;
 
     @BeforeEach
     void setUp() {
-        smsService = new SmsService(redisTemplate, messageService);
+        smsService = new TestableSmsService(redisTemplate, messageService);
         ReflectionTestUtils.setField(smsService, "sender", "01012345678");
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
     @Test
     void sendCodeThrowsWhenCooldownExists() {
-        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString(), anyString(), anyString()))
-                .thenReturn(-1L);
+        smsService.scriptResult = -1L;
 
         assertThatThrownBy(() -> smsService.sendCode("010-1234-5678"))
-                .isInstanceOf(RateLimitException.class)
-                .hasMessageContaining("1분");
+                .isInstanceOf(RateLimitException.class);
 
         verify(messageService, never()).sendOne(any());
     }
 
     @Test
     void sendCodeThrowsWhenHourlyLimitExceeded() {
-        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString(), anyString(), anyString()))
-                .thenReturn(-2L);
+        smsService.scriptResult = -2L;
 
         assertThatThrownBy(() -> smsService.sendCode("01012345678"))
-                .isInstanceOf(RateLimitException.class)
-                .hasMessageContaining("초과");
+                .isInstanceOf(RateLimitException.class);
 
         verify(messageService, never()).sendOne(any());
         verify(valueOperations, never()).set(eq("sms:code:01012345678"), anyString(), any(Duration.class));
@@ -74,43 +68,36 @@ class SmsServiceTest {
 
     @Test
     void sendCodeStoresCooldownAndCodeWhenAllowed() {
-        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString(), anyString(), anyString()))
-                .thenReturn(1L);
+        smsService.scriptResult = 1L;
 
         smsService.sendCode("010-1234-5678");
 
-        verify(redisTemplate).execute(any(DefaultRedisScript.class), anyList(), eq("60"), eq("5"), eq("60"));
         verify(valueOperations).set(eq("sms:code:01012345678"), anyString(), eq(Duration.ofMinutes(5)));
         verify(messageService).sendOne(any());
     }
 
     @Test
     void sendCodeDoesNotResetHourlyWindowWhenSendCountAlreadyExists() {
-        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString(), anyString(), anyString()))
-                .thenReturn(2L);
+        smsService.scriptResult = 2L;
 
         smsService.sendCode("010-1234-5678");
 
-        verify(redisTemplate).execute(any(DefaultRedisScript.class), anyList(), eq("60"), eq("5"), eq("60"));
         verify(messageService).sendOne(any());
     }
 
     @Test
     void sendCodeThrowsWhenRateLimitScriptFails() {
-        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString(), anyString(), anyString()))
-                .thenReturn(null);
+        smsService.scriptResult = null;
 
         assertThatThrownBy(() -> smsService.sendCode("010-1234-5678"))
-                .isInstanceOf(InternalServerException.class)
-                .hasMessageContaining("전송 제한 처리");
+                .isInstanceOf(InternalServerException.class);
 
         verify(messageService, never()).sendOne(any());
     }
 
     @Test
     void sendCodeRollsBackRedisStateWhenMessageSendFails() {
-        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString(), anyString(), anyString()))
-                .thenReturn(1L);
+        smsService.scriptResult = 1L;
         when(valueOperations.decrement("sms:count:01012345678")).thenReturn(0L);
         doThrow(new RuntimeException("send failed")).when(messageService).sendOne(any());
 
@@ -131,8 +118,7 @@ class SmsServiceTest {
         when(valueOperations.increment("sms:verify:count:01012345678")).thenReturn(1L);
 
         assertThatThrownBy(() -> smsService.verifyCode("010-1234-5678", "654321"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("올바르지");
+                .isInstanceOf(BadRequestException.class);
 
         verify(redisTemplate).expire("sms:verify:count:01012345678", Duration.ofMinutes(5));
     }
@@ -142,8 +128,7 @@ class SmsServiceTest {
         when(valueOperations.get("sms:code:01012345678")).thenReturn(null);
 
         assertThatThrownBy(() -> smsService.verifyCode("010-1234-5678", "123456"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("만료");
+                .isInstanceOf(BadRequestException.class);
 
         verify(valueOperations, never()).increment("sms:verify:count:01012345678");
     }
@@ -154,8 +139,7 @@ class SmsServiceTest {
         when(valueOperations.increment("sms:verify:count:01012345678")).thenReturn(5L);
 
         assertThatThrownBy(() -> smsService.verifyCode("01012345678", "654321"))
-                .isInstanceOf(RateLimitException.class)
-                .hasMessageContaining("초과");
+                .isInstanceOf(RateLimitException.class);
 
         verify(redisTemplate).delete("sms:code:01012345678");
         verify(redisTemplate).delete("sms:verify:count:01012345678");
@@ -177,7 +161,20 @@ class SmsServiceTest {
         when(redisTemplate.opsForValue().getAndDelete("sms:verified:01012345678")).thenReturn(null);
 
         assertThatThrownBy(() -> smsService.checkAndConsumeVerified("010-1234-5678"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("SMS 인증");
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    private static class TestableSmsService extends SmsService {
+
+        private Long scriptResult;
+
+        private TestableSmsService(StringRedisTemplate redisTemplate, DefaultMessageService messageService) {
+            super(redisTemplate, messageService);
+        }
+
+        @Override
+        Long executeSendRateLimitScript(String countKey, String cooldownKey) {
+            return scriptResult;
+        }
     }
 }

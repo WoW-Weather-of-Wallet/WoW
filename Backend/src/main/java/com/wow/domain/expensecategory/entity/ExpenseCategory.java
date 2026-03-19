@@ -22,6 +22,8 @@ public class ExpenseCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "category_id", nullable = false)
+    // [주의] 다른 엔티티는 Long을 사용하지만 이 필드는 Integer — DB 컬럼 타입이 INT(4바이트)로 정의되어 있어
+    //   Long으로 변경하려면 DB 마이그레이션이 필요하므로 현재 타입 유지
     private Integer id;
 
     @Column(name = "category_name", length = 10)

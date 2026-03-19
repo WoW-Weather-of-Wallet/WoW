@@ -4,6 +4,7 @@ import com.wow.domain.auth.dto.ChangePasswordRequest;
 import com.wow.domain.auth.dto.FindIdRequest;
 import com.wow.domain.auth.dto.FindIdResponse;
 import com.wow.domain.auth.dto.FindPwRequest;
+import com.wow.domain.auth.dto.SignupIdentityCheckRequest;
 import com.wow.domain.auth.dto.TokenRefreshResponse;
 import com.wow.domain.auth.dto.UserCreateRequest;
 import com.wow.domain.auth.dto.UserCreateResponse;
@@ -22,6 +23,7 @@ import com.wow.domain.user.entity.UserTerm;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.domain.user.repository.UserTermRepository;
 import com.wow.global.constant.RedisKeys;
+import com.wow.global.constant.ValidationPatterns;
 import com.wow.global.exception.BadRequestException;
 import com.wow.global.exception.DuplicateException;
 import com.wow.global.exception.InvalidTokenException;
@@ -37,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -62,6 +65,13 @@ public class AuthService {
     private static final Duration PUBLIC_AUTH_BLOCK_DURATION = Duration.ofMinutes(10);
     private static final Duration PUBLIC_AUTH_ATTEMPT_WINDOW = Duration.ofMinutes(10);
 
+    // [added] 이유: enforcePublicRateLimit의 blockKey 조회 → 카운터 증가 TOCTOU 레이스 컨디션 방지를 위한 Lua 스크립트
+    private static final DefaultRedisScript<Long> PUBLIC_RATE_LIMIT_SCRIPT = PublicAuthRateLimitScript.create();
+    // [fix] 수정 전: checkLoginRateLimit(hasKey) → incrementLoginAttempts(increment) 분리 연산 | 이유: TOCTOU → Lua 스크립트로 원자 처리
+    private static final DefaultRedisScript<Long> LOGIN_RATE_LIMIT_SCRIPT = LoginRateLimitScript.create();
+    private static final long RATE_LIMIT_BLOCKED = -1L;
+    private static final long RATE_LIMIT_EXCEEDED = -2L;
+
     private final UserRepository userRepository;
     private final UserTermRepository userTermRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -74,15 +84,35 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public UserIdCheckResponse checkUserId(String userId) {
+        String normalizedUserId = userId == null ? "" : userId.trim();
+        if (normalizedUserId.isBlank()) {
+            throw new BadRequestException("?ê¾©ì” ?ë¶¾? ?ë‚…ì °?ëŒï¼œ?ëª„ìŠ‚.");
+        }
+        if (!normalizedUserId.matches(ValidationPatterns.USER_ID)) {
+            throw new BadRequestException("?ê¾©ì” ?ë¶¾ë’— ?ê³·Ð¦ ?ëš®Ð¦?ë¨¯? ?ãƒ¬ì˜„ç‘œ??Ñ‹ë¸¿??4???ëŒê¸½ 20???ëŒ„ë¸¯ï§??ÑŠìŠœ?????ë‰ë’¿?ëˆë–Ž.");
+        }
         enforcePublicRateLimit(
                 RedisKeys.USER_ID_CHECK_ATTEMPT_PREFIX,
                 RedisKeys.USER_ID_CHECK_BLOCK_PREFIX,
-                userId,
+                normalizedUserId,
                 "아이디 중복 확인 요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
         );
-        boolean isAvailable = !userRepository.existsByUserIdOrSsafyOauthId(userId, userId);
+        boolean isAvailable = !userRepository.existsByUserIdOrSsafyOauthId(normalizedUserId, normalizedUserId);
         String message = isAvailable ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다.";
-        return new UserIdCheckResponse(isAvailable, message, userId);
+        return new UserIdCheckResponse(isAvailable, message, normalizedUserId);
+    }
+
+    public void checkSignupIdentity(SignupIdentityCheckRequest request) {
+        String normalizedName = request.getName().trim();
+        String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+
+        if (userRepository.existsDuplicate(normalizedName, request.getGender(), request.getBirthDate(), phoneNumber)) {
+            throw new DuplicateException("이미 등록된 회원입니다.");
+        }
+
+        if (userRepository.existsByPhoneNumber(phoneNumber)) {
+            throw new DuplicateException("이미 사용 중인 휴대폰번호입니다.");
+        }
     }
 
     @Transactional
@@ -94,13 +124,13 @@ public class AuthService {
             // [fix] 수정 전: throw new IllegalArgumentException("이미 사용 중인 아이디입니다.") | 이유: 중복은 409 CONFLICT가 적절
             throw new DuplicateException("이미 사용 중인 아이디입니다.");
         }
-        if (userRepository.existsByPhoneNumber(phoneNumber)) {
-            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 중복은 409 CONFLICT가 적절
-            throw new DuplicateException("이미 사용 중인 전화번호입니다.");
-        }
+        // [fix] 수정 전: existsByPhoneNumber → existsDuplicate 순서 | 이유: 이름+성별+생년월일+전화번호 4개 조건이 모두 일치하면 동일인으로 판단하여 먼저 차단,
+        //   이후 전화번호만 다른 타인의 번호 중복은 별도 메시지로 구분
         if (userRepository.existsDuplicate(normalizedName, request.getGender(), request.getBirthDate(), phoneNumber)) {
-            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 중복은 409 CONFLICT가 적절
             throw new DuplicateException("이미 등록된 회원입니다.");
+        }
+        if (userRepository.existsByPhoneNumber(phoneNumber)) {
+            throw new DuplicateException("이미 사용 중인 전화번호입니다.");
         }
 
         validatePassword(request.getPw(), request.getUserId());
@@ -135,8 +165,9 @@ public class AuthService {
 
     @Transactional
     public UserLoginResponse login(UserLoginRequest request) {
-        // [added] 이유: 로그인 엔드포인트에 무차별 대입 공격 방지를 위한 rate limiting
-        checkLoginRateLimit(request.getUserId());
+        // [fix] 수정 전: checkLoginRateLimit(hasKey) → 인증 → catch incrementLoginAttempts(increment) 분리 연산
+        //   이유: TOCTOU 레이스 컨디션 → enforceLoginRateLimit(Lua Script)로 차단 확인 + 카운터 증가를 원자 처리
+        enforceLoginRateLimit(request.getUserId());
 
         try {
             Authentication auth = authenticationManager.authenticate(
@@ -167,8 +198,6 @@ public class AuthService {
                     UserSummaryResponse.from(userDetails)
             );
         } catch (AuthenticationException e) {
-            // [added] 이유: 로그인 실패 시 시도 횟수 증가
-            incrementLoginAttempts(request.getUserId());
             throw e;
         }
     }
@@ -253,8 +282,9 @@ public class AuthService {
                 "비밀번호 재설정 요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
         );
 
-        User user = userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(
-                        request.getUserId(), normalizedName, request.getBirthDate(), phoneNumber)
+        // [fix] 수정 전: findByUserIdAndNameAndBirthDateAndPhoneNumber (gender 없음) | 이유: findId와 동일한 4개 조건으로 본인확인 강도 대칭
+        User user = userRepository.findByUserIdAndNameAndGenderAndBirthDateAndPhoneNumber(
+                        request.getUserId(), normalizedName, request.getGender(), request.getBirthDate(), phoneNumber)
                 // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 리소스 미발견은 404가 적절
                 .orElseThrow(() -> new NotFoundException("일치하는 회원 정보를 찾을 수 없습니다."));
 
@@ -284,24 +314,22 @@ public class AuthService {
         user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
     }
 
-    // [added] 이유: 로그인 무차별 대입 공격 방지 - Redis 기반 rate limiting
-    private void checkLoginRateLimit(String userId) {
-        String blockKey = RedisKeys.LOGIN_BLOCK_PREFIX + userId;
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(blockKey))) {
-            throw new RateLimitException("로그인 시도 횟수가 초과되었습니다. 잠시 후 다시 시도해주세요.");
-        }
-    }
-
-    private void incrementLoginAttempts(String userId) {
+    // [fix] 수정 전: checkLoginRateLimit(hasKey) + incrementLoginAttempts(increment) 분리 | 이유: TOCTOU → Lua 스크립트로 원자 처리
+    private void enforceLoginRateLimit(String userId) {
         String attemptKey = RedisKeys.LOGIN_ATTEMPT_PREFIX + userId;
-        Long attempts = redisTemplate.opsForValue().increment(attemptKey);
-        if (attempts != null && attempts == 1L) {
-            redisTemplate.expire(attemptKey, LOGIN_ATTEMPT_WINDOW);
-        }
-        if (attempts != null && attempts >= MAX_LOGIN_ATTEMPTS) {
-            redisTemplate.opsForValue().set(RedisKeys.LOGIN_BLOCK_PREFIX + userId, "blocked", LOGIN_BLOCK_DURATION);
-            redisTemplate.delete(attemptKey);
+        String blockKey = RedisKeys.LOGIN_BLOCK_PREFIX + userId;
+
+        Long result = redisTemplate.execute(
+                LOGIN_RATE_LIMIT_SCRIPT,
+                List.of(attemptKey, blockKey),
+                String.valueOf(LOGIN_ATTEMPT_WINDOW.toSeconds()),
+                String.valueOf(MAX_LOGIN_ATTEMPTS),
+                String.valueOf(LOGIN_BLOCK_DURATION.toSeconds())
+        );
+
+        if (result == null || result == RATE_LIMIT_BLOCKED || result == RATE_LIMIT_EXCEEDED) {
             log.warn("로그인 시도 횟수 초과로 계정 차단: userId={}", userId);
+            throw new RateLimitException("로그인 시도 횟수가 초과되었습니다. 잠시 후 다시 시도해주세요.");
         }
     }
 
@@ -310,26 +338,25 @@ public class AuthService {
         redisTemplate.delete(RedisKeys.LOGIN_BLOCK_PREFIX + userId);
     }
 
-    // [added] 이유: 아이디 찾기, 비밀번호 재설정, 중복 확인 API에 공통 Redis rate limit 적용
+    // [fix] 수정 전: hasKey(blockKey) → increment(attemptKey) 순서로 별도 연산 수행 | 이유: 동시 요청 시 TOCTOU 레이스 컨디션으로 rate limit 우회 가능 → Lua 스크립트로 원자 처리
     private void enforcePublicRateLimit(
             String attemptPrefix,
             String blockPrefix,
             String identifier,
             String blockMessage
     ) {
-        String blockKey = blockPrefix + identifier;
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(blockKey))) {
-            throw new RateLimitException(blockMessage);
-        }
-
         String attemptKey = attemptPrefix + identifier;
-        Long attempts = redisTemplate.opsForValue().increment(attemptKey);
-        if (attempts != null && attempts == 1L) {
-            redisTemplate.expire(attemptKey, PUBLIC_AUTH_ATTEMPT_WINDOW);
-        }
-        if (attempts != null && attempts > MAX_PUBLIC_AUTH_ATTEMPTS) {
-            redisTemplate.opsForValue().set(blockKey, "blocked", PUBLIC_AUTH_BLOCK_DURATION);
-            redisTemplate.delete(attemptKey);
+        String blockKey = blockPrefix + identifier;
+
+        Long result = redisTemplate.execute(
+                PUBLIC_RATE_LIMIT_SCRIPT,
+                List.of(attemptKey, blockKey),
+                String.valueOf(PUBLIC_AUTH_ATTEMPT_WINDOW.toSeconds()),
+                String.valueOf(MAX_PUBLIC_AUTH_ATTEMPTS),
+                String.valueOf(PUBLIC_AUTH_BLOCK_DURATION.toSeconds())
+        );
+
+        if (result == null || result == RATE_LIMIT_BLOCKED || result == RATE_LIMIT_EXCEEDED) {
             throw new RateLimitException(blockMessage);
         }
     }
