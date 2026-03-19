@@ -33,11 +33,11 @@ public class CalendarController {
             @RequestParam int year,
             @RequestParam int month
     ) {
-        if (userDetails == null || userDetails.getUser() == null) {
+        if (userDetails == null) {
             throw new AuthenticationCredentialsNotFoundException("Authentication is required.");
         }
 
-        Long userId = userDetails.getUser().getId();
+        Long userId = userDetails.getId();
         CalendarHeaderResponse response = calendarService.getCalendarHeader(userId, year, month);
         return ResponseEntity.ok(response);
     }
