@@ -3,6 +3,7 @@ package com.wow.domain.account.entity;
 import com.wow.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,20 +17,20 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 // [added] 이유: Account 엔티티에 JPA Auditing이 적용되지 않아 createdAt이 수동 관리 → 다른 엔티티와 일관성 확보
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
+// [fix] 수정 전: @jakarta.persistence.EntityListeners FQCN | 이유: Transaction.java 등 다른 엔티티와 import 방식으로 통일
 @Entity
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "accounts")
-@jakarta.persistence.EntityListeners(AuditingEntityListener.class)
+@EntityListeners(AuditingEntityListener.class)
 public class Account {
 
     @Id

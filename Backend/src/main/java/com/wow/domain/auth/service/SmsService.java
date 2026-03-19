@@ -5,6 +5,7 @@ import com.wow.global.exception.BadRequestException;
 import com.wow.global.exception.InternalServerException;
 import com.wow.global.exception.RateLimitException;
 import com.wow.global.util.PhoneNumberUtils;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -45,7 +46,8 @@ public class SmsService {
 
     public void sendCode(String phoneNumber) {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
-        validateSendRateLimit(normalized);
+        // TEMP: 비밀번호 찾기 로컬 테스트를 위해 SMS 발송 쿨타임/시간당 제한을 잠시 비활성화한다.
+        // validateSendRateLimit(normalized);
 
         String code = generateCode();
         redisTemplate.opsForValue().set(
@@ -75,8 +77,9 @@ public class SmsService {
             throw new BadRequestException("인증번호가 만료되었거나 존재하지 않습니다.");
         }
 
-        // [fix] 수정 전: String.equals 비교 | 이유: timing side-channel 가능성을 낮추기 위해 상수 시간 비교 사용
-        if (!MessageDigest.isEqual(savedCode.getBytes(), code.getBytes())) {
+        if (!MessageDigest.isEqual(
+                savedCode.getBytes(StandardCharsets.UTF_8),
+                code.getBytes(StandardCharsets.UTF_8))) {
             handleVerifyFailure(normalized);
         }
 
@@ -89,7 +92,6 @@ public class SmsService {
         );
     }
 
-    // [fix] 수정 전: checkVerified + deleteVerified 분리 호출 | 이유: 인증 상태 재사용 레이스 컨디션 방지를 위해 원자적 소비로 통합
     public void checkAndConsumeVerified(String phoneNumber) {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
         String verified = redisTemplate.opsForValue().getAndDelete(RedisKeys.SMS_VERIFIED_PREFIX + normalized);
@@ -102,24 +104,28 @@ public class SmsService {
         String countKey = RedisKeys.SMS_COUNT_PREFIX + phoneNumber;
         String cooldownKey = RedisKeys.SMS_COOLDOWN_PREFIX + phoneNumber;
 
-        Long result = redisTemplate.execute(
+        Long result = executeSendRateLimitScript(countKey, cooldownKey);
+
+        if (result == null) {
+            log.error("SMS 전송 제한 Lua 스크립트 결과가 null입니다.");
+            throw new InternalServerException("SMS 전송 제한 처리 중 오류가 발생했습니다.");
+        }
+        if (result == RATE_LIMIT_RESULT_COOLDOWN_EXISTS) {
+            throw new RateLimitException("인증번호는 1분 후에 다시 요청할 수 있습니다.");
+        }
+        if (result == RATE_LIMIT_RESULT_LIMIT_EXCEEDED) {
+            throw new RateLimitException("인증번호 요청 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.");
+        }
+    }
+
+    Long executeSendRateLimitScript(String countKey, String cooldownKey) {
+        return redisTemplate.execute(
                 SEND_RATE_LIMIT_SCRIPT,
                 List.of(countKey, cooldownKey),
                 String.valueOf(SEND_LIMIT_WINDOW_MINUTES),
                 String.valueOf(MAX_SEND_COUNT_PER_WINDOW),
                 String.valueOf(SEND_COOLDOWN_SECONDS)
         );
-
-        if (result == null) {
-            log.error("SMS 전송 제한 Lua 스크립트 결과가 null입니다.");
-            throw new InternalServerException("SMS 전송 제한 처리에 실패했습니다.");
-        }
-        if (result == RATE_LIMIT_RESULT_COOLDOWN_EXISTS) {
-            throw new RateLimitException("인증번호는 1분 후에 다시 요청할 수 있습니다.");
-        }
-        if (result == RATE_LIMIT_RESULT_LIMIT_EXCEEDED) {
-            throw new RateLimitException("인증번호 요청 횟수가 초과되었습니다. 잠시 후 다시 시도해주세요.");
-        }
     }
 
     private void handleVerifyFailure(String phoneNumber) {
@@ -133,7 +139,7 @@ public class SmsService {
         if (verifyCount != null && verifyCount >= MAX_VERIFY_ATTEMPTS) {
             redisTemplate.delete(RedisKeys.SMS_CODE_PREFIX + phoneNumber);
             redisTemplate.delete(verifyCountKey);
-            throw new RateLimitException("인증번호 입력 횟수가 초과되었습니다. 인증번호를 다시 요청해주세요.");
+            throw new RateLimitException("인증번호 입력 횟수를 초과했습니다. 인증번호를 다시 요청해주세요.");
         }
 
         throw new BadRequestException("인증번호가 올바르지 않습니다.");

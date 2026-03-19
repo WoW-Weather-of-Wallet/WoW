@@ -1,6 +1,7 @@
 package com.wow.domain.auth.controller;
 
 import com.wow.domain.auth.dto.UserLoginResponse;
+import com.wow.domain.auth.dto.ssafy.ExchangeTokenRequest;
 import com.wow.domain.auth.dto.ssafy.SsafyCheckRequest;
 import com.wow.domain.auth.dto.ssafy.SsafyRegisterRequest;
 import com.wow.domain.auth.service.SsafyOAuthService;
@@ -43,10 +44,11 @@ public class SsafyOAuthController {
     }
 
     // [fix] 수정 전: @GetMapping("/token") + @RequestParam | 이유: GET 요청 시 auth code가 서버 로그/브라우저 히스토리/referrer에 노출 → POST로 변경
+    // [fix] 수정 전: @RequestParam String code | 이유: POST여도 쿼리스트링은 서버 access log에 기록됨 → @RequestBody로 이동
     @Operation(summary = "SSAFY 로그인 토큰 교환", description = "딥링크로 받은 일회성 code를 JWT로 교환합니다.")
     @PostMapping("/token")
-    public ResponseEntity<UserLoginResponse> exchangeToken(@RequestParam String code) {
-        return ResponseEntity.ok(ssafyOAuthService.exchangeToken(code));
+    public ResponseEntity<UserLoginResponse> exchangeToken(@Valid @RequestBody ExchangeTokenRequest request) {
+        return ResponseEntity.ok(ssafyOAuthService.exchangeToken(request.getCode()));
     }
 
     @Operation(summary = "SSAFY 신규 회원 중복 확인", description = "SMS 인증 전 이름, 성별, 생년월일, 전화번호로 중복 여부를 확인합니다.")

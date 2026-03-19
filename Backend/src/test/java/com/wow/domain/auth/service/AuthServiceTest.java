@@ -3,6 +3,7 @@ package com.wow.domain.auth.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
@@ -204,6 +205,7 @@ class AuthServiceTest {
         FindPwRequest request = new FindPwRequest();
         ReflectionTestUtils.setField(request, "userId", "wowuser");
         ReflectionTestUtils.setField(request, "name", "tester");
+        ReflectionTestUtils.setField(request, "gender", "M");
         ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
         ReflectionTestUtils.setField(request, "phoneNumber", "010-1234-5678");
         ReflectionTestUtils.setField(request, "newPw", "Valid1!A");
@@ -218,8 +220,8 @@ class AuthServiceTest {
                 .role(Role.USER)
                 .build();
 
-        when(userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(
-                "wowuser", "tester", LocalDate.of(1999, 1, 1), "01012345678"))
+        when(userRepository.findByUserIdAndNameAndGenderAndBirthDateAndPhoneNumber(
+                "wowuser", "tester", "M", LocalDate.of(1999, 1, 1), "01012345678"))
                 .thenReturn(Optional.of(user));
         when(bCryptPasswordEncoder.encode("Valid1!A")).thenReturn("encoded-password");
 
@@ -328,6 +330,7 @@ class AuthServiceTest {
         FindPwRequest request = new FindPwRequest();
         ReflectionTestUtils.setField(request, "userId", "wowuser");
         ReflectionTestUtils.setField(request, "name", "tester");
+        ReflectionTestUtils.setField(request, "gender", "M");
         ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
         ReflectionTestUtils.setField(request, "phoneNumber", "010-1234-5678");
         ReflectionTestUtils.setField(request, "newPw", "Valid1!A");
@@ -342,8 +345,8 @@ class AuthServiceTest {
                 .role(Role.USER)
                 .build();
 
-        when(userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(
-                "wowuser", "tester", LocalDate.of(1999, 1, 1), "01012345678"))
+        when(userRepository.findByUserIdAndNameAndGenderAndBirthDateAndPhoneNumber(
+                "wowuser", "tester", "M", LocalDate.of(1999, 1, 1), "01012345678"))
                 .thenReturn(Optional.of(user));
         when(bCryptPasswordEncoder.encode("Valid1!A")).thenThrow(new RuntimeException("encode failure"));
 
@@ -362,6 +365,7 @@ class AuthServiceTest {
         FindPwRequest request = new FindPwRequest();
         ReflectionTestUtils.setField(request, "userId", "wowuser");
         ReflectionTestUtils.setField(request, "name", "tester");
+        ReflectionTestUtils.setField(request, "gender", "M");
         ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
         ReflectionTestUtils.setField(request, "phoneNumber", "010-1234-5678");
         ReflectionTestUtils.setField(request, "newPw", "Valid1!A");
@@ -376,8 +380,8 @@ class AuthServiceTest {
                 .role(Role.USER)
                 .build();
 
-        when(userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(
-                "wowuser", "tester", LocalDate.of(1999, 1, 1), "01012345678"))
+        when(userRepository.findByUserIdAndNameAndGenderAndBirthDateAndPhoneNumber(
+                "wowuser", "tester", "M", LocalDate.of(1999, 1, 1), "01012345678"))
                 .thenReturn(Optional.of(user));
         // [fix] 수정 전: checkVerified에 doThrow | 이유: checkAndConsumeVerified로 메서드명 변경됨
         doThrow(new BadRequestException("sms verification required"))
@@ -416,8 +420,6 @@ class AuthServiceTest {
     }
 
     private void stubPublicRateLimit() {
-        when(redisTemplate.hasKey(anyString())).thenReturn(false);
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.increment(anyString())).thenReturn(1L);
+        when(redisTemplate.execute(any(), anyList(), anyString(), anyString(), anyString())).thenReturn(1L);
     }
 }

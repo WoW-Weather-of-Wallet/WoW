@@ -8,6 +8,7 @@ import io.jsonwebtoken.security.Keys;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import javax.crypto.SecretKey;
@@ -100,7 +101,25 @@ public class JwtTokenProvider {
                 .verifyWith(key)
                 .build()
                 .parseSignedClaims(token);
-        return jws.getPayload();
+        Claims claims = jws.getPayload();
+        validateRegisteredClaims(claims);
+        return claims;
+    }
+
+    private void validateRegisteredClaims(Claims claims) {
+        if (!issuer.equals(claims.getIssuer())) {
+            throw new JwtException("ì˜¬ë°”ë¥´ì§€ ì•Šì€ JWT issuerìž…ë‹ˆë‹¤.");
+        }
+        Object audience = claims.get(CLAIM_AUDIENCE);
+        boolean audienceMatched = false;
+        if (audience instanceof String audienceValue) {
+            audienceMatched = AUDIENCE_VALUE.equals(audienceValue);
+        } else if (audience instanceof Collection<?> audienceValues) {
+            audienceMatched = audienceValues.contains(AUDIENCE_VALUE);
+        }
+        if (!audienceMatched) {
+            throw new JwtException("ì˜¬ë°”ë¥´ì§€ ì•Šì€ JWT audienceìž…ë‹ˆë‹¤.");
+        }
     }
 
     // [added] 이유: access 토큰만 파싱하여 type claim 검증 + 단일 파싱으로 성능 개선 (기존: validateToken + getAuthentication에서 2회 파싱)
@@ -144,10 +163,7 @@ public class JwtTokenProvider {
         }
     }
 
-    public String getUserIdFromToken(String token) {
-        Claims claims = parseClaims(token);
-        return claims.getSubject();
-    }
+    // [removed] 삭제 전: getUserIdFromToken(String token) | 이유: parseAccessToken/parseRefreshToken으로 대체된 이후 production 코드에서 미사용
 
     public long getAccessTokenValidityInSeconds() {
         return accessTokenValidity.toSeconds();

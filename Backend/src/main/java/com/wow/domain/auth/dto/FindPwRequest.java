@@ -22,6 +22,11 @@ public class FindPwRequest {
     @Size(max = 10, message = "이름은 10자 이하이어야 합니다.")
     private String name;
 
+    // [added] 이유: findId는 gender 포함 4개 조건 검증인데 findPassword는 gender 없이 3개만 검증하여 본인확인이 더 약함 → gender 추가로 대칭 강화
+    @NotBlank(message = "성별을 입력해주세요.")
+    @Pattern(regexp = ValidationPatterns.GENDER, message = "성별은 M 또는 F만 가능합니다.")
+    private String gender;
+
     @NotNull(message = "생년월일을 입력해주세요.")
     @Past(message = "생년월일은 오늘 이전 날짜여야 합니다.")
     private LocalDate birthDate;
