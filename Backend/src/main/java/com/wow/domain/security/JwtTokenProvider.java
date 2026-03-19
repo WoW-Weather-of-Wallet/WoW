@@ -144,10 +144,7 @@ public class JwtTokenProvider {
         }
     }
 
-    public String getUserIdFromToken(String token) {
-        Claims claims = parseClaims(token);
-        return claims.getSubject();
-    }
+    // [removed] 삭제 전: getUserIdFromToken(String token) | 이유: parseAccessToken/parseRefreshToken으로 대체된 이후 production 코드에서 미사용
 
     public long getAccessTokenValidityInSeconds() {
         return accessTokenValidity.toSeconds();

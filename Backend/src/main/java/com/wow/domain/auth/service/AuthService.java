@@ -65,6 +65,8 @@ public class AuthService {
 
     // [added] 이유: enforcePublicRateLimit의 blockKey 조회 → 카운터 증가 TOCTOU 레이스 컨디션 방지를 위한 Lua 스크립트
     private static final DefaultRedisScript<Long> PUBLIC_RATE_LIMIT_SCRIPT = PublicAuthRateLimitScript.create();
+    // [fix] 수정 전: checkLoginRateLimit(hasKey) → incrementLoginAttempts(increment) 분리 연산 | 이유: TOCTOU → Lua 스크립트로 원자 처리
+    private static final DefaultRedisScript<Long> LOGIN_RATE_LIMIT_SCRIPT = LoginRateLimitScript.create();
     private static final long RATE_LIMIT_BLOCKED = -1L;
     private static final long RATE_LIMIT_EXCEEDED = -2L;
 
@@ -141,8 +143,9 @@ public class AuthService {
 
     @Transactional
     public UserLoginResponse login(UserLoginRequest request) {
-        // [added] 이유: 로그인 엔드포인트에 무차별 대입 공격 방지를 위한 rate limiting
-        checkLoginRateLimit(request.getUserId());
+        // [fix] 수정 전: checkLoginRateLimit(hasKey) → 인증 → catch incrementLoginAttempts(increment) 분리 연산
+        //   이유: TOCTOU 레이스 컨디션 → enforceLoginRateLimit(Lua Script)로 차단 확인 + 카운터 증가를 원자 처리
+        enforceLoginRateLimit(request.getUserId());
 
         try {
             Authentication auth = authenticationManager.authenticate(
@@ -173,8 +176,6 @@ public class AuthService {
                     UserSummaryResponse.from(userDetails)
             );
         } catch (AuthenticationException e) {
-            // [added] 이유: 로그인 실패 시 시도 횟수 증가
-            incrementLoginAttempts(request.getUserId());
             throw e;
         }
     }
@@ -291,24 +292,22 @@ public class AuthService {
         user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
     }
 
-    // [added] 이유: 로그인 무차별 대입 공격 방지 - Redis 기반 rate limiting
-    private void checkLoginRateLimit(String userId) {
-        String blockKey = RedisKeys.LOGIN_BLOCK_PREFIX + userId;
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(blockKey))) {
-            throw new RateLimitException("로그인 시도 횟수가 초과되었습니다. 잠시 후 다시 시도해주세요.");
-        }
-    }
-
-    private void incrementLoginAttempts(String userId) {
+    // [fix] 수정 전: checkLoginRateLimit(hasKey) + incrementLoginAttempts(increment) 분리 | 이유: TOCTOU → Lua 스크립트로 원자 처리
+    private void enforceLoginRateLimit(String userId) {
         String attemptKey = RedisKeys.LOGIN_ATTEMPT_PREFIX + userId;
-        Long attempts = redisTemplate.opsForValue().increment(attemptKey);
-        if (attempts != null && attempts == 1L) {
-            redisTemplate.expire(attemptKey, LOGIN_ATTEMPT_WINDOW);
-        }
-        if (attempts != null && attempts >= MAX_LOGIN_ATTEMPTS) {
-            redisTemplate.opsForValue().set(RedisKeys.LOGIN_BLOCK_PREFIX + userId, "blocked", LOGIN_BLOCK_DURATION);
-            redisTemplate.delete(attemptKey);
+        String blockKey = RedisKeys.LOGIN_BLOCK_PREFIX + userId;
+
+        Long result = redisTemplate.execute(
+                LOGIN_RATE_LIMIT_SCRIPT,
+                List.of(attemptKey, blockKey),
+                String.valueOf(LOGIN_ATTEMPT_WINDOW.toSeconds()),
+                String.valueOf(MAX_LOGIN_ATTEMPTS),
+                String.valueOf(LOGIN_BLOCK_DURATION.toSeconds())
+        );
+
+        if (result == null || result == RATE_LIMIT_BLOCKED || result == RATE_LIMIT_EXCEEDED) {
             log.warn("로그인 시도 횟수 초과로 계정 차단: userId={}", userId);
+            throw new RateLimitException("로그인 시도 횟수가 초과되었습니다. 잠시 후 다시 시도해주세요.");
         }
     }
 
