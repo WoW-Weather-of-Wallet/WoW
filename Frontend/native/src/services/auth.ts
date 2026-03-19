@@ -123,7 +123,7 @@ export interface CheckUserIdResponse {
   message?: string;
 }
 
-const nativeApi = axios.create({
+export const nativeApi = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
   withCredentials: true,

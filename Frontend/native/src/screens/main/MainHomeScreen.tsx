@@ -1,6 +1,6 @@
-import React from 'react';
-import { ScrollView, StatusBar, View } from 'react-native';
+import { ScrollView, StatusBar, View, TouchableOpacity, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { fcmService } from '../../services/fcmService';
 import {
   mockHomeInsights,
   mockHomeSummary,
@@ -45,6 +45,21 @@ export default function MainHomeScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {/* 테스트용 알림 버튼 */}
+        <TouchableOpacity 
+          onPress={() => fcmService.testLocalNotification()}
+          style={{
+            backgroundColor: COLORS.primary,
+            padding: 15,
+            marginHorizontal: 16,
+            marginBottom: 20,
+            borderRadius: 12,
+            alignItems: 'center'
+          }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>🔔 알림 기능 테스트 (로컬)</Text>
+        </TouchableOpacity>
+
         <HomeSpendingTypeCard onPress={spendingTypeModal.open} />
         <HomeWeeklyPreviewCard items={mockHomeCalendarPreview} />
         <HomeBudgetReportCard {...mockHomeSummary} onPress={reportModal.open} />
