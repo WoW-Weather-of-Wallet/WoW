@@ -42,6 +42,8 @@ Backend/out/
 Backend/.classpath
 Backend/.project
 Backend/.settings/
+Backend/.gradle-home/
+Backend/.gradle-user-home/
 
 ############################################
 # Frontend (React / React Native / Node)
@@ -102,3 +104,4 @@ htmlcov/
 Infra/Docker/env.prod
 Backend/src/main/resources/application-local.yml
 Backend/src/main/resources/application-local.yaml
+Backend/.gradle-user-home/

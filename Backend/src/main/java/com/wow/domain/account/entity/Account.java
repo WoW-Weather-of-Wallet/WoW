@@ -19,12 +19,17 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 
+// [added] 이유: Account 엔티티에 JPA Auditing이 적용되지 않아 createdAt이 수동 관리 → 다른 엔티티와 일관성 확보
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 @Entity
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "accounts")
+@jakarta.persistence.EntityListeners(AuditingEntityListener.class)
 public class Account {
 
     @Id
@@ -52,7 +57,9 @@ public class Account {
     @Column(length = 30)
     private String status;
 
-    @Column(name = "created_at")
+    // [fix] 수정 전: @Column만 (Auditing 미적용) | 이유: 다른 엔티티는 @CreatedDate 사용하는데 Account만 수동 → 일관성 확보
+    @CreatedDate
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "closed_at")

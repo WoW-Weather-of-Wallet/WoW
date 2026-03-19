@@ -1,12 +1,13 @@
 package com.wow.domain.auth.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.wow.domain.security.CustomUserDetails;
+import com.wow.domain.user.dto.UserIdentityResolver;
 import com.wow.domain.user.entity.User;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,25 +24,24 @@ public class UserSummaryResponse {
 
     public static UserSummaryResponse from(User user) {
         return new UserSummaryResponse(
-                resolveUserId(user),
+                UserIdentityResolver.resolveUserId(user),
                 user.getName(),
                 user.getGender(),
                 user.getPhoneNumber(),
                 user.getBirthDate(),
-                resolveLoginType(user)
+                UserIdentityResolver.resolveLoginType(user)
         );
-
     }
 
-    private static String resolveUserId(User user) {
-        if (user.getUserId() != null) return user.getUserId();
-        return null;
+    // [added] 이유: CustomUserDetails가 User 엔티티 전체를 외부로 노출하지 않아도 로그인 응답 생성 가능하도록 보완
+    public static UserSummaryResponse from(CustomUserDetails userDetails) {
+        return new UserSummaryResponse(
+                userDetails.getLoginIdentifier(),
+                userDetails.getName(),
+                userDetails.getGender(),
+                userDetails.getPhoneNumber(),
+                userDetails.getBirthDate(),
+                userDetails.getLoginType()
+        );
     }
-
-    private static String resolveLoginType(User user) {
-        if (user.getUserId() != null) return "NORMAL";
-        if (user.getSsafyOauthId() != null) return "SSAFY";
-        return null;
-    }
-
 }

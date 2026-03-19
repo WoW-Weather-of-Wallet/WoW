@@ -7,11 +7,36 @@ import com.wow.domain.auth.dto.ssafy.SsafyRegisterRequest;
 import com.wow.domain.auth.dto.ssafy.SsafyTokenResponse;
 import com.wow.domain.auth.dto.ssafy.SsafyUserInfo;
 import com.wow.domain.security.JwtTokenProvider;
+import com.wow.domain.term.entity.Term;
+import com.wow.domain.term.service.TermService;
 import com.wow.domain.user.entity.Role;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.entity.UserTerm;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.domain.user.repository.UserTermRepository;
+import com.wow.global.constant.RedisKeys;
+import com.wow.global.exception.BadRequestException;
+import com.wow.global.exception.DuplicateException;
+import com.wow.global.exception.InvalidTokenException;
+import com.wow.global.exception.NotFoundException;
+import com.wow.global.util.PhoneNumberUtils;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -19,27 +44,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.wow.global.util.PhoneNumberUtils;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.http.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
-
 @Service
 @RequiredArgsConstructor
 public class SsafyOAuthService {
 
-    private static final String REFRESH_KEY_PREFIX = "refresh:";
-    private static final String PENDING_KEY_PREFIX = "ssafy:pending:";
-    private static final String AUTH_CODE_KEY_PREFIX = "ssafy:code:";
+    private static final Logger log = LoggerFactory.getLogger(SsafyOAuthService.class);
+
     private static final long PENDING_TTL_MINUTES = 30;
     private static final long AUTH_CODE_TTL_SECONDS = 30;
+    private static final long STATE_TTL_MINUTES = 5;
 
     @Value("${sso.ssafy.client-id}")
     private String clientId;
@@ -56,142 +69,148 @@ public class SsafyOAuthService {
     private final StringRedisTemplate redisTemplate;
     private final SmsService smsService;
     private final UserTermRepository userTermRepository;
+    private final TermService termService;
 
-    // 1. 인가코드 받기 URL 생성
     public String getLoginUrl() {
-        return "https://project.ssafy.com/oauth/sso-check"
-                + "?client_id=" + clientId
-                + "&redirect_uri=" + redirectUri
-                + "&response_type=code";
+        String state = UUID.randomUUID().toString();
+        redisTemplate.opsForValue().set(
+                RedisKeys.SSAFY_STATE_PREFIX + state,
+                "true",
+                Duration.ofMinutes(STATE_TTL_MINUTES)
+        );
+
+        return UriComponentsBuilder.fromUriString("https://project.ssafy.com/oauth/sso-check")
+                .queryParam("client_id", clientId)
+                .queryParam("redirect_uri", redirectUri)
+                .queryParam("response_type", "code")
+                .queryParam("state", state)
+                .build()
+                .encode()
+                .toUriString();
     }
 
-    // 2. 인가코드로 로그인 처리
-    public String login(String code) {
+    public String login(String code, String state) {
+        validateState(state);
 
         SsafyTokenResponse tokenResponse = getAccessToken(code);
-
         SsafyUserInfo userInfo = getUserInfo(tokenResponse.getAccessToken());
-
         Optional<User> existingUser = userRepository.findBySsafyOauthId(userInfo.getUserId());
 
-        // 기존 회원이면 일회성 code 발급 후 딥링크 URL 반환
         if (existingUser.isPresent()) {
             String authCode = UUID.randomUUID().toString();
             redisTemplate.opsForValue().set(
-                    AUTH_CODE_KEY_PREFIX + authCode,
+                    RedisKeys.SSAFY_AUTH_CODE_PREFIX + authCode,
                     userInfo.getUserId(),
                     Duration.ofSeconds(AUTH_CODE_TTL_SECONDS)
             );
-            return UriComponentsBuilder
-                    .fromUriString("wow://auth/ssafy/callback")
+            return UriComponentsBuilder.fromUriString("wow://auth/ssafy/callback")
                     .queryParam("code", authCode)
                     .build()
                     .encode()
                     .toUriString();
         }
 
-        // 신규 회원 → 중복 검증 하기 전 Redis에 30분동안 ssafyOauthId 임시 저장
+        // [fix] 수정 전: ssafyOauthId를 딥링크 URL에 직접 노출 (queryParam("ssafyOauthId", userInfo.getUserId()))
+        // 이유: 클라이언트가 ssafyOauthId를 조작하여 타인의 SSAFY 계정으로 가입 가능 → opaque pending token으로 대체
+        String pendingToken = UUID.randomUUID().toString();
         redisTemplate.opsForValue().set(
-                PENDING_KEY_PREFIX + userInfo.getUserId(),
-                userInfo.getName(),
+                RedisKeys.SSAFY_PENDING_PREFIX + pendingToken,
+                userInfo.getUserId() + "|" + userInfo.getName(),
                 Duration.ofMinutes(PENDING_TTL_MINUTES)
         );
 
-        // 신규 회원 정보 입력 딥링크 반환
-        return UriComponentsBuilder
-                .fromUriString("wow://auth/ssafy/register")
-                .queryParam("ssafyOauthId", userInfo.getUserId())
+        return UriComponentsBuilder.fromUriString("wow://auth/ssafy/register")
+                .queryParam("pendingToken", pendingToken)
                 .build()
                 .encode()
                 .toUriString();
     }
 
-    // 3. 신규 SSAFY 회원 중복 확인 (SMS 인증 전)
     public void checkDuplicate(SsafyCheckRequest request) {
-
+        // [fix] 수정 전: request.getSsafyOauthId()로 직접 접근 | 이유: opaque pending token에서 ssafyOauthId를 서버사이드에서 resolve
+        String[] pendingData = resolvePendingToken(request.getPendingToken());
+        String ssafyOauthId = pendingData[0];
+        String name = pendingData[1];
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
 
-        if (userRepository.existsBySsafyOauthId(request.getSsafyOauthId())) {
-            throw new IllegalArgumentException("이미 가입된 SSAFY 계정입니다.");
+        if (userRepository.existsByUserIdOrSsafyOauthId(ssafyOauthId, ssafyOauthId)) {
+            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 중복은 409 CONFLICT가 적절
+            throw new DuplicateException("이미 가입된 SSAFY 계정입니다.");
         }
-
-        String name = redisTemplate.opsForValue().get(PENDING_KEY_PREFIX + request.getSsafyOauthId());
-
-        if (name == null) {
-            throw new IllegalArgumentException("SSAFY 로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
-        }
-
         if (userRepository.existsByPhoneNumber(phoneNumber)) {
-            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
+            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 중복은 409 CONFLICT가 적절
+            throw new DuplicateException("이미 사용 중인 전화번호입니다.");
         }
-
         if (userRepository.existsDuplicate(name, request.getGender(), request.getBirthDate(), phoneNumber)) {
-            throw new IllegalArgumentException("이미 가입된 회원입니다.");
+            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 중복은 409 CONFLICT가 적절
+            throw new DuplicateException("이미 가입된 회원입니다.");
         }
-
     }
 
-    // 4. 신규 SSAFY 회원 SMS 인증 완료 후 회원가입 + JWT 발급
     @Transactional
     public UserLoginResponse register(SsafyRegisterRequest request) {
+        // [fix] 수정 전: request.getSsafyOauthId()로 직접 접근 | 이유: opaque pending token에서 서버사이드 resolve
+        String[] pendingData = resolvePendingToken(request.getPendingToken());
+        String ssafyOauthId = pendingData[0];
+        String name = pendingData[1];
 
-        if (userRepository.existsBySsafyOauthId(request.getSsafyOauthId())) {
-            throw new IllegalArgumentException("이미 가입된 SSAFY 계정입니다.");
-        }
-
-        // redis에서 ssafyOauthId로 name 가져오기
-        String redisKey = PENDING_KEY_PREFIX + request.getSsafyOauthId();
-        String name = redisTemplate.opsForValue().get(redisKey);
-
-        if (name == null) {
-            throw new IllegalArgumentException("SSAFY 로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
+        if (userRepository.existsByUserIdOrSsafyOauthId(ssafyOauthId, ssafyOauthId)) {
+            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 중복은 409 CONFLICT가 적절
+            throw new DuplicateException("이미 가입된 SSAFY 계정입니다.");
         }
 
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
-
         if (userRepository.existsByPhoneNumber(phoneNumber)) {
-            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
+            throw new DuplicateException("이미 사용 중인 전화번호입니다.");
         }
-
         if (userRepository.existsDuplicate(name, request.getGender(), request.getBirthDate(), phoneNumber)) {
-            throw new IllegalArgumentException("이미 가입된 회원입니다.");
+            throw new DuplicateException("이미 가입된 회원입니다.");
         }
 
-        // SMS 검증
-        smsService.checkVerified(phoneNumber);
+        Term currentRequiredTerm = termService.getCurrentRequiredTerm();
+
+        // [fix] 수정 전: smsService.checkVerified() + try/finally { smsService.deleteVerified() } | 이유: 원자적 checkAndConsume으로 레이스 컨디션 방지
+        smsService.checkAndConsumeVerified(phoneNumber);
 
         User newUser = User.builder()
-                .ssafyOauthId(request.getSsafyOauthId())
+                .userId(null)
+                .pw(null)
+                .ssafyOauthId(ssafyOauthId)
                 .name(name)
                 .gender(request.getGender())
                 .alarmEnabled(request.isAlarmEnabled())
                 .birthDate(request.getBirthDate())
                 .phoneNumber(phoneNumber)
-                .role(Role.User)
+                .role(Role.USER)
                 .build();
 
-        // USER 저장
         userRepository.save(newUser);
 
-        // 회원 동의 이력 저장
         userTermRepository.save(UserTerm.builder()
                 .user(newUser)
+                .term(currentRequiredTerm)
                 .agreed(request.isTermsAgreed())
                 .agreedAt(LocalDateTime.now())
                 .build());
 
-        // redis에서 ssafyOauthId 삭제
-        redisTemplate.delete(PENDING_KEY_PREFIX + request.getSsafyOauthId());
-
-        // redis에서 sms 인증 완료 기록 삭제
-        smsService.deleteVerified(phoneNumber);
-
+        redisTemplate.delete(RedisKeys.SSAFY_PENDING_PREFIX + request.getPendingToken());
         return issueToken(newUser);
     }
 
-    // SSAFY 토큰 요청
-    private SsafyTokenResponse getAccessToken(String code) {
+    // [added] 이유: opaque pending token에서 ssafyOauthId와 name을 서버사이드에서 안전하게 추출
+    private String[] resolvePendingToken(String pendingToken) {
+        String value = redisTemplate.opsForValue().get(RedisKeys.SSAFY_PENDING_PREFIX + pendingToken);
+        if (value == null) {
+            throw new BadRequestException("SSAFY 인증 정보가 만료되었습니다. 다시 인증을 진행해주세요.");
+        }
+        String[] parts = value.split("\\|", 2);
+        if (parts.length != 2) {
+            throw new BadRequestException("SSAFY 인증 정보가 올바르지 않습니다.");
+        }
+        return parts;
+    }
 
+    private SsafyTokenResponse getAccessToken(String code) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -204,57 +223,79 @@ public class SsafyOAuthService {
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
-        ResponseEntity<SsafyTokenResponse> response = restTemplate.postForEntity(
-                "https://project.ssafy.com/ssafy/oauth2/token",
-                request,
-                SsafyTokenResponse.class
-        );
+        // [added] 이유: RestClientException이 catch되지 않아 500 에러로 전파 → 적절한 예외 처리 추가
+        try {
+            ResponseEntity<SsafyTokenResponse> response = restTemplate.postForEntity(
+                    "https://project.ssafy.com/ssafy/oauth2/token",
+                    request,
+                    SsafyTokenResponse.class
+            );
 
-        return response.getBody();
-
+            SsafyTokenResponse body = response.getBody();
+            if (body == null || body.getAccessToken() == null || body.getAccessToken().isBlank()) {
+                throw new BadRequestException("SSAFY 토큰 응답이 올바르지 않습니다.");
+            }
+            return body;
+        } catch (RestClientException e) {
+            log.error("SSAFY 토큰 교환 실패: {}", e.getMessage(), e);
+            throw new BadRequestException("SSAFY 인증 서버와 통신에 실패했습니다.");
+        }
     }
 
-    // SSAFY 사용자 정보 조회
     private SsafyUserInfo getUserInfo(String accessToken) {
-
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + accessToken);
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         HttpEntity<?> request = new HttpEntity<>(headers);
 
-        ResponseEntity<SsafyUserInfo> response = restTemplate.exchange(
-                "https://project.ssafy.com/ssafy/resources/userInfo",
-                HttpMethod.GET,
-                request,
-                SsafyUserInfo.class
-        );
+        // [added] 이유: RestClientException이 catch되지 않아 500 에러로 전파 → 적절한 예외 처리 추가
+        try {
+            ResponseEntity<SsafyUserInfo> response = restTemplate.exchange(
+                    "https://project.ssafy.com/ssafy/resources/userInfo",
+                    HttpMethod.GET,
+                    request,
+                    SsafyUserInfo.class
+            );
 
-        return response.getBody();
-
+            SsafyUserInfo body = response.getBody();
+            if (body == null || body.getUserId() == null || body.getUserId().isBlank()) {
+                throw new BadRequestException("SSAFY 사용자 정보 응답이 올바르지 않습니다.");
+            }
+            return body;
+        } catch (RestClientException e) {
+            log.error("SSAFY 사용자 정보 조회 실패: {}", e.getMessage(), e);
+            throw new BadRequestException("SSAFY 인증 서버와 통신에 실패했습니다.");
+        }
     }
 
-    // 일회성 code로 JWT 교환
     public UserLoginResponse exchangeToken(String code) {
-
-        String ssafyOauthId = redisTemplate.opsForValue().get(AUTH_CODE_KEY_PREFIX + code);
-
+        String ssafyOauthId = redisTemplate.opsForValue().get(RedisKeys.SSAFY_AUTH_CODE_PREFIX + code);
         if (ssafyOauthId == null) {
-            throw new IllegalArgumentException("유효하지 않거나 만료된 코드입니다.");
+            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 인증 코드 관련 오류는 401 UNAUTHORIZED가 적절
+            throw new InvalidTokenException("유효하지 않은 인증 코드입니다.");
         }
 
-        redisTemplate.delete(AUTH_CODE_KEY_PREFIX + code);
+        redisTemplate.delete(RedisKeys.SSAFY_AUTH_CODE_PREFIX + code);
 
         User user = userRepository.findBySsafyOauthId(ssafyOauthId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 리소스 미발견은 404가 적절
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
 
         return issueToken(user);
-
     }
 
-    // JWT 발급 공통 로직
-    private UserLoginResponse issueToken(User user) {
+    private void validateState(String state) {
+        String stateKey = RedisKeys.SSAFY_STATE_PREFIX + state;
+        String savedState = redisTemplate.opsForValue().get(stateKey);
+        if (savedState == null) {
+            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 커스텀 예외로 전환
+            throw new BadRequestException("유효하지 않은 SSAFY 인증 요청입니다.");
+        }
+        redisTemplate.delete(stateKey);
+    }
 
+    private UserLoginResponse issueToken(User user) {
         String userId = user.getSsafyOauthId();
         String accessToken = jwtTokenProvider.createAccessToken(
                 userId,
@@ -263,7 +304,7 @@ public class SsafyOAuthService {
         String refreshToken = jwtTokenProvider.createRefreshToken(userId);
 
         redisTemplate.opsForValue().set(
-                REFRESH_KEY_PREFIX + userId,
+                RedisKeys.REFRESH_TOKEN_PREFIX + userId,
                 refreshToken,
                 Duration.ofSeconds(jwtTokenProvider.getRefreshTokenValidityInSeconds())
         );
@@ -274,7 +315,5 @@ public class SsafyOAuthService {
                 refreshToken,
                 UserSummaryResponse.from(user)
         );
-
     }
-
 }

@@ -1,43 +1,55 @@
 package com.wow.domain.auth.service;
 
-import net.nurigo.sdk.NurigoApp;
+import com.wow.global.constant.RedisKeys;
+import com.wow.global.exception.BadRequestException;
+import com.wow.global.exception.InternalServerException;
+import com.wow.global.exception.RateLimitException;
+import com.wow.global.util.PhoneNumberUtils;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
 import net.nurigo.sdk.message.model.Message;
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
 import net.nurigo.sdk.message.service.DefaultMessageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
-import com.wow.global.util.PhoneNumberUtils;
-import java.security.SecureRandom;
-import java.time.Duration;
-
 @Service
+@RequiredArgsConstructor
 public class SmsService {
 
+    private static final Logger log = LoggerFactory.getLogger(SmsService.class);
+
     private static final long CODE_TTL_MINUTES = 5;
-    private static final String VERIFIED_KEY_PREFIX = "sms:verified:";
-    private static final String CODE_KEY_PREFIX = "sms:code:";
+    private static final long SEND_COOLDOWN_SECONDS = 60;
+    private static final long SEND_LIMIT_WINDOW_MINUTES = 60;
+    private static final long MAX_SEND_COUNT_PER_WINDOW = 5;
+    private static final long MAX_VERIFY_ATTEMPTS = 5;
+
+    private static final long RATE_LIMIT_RESULT_COOLDOWN_EXISTS = -1L;
+    private static final long RATE_LIMIT_RESULT_LIMIT_EXCEEDED = -2L;
+
+    private static final DefaultRedisScript<Long> SEND_RATE_LIMIT_SCRIPT = SmsRateLimitScript.create();
 
     private final StringRedisTemplate redisTemplate;
     private final DefaultMessageService messageService;
-    private final String sender;
 
-    public SmsService(StringRedisTemplate redisTemplate,
-                      @Value("${solapi.api-key}") String apiKey,
-                      @Value("${solapi.api-secret}") String apiSecret,
-                      @Value("${solapi.sender}") String sender) {
-        this.redisTemplate = redisTemplate;
-        this.messageService = NurigoApp.INSTANCE.initialize(apiKey, apiSecret, "https://api.solapi.com");
-        this.sender = sender;
-    }
+    @Value("${solapi.sender}")
+    private String sender;
 
     public void sendCode(String phoneNumber) {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
-        String code = generateCode();
+        validateSendRateLimit(normalized);
 
+        String code = generateCode();
         redisTemplate.opsForValue().set(
-                CODE_KEY_PREFIX + normalized,
+                RedisKeys.SMS_CODE_PREFIX + normalized,
                 code,
                 Duration.ofMinutes(CODE_TTL_MINUTES)
         );
@@ -47,44 +59,104 @@ public class SmsService {
         message.setTo(normalized);
         message.setText("[WoW] 인증번호 [" + code + "]를 입력해주세요.");
 
-        messageService.sendOne(new SingleMessageSendingRequest(message));
+        try {
+            messageService.sendOne(new SingleMessageSendingRequest(message));
+        } catch (RuntimeException e) {
+            rollbackSendState(normalized);
+            throw e;
+        }
     }
 
     public void verifyCode(String phoneNumber, String code) {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
-        String savedCode = redisTemplate.opsForValue().get(CODE_KEY_PREFIX + normalized);
+        String savedCode = redisTemplate.opsForValue().get(RedisKeys.SMS_CODE_PREFIX + normalized);
 
         if (savedCode == null) {
-            throw new IllegalArgumentException("인증번호가 만료되었습니다.");
-        }
-        if (!savedCode.equals(code)) {
-            throw new IllegalArgumentException("인증번호가 올바르지 않습니다.");
+            throw new BadRequestException("인증번호가 만료되었거나 존재하지 않습니다.");
         }
 
-        redisTemplate.delete(CODE_KEY_PREFIX + normalized);
+        // [fix] 수정 전: String.equals 비교 | 이유: timing side-channel 가능성을 낮추기 위해 상수 시간 비교 사용
+        if (!MessageDigest.isEqual(savedCode.getBytes(), code.getBytes())) {
+            handleVerifyFailure(normalized);
+        }
 
+        redisTemplate.delete(RedisKeys.SMS_CODE_PREFIX + normalized);
+        redisTemplate.delete(RedisKeys.SMS_VERIFY_COUNT_PREFIX + normalized);
         redisTemplate.opsForValue().set(
-                VERIFIED_KEY_PREFIX + normalized,
+                RedisKeys.SMS_VERIFIED_PREFIX + normalized,
                 "true",
                 Duration.ofMinutes(30)
         );
     }
 
-    public void checkVerified(String phoneNumber) {
+    // [fix] 수정 전: checkVerified + deleteVerified 분리 호출 | 이유: 인증 상태 재사용 레이스 컨디션 방지를 위해 원자적 소비로 통합
+    public void checkAndConsumeVerified(String phoneNumber) {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
-        String verified = redisTemplate.opsForValue().get(VERIFIED_KEY_PREFIX + normalized);
+        String verified = redisTemplate.opsForValue().getAndDelete(RedisKeys.SMS_VERIFIED_PREFIX + normalized);
         if (!"true".equals(verified)) {
-            throw new IllegalArgumentException("휴대폰 인증이 필요합니다.");
+            throw new BadRequestException("SMS 인증이 필요합니다.");
         }
     }
 
-    public void deleteVerified(String phoneNumber) {
-        redisTemplate.delete(VERIFIED_KEY_PREFIX + PhoneNumberUtils.normalize(phoneNumber));
+    private void validateSendRateLimit(String phoneNumber) {
+        String countKey = RedisKeys.SMS_COUNT_PREFIX + phoneNumber;
+        String cooldownKey = RedisKeys.SMS_COOLDOWN_PREFIX + phoneNumber;
+
+        Long result = redisTemplate.execute(
+                SEND_RATE_LIMIT_SCRIPT,
+                List.of(countKey, cooldownKey),
+                String.valueOf(SEND_LIMIT_WINDOW_MINUTES),
+                String.valueOf(MAX_SEND_COUNT_PER_WINDOW),
+                String.valueOf(SEND_COOLDOWN_SECONDS)
+        );
+
+        if (result == null) {
+            log.error("SMS 전송 제한 Lua 스크립트 결과가 null입니다.");
+            throw new InternalServerException("SMS 전송 제한 처리에 실패했습니다.");
+        }
+        if (result == RATE_LIMIT_RESULT_COOLDOWN_EXISTS) {
+            throw new RateLimitException("인증번호는 1분 후에 다시 요청할 수 있습니다.");
+        }
+        if (result == RATE_LIMIT_RESULT_LIMIT_EXCEEDED) {
+            throw new RateLimitException("인증번호 요청 횟수가 초과되었습니다. 잠시 후 다시 시도해주세요.");
+        }
+    }
+
+    private void handleVerifyFailure(String phoneNumber) {
+        String verifyCountKey = RedisKeys.SMS_VERIFY_COUNT_PREFIX + phoneNumber;
+        Long verifyCount = redisTemplate.opsForValue().increment(verifyCountKey);
+
+        if (verifyCount != null && verifyCount == 1L) {
+            redisTemplate.expire(verifyCountKey, Duration.ofMinutes(CODE_TTL_MINUTES));
+        }
+
+        if (verifyCount != null && verifyCount >= MAX_VERIFY_ATTEMPTS) {
+            redisTemplate.delete(RedisKeys.SMS_CODE_PREFIX + phoneNumber);
+            redisTemplate.delete(verifyCountKey);
+            throw new RateLimitException("인증번호 입력 횟수가 초과되었습니다. 인증번호를 다시 요청해주세요.");
+        }
+
+        throw new BadRequestException("인증번호가 올바르지 않습니다.");
+    }
+
+    private void rollbackSendState(String phoneNumber) {
+        String countKey = RedisKeys.SMS_COUNT_PREFIX + phoneNumber;
+        String cooldownKey = RedisKeys.SMS_COOLDOWN_PREFIX + phoneNumber;
+        String codeKey = RedisKeys.SMS_CODE_PREFIX + phoneNumber;
+        String verifyCountKey = RedisKeys.SMS_VERIFY_COUNT_PREFIX + phoneNumber;
+
+        redisTemplate.delete(codeKey);
+        redisTemplate.delete(cooldownKey);
+        redisTemplate.delete(verifyCountKey);
+
+        Long updatedCount = redisTemplate.opsForValue().decrement(countKey);
+        if (updatedCount != null && updatedCount <= 0) {
+            redisTemplate.delete(countKey);
+        }
     }
 
     private String generateCode() {
         SecureRandom random = new SecureRandom();
         return String.format("%06d", random.nextInt(1000000));
     }
-
 }
