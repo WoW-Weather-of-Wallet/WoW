@@ -7,6 +7,7 @@ import com.wow.domain.auth.dto.UserCreateResponse;
 import com.wow.domain.auth.service.AuthService;
 import com.wow.domain.auth.service.SmsService;
 import com.wow.global.GlobalExceptionHandler;
+import org.springframework.web.servlet.DispatcherServlet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import java.time.LocalDate;
 import java.util.Map;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -56,6 +58,7 @@ class AuthControllerMockMvcTest {
         mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(authService, smsService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setValidator(validator)
+                .addDispatcherServletCustomizer(servlet -> servlet.setThrowExceptionIfNoHandlerFound(true))
                 .build();
     }
 
@@ -179,6 +182,34 @@ class AuthControllerMockMvcTest {
                 .andExpect(content().string(""));
 
         verify(authService).findPassword(any());
+    }
+
+    @Test
+    void signupReturnsBadRequestErrorResponseWhenJsonIsMalformed() throws Exception {
+        mockMvc.perform(post(AUTH_BASE_URL + "/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"userId\":\"wowuser\""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.errorMessage").value("잘못된 요청 본문입니다."));
+    }
+
+    @Test
+    void returnsNotFoundErrorResponseWhenEndpointDoesNotExist() throws Exception {
+        mockMvc.perform(post(AUTH_BASE_URL + "/missing")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.errorMessage").value("요청한 리소스를 찾을 수 없습니다."));
+    }
+
+    @Test
+    void returnsMethodNotAllowedErrorResponseWhenHttpMethodIsInvalid() throws Exception {
+        mockMvc.perform(get(AUTH_BASE_URL + "/signup"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.METHOD_NOT_ALLOWED.value()))
+                .andExpect(jsonPath("$.errorMessage").value("지원하지 않는 HTTP 메서드입니다."));
     }
 
     private ResultActions performPost(String path, Map<String, Object> requestBody) throws Exception {

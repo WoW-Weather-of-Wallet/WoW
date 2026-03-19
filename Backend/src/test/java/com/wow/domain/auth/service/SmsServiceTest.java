@@ -2,6 +2,7 @@ package com.wow.domain.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -19,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,7 +46,8 @@ class SmsServiceTest {
 
     @Test
     void sendCodeThrowsWhenCooldownExists() {
-        when(redisTemplate.hasKey("sms:cooldown:01012345678")).thenReturn(true);
+        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString(), anyString(), anyString()))
+                .thenReturn(-1L);
 
         assertThatThrownBy(() -> smsService.sendCode("010-1234-5678"))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -55,46 +58,56 @@ class SmsServiceTest {
 
     @Test
     void sendCodeThrowsWhenHourlyLimitExceeded() {
-        when(redisTemplate.hasKey("sms:cooldown:01012345678")).thenReturn(false);
-        when(valueOperations.increment("sms:count:01012345678")).thenReturn(6L);
+        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString(), anyString(), anyString()))
+                .thenReturn(-2L);
 
         assertThatThrownBy(() -> smsService.sendCode("01012345678"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("초과");
 
-        verify(valueOperations).setIfAbsent("sms:count:01012345678", "0", Duration.ofMinutes(60));
-        verify(valueOperations).set("sms:cooldown:01012345678", "true", Duration.ofSeconds(60));
         verify(messageService, never()).sendOne(any());
+        verify(valueOperations, never()).set(eq("sms:code:01012345678"), anyString(), any(Duration.class));
     }
 
     @Test
     void sendCodeStoresCooldownAndCodeWhenAllowed() {
-        when(redisTemplate.hasKey("sms:cooldown:01012345678")).thenReturn(false);
-        when(valueOperations.increment("sms:count:01012345678")).thenReturn(1L);
+        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString(), anyString(), anyString()))
+                .thenReturn(1L);
 
         smsService.sendCode("010-1234-5678");
 
-        verify(valueOperations).setIfAbsent("sms:count:01012345678", "0", Duration.ofMinutes(60));
-        verify(valueOperations).set("sms:cooldown:01012345678", "true", Duration.ofSeconds(60));
+        verify(redisTemplate).execute(any(DefaultRedisScript.class), anyList(), eq("60"), eq("5"), eq("60"));
         verify(valueOperations).set(eq("sms:code:01012345678"), anyString(), eq(Duration.ofMinutes(5)));
         verify(messageService).sendOne(any());
     }
 
     @Test
     void sendCodeDoesNotResetHourlyWindowWhenSendCountAlreadyExists() {
-        when(redisTemplate.hasKey("sms:cooldown:01012345678")).thenReturn(false);
-        when(valueOperations.increment("sms:count:01012345678")).thenReturn(2L);
+        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString(), anyString(), anyString()))
+                .thenReturn(2L);
 
         smsService.sendCode("010-1234-5678");
 
-        verify(valueOperations).setIfAbsent("sms:count:01012345678", "0", Duration.ofMinutes(60));
+        verify(redisTemplate).execute(any(DefaultRedisScript.class), anyList(), eq("60"), eq("5"), eq("60"));
         verify(messageService).sendOne(any());
     }
 
     @Test
+    void sendCodeThrowsWhenRateLimitScriptFails() {
+        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString(), anyString(), anyString()))
+                .thenReturn(null);
+
+        assertThatThrownBy(() -> smsService.sendCode("010-1234-5678"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("실패");
+
+        verify(messageService, never()).sendOne(any());
+    }
+
+    @Test
     void sendCodeRollsBackRedisStateWhenMessageSendFails() {
-        when(redisTemplate.hasKey("sms:cooldown:01012345678")).thenReturn(false);
-        when(valueOperations.increment("sms:count:01012345678")).thenReturn(1L);
+        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString(), anyString(), anyString()))
+                .thenReturn(1L);
         when(valueOperations.decrement("sms:count:01012345678")).thenReturn(0L);
         doThrow(new RuntimeException("send failed")).when(messageService).sendOne(any());
 

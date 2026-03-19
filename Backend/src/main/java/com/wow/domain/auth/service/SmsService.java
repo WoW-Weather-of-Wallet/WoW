@@ -4,12 +4,14 @@ import com.wow.global.constant.RedisKeys;
 import com.wow.global.util.PhoneNumberUtils;
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import net.nurigo.sdk.message.model.Message;
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
 import net.nurigo.sdk.message.service.DefaultMessageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,6 +23,11 @@ public class SmsService {
     private static final long SEND_LIMIT_WINDOW_MINUTES = 60;
     private static final long MAX_SEND_COUNT_PER_WINDOW = 5;
     private static final long MAX_VERIFY_ATTEMPTS = 5;
+
+    private static final long RATE_LIMIT_RESULT_COOLDOWN_EXISTS = -1L;
+    private static final long RATE_LIMIT_RESULT_LIMIT_EXCEEDED = -2L;
+
+    private static final DefaultRedisScript<Long> SEND_RATE_LIMIT_SCRIPT = createSendRateLimitScript();
 
     private final StringRedisTemplate redisTemplate;
     private final DefaultMessageService messageService;
@@ -86,33 +93,26 @@ public class SmsService {
     }
 
     private void validateSendRateLimit(String phoneNumber) {
+        String countKey = RedisKeys.SMS_COUNT_PREFIX + phoneNumber;
         String cooldownKey = RedisKeys.SMS_COOLDOWN_PREFIX + phoneNumber;
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(cooldownKey))) {
+
+        Long result = redisTemplate.execute(
+                SEND_RATE_LIMIT_SCRIPT,
+                List.of(countKey, cooldownKey),
+                String.valueOf(SEND_LIMIT_WINDOW_MINUTES),
+                String.valueOf(MAX_SEND_COUNT_PER_WINDOW),
+                String.valueOf(SEND_COOLDOWN_SECONDS)
+        );
+
+        if (result == null) {
+            throw new IllegalStateException("SMS 전송 제한 처리에 실패했습니다.");
+        }
+        if (result == RATE_LIMIT_RESULT_COOLDOWN_EXISTS) {
             throw new IllegalArgumentException("인증번호는 1분 후에 다시 요청할 수 있습니다.");
         }
-
-        String countKey = RedisKeys.SMS_COUNT_PREFIX + phoneNumber;
-        redisTemplate.opsForValue().setIfAbsent(
-                countKey,
-                "0",
-                Duration.ofMinutes(SEND_LIMIT_WINDOW_MINUTES)
-        );
-
-        Long sendCount = redisTemplate.opsForValue().increment(countKey);
-        if (sendCount != null && sendCount > MAX_SEND_COUNT_PER_WINDOW) {
-            redisTemplate.opsForValue().set(
-                    cooldownKey,
-                    "true",
-                    Duration.ofSeconds(SEND_COOLDOWN_SECONDS)
-            );
+        if (result == RATE_LIMIT_RESULT_LIMIT_EXCEEDED) {
             throw new IllegalArgumentException("인증번호 요청 횟수가 초과되었습니다. 잠시 후 다시 시도해주세요.");
         }
-
-        redisTemplate.opsForValue().set(
-                cooldownKey,
-                "true",
-                Duration.ofSeconds(SEND_COOLDOWN_SECONDS)
-        );
     }
 
     private void handleVerifyFailure(String phoneNumber) {
@@ -151,5 +151,35 @@ public class SmsService {
     private String generateCode() {
         SecureRandom random = new SecureRandom();
         return String.format("%06d", random.nextInt(1000000));
+    }
+
+    private static DefaultRedisScript<Long> createSendRateLimitScript() {
+        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+        script.setResultType(Long.class);
+        script.setScriptText("""
+                local countKey = KEYS[1]
+                local cooldownKey = KEYS[2]
+                local windowMinutes = tonumber(ARGV[1])
+                local maxSendCount = tonumber(ARGV[2])
+                local cooldownSeconds = tonumber(ARGV[3])
+
+                if redis.call('EXISTS', cooldownKey) == 1 then
+                    return -1
+                end
+
+                local sendCount = redis.call('INCR', countKey)
+                if sendCount == 1 then
+                    redis.call('EXPIRE', countKey, windowMinutes * 60)
+                end
+
+                if sendCount > maxSendCount then
+                    redis.call('SET', cooldownKey, 'true', 'EX', cooldownSeconds)
+                    return -2
+                end
+
+                redis.call('SET', cooldownKey, 'true', 'EX', cooldownSeconds)
+                return sendCount
+                """);
+        return script;
     }
 }
