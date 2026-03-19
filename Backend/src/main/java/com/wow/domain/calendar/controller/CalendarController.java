@@ -6,6 +6,7 @@ import com.wow.domain.security.CustomUserDetails;
 import com.wow.global.exception.BadRequestException;
 import com.wow.global.exception.InvalidTokenException;
 import com.wow.global.common.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -78,5 +79,21 @@ public class CalendarController {
         return ResponseEntity
                 .status(201)
                 .body(ApiResponse.success(201, "거래내역 저장 성공", response));
+    }
+
+    // ④ 거래내역 직접 입력 (다건)
+    @PostMapping("/transactions/custom")
+    public ResponseEntity<ApiResponse<TransactionCustomResponse>> createCustomTransaction(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody TransactionCustomRequest request) {
+
+        Long userId = userDetails.getId();
+
+        TransactionCustomResponse response =
+                calendarService.createCustomTransaction(userId, request);
+
+        return ResponseEntity
+                .status(201)
+                .body(ApiResponse.success(201, "거래내역 직접 입력 성공", response));
     }
 }
