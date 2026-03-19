@@ -26,6 +26,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * - Optional<User> findByNameAndBirthDateAndPhoneNumber(String name, LocalDate birthDate, String phoneNumber);
      */
     Optional<User> findByNameAndGenderAndBirthDateAndPhoneNumber(String name, String gender, LocalDate birthDate, String phoneNumber);
-    Optional<User> findByUserIdAndNameAndBirthDateAndPhoneNumber(String userId, String name, LocalDate birthDate, String phoneNumber);
+    /*
+     * 수정 이유:
+     * - findPassword의 본인확인 조건이 findId(name+gender+birthDate+phoneNumber)보다 약했습니다.
+     * - gender를 추가하여 findId와 동일한 수준의 신원 확인 강도를 유지합니다.
+     *
+     * 수정 전 코드:
+     * - Optional<User> findByUserIdAndNameAndBirthDateAndPhoneNumber(String userId, String name, LocalDate birthDate, String phoneNumber);
+     */
+    Optional<User> findByUserIdAndNameAndGenderAndBirthDateAndPhoneNumber(String userId, String name, String gender, LocalDate birthDate, String phoneNumber);
 
 }

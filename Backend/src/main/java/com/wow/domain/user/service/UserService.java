@@ -43,6 +43,9 @@ public class UserService {
 
         String redisKey = user.getUserId() != null ? user.getUserId() : user.getSsafyOauthId();
         redisTemplate.delete(RedisKeys.REFRESH_TOKEN_PREFIX + redisKey);
+        // [added] 이유: 탈퇴 후 동일 userId 재사용 시 이전 로그인 차단 상태가 남아 신규 가입자가 즉시 차단될 수 있음 → 삭제 시 rate limit 키 함께 정리
+        redisTemplate.delete(RedisKeys.LOGIN_ATTEMPT_PREFIX + redisKey);
+        redisTemplate.delete(RedisKeys.LOGIN_BLOCK_PREFIX + redisKey);
 
         userRepository.delete(user);
     }

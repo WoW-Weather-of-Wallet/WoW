@@ -14,9 +14,10 @@ public final class UserIdentityResolver {
         return null;
     }
 
+    // [fix] 수정 전: "NORMAL" 반환 | 이유: CustomUserDetails.getLoginType()이 "GENERAL"을 반환하므로 불일치 → "GENERAL"로 통일
     public static String resolveLoginType(User user) {
         if (user.getUserId() != null) {
-            return "NORMAL";
+            return "GENERAL";
         }
         if (user.getSsafyOauthId() != null) {
             return "SSAFY";

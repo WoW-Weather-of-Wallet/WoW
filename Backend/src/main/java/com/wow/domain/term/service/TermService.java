@@ -119,7 +119,8 @@ public class TermService {
             throw new BadRequestException("올바르지 않은 S3 URL 형식입니다.");
         }
 
-        return trimmed;
+        // [fix] 수정 전: s3://, http://, https:// 이외의 값을 그대로 S3 key로 사용 | 이유: DB에 잘못된 값이 저장된 경우에도 S3 요청이 발생해 오류가 불명확해짐 → 명시적 예외로 빠른 실패 처리
+        throw new BadRequestException("지원하지 않는 S3 URL 형식입니다. s3://, http://, https:// 중 하나여야 합니다.");
     }
 
     private boolean isS3Host(String host) {

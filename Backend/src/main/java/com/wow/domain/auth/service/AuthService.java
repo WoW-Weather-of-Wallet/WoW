@@ -37,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -61,6 +62,11 @@ public class AuthService {
     private static final int MAX_PUBLIC_AUTH_ATTEMPTS = 5;
     private static final Duration PUBLIC_AUTH_BLOCK_DURATION = Duration.ofMinutes(10);
     private static final Duration PUBLIC_AUTH_ATTEMPT_WINDOW = Duration.ofMinutes(10);
+
+    // [added] 이유: enforcePublicRateLimit의 blockKey 조회 → 카운터 증가 TOCTOU 레이스 컨디션 방지를 위한 Lua 스크립트
+    private static final DefaultRedisScript<Long> PUBLIC_RATE_LIMIT_SCRIPT = PublicAuthRateLimitScript.create();
+    private static final long RATE_LIMIT_BLOCKED = -1L;
+    private static final long RATE_LIMIT_EXCEEDED = -2L;
 
     private final UserRepository userRepository;
     private final UserTermRepository userTermRepository;
@@ -94,13 +100,13 @@ public class AuthService {
             // [fix] 수정 전: throw new IllegalArgumentException("이미 사용 중인 아이디입니다.") | 이유: 중복은 409 CONFLICT가 적절
             throw new DuplicateException("이미 사용 중인 아이디입니다.");
         }
-        if (userRepository.existsByPhoneNumber(phoneNumber)) {
-            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 중복은 409 CONFLICT가 적절
-            throw new DuplicateException("이미 사용 중인 전화번호입니다.");
-        }
+        // [fix] 수정 전: existsByPhoneNumber → existsDuplicate 순서 | 이유: 이름+성별+생년월일+전화번호 4개 조건이 모두 일치하면 동일인으로 판단하여 먼저 차단,
+        //   이후 전화번호만 다른 타인의 번호 중복은 별도 메시지로 구분
         if (userRepository.existsDuplicate(normalizedName, request.getGender(), request.getBirthDate(), phoneNumber)) {
-            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 중복은 409 CONFLICT가 적절
             throw new DuplicateException("이미 등록된 회원입니다.");
+        }
+        if (userRepository.existsByPhoneNumber(phoneNumber)) {
+            throw new DuplicateException("이미 사용 중인 전화번호입니다.");
         }
 
         validatePassword(request.getPw(), request.getUserId());
@@ -253,8 +259,9 @@ public class AuthService {
                 "비밀번호 재설정 요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
         );
 
-        User user = userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(
-                        request.getUserId(), normalizedName, request.getBirthDate(), phoneNumber)
+        // [fix] 수정 전: findByUserIdAndNameAndBirthDateAndPhoneNumber (gender 없음) | 이유: findId와 동일한 4개 조건으로 본인확인 강도 대칭
+        User user = userRepository.findByUserIdAndNameAndGenderAndBirthDateAndPhoneNumber(
+                        request.getUserId(), normalizedName, request.getGender(), request.getBirthDate(), phoneNumber)
                 // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 리소스 미발견은 404가 적절
                 .orElseThrow(() -> new NotFoundException("일치하는 회원 정보를 찾을 수 없습니다."));
 
@@ -310,26 +317,25 @@ public class AuthService {
         redisTemplate.delete(RedisKeys.LOGIN_BLOCK_PREFIX + userId);
     }
 
-    // [added] 이유: 아이디 찾기, 비밀번호 재설정, 중복 확인 API에 공통 Redis rate limit 적용
+    // [fix] 수정 전: hasKey(blockKey) → increment(attemptKey) 순서로 별도 연산 수행 | 이유: 동시 요청 시 TOCTOU 레이스 컨디션으로 rate limit 우회 가능 → Lua 스크립트로 원자 처리
     private void enforcePublicRateLimit(
             String attemptPrefix,
             String blockPrefix,
             String identifier,
             String blockMessage
     ) {
-        String blockKey = blockPrefix + identifier;
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(blockKey))) {
-            throw new RateLimitException(blockMessage);
-        }
-
         String attemptKey = attemptPrefix + identifier;
-        Long attempts = redisTemplate.opsForValue().increment(attemptKey);
-        if (attempts != null && attempts == 1L) {
-            redisTemplate.expire(attemptKey, PUBLIC_AUTH_ATTEMPT_WINDOW);
-        }
-        if (attempts != null && attempts > MAX_PUBLIC_AUTH_ATTEMPTS) {
-            redisTemplate.opsForValue().set(blockKey, "blocked", PUBLIC_AUTH_BLOCK_DURATION);
-            redisTemplate.delete(attemptKey);
+        String blockKey = blockPrefix + identifier;
+
+        Long result = redisTemplate.execute(
+                PUBLIC_RATE_LIMIT_SCRIPT,
+                List.of(attemptKey, blockKey),
+                String.valueOf(PUBLIC_AUTH_ATTEMPT_WINDOW.toSeconds()),
+                String.valueOf(MAX_PUBLIC_AUTH_ATTEMPTS),
+                String.valueOf(PUBLIC_AUTH_BLOCK_DURATION.toSeconds())
+        );
+
+        if (result == null || result == RATE_LIMIT_BLOCKED || result == RATE_LIMIT_EXCEEDED) {
             throw new RateLimitException(blockMessage);
         }
     }

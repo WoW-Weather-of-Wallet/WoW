@@ -73,12 +73,14 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = jakarta.persistence.CascadeType.REMOVE, orphanRemoval = true)
     private List<UserTerm> userTerms = new ArrayList<>();
 
-    // [added] 이유: DB 레벨 CASCADE가 누락된 환경에서도 사용자 삭제 시 계좌가 함께 정리되도록 JPA 레벨 안전장치 추가
+    // [added] 이유: Account.user에 @OnDelete(CASCADE)가 있어 DB 레벨에서 삭제되지만,
+    //   DB 스키마 변경이나 마이그레이션 누락 시에도 JPA 레벨에서 삭제가 보장되도록 이중 안전장치로 cascade = REMOVE + orphanRemoval 추가
     @Builder.Default
     @OneToMany(mappedBy = "user", cascade = jakarta.persistence.CascadeType.REMOVE, orphanRemoval = true)
     private List<Account> accounts = new ArrayList<>();
 
-    // [added] 이유: DB 스키마 의존도를 낮추고 사용자 삭제 시 거래내역 정리 흐름을 JPA에서도 명시적으로 보장
+    // [added] 이유: Transaction.user에 @OnDelete(CASCADE)가 있어 DB 레벨에서 삭제되지만,
+    //   DB 스키마 변경이나 마이그레이션 누락 시에도 JPA 레벨에서 삭제가 보장되도록 이중 안전장치로 cascade = REMOVE + orphanRemoval 추가
     @Builder.Default
     @OneToMany(mappedBy = "user", cascade = jakarta.persistence.CascadeType.REMOVE, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();

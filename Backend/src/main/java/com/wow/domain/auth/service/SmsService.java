@@ -5,6 +5,7 @@ import com.wow.global.exception.BadRequestException;
 import com.wow.global.exception.InternalServerException;
 import com.wow.global.exception.RateLimitException;
 import com.wow.global.util.PhoneNumberUtils;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -76,7 +77,10 @@ public class SmsService {
         }
 
         // [fix] 수정 전: String.equals 비교 | 이유: timing side-channel 가능성을 낮추기 위해 상수 시간 비교 사용
-        if (!MessageDigest.isEqual(savedCode.getBytes(), code.getBytes())) {
+        // [fix] 수정 전: savedCode.getBytes(), code.getBytes() (charset 미지정) | 이유: 플랫폼 기본 charset 의존 → StandardCharsets.UTF_8로 명시
+        if (!MessageDigest.isEqual(
+                savedCode.getBytes(StandardCharsets.UTF_8),
+                code.getBytes(StandardCharsets.UTF_8))) {
             handleVerifyFailure(normalized);
         }
 

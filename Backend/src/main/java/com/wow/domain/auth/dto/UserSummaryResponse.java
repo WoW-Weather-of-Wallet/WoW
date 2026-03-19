@@ -34,6 +34,7 @@ public class UserSummaryResponse {
     }
 
     // [added] 이유: CustomUserDetails가 User 엔티티 전체를 외부로 노출하지 않아도 로그인 응답 생성 가능하도록 보완
+    // [주의] userId 필드에는 getLoginIdentifier() 값이 담김 — GENERAL 로그인이면 userId, SSAFY 로그인이면 ssafyOauthId
     public static UserSummaryResponse from(CustomUserDetails userDetails) {
         return new UserSummaryResponse(
                 userDetails.getLoginIdentifier(),
