@@ -4,10 +4,11 @@ import com.wow.domain.calendar.dto.CalendarHeaderResponse;
 import com.wow.domain.calendar.dto.TransactionConfirmDto;
 import com.wow.domain.calendar.service.CalendarService;
 import com.wow.domain.security.CustomUserDetails;
+import com.wow.global.exception.BadRequestException;
+import com.wow.global.exception.InvalidTokenException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,7 +35,11 @@ public class CalendarController {
             @RequestParam int month
     ) {
         if (userDetails == null) {
-            throw new AuthenticationCredentialsNotFoundException("Authentication is required.");
+            throw new InvalidTokenException("인증이 필요하거나 유효하지 않은 토큰입니다.");
+        }
+
+        if (month < 1 || month > 12) {
+            throw new BadRequestException("month는 1~12 범위여야 합니다.");
         }
 
         Long userId = userDetails.getId();
