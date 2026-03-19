@@ -13,7 +13,8 @@ public class SsafyTokenResponse {
     private String tokenType;       // bearer 고정
     private String accessToken;     // SSAFY 액세스 토큰
     private String scope;
-    private String expiresIn;
+    // [fix] 수정 전: String expiresIn | 이유: refreshTokenExpiresIn은 Integer인데 expiresIn만 String → 타입 불일치, 역직렬화 오류 가능
+    private Integer expiresIn;
     private String refreshToken;
     private Integer refreshTokenExpiresIn;
 }

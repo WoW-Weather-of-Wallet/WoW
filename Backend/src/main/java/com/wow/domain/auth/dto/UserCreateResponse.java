@@ -1,5 +1,6 @@
 package com.wow.domain.auth.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.wow.domain.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,6 +11,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserCreateResponse {
 
     private String userId;

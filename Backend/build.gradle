@@ -55,6 +55,7 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test' // 필수: 부트 테스트 통합 스타터
 	// 아래 존재하지 않는 -test 스타터들은 삭제하거나 starter-test 하나로 통합하는 것이 일반적입니다.
 	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'com.h2database:h2'
 
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
