@@ -7,6 +7,6 @@ public record CalendarHeaderResponse(
         String yearMonth,
         String weatherName,
         String iconCode,
-        String desc,
+        String description,
         int savedAmount
 ) {}
