@@ -81,8 +81,8 @@ export default function AiFeedbackHomeScreen({ navigation }: any) {
           <GradientButton 
             title="피드백 시작하기" 
             onPress={() => {
-              // TODO: AI 분석 화면으로 연결
-              console.log('AI 피드백 시작');
+              // [UX-Flow] 로딩 시퀀스 화면으로 진입합니다.
+              navigation.navigate('AiLoading');
             }}
           />
         </View>
