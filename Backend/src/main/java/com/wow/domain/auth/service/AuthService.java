@@ -4,6 +4,7 @@ import com.wow.domain.auth.dto.ChangePasswordRequest;
 import com.wow.domain.auth.dto.FindIdRequest;
 import com.wow.domain.auth.dto.FindIdResponse;
 import com.wow.domain.auth.dto.FindPwRequest;
+import com.wow.domain.auth.dto.SignupIdentityCheckRequest;
 import com.wow.domain.auth.dto.TokenRefreshResponse;
 import com.wow.domain.auth.dto.UserCreateRequest;
 import com.wow.domain.auth.dto.UserCreateResponse;
@@ -99,6 +100,19 @@ public class AuthService {
         boolean isAvailable = !userRepository.existsByUserIdOrSsafyOauthId(normalizedUserId, normalizedUserId);
         String message = isAvailable ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다.";
         return new UserIdCheckResponse(isAvailable, message, normalizedUserId);
+    }
+
+    public void checkSignupIdentity(SignupIdentityCheckRequest request) {
+        String normalizedName = request.getName().trim();
+        String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
+
+        if (userRepository.existsDuplicate(normalizedName, request.getGender(), request.getBirthDate(), phoneNumber)) {
+            throw new DuplicateException("이미 등록된 회원입니다.");
+        }
+
+        if (userRepository.existsByPhoneNumber(phoneNumber)) {
+            throw new DuplicateException("이미 사용 중인 휴대폰번호입니다.");
+        }
     }
 
     @Transactional
