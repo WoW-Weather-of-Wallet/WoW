@@ -174,7 +174,7 @@ class RequestValidationTest {
     @Test
     void ssafyCheckRequestRejectsInvalidPhoneNumberFormat() {
         SsafyCheckRequest request = new SsafyCheckRequest();
-        ReflectionTestUtils.setField(request, "ssafyOauthId", "ssafy@example.com");
+        ReflectionTestUtils.setField(request, "pendingToken", "pending-token");
         ReflectionTestUtils.setField(request, "gender", "M");
         ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
         ReflectionTestUtils.setField(request, "phoneNumber", "invalid-phone");
@@ -187,9 +187,9 @@ class RequestValidationTest {
     }
 
     @Test
-    void ssafyCheckRequestRejectsNonEmailOauthId() {
+    void ssafyCheckRequestRejectsBlankPendingToken() {
         SsafyCheckRequest request = new SsafyCheckRequest();
-        ReflectionTestUtils.setField(request, "ssafyOauthId", "not-email-id");
+        ReflectionTestUtils.setField(request, "pendingToken", "   ");
         ReflectionTestUtils.setField(request, "gender", "M");
         ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));
         ReflectionTestUtils.setField(request, "phoneNumber", "01012345678");
@@ -198,6 +198,6 @@ class RequestValidationTest {
 
         assertThat(violations)
                 .extracting(violation -> violation.getPropertyPath().toString())
-                .contains("ssafyOauthId");
+                .contains("pendingToken");
     }
 }

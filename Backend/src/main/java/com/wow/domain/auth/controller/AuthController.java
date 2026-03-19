@@ -15,10 +15,12 @@ import com.wow.domain.auth.dto.UserLoginRequest;
 import com.wow.domain.auth.dto.UserLoginResponse;
 import com.wow.domain.auth.service.AuthService;
 import com.wow.domain.auth.service.SmsService;
+import com.wow.global.exception.InvalidTokenException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -45,10 +47,11 @@ public class AuthController {
         return ResponseEntity.ok(authService.checkUserId(userId));
     }
 
+    // [fix] 수정 전: ResponseEntity.ok() → 200 OK | 이유: 리소스 생성 시 201 Created가 HTTP 표준
     @Operation(summary = "회원가입", description = "일반 회원가입을 진행합니다.")
     @PostMapping("/signup")
     public ResponseEntity<UserCreateResponse> signup(@Valid @RequestBody UserCreateRequest request) {
-        return ResponseEntity.ok(authService.signup(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(authService.signup(request));
     }
 
     @Operation(summary = "로그인", description = "아이디와 비밀번호로 로그인하고 JWT를 발급합니다.")
@@ -80,6 +83,10 @@ public class AuthController {
     @Operation(summary = "로그아웃", description = "저장된 Refresh Token을 삭제합니다.")
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails userDetails) {
+        // [added] 이유: @AuthenticationPrincipal이 null을 반환하면 NPE 발생 → null guard 추가
+        if (userDetails == null) {
+            throw new InvalidTokenException("인증이 필요합니다.");
+        }
         authService.logout(userDetails.getUsername());
         return ResponseEntity.noContent().build();
     }
@@ -103,6 +110,10 @@ public class AuthController {
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody ChangePasswordRequest request
     ) {
+        // [added] 이유: @AuthenticationPrincipal이 null을 반환하면 NPE 발생 → null guard 추가
+        if (userDetails == null) {
+            throw new InvalidTokenException("인증이 필요합니다.");
+        }
         authService.changePassword(userDetails.getUsername(), request);
         return ResponseEntity.noContent().build();
     }

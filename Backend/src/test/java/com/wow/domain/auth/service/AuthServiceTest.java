@@ -24,6 +24,10 @@ import com.wow.domain.user.entity.User;
 import com.wow.domain.user.entity.UserTerm;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.domain.user.repository.UserTermRepository;
+import com.wow.global.exception.BadRequestException;
+import com.wow.global.exception.InvalidTokenException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
@@ -85,8 +89,9 @@ class AuthServiceTest {
                 List.of(new SimpleGrantedAuthority("ROLE_USER"))
         );
 
-        when(jwtTokenProvider.validateToken("refresh-token")).thenReturn(true);
-        when(jwtTokenProvider.getUserIdFromToken("refresh-token")).thenReturn("wowuser");
+        // [fix] 수정 전: validateToken + getUserIdFromToken | 이유: parseRefreshToken(Claims 반환)으로 변경됨
+        Claims claims = Jwts.claims().subject("wowuser").build();
+        when(jwtTokenProvider.parseRefreshToken("refresh-token")).thenReturn(claims);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get("refresh:wowuser")).thenReturn("refresh-token");
         when(customUserDetailsService.loadUserByUsername("wowuser")).thenReturn(userDetails);
@@ -106,22 +111,25 @@ class AuthServiceTest {
 
     @Test
     void refreshThrowsWhenStoredRefreshTokenDoesNotMatch() {
-        when(jwtTokenProvider.validateToken("refresh-token")).thenReturn(true);
-        when(jwtTokenProvider.getUserIdFromToken("refresh-token")).thenReturn("wowuser");
+        Claims claims = Jwts.claims().subject("wowuser").build();
+        when(jwtTokenProvider.parseRefreshToken("refresh-token")).thenReturn(claims);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get("refresh:wowuser")).thenReturn("another-token");
 
+        // [fix] 수정 전: IllegalArgumentException | 이유: refresh 토큰 불일치 시 InvalidTokenException으로 변경됨
         assertThatThrownBy(() -> authService.refresh("refresh-token"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidTokenException.class)
                 .hasMessageContaining("refresh token");
     }
 
     @Test
     void refreshThrowsWhenRefreshTokenIsInvalid() {
-        when(jwtTokenProvider.validateToken("refresh-token")).thenReturn(false);
+        when(jwtTokenProvider.parseRefreshToken("refresh-token"))
+                .thenThrow(new io.jsonwebtoken.JwtException("invalid refresh token"));
 
+        // [fix] 수정 전: IllegalArgumentException | 이유: 유효하지 않은 refresh 토큰은 InvalidTokenException으로 변경됨
         assertThatThrownBy(() -> authService.refresh("refresh-token"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidTokenException.class)
                 .hasMessageContaining("refresh token");
 
         verify(redisTemplate, never()).opsForValue();
@@ -129,6 +137,8 @@ class AuthServiceTest {
 
     @Test
     void findIdUsesGenderAndNormalizedPhoneNumber() {
+        stubPublicRateLimit();
+
         FindIdRequest request = new FindIdRequest();
         ReflectionTestUtils.setField(request, "name", " tester ");
         ReflectionTestUtils.setField(request, "gender", "M");
@@ -151,12 +161,14 @@ class AuthServiceTest {
         FindIdResponse response = authService.findId(request);
 
         assertThat(response.getUserId()).isEqualTo("wowuser");
-        verify(smsService).checkVerified("01012345678");
-        verify(smsService).deleteVerified("01012345678");
+        // [fix] 수정 전: checkVerified + deleteVerified 개별 호출 | 이유: 단일 원자적 호출 checkAndConsumeVerified로 통합됨
+        verify(smsService).checkAndConsumeVerified("01012345678");
     }
 
     @Test
     void findIdThrowsSsafyMessageWhenMatchedUserIsSsafyAccount() {
+        stubPublicRateLimit();
+
         FindIdRequest request = new FindIdRequest();
         ReflectionTestUtils.setField(request, "name", "tester");
         ReflectionTestUtils.setField(request, "gender", "F");
@@ -176,16 +188,19 @@ class AuthServiceTest {
                 "tester", "F", LocalDate.of(2000, 2, 2), "01000001111"))
                 .thenReturn(Optional.of(ssafyUser));
 
+        // [fix] 수정 전: IllegalArgumentException | 이유: SSAFY 계정 검출 시 BadRequestException으로 변경됨
         assertThatThrownBy(() -> authService.findId(request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("SSAFY");
 
-        verify(smsService, never()).checkVerified(anyString());
-        verify(smsService, never()).deleteVerified(anyString());
+        // [fix] 수정 전: checkVerified + deleteVerified never() 개별 검증 | 이유: 단일 원자적 호출 checkAndConsumeVerified로 통합됨
+        verify(smsService, never()).checkAndConsumeVerified(anyString());
     }
 
     @Test
     void findPasswordUsesNormalizedPhoneNumberAndUpdatesEncodedPassword() {
+        stubPublicRateLimit();
+
         FindPwRequest request = new FindPwRequest();
         ReflectionTestUtils.setField(request, "userId", "wowuser");
         ReflectionTestUtils.setField(request, "name", "tester");
@@ -211,15 +226,15 @@ class AuthServiceTest {
         authService.findPassword(request);
 
         assertThat(user.getPw()).isEqualTo("encoded-password");
-        verify(smsService).checkVerified("01012345678");
-        verify(smsService).deleteVerified("01012345678");
+        // [fix] 수정 전: checkVerified + deleteVerified 개별 호출 | 이유: 단일 원자적 호출 checkAndConsumeVerified로 통합됨
+        verify(smsService).checkAndConsumeVerified("01012345678");
     }
 
     @Test
     void signupDeletesVerifiedStateWhenSaveFails() {
         UserCreateRequest request = createSignupRequest();
 
-        when(userRepository.existsByUserId("wowuser")).thenReturn(false);
+        when(userRepository.existsByUserIdOrSsafyOauthId("wowuser", "wowuser")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
         when(termService.getCurrentRequiredTerm()).thenReturn(createCurrentTerm());
@@ -230,8 +245,8 @@ class AuthServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("db failure");
 
-        verify(smsService).checkVerified("01012345678");
-        verify(smsService).deleteVerified("01012345678");
+        // [fix] 수정 전: checkVerified + deleteVerified 개별 호출 | 이유: 단일 원자적 호출 checkAndConsumeVerified로 통합됨
+        verify(smsService).checkAndConsumeVerified("01012345678");
     }
 
     @Test
@@ -239,7 +254,7 @@ class AuthServiceTest {
         UserCreateRequest request = createSignupRequest();
         Term currentTerm = createCurrentTerm();
 
-        when(userRepository.existsByUserId("wowuser")).thenReturn(false);
+        when(userRepository.existsByUserIdOrSsafyOauthId("wowuser", "wowuser")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
         when(termService.getCurrentRequiredTerm()).thenReturn(currentTerm);
@@ -258,7 +273,7 @@ class AuthServiceTest {
     void signupThrowsWhenRequiredTermIsMissing() {
         UserCreateRequest request = createSignupRequest();
 
-        when(userRepository.existsByUserId("wowuser")).thenReturn(false);
+        when(userRepository.existsByUserIdOrSsafyOauthId("wowuser", "wowuser")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
         when(termService.getCurrentRequiredTerm())
@@ -267,8 +282,8 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.signup(request))
                 .isInstanceOf(IllegalStateException.class);
 
-        verify(smsService, never()).checkVerified(anyString());
-        verify(smsService, never()).deleteVerified(anyString());
+        // [fix] 수정 전: checkVerified + deleteVerified never() 개별 검증 | 이유: 단일 원자적 호출 checkAndConsumeVerified로 통합됨
+        verify(smsService, never()).checkAndConsumeVerified(anyString());
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -276,24 +291,40 @@ class AuthServiceTest {
     void signupStopsBeforeSaveWhenSmsVerificationFails() {
         UserCreateRequest request = createSignupRequest();
 
-        when(userRepository.existsByUserId("wowuser")).thenReturn(false);
+        when(userRepository.existsByUserIdOrSsafyOauthId("wowuser", "wowuser")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
         when(termService.getCurrentRequiredTerm()).thenReturn(createCurrentTerm());
-        doThrow(new IllegalArgumentException("sms verification required"))
-                .when(smsService).checkVerified("01012345678");
+        // [fix] 수정 전: checkVerified에 doThrow | 이유: checkAndConsumeVerified로 메서드명 변경됨
+        doThrow(new BadRequestException("sms verification required"))
+                .when(smsService).checkAndConsumeVerified("01012345678");
 
+        // [fix] 수정 전: IllegalArgumentException | 이유: SMS 인증 실패 시 BadRequestException으로 변경됨
         assertThatThrownBy(() -> authService.signup(request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("sms verification");
 
         verify(userRepository, never()).save(any(User.class));
         verify(userTermRepository, never()).save(any(UserTerm.class));
-        verify(smsService, never()).deleteVerified("01012345678");
+    }
+
+    @Test
+    void signupThrowsWhenUserIdConflictsWithExistingSsafyOauthId() {
+        UserCreateRequest request = createSignupRequest();
+
+        when(userRepository.existsByUserIdOrSsafyOauthId("wowuser", "wowuser")).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.signup(request))
+                .isInstanceOf(com.wow.global.exception.DuplicateException.class)
+                .hasMessageContaining("아이디");
+
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
     void findPasswordDeletesVerifiedStateWhenPasswordEncodingFails() {
+        stubPublicRateLimit();
+
         FindPwRequest request = new FindPwRequest();
         ReflectionTestUtils.setField(request, "userId", "wowuser");
         ReflectionTestUtils.setField(request, "name", "tester");
@@ -320,12 +351,14 @@ class AuthServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("encode failure");
 
-        verify(smsService).checkVerified("01012345678");
-        verify(smsService).deleteVerified("01012345678");
+        // [fix] 수정 전: checkVerified + deleteVerified 개별 호출 | 이유: 단일 원자적 호출 checkAndConsumeVerified로 통합됨
+        verify(smsService).checkAndConsumeVerified("01012345678");
     }
 
     @Test
     void findPasswordStopsWhenSmsVerificationFails() {
+        stubPublicRateLimit();
+
         FindPwRequest request = new FindPwRequest();
         ReflectionTestUtils.setField(request, "userId", "wowuser");
         ReflectionTestUtils.setField(request, "name", "tester");
@@ -346,16 +379,17 @@ class AuthServiceTest {
         when(userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(
                 "wowuser", "tester", LocalDate.of(1999, 1, 1), "01012345678"))
                 .thenReturn(Optional.of(user));
-        doThrow(new IllegalArgumentException("sms verification required"))
-                .when(smsService).checkVerified("01012345678");
+        // [fix] 수정 전: checkVerified에 doThrow | 이유: checkAndConsumeVerified로 메서드명 변경됨
+        doThrow(new BadRequestException("sms verification required"))
+                .when(smsService).checkAndConsumeVerified("01012345678");
 
+        // [fix] 수정 전: IllegalArgumentException | 이유: SMS 인증 실패 시 BadRequestException으로 변경됨
         assertThatThrownBy(() -> authService.findPassword(request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("sms verification");
 
         assertThat(user.getPw()).isEqualTo("old-password");
         verify(bCryptPasswordEncoder, never()).encode(anyString());
-        verify(smsService, never()).deleteVerified("01012345678");
     }
 
     private UserCreateRequest createSignupRequest() {
@@ -379,5 +413,11 @@ class AuthServiceTest {
                 .required(true)
                 .s3Url("s3://bucket/terms.pdf")
                 .build();
+    }
+
+    private void stubPublicRateLimit() {
+        when(redisTemplate.hasKey(anyString())).thenReturn(false);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.increment(anyString())).thenReturn(1L);
     }
 }

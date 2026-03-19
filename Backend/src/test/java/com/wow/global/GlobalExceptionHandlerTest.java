@@ -3,11 +3,13 @@ package com.wow.global;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.wow.global.common.ErrorResponse;
+import com.wow.global.exception.BusinessException;
+import com.wow.global.exception.InternalServerException;
 import java.sql.SQLException;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpInputMessage;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -31,14 +33,26 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleIllegalStateReturnsInternalServerError() {
+    void handleBusinessExceptionReturnsMatchingStatusAndMessage() {
+        BusinessException exception = new BusinessException(HttpStatus.CONFLICT, "이미 사용 중인 값이 존재합니다.") {};
+
+        ResponseEntity<ErrorResponse> response = handler.handleBusinessException(exception);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .isEqualTo(ErrorResponse.of(HttpStatus.CONFLICT.value(), "이미 사용 중인 값이 존재합니다."));
+    }
+
+    @Test
+    void handleInternalServerBusinessExceptionReturnsGeneric500Message() {
         ResponseEntity<ErrorResponse> response =
-                handler.handleIllegalState(new IllegalStateException("state error"));
+                handler.handleBusinessException(new InternalServerException("서버 내부 처리 중 오류가 발생했습니다."));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody())
                 .usingRecursiveComparison()
-                .isEqualTo(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "state error"));
+                .isEqualTo(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "서버 내부 처리 중 오류가 발생했습니다."));
     }
 
     @Test
@@ -62,7 +76,7 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody())
                 .usingRecursiveComparison()
-                .isEqualTo(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "잘못된 요청 본문입니다."));
+                .isEqualTo(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "요청 본문 형식이 올바르지 않습니다."));
     }
 
     @Test
@@ -73,7 +87,7 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED);
         assertThat(response.getBody())
                 .usingRecursiveComparison()
-                .isEqualTo(ErrorResponse.of(HttpStatus.METHOD_NOT_ALLOWED.value(), "지원하지 않는 HTTP 메서드입니다."));
+                .isEqualTo(ErrorResponse.of(HttpStatus.METHOD_NOT_ALLOWED.value(), "허용되지 않은 HTTP 메서드입니다."));
     }
 
     @Test
@@ -93,10 +107,10 @@ class GlobalExceptionHandlerTest {
                 new DataIntegrityViolationException("duplicate", new SQLException("duplicate key on phone_number", "23505"))
         );
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody())
                 .usingRecursiveComparison()
-                .isEqualTo(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 사용 중인 전화번호입니다."));
+                .isEqualTo(ErrorResponse.of(HttpStatus.CONFLICT.value(), "이미 사용 중인 전화번호입니다."));
     }
 
     @Test
@@ -105,10 +119,10 @@ class GlobalExceptionHandlerTest {
                 new DataIntegrityViolationException("duplicate", new SQLException("duplicate key on ssafy_oauth_id", "23505"))
         );
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody())
                 .usingRecursiveComparison()
-                .isEqualTo(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 등록된 SSAFY 계정입니다."));
+                .isEqualTo(ErrorResponse.of(HttpStatus.CONFLICT.value(), "이미 등록된 SSAFY 계정입니다."));
     }
 
     @Test
@@ -117,10 +131,10 @@ class GlobalExceptionHandlerTest {
                 new DataIntegrityViolationException("duplicate", new SQLException("duplicate key on another_column", "23505"))
         );
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody())
                 .usingRecursiveComparison()
-                .isEqualTo(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "이미 사용 중인 값입니다."));
+                .isEqualTo(ErrorResponse.of(HttpStatus.CONFLICT.value(), "이미 사용 중인 값이 존재합니다."));
     }
 
     @Test
@@ -132,7 +146,7 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody())
                 .usingRecursiveComparison()
-                .isEqualTo(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "데이터 처리 중 오류가 발생했습니다."));
+                .isEqualTo(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "서버 내부 처리 중 오류가 발생했습니다."));
     }
 
     @Test
@@ -142,6 +156,6 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody())
                 .usingRecursiveComparison()
-                .isEqualTo(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "서버 내부 오류가 발생했습니다."));
+                .isEqualTo(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "서버 내부 처리 중 오류가 발생했습니다."));
     }
 }

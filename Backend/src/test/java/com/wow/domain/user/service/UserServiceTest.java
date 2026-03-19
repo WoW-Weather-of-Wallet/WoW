@@ -6,6 +6,8 @@ import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.entity.Role;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
+// [fix] 수정 전: import 없음 | 이유: IllegalArgumentException → BadRequestException 전환에 따라 커스텀 예외 import 필요
+import com.wow.global.exception.BadRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -55,11 +57,13 @@ class UserServiceTest {
 
         when(userRepository.findByUserId("wowuser")).thenReturn(Optional.of(user));
 
+        // [fix] 수정 전: .isInstanceOf(IllegalArgumentException.class) | 이유: BadRequestException으로 전환
         assertThatThrownBy(() -> userService.updatePhone("wowuser", request))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(BadRequestException.class);
 
         verify(userRepository, never()).existsByPhoneNumber("01012345678");
-        verify(smsService, never()).checkVerified("01012345678");
+        // [fix] 수정 전: verify(smsService, never()).checkVerified("01012345678") | 이유: checkAndConsumeVerified로 메서드명 변경
+        verify(smsService, never()).checkAndConsumeVerified("01012345678");
     }
 
     @Test
@@ -82,12 +86,12 @@ class UserServiceTest {
 
         assertThat(user.getPhoneNumber()).isEqualTo("01099998888");
         verify(userRepository).existsByPhoneNumber("01099998888");
-        verify(smsService).checkVerified("01099998888");
-        verify(smsService).deleteVerified("01099998888");
+        // [fix] 수정 전: verify(smsService).checkVerified("01099998888") + verify(smsService).deleteVerified("01099998888") | 이유: checkAndConsumeVerified 원자적 호출로 대체
+        verify(smsService).checkAndConsumeVerified("01099998888");
     }
 
     @Test
-    void updatePhoneDeletesVerifiedStateWhenUpdateFails() {
+    void updatePhoneFailsWhenUpdateThrows() {
         User user = mock(User.class);
         UpdatePhoneRequest request = new UpdatePhoneRequest();
         ReflectionTestUtils.setField(request, "phoneNumber", "010-9999-8888");
@@ -101,8 +105,8 @@ class UserServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("update failure");
 
-        verify(smsService).checkVerified("01099998888");
-        verify(smsService).deleteVerified("01099998888");
+        // [fix] 수정 전: verify(smsService).checkVerified("01099998888") + verify(smsService).deleteVerified("01099998888") | 이유: checkAndConsumeVerified 원자적 호출로 대체
+        verify(smsService).checkAndConsumeVerified("01099998888");
     }
 
     @Test

@@ -1,7 +1,6 @@
 package com.wow.domain.auth.dto.ssafy;
 
 import com.wow.global.constant.ValidationPatterns;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
@@ -15,9 +14,10 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class SsafyCheckRequest {
 
-    @NotBlank(message = "SSAFY 계정을 입력해주세요.")
-    @Email(message = "SSAFY 계정은 이메일 형식이어야 합니다.")
-    private String ssafyOauthId;
+    // [fix] 수정 전: ssafyOauthId (클라이언트가 직접 전달) | 이유: ssafyOauthId가 딥링크에 노출되어 클라이언트가 위조 가능 → opaque pending token으로 변경
+    // [removed] 삭제 전: @Email private String ssafyOauthId | 이유: 서버사이드에서 pending token을 통해 ssafyOauthId를 안전하게 resolve
+    @NotBlank(message = "인증 토큰을 입력해주세요.")
+    private String pendingToken;
 
     @NotBlank(message = "성별을 입력해주세요.")
     @Pattern(regexp = ValidationPatterns.GENDER, message = "성별은 M 또는 F만 가능합니다.")

@@ -10,9 +10,13 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class AppConfig {
 
+    // [fix] 수정 전: new RestTemplate() (타임아웃 없음) | 이유: 외부 HTTP 호출이 무한정 대기 → 스레드 고갈 가능
     @Bean
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        var factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(java.time.Duration.ofSeconds(5));
+        factory.setReadTimeout(java.time.Duration.ofSeconds(10));
+        return new RestTemplate(factory);
     }
 
     @Bean

@@ -13,6 +13,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUserId(String userId);
     boolean existsByPhoneNumber(String phoneNumber);
     boolean existsBySsafyOauthId(String ssafyOauthId);
+    boolean existsByUserIdOrSsafyOauthId(String userId, String ssafyOauthId);
     @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.name = :name AND u.gender = :gender AND u.birthDate = :birthDate AND u.phoneNumber = :phoneNumber")
     boolean existsDuplicate(@Param("name") String name, @Param("gender") String gender, @Param("birthDate") LocalDate birthDate, @Param("phoneNumber") String phoneNumber);
     Optional<User> findByUserId(String userId);

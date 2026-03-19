@@ -20,6 +20,8 @@ import com.wow.domain.user.entity.UserTerm;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.domain.user.repository.UserTermRepository;
 import com.wow.global.constant.RedisKeys;
+// [fix] 수정 전: import 없음 | 이유: IllegalArgumentException → BadRequestException 전환에 따라 커스텀 예외 import 필요
+import com.wow.global.exception.BadRequestException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
@@ -69,8 +71,9 @@ class SsafyOAuthServiceTest {
         Term currentTerm = createCurrentTerm();
 
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(RedisKeys.SSAFY_PENDING_PREFIX + "ssafy@example.com")).thenReturn("tester");
-        when(userRepository.existsBySsafyOauthId("ssafy@example.com")).thenReturn(false);
+        // [fix] 수정 전: key="SSAFY_PENDING_PREFIX + ssafy@example.com", value="tester" | 이유: pendingToken 기반으로 변경, Redis 값은 "ssafyOauthId|name" 파이프 구분자 형식
+        when(valueOperations.get(RedisKeys.SSAFY_PENDING_PREFIX + "pending-token-uuid")).thenReturn("ssafy@example.com|tester");
+        when(userRepository.existsByUserIdOrSsafyOauthId("ssafy@example.com", "ssafy@example.com")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
         when(termService.getCurrentRequiredTerm()).thenReturn(currentTerm);
@@ -88,17 +91,19 @@ class SsafyOAuthServiceTest {
                         && userTerm.getUser() != null
         ));
         verify(valueOperations).set("refresh:ssafy@example.com", "refresh-token", Duration.ofSeconds(1209600L));
-        verify(redisTemplate).delete(RedisKeys.SSAFY_PENDING_PREFIX + "ssafy@example.com");
-        verify(smsService).deleteVerified("01012345678");
+        // [fix] 수정 전: RedisKeys.SSAFY_PENDING_PREFIX + "ssafy@example.com" | 이유: pendingToken 기반으로 변경
+        verify(redisTemplate).delete(RedisKeys.SSAFY_PENDING_PREFIX + "pending-token-uuid");
+        // [fix] 수정 전: verify(smsService).deleteVerified("01012345678") | 이유: checkVerified + deleteVerified → checkAndConsumeVerified 원자적 호출로 대체, 별도 deleteVerified 불필요
     }
 
     @Test
-    void registerDeletesVerifiedStateWhenUserSaveFails() {
+    void registerFailsWhenUserSaveFails() {
         SsafyRegisterRequest request = createRegisterRequest();
 
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(RedisKeys.SSAFY_PENDING_PREFIX + "ssafy@example.com")).thenReturn("tester");
-        when(userRepository.existsBySsafyOauthId("ssafy@example.com")).thenReturn(false);
+        // [fix] 수정 전: key="SSAFY_PENDING_PREFIX + ssafy@example.com", value="tester" | 이유: pendingToken 기반으로 변경, Redis 값은 "ssafyOauthId|name" 파이프 구분자 형식
+        when(valueOperations.get(RedisKeys.SSAFY_PENDING_PREFIX + "pending-token-uuid")).thenReturn("ssafy@example.com|tester");
+        when(userRepository.existsByUserIdOrSsafyOauthId("ssafy@example.com", "ssafy@example.com")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
         when(termService.getCurrentRequiredTerm()).thenReturn(createCurrentTerm());
@@ -108,10 +113,11 @@ class SsafyOAuthServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("db failure");
 
-        verify(smsService).checkVerified("01012345678");
-        verify(smsService).deleteVerified("01012345678");
+        // [fix] 수정 전: verify(smsService).checkVerified("01012345678") + verify(smsService).deleteVerified("01012345678") | 이유: checkAndConsumeVerified 원자적 호출로 대체
+        verify(smsService).checkAndConsumeVerified("01012345678");
         verify(userTermRepository, never()).save(any(UserTerm.class));
-        verify(redisTemplate, never()).delete(RedisKeys.SSAFY_PENDING_PREFIX + "ssafy@example.com");
+        // [fix] 수정 전: RedisKeys.SSAFY_PENDING_PREFIX + "ssafy@example.com" | 이유: pendingToken 기반으로 변경
+        verify(redisTemplate, never()).delete(RedisKeys.SSAFY_PENDING_PREFIX + "pending-token-uuid");
     }
 
     @Test
@@ -119,8 +125,9 @@ class SsafyOAuthServiceTest {
         SsafyRegisterRequest request = createRegisterRequest();
 
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(RedisKeys.SSAFY_PENDING_PREFIX + "ssafy@example.com")).thenReturn("tester");
-        when(userRepository.existsBySsafyOauthId("ssafy@example.com")).thenReturn(false);
+        // [fix] 수정 전: key="SSAFY_PENDING_PREFIX + ssafy@example.com", value="tester" | 이유: pendingToken 기반으로 변경, Redis 값은 "ssafyOauthId|name" 파이프 구분자 형식
+        when(valueOperations.get(RedisKeys.SSAFY_PENDING_PREFIX + "pending-token-uuid")).thenReturn("ssafy@example.com|tester");
+        when(userRepository.existsByUserIdOrSsafyOauthId("ssafy@example.com", "ssafy@example.com")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
         when(termService.getCurrentRequiredTerm())
@@ -129,8 +136,8 @@ class SsafyOAuthServiceTest {
         assertThatThrownBy(() -> ssafyOAuthService.register(request))
                 .isInstanceOf(IllegalStateException.class);
 
-        verify(smsService, never()).checkVerified(anyString());
-        verify(smsService, never()).deleteVerified(anyString());
+        // [fix] 수정 전: verify(smsService, never()).checkVerified(anyString()) | 이유: checkAndConsumeVerified로 메서드명 변경
+        verify(smsService, never()).checkAndConsumeVerified(anyString());
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -139,26 +146,43 @@ class SsafyOAuthServiceTest {
         SsafyRegisterRequest request = createRegisterRequest();
 
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(RedisKeys.SSAFY_PENDING_PREFIX + "ssafy@example.com")).thenReturn("tester");
-        when(userRepository.existsBySsafyOauthId("ssafy@example.com")).thenReturn(false);
+        // [fix] 수정 전: key="SSAFY_PENDING_PREFIX + ssafy@example.com", value="tester" | 이유: pendingToken 기반으로 변경, Redis 값은 "ssafyOauthId|name" 파이프 구분자 형식
+        when(valueOperations.get(RedisKeys.SSAFY_PENDING_PREFIX + "pending-token-uuid")).thenReturn("ssafy@example.com|tester");
+        when(userRepository.existsByUserIdOrSsafyOauthId("ssafy@example.com", "ssafy@example.com")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
         when(termService.getCurrentRequiredTerm()).thenReturn(createCurrentTerm());
-        doThrow(new IllegalArgumentException("sms verification required"))
-                .when(smsService).checkVerified("01012345678");
+        // [fix] 수정 전: doThrow(...).when(smsService).checkVerified("01012345678") | 이유: checkAndConsumeVerified로 메서드명 변경, IllegalArgumentException → BadRequestException
+        doThrow(new BadRequestException("휴대폰 인증이 필요합니다."))
+                .when(smsService).checkAndConsumeVerified("01012345678");
 
+        // [fix] 수정 전: .isInstanceOf(IllegalArgumentException.class) | 이유: BadRequestException으로 전환
         assertThatThrownBy(() -> ssafyOAuthService.register(request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("sms verification");
+                .isInstanceOf(BadRequestException.class);
 
         verify(userRepository, never()).save(any(User.class));
         verify(userTermRepository, never()).save(any(UserTerm.class));
-        verify(smsService, never()).deleteVerified("01012345678");
+    }
+
+    @Test
+    void registerThrowsWhenSsafyOauthIdConflictsWithExistingGeneralUserId() {
+        SsafyRegisterRequest request = createRegisterRequest();
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(RedisKeys.SSAFY_PENDING_PREFIX + "pending-token-uuid")).thenReturn("ssafy@example.com|tester");
+        when(userRepository.existsByUserIdOrSsafyOauthId("ssafy@example.com", "ssafy@example.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> ssafyOAuthService.register(request))
+                .isInstanceOf(com.wow.global.exception.DuplicateException.class)
+                .hasMessageContaining("SSAFY");
+
+        verify(userRepository, never()).save(any(User.class));
     }
 
     private SsafyRegisterRequest createRegisterRequest() {
         SsafyRegisterRequest request = new SsafyRegisterRequest();
-        ReflectionTestUtils.setField(request, "ssafyOauthId", "ssafy@example.com");
+        // [fix] 수정 전: ReflectionTestUtils.setField(request, "ssafyOauthId", "ssafy@example.com") | 이유: SsafyRegisterRequest 필드가 ssafyOauthId → pendingToken으로 변경
+        ReflectionTestUtils.setField(request, "pendingToken", "pending-token-uuid");
         ReflectionTestUtils.setField(request, "phoneNumber", "010-1234-5678");
         ReflectionTestUtils.setField(request, "gender", "M");
         ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(1999, 1, 1));

@@ -1,7 +1,11 @@
 package com.wow.domain.auth.service;
 
 import com.wow.global.constant.RedisKeys;
+import com.wow.global.exception.BadRequestException;
+import com.wow.global.exception.InternalServerException;
+import com.wow.global.exception.RateLimitException;
 import com.wow.global.util.PhoneNumberUtils;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.List;
@@ -9,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import net.nurigo.sdk.message.model.Message;
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
 import net.nurigo.sdk.message.service.DefaultMessageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -17,6 +23,8 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class SmsService {
+
+    private static final Logger log = LoggerFactory.getLogger(SmsService.class);
 
     private static final long CODE_TTL_MINUTES = 5;
     private static final long SEND_COOLDOWN_SECONDS = 60;
@@ -64,10 +72,11 @@ public class SmsService {
         String savedCode = redisTemplate.opsForValue().get(RedisKeys.SMS_CODE_PREFIX + normalized);
 
         if (savedCode == null) {
-            throw new IllegalArgumentException("인증번호가 만료되었거나 존재하지 않습니다.");
+            throw new BadRequestException("인증번호가 만료되었거나 존재하지 않습니다.");
         }
 
-        if (!savedCode.equals(code)) {
+        // [fix] 수정 전: String.equals 비교 | 이유: timing side-channel 가능성을 낮추기 위해 상수 시간 비교 사용
+        if (!MessageDigest.isEqual(savedCode.getBytes(), code.getBytes())) {
             handleVerifyFailure(normalized);
         }
 
@@ -80,16 +89,13 @@ public class SmsService {
         );
     }
 
-    public void checkVerified(String phoneNumber) {
+    // [fix] 수정 전: checkVerified + deleteVerified 분리 호출 | 이유: 인증 상태 재사용 레이스 컨디션 방지를 위해 원자적 소비로 통합
+    public void checkAndConsumeVerified(String phoneNumber) {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
-        String verified = redisTemplate.opsForValue().get(RedisKeys.SMS_VERIFIED_PREFIX + normalized);
+        String verified = redisTemplate.opsForValue().getAndDelete(RedisKeys.SMS_VERIFIED_PREFIX + normalized);
         if (!"true".equals(verified)) {
-            throw new IllegalArgumentException("휴대폰 인증이 필요합니다.");
+            throw new BadRequestException("SMS 인증이 필요합니다.");
         }
-    }
-
-    public void deleteVerified(String phoneNumber) {
-        redisTemplate.delete(RedisKeys.SMS_VERIFIED_PREFIX + PhoneNumberUtils.normalize(phoneNumber));
     }
 
     private void validateSendRateLimit(String phoneNumber) {
@@ -105,13 +111,14 @@ public class SmsService {
         );
 
         if (result == null) {
-            throw new IllegalStateException("SMS 전송 제한 처리에 실패했습니다.");
+            log.error("SMS 전송 제한 Lua 스크립트 결과가 null입니다.");
+            throw new InternalServerException("SMS 전송 제한 처리에 실패했습니다.");
         }
         if (result == RATE_LIMIT_RESULT_COOLDOWN_EXISTS) {
-            throw new IllegalArgumentException("인증번호는 1분 후에 다시 요청할 수 있습니다.");
+            throw new RateLimitException("인증번호는 1분 후에 다시 요청할 수 있습니다.");
         }
         if (result == RATE_LIMIT_RESULT_LIMIT_EXCEEDED) {
-            throw new IllegalArgumentException("인증번호 요청 횟수가 초과되었습니다. 잠시 후 다시 시도해주세요.");
+            throw new RateLimitException("인증번호 요청 횟수가 초과되었습니다. 잠시 후 다시 시도해주세요.");
         }
     }
 
@@ -126,10 +133,10 @@ public class SmsService {
         if (verifyCount != null && verifyCount >= MAX_VERIFY_ATTEMPTS) {
             redisTemplate.delete(RedisKeys.SMS_CODE_PREFIX + phoneNumber);
             redisTemplate.delete(verifyCountKey);
-            throw new IllegalArgumentException("인증번호 입력 횟수가 초과되었습니다. 인증번호를 다시 요청해주세요.");
+            throw new RateLimitException("인증번호 입력 횟수가 초과되었습니다. 인증번호를 다시 요청해주세요.");
         }
 
-        throw new IllegalArgumentException("인증번호가 올바르지 않습니다.");
+        throw new BadRequestException("인증번호가 올바르지 않습니다.");
     }
 
     private void rollbackSendState(String phoneNumber) {

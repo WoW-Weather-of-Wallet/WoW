@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,8 +42,9 @@ public class SsafyOAuthController {
         response.sendRedirect(ssafyOAuthService.login(code, state));
     }
 
+    // [fix] 수정 전: @GetMapping("/token") + @RequestParam | 이유: GET 요청 시 auth code가 서버 로그/브라우저 히스토리/referrer에 노출 → POST로 변경
     @Operation(summary = "SSAFY 로그인 토큰 교환", description = "딥링크로 받은 일회성 code를 JWT로 교환합니다.")
-    @GetMapping("/token")
+    @PostMapping("/token")
     public ResponseEntity<UserLoginResponse> exchangeToken(@RequestParam String code) {
         return ResponseEntity.ok(ssafyOAuthService.exchangeToken(code));
     }
@@ -54,9 +56,10 @@ public class SsafyOAuthController {
         return ResponseEntity.ok().build();
     }
 
+    // [fix] 수정 전: ResponseEntity.ok() → 200 | 이유: 리소스 생성 시 201 Created가 HTTP 표준
     @Operation(summary = "SSAFY 신규 회원 등록", description = "SMS 인증 완료 후 신규 SSAFY 회원을 등록하고 JWT를 발급합니다.")
     @PostMapping("/register")
     public ResponseEntity<UserLoginResponse> register(@Valid @RequestBody SsafyRegisterRequest request) {
-        return ResponseEntity.ok(ssafyOAuthService.register(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ssafyOAuthService.register(request));
     }
 }

@@ -1,5 +1,14 @@
 package com.wow.domain.auth.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wow.domain.auth.dto.FindIdResponse;
 import com.wow.domain.auth.dto.TokenRefreshResponse;
@@ -7,30 +16,20 @@ import com.wow.domain.auth.dto.UserCreateResponse;
 import com.wow.domain.auth.service.AuthService;
 import com.wow.domain.auth.service.SmsService;
 import com.wow.global.GlobalExceptionHandler;
-import org.springframework.web.servlet.DispatcherServlet;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.web.servlet.ResultActions;
-
+import com.wow.global.exception.InvalidTokenException;
 import java.time.LocalDate;
 import java.util.Map;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 @ExtendWith(MockitoExtension.class)
 class AuthControllerMockMvcTest {
@@ -58,7 +57,6 @@ class AuthControllerMockMvcTest {
         mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(authService, smsService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setValidator(validator)
-                .addDispatcherServletCustomizer(servlet -> servlet.setThrowExceptionIfNoHandlerFound(true))
                 .build();
     }
 
@@ -79,19 +77,19 @@ class AuthControllerMockMvcTest {
         );
 
         performPost("/signup", signupRequest(Map.of()))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.userId").value("wowuser"))
                 .andExpect(jsonPath("$.name").value("tester"));
     }
 
     @Test
-    void refreshReturnsBadRequestErrorResponseWhenServiceRejectsToken() throws Exception {
+    void refreshReturnsUnauthorizedErrorResponseWhenServiceRejectsToken() throws Exception {
         when(authService.refresh("invalid-refresh-token"))
-                .thenThrow(new IllegalArgumentException("invalid refresh token"));
+                .thenThrow(new InvalidTokenException("invalid refresh token"));
 
         performPost("/refresh", Map.of("refreshToken", "invalid-refresh-token"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.UNAUTHORIZED.value()))
                 .andExpect(jsonPath("$.errorMessage").value("invalid refresh token"));
     }
 
@@ -191,7 +189,7 @@ class AuthControllerMockMvcTest {
                         .content("{\"userId\":\"wowuser\""))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.errorMessage").value("잘못된 요청 본문입니다."));
+                .andExpect(jsonPath("$.errorMessage").value("요청 본문 형식이 올바르지 않습니다."));
     }
 
     @Test
@@ -209,7 +207,7 @@ class AuthControllerMockMvcTest {
         mockMvc.perform(get(AUTH_BASE_URL + "/signup"))
                 .andExpect(status().isMethodNotAllowed())
                 .andExpect(jsonPath("$.httpStatusCode").value(HttpStatus.METHOD_NOT_ALLOWED.value()))
-                .andExpect(jsonPath("$.errorMessage").value("지원하지 않는 HTTP 메서드입니다."));
+                .andExpect(jsonPath("$.errorMessage").value("허용되지 않은 HTTP 메서드입니다."));
     }
 
     private ResultActions performPost(String path, Map<String, Object> requestBody) throws Exception {

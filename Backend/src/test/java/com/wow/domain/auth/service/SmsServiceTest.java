@@ -11,6 +11,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.wow.global.exception.BadRequestException;
+import com.wow.global.exception.InternalServerException;
+import com.wow.global.exception.RateLimitException;
 import java.time.Duration;
 import net.nurigo.sdk.message.service.DefaultMessageService;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +53,7 @@ class SmsServiceTest {
                 .thenReturn(-1L);
 
         assertThatThrownBy(() -> smsService.sendCode("010-1234-5678"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(RateLimitException.class)
                 .hasMessageContaining("1분");
 
         verify(messageService, never()).sendOne(any());
@@ -62,7 +65,7 @@ class SmsServiceTest {
                 .thenReturn(-2L);
 
         assertThatThrownBy(() -> smsService.sendCode("01012345678"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(RateLimitException.class)
                 .hasMessageContaining("초과");
 
         verify(messageService, never()).sendOne(any());
@@ -98,8 +101,8 @@ class SmsServiceTest {
                 .thenReturn(null);
 
         assertThatThrownBy(() -> smsService.sendCode("010-1234-5678"))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("실패");
+                .isInstanceOf(InternalServerException.class)
+                .hasMessageContaining("전송 제한 처리");
 
         verify(messageService, never()).sendOne(any());
     }
@@ -128,7 +131,7 @@ class SmsServiceTest {
         when(valueOperations.increment("sms:verify:count:01012345678")).thenReturn(1L);
 
         assertThatThrownBy(() -> smsService.verifyCode("010-1234-5678", "654321"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("올바르지");
 
         verify(redisTemplate).expire("sms:verify:count:01012345678", Duration.ofMinutes(5));
@@ -139,7 +142,7 @@ class SmsServiceTest {
         when(valueOperations.get("sms:code:01012345678")).thenReturn(null);
 
         assertThatThrownBy(() -> smsService.verifyCode("010-1234-5678", "123456"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("만료");
 
         verify(valueOperations, never()).increment("sms:verify:count:01012345678");
@@ -151,7 +154,7 @@ class SmsServiceTest {
         when(valueOperations.increment("sms:verify:count:01012345678")).thenReturn(5L);
 
         assertThatThrownBy(() -> smsService.verifyCode("01012345678", "654321"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(RateLimitException.class)
                 .hasMessageContaining("초과");
 
         verify(redisTemplate).delete("sms:code:01012345678");
@@ -171,10 +174,10 @@ class SmsServiceTest {
 
     @Test
     void checkVerifiedThrowsWhenPhoneNumberIsNotVerified() {
-        when(valueOperations.get("sms:verified:01012345678")).thenReturn(null);
+        when(redisTemplate.opsForValue().getAndDelete("sms:verified:01012345678")).thenReturn(null);
 
-        assertThatThrownBy(() -> smsService.checkVerified("010-1234-5678"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("필요");
+        assertThatThrownBy(() -> smsService.checkAndConsumeVerified("010-1234-5678"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("SMS 인증");
     }
 }

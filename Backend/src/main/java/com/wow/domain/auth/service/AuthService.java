@@ -22,15 +22,25 @@ import com.wow.domain.user.entity.UserTerm;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.domain.user.repository.UserTermRepository;
 import com.wow.global.constant.RedisKeys;
+import com.wow.global.exception.BadRequestException;
+import com.wow.global.exception.DuplicateException;
+import com.wow.global.exception.InvalidTokenException;
+import com.wow.global.exception.NotFoundException;
+import com.wow.global.exception.RateLimitException;
 import com.wow.global.util.PhoneNumberUtils;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -40,6 +50,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
+    // [added] 이유: 로그인 무차별 대입 공격 방지를 위한 rate limit 상수
+    private static final int MAX_LOGIN_ATTEMPTS = 5;
+    private static final Duration LOGIN_BLOCK_DURATION = Duration.ofMinutes(15);
+    private static final Duration LOGIN_ATTEMPT_WINDOW = Duration.ofMinutes(15);
+    // [added] 이유: 로그인 외 공개 인증 API에도 공통 rate limit을 적용하기 위한 제한값
+    private static final int MAX_PUBLIC_AUTH_ATTEMPTS = 5;
+    private static final Duration PUBLIC_AUTH_BLOCK_DURATION = Duration.ofMinutes(10);
+    private static final Duration PUBLIC_AUTH_ATTEMPT_WINDOW = Duration.ofMinutes(10);
 
     private final UserRepository userRepository;
     private final UserTermRepository userTermRepository;
@@ -53,7 +74,13 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public UserIdCheckResponse checkUserId(String userId) {
-        boolean isAvailable = !userRepository.existsByUserId(userId);
+        enforcePublicRateLimit(
+                RedisKeys.USER_ID_CHECK_ATTEMPT_PREFIX,
+                RedisKeys.USER_ID_CHECK_BLOCK_PREFIX,
+                userId,
+                "아이디 중복 확인 요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
+        );
+        boolean isAvailable = !userRepository.existsByUserIdOrSsafyOauthId(userId, userId);
         String message = isAvailable ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다.";
         return new UserIdCheckResponse(isAvailable, message, userId);
     }
@@ -63,86 +90,104 @@ public class AuthService {
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
         String normalizedName = request.getName().trim();
 
-        if (userRepository.existsByUserId(request.getUserId())) {
-            throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
+        if (userRepository.existsByUserIdOrSsafyOauthId(request.getUserId(), request.getUserId())) {
+            // [fix] 수정 전: throw new IllegalArgumentException("이미 사용 중인 아이디입니다.") | 이유: 중복은 409 CONFLICT가 적절
+            throw new DuplicateException("이미 사용 중인 아이디입니다.");
         }
         if (userRepository.existsByPhoneNumber(phoneNumber)) {
-            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
+            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 중복은 409 CONFLICT가 적절
+            throw new DuplicateException("이미 사용 중인 전화번호입니다.");
         }
         if (userRepository.existsDuplicate(normalizedName, request.getGender(), request.getBirthDate(), phoneNumber)) {
-            throw new IllegalArgumentException("이미 등록된 회원입니다.");
+            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 중복은 409 CONFLICT가 적절
+            throw new DuplicateException("이미 등록된 회원입니다.");
         }
 
         validatePassword(request.getPw(), request.getUserId());
         Term currentRequiredTerm = termService.getCurrentRequiredTerm();
 
-        smsService.checkVerified(phoneNumber);
-        try {
-            User user = User.builder()
-                    .userId(request.getUserId())
-                    .ssafyOauthId(null)
-                    .pw(bCryptPasswordEncoder.encode(request.getPw()))
-                    .name(normalizedName)
-                    .gender(request.getGender())
-                    .phoneNumber(phoneNumber)
-                    .birthDate(request.getBirthDate())
-                    .alarmEnabled(request.isAlarmEnabled())
-                    .role(Role.USER)
-                    .build();
+        // [fix] 수정 전: smsService.checkVerified() + try/finally { smsService.deleteVerified() } | 이유: check와 delete가 분리된 Redis 연산으로 레이스 컨디션 → 원자적 checkAndConsume으로 대체
+        smsService.checkAndConsumeVerified(phoneNumber);
 
-            userRepository.save(user);
+        User user = User.builder()
+                .userId(request.getUserId())
+                .ssafyOauthId(null)
+                .pw(bCryptPasswordEncoder.encode(request.getPw()))
+                .name(normalizedName)
+                .gender(request.getGender())
+                .phoneNumber(phoneNumber)
+                .birthDate(request.getBirthDate())
+                .alarmEnabled(request.isAlarmEnabled())
+                .role(Role.USER)
+                .build();
 
-            userTermRepository.save(UserTerm.builder()
-                    .user(user)
-                    .term(currentRequiredTerm)
-                    .agreed(request.isTermsAgreed())
-                    .agreedAt(LocalDateTime.now())
-                    .build());
+        userRepository.save(user);
 
-            return UserCreateResponse.from(user);
-        } finally {
-            smsService.deleteVerified(phoneNumber);
-        }
+        userTermRepository.save(UserTerm.builder()
+                .user(user)
+                .term(currentRequiredTerm)
+                .agreed(request.isTermsAgreed())
+                .agreedAt(LocalDateTime.now())
+                .build());
+
+        return UserCreateResponse.from(user);
     }
 
     @Transactional
     public UserLoginResponse login(UserLoginRequest request) {
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUserId(), request.getPw())
-        );
+        // [added] 이유: 로그인 엔드포인트에 무차별 대입 공격 방지를 위한 rate limiting
+        checkLoginRateLimit(request.getUserId());
 
-        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-        String userId = userDetails.getUsername();
-        String accessToken = jwtTokenProvider.createAccessToken(
-                userId,
-                userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList()
-        );
-        String refreshToken = jwtTokenProvider.createRefreshToken(userId);
+        try {
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUserId(), request.getPw())
+            );
 
-        redisTemplate.opsForValue().set(
-                RedisKeys.REFRESH_TOKEN_PREFIX + userId,
-                refreshToken,
-                Duration.ofSeconds(jwtTokenProvider.getRefreshTokenValidityInSeconds())
-        );
+            // [added] 이유: 로그인 성공 시 실패 카운터 초기화
+            resetLoginAttempts(request.getUserId());
 
-        return UserLoginResponse.of(
-                accessToken,
-                jwtTokenProvider.getAccessTokenValidityInSeconds(),
-                refreshToken,
-                UserSummaryResponse.from(userDetails.getUser())
-        );
+            CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+            String userId = userDetails.getUsername();
+            String accessToken = jwtTokenProvider.createAccessToken(
+                    userId,
+                    userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList()
+            );
+            String refreshToken = jwtTokenProvider.createRefreshToken(userId);
+
+            redisTemplate.opsForValue().set(
+                    RedisKeys.REFRESH_TOKEN_PREFIX + userId,
+                    refreshToken,
+                    Duration.ofSeconds(jwtTokenProvider.getRefreshTokenValidityInSeconds())
+            );
+
+            return UserLoginResponse.of(
+                    accessToken,
+                    jwtTokenProvider.getAccessTokenValidityInSeconds(),
+                    refreshToken,
+                    UserSummaryResponse.from(userDetails)
+            );
+        } catch (AuthenticationException e) {
+            // [added] 이유: 로그인 실패 시 시도 횟수 증가
+            incrementLoginAttempts(request.getUserId());
+            throw e;
+        }
     }
 
     public TokenRefreshResponse refresh(String refreshToken) {
-        if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new IllegalArgumentException("유효하지 않은 refresh token입니다.");
+        // [fix] 수정 전: jwtTokenProvider.validateToken(refreshToken) + getUserIdFromToken(refreshToken) (이중 파싱, type 미검증) | 이유: refresh 토큰 type claim 검증 + 단일 파싱으로 개선
+        Claims claims;
+        try {
+            claims = jwtTokenProvider.parseRefreshToken(refreshToken);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new InvalidTokenException("유효하지 않은 refresh token입니다.");
         }
 
-        String userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+        String userId = claims.getSubject();
         String savedToken = redisTemplate.opsForValue().get(RedisKeys.REFRESH_TOKEN_PREFIX + userId);
 
         if (!refreshToken.equals(savedToken)) {
-            throw new IllegalArgumentException("refresh token이 일치하지 않습니다.");
+            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 토큰 불일치는 401 UNAUTHORIZED가 적절
+            throw new InvalidTokenException("refresh token이 일치하지 않습니다.");
         }
 
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(userId);
@@ -175,82 +220,145 @@ public class AuthService {
     public FindIdResponse findId(FindIdRequest request) {
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
         String normalizedName = request.getName().trim();
+        enforcePublicRateLimit(
+                RedisKeys.FIND_ID_ATTEMPT_PREFIX,
+                RedisKeys.FIND_ID_BLOCK_PREFIX,
+                phoneNumber,
+                "아이디 찾기 요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
+        );
 
         User user = userRepository.findByNameAndGenderAndBirthDateAndPhoneNumber(
                         normalizedName, request.getGender(), request.getBirthDate(), phoneNumber)
-                .orElseThrow(() -> new IllegalArgumentException("일치하는 회원 정보를 찾을 수 없습니다."));
+                // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 리소스 미발견은 404가 적절
+                .orElseThrow(() -> new NotFoundException("일치하는 회원 정보를 찾을 수 없습니다."));
 
         if (user.getUserId() == null) {
-            throw new IllegalArgumentException("SSAFY 계정으로 가입된 회원입니다.");
+            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 커스텀 예외로 전환
+            throw new BadRequestException("SSAFY 계정으로 가입된 회원입니다.");
         }
 
-        smsService.checkVerified(phoneNumber);
-        try {
-            return new FindIdResponse(user.getUserId());
-        } finally {
-            smsService.deleteVerified(phoneNumber);
-        }
+        // [fix] 수정 전: checkVerified + try/finally deleteVerified | 이유: 원자적 checkAndConsume으로 레이스 컨디션 방지
+        smsService.checkAndConsumeVerified(phoneNumber);
+        return new FindIdResponse(user.getUserId());
     }
 
     @Transactional
     public void findPassword(FindPwRequest request) {
         String phoneNumber = PhoneNumberUtils.normalize(request.getPhoneNumber());
         String normalizedName = request.getName().trim();
+        enforcePublicRateLimit(
+                RedisKeys.FIND_PASSWORD_ATTEMPT_PREFIX,
+                RedisKeys.FIND_PASSWORD_BLOCK_PREFIX,
+                request.getUserId() + ":" + phoneNumber,
+                "비밀번호 재설정 요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
+        );
 
         User user = userRepository.findByUserIdAndNameAndBirthDateAndPhoneNumber(
                         request.getUserId(), normalizedName, request.getBirthDate(), phoneNumber)
-                .orElseThrow(() -> new IllegalArgumentException("일치하는 회원 정보를 찾을 수 없습니다."));
+                // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 리소스 미발견은 404가 적절
+                .orElseThrow(() -> new NotFoundException("일치하는 회원 정보를 찾을 수 없습니다."));
 
-        smsService.checkVerified(phoneNumber);
-        try {
-            validatePassword(request.getNewPw(), request.getUserId());
-            user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
-        } finally {
-            smsService.deleteVerified(phoneNumber);
-        }
+        // [fix] 수정 전: checkVerified + try/finally deleteVerified | 이유: 원자적 checkAndConsume으로 레이스 컨디션 방지
+        smsService.checkAndConsumeVerified(phoneNumber);
+        validatePassword(request.getNewPw(), request.getUserId());
+        user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
     }
 
     @Transactional
     public void changePassword(String userId, ChangePasswordRequest request) {
         User user = userRepository.findByUserId(userId)
                 .or(() -> userRepository.findBySsafyOauthId(userId))
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+                // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 리소스 미발견은 404가 적절
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 회원입니다."));
 
         if (user.getPw() == null) {
-            throw new IllegalArgumentException("소셜 로그인 계정은 비밀번호를 변경할 수 없습니다.");
+            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 커스텀 예외로 전환
+            throw new BadRequestException("소셜 로그인 계정은 비밀번호를 변경할 수 없습니다.");
         }
         if (!bCryptPasswordEncoder.matches(request.getCurrentPw(), user.getPw())) {
-            throw new IllegalArgumentException("현재 비밀번호가 올바르지 않습니다.");
+            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 커스텀 예외로 전환
+            throw new BadRequestException("현재 비밀번호가 올바르지 않습니다.");
         }
 
         validatePassword(request.getNewPw(), userId);
         user.updatePw(bCryptPasswordEncoder.encode(request.getNewPw()));
     }
 
+    // [added] 이유: 로그인 무차별 대입 공격 방지 - Redis 기반 rate limiting
+    private void checkLoginRateLimit(String userId) {
+        String blockKey = RedisKeys.LOGIN_BLOCK_PREFIX + userId;
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(blockKey))) {
+            throw new RateLimitException("로그인 시도 횟수가 초과되었습니다. 잠시 후 다시 시도해주세요.");
+        }
+    }
+
+    private void incrementLoginAttempts(String userId) {
+        String attemptKey = RedisKeys.LOGIN_ATTEMPT_PREFIX + userId;
+        Long attempts = redisTemplate.opsForValue().increment(attemptKey);
+        if (attempts != null && attempts == 1L) {
+            redisTemplate.expire(attemptKey, LOGIN_ATTEMPT_WINDOW);
+        }
+        if (attempts != null && attempts >= MAX_LOGIN_ATTEMPTS) {
+            redisTemplate.opsForValue().set(RedisKeys.LOGIN_BLOCK_PREFIX + userId, "blocked", LOGIN_BLOCK_DURATION);
+            redisTemplate.delete(attemptKey);
+            log.warn("로그인 시도 횟수 초과로 계정 차단: userId={}", userId);
+        }
+    }
+
+    private void resetLoginAttempts(String userId) {
+        redisTemplate.delete(RedisKeys.LOGIN_ATTEMPT_PREFIX + userId);
+        redisTemplate.delete(RedisKeys.LOGIN_BLOCK_PREFIX + userId);
+    }
+
+    // [added] 이유: 아이디 찾기, 비밀번호 재설정, 중복 확인 API에 공통 Redis rate limit 적용
+    private void enforcePublicRateLimit(
+            String attemptPrefix,
+            String blockPrefix,
+            String identifier,
+            String blockMessage
+    ) {
+        String blockKey = blockPrefix + identifier;
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(blockKey))) {
+            throw new RateLimitException(blockMessage);
+        }
+
+        String attemptKey = attemptPrefix + identifier;
+        Long attempts = redisTemplate.opsForValue().increment(attemptKey);
+        if (attempts != null && attempts == 1L) {
+            redisTemplate.expire(attemptKey, PUBLIC_AUTH_ATTEMPT_WINDOW);
+        }
+        if (attempts != null && attempts > MAX_PUBLIC_AUTH_ATTEMPTS) {
+            redisTemplate.opsForValue().set(blockKey, "blocked", PUBLIC_AUTH_BLOCK_DURATION);
+            redisTemplate.delete(attemptKey);
+            throw new RateLimitException(blockMessage);
+        }
+    }
+
     private void validatePassword(String pw, String userId) {
         if (pw == null || pw.length() < 8 || pw.length() > 20) {
-            throw new IllegalArgumentException("비밀번호는 8자 이상 20자 이하여야 합니다.");
+            // [fix] 수정 전: throw new IllegalArgumentException(...) | 이유: 커스텀 예외로 전환
+            throw new BadRequestException("비밀번호는 8자 이상 20자 이하여야 합니다.");
         }
         if (!pw.matches(".*[A-Z].*")) {
-            throw new IllegalArgumentException("비밀번호에는 대문자가 최소 1자 이상 포함되어야 합니다.");
+            throw new BadRequestException("비밀번호에는 대문자가 최소 1자 이상 포함되어야 합니다.");
         }
         if (!pw.matches(".*[a-z].*")) {
-            throw new IllegalArgumentException("비밀번호에는 소문자가 최소 1자 이상 포함되어야 합니다.");
+            throw new BadRequestException("비밀번호에는 소문자가 최소 1자 이상 포함되어야 합니다.");
         }
         if (!pw.matches(".*[0-9].*")) {
-            throw new IllegalArgumentException("비밀번호에는 숫자가 최소 1자 이상 포함되어야 합니다.");
+            throw new BadRequestException("비밀번호에는 숫자가 최소 1자 이상 포함되어야 합니다.");
         }
         if (!pw.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*")) {
-            throw new IllegalArgumentException("비밀번호에는 특수문자가 최소 1자 이상 포함되어야 합니다.");
+            throw new BadRequestException("비밀번호에는 특수문자가 최소 1자 이상 포함되어야 합니다.");
         }
         if (userId != null && userId.equals(pw)) {
-            throw new IllegalArgumentException("비밀번호는 아이디와 동일하게 설정할 수 없습니다.");
+            throw new BadRequestException("비밀번호는 아이디와 동일하게 설정할 수 없습니다.");
         }
         if (hasConsecutiveSequence(pw)) {
-            throw new IllegalArgumentException("비밀번호에 연속된 문자 또는 숫자 4자 이상을 사용할 수 없습니다.");
+            throw new BadRequestException("비밀번호에 연속된 문자 또는 숫자 4자 이상을 사용할 수 없습니다.");
         }
         if (hasRepeatedChars(pw)) {
-            throw new IllegalArgumentException("비밀번호에 같은 문자 또는 숫자 4자 이상을 반복할 수 없습니다.");
+            throw new BadRequestException("비밀번호에 같은 문자 또는 숫자 4자 이상을 반복할 수 없습니다.");
         }
     }
 
