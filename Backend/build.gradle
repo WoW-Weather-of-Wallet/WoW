@@ -74,7 +74,6 @@ dependencies {
 
 	// aws s3 presigner
 	implementation 'software.amazon.awssdk:s3:2.28.29'
-
 }
 
 tasks.named('test') {

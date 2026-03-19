@@ -5,8 +5,8 @@ import lombok.Builder;
 @Builder
 public record CalendarHeaderResponse(
         String yearMonth,
-        String weatherStatus,
-        String weatherIcon,
-        String weatherDescription,
+        String weatherName,
+        String iconCode,
+        String description,
         int savedAmount
 ) {}
