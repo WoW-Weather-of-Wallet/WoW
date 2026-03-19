@@ -22,6 +22,7 @@ import SettingsScreen from '../screens/mypage/SettingsScreen';
 import TermsPdfScreen from '../screens/common/TermsPdfScreen';
 import AiLoadingScreen from '../screens/ai/AiLoadingScreen';
 import AiResultScreen from '../screens/ai/AiResultScreen';
+import AiNotification from '../components/common/AiNotification';
 
 const Stack = createNativeStackNavigator();
 
@@ -175,6 +176,7 @@ export default function RootNavigator() {
           }}
         />
       </Stack.Navigator>
+      <AiNotification />
     </NavigationContainer>
   );
 }

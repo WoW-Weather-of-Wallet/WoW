@@ -13,11 +13,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, wp, hp } from '../../constants/theme';
 import { styles } from './AiFeedbackHomeScreen.styles';
 import GradientButton from '../../components/common/GradientButton';
+import { useAiStore } from '../../store/aiStore';
 
 const AnimatedIcon = Animated.createAnimatedComponent(Ionicons);
 
 export default function AiFeedbackHomeScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const { status } = useAiStore();
   
   /**
    * [UX-Design] 중앙 시각적 요소의 펄스(Pulse) 애니메이션을 설정합니다.
@@ -79,9 +81,9 @@ export default function AiFeedbackHomeScreen({ navigation }: any) {
 
         <View style={styles.bottomSection}>
           <GradientButton 
-            title="피드백 시작하기" 
+            title={status === 'loading' ? "분석 확인하기" : "피드백 시작하기"} 
             onPress={() => {
-              // [UX-Flow] 로딩 시퀀스 화면으로 진입합니다.
+              // [UX-Flow] 이미 분석 중일 경우 로딩 화면으로 재진입하여 진행 상황을 보여줍니다.
               navigation.navigate('AiLoading');
             }}
           />

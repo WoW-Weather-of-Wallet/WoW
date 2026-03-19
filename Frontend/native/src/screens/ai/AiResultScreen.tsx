@@ -91,7 +91,15 @@ const AnimatedNumber = ({
       underlineColorAndroid="transparent"
       editable={false}
       defaultValue={'0'} 
-      style={[style, { padding: 0 }]}
+      style={[
+        style, 
+        { 
+          padding: 0, 
+          margin: 0, 
+          includeFontPadding: false,
+          textAlignVertical: 'center',
+        }
+      ]}
       animatedProps={animatedProps}
     />
   );
@@ -303,15 +311,18 @@ export default function AiResultScreen({ navigation }: any) {
 
       <View style={[styles.feedbackSection, { marginBottom: 0 }]}>
         <Text style={styles.feedbackTitle}>3. 이번 달 절감 목표</Text>
-        <Text style={styles.feedbackText}>
-          비슷한 유형 기준 대비 절감 가능액은 <Text style={styles.feedbackHighlight}>약 </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap' }}>
+          <Text style={styles.feedbackText}>비슷한 유형 기준 대비 절감 가능액은 </Text>
+          <Text style={styles.feedbackHighlight}>약 </Text>
           <AnimatedNumber 
             value={29258} 
             type="price"
             delay={1000}
             style={styles.feedbackHighlight}
           />
-          <Text style={styles.feedbackHighlight}>입니다.</Text>{'\n'}
+          <Text style={styles.feedbackHighlight}> 입니다.</Text>
+        </View>
+        <Text style={styles.feedbackText}>
           커피를 <Text style={styles.feedbackHighlight}>하루 1회/주 3회</Text>로 고정하는 규칙 하나만 제대로 세워도{'\n'}
           전체 소비 리듬이 가장 먼저 안정될 것입니다!
         </Text>

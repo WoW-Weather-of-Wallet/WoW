@@ -13,6 +13,8 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, wp, hp } from '../../constants/theme';
 import { styles } from './AiLoadingScreen.styles';
+import { useAiStore } from '../../store/aiStore';
+import { useIsFocused } from '@react-navigation/native';
 
 /**
  * [UX-Plan] 로딩 단계별 구성을 정의합니다.
@@ -53,7 +55,7 @@ const PulseRing = ({ delayTime = 0 }: { delayTime?: number }) => {
       opacity.value = withRepeat(withTiming(0, { duration: 2000 }), -1, false);
     }, delayTime);
     return () => clearTimeout(timeout);
-  }, []);
+  }, [delayTime, opacity, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -80,14 +82,16 @@ const CompletionCheck = () => {
     });
 
     // 2. 등장 직후 성공을 알리는 단발성 파동 효과
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       pulseScale.value = withTiming(2.5, { duration: 1000 });
       pulseOpacity.value = withSequence(
         withTiming(0.4, { duration: 200 }),
         withTiming(0, { duration: 800 })
       );
     }, 200);
-  }, []);
+
+    return () => clearTimeout(timeout);
+  }, [pulseOpacity, pulseScale, scale]);
 
   const animatedIconStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -111,24 +115,41 @@ const CompletionCheck = () => {
 export default function AiLoadingScreen({ navigation }: any) {
   const [currentStep, setCurrentStep] = useState(0);
   const progress = useSharedValue(0);
+  const isFocused = useIsFocused(); // 현재 화면에 머물고 있는지 확인
+  const { startAnalysis, simulateAnalysis, hideToast } = useAiStore();
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
+    
+    // 분석 시작 및 시뮬레이션 동시 실행 (이제 화면을 나가도 스토어에서 8초 뒤 완료 처리됨)
+    startAnalysis();
+    simulateAnalysis();
+
     const runStep = (stepIndex: number) => {
       if (stepIndex >= LOADING_STEPS.length) {
-        navigation.replace('AiResult');
+        // [Logic] 애니메이션이 모두 끝났을 때
+        if (isFocused) {
+          hideToast(); // 화면에 있으면 토스트는 안 보여줍니다.
+          navigation.replace('AiResult');
+        }
         return;
       }
+      
       setCurrentStep(stepIndex);
       const nextProgress = (stepIndex + 1) / LOADING_STEPS.length;
       progress.value = withTiming(nextProgress, { duration: LOADING_STEPS[stepIndex].duration });
+      
       timeout = setTimeout(() => {
         runStep(stepIndex + 1);
       }, LOADING_STEPS[stepIndex].duration);
     };
+
     runStep(0);
-    return () => clearTimeout(timeout);
-  }, []);
+    
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [hideToast, isFocused, navigation, progress, simulateAnalysis, startAnalysis]);  // 실제 서비스에서는 Background Task나 Store Action으로 관리하는 것이 더 안전함.
 
   const animatedProgressStyle = useAnimatedStyle(() => ({
     width: `${progress.value * 100}%`,
