@@ -27,7 +27,7 @@ public class SmsService {
     private static final long RATE_LIMIT_RESULT_COOLDOWN_EXISTS = -1L;
     private static final long RATE_LIMIT_RESULT_LIMIT_EXCEEDED = -2L;
 
-    private static final DefaultRedisScript<Long> SEND_RATE_LIMIT_SCRIPT = createSendRateLimitScript();
+    private static final DefaultRedisScript<Long> SEND_RATE_LIMIT_SCRIPT = SmsRateLimitScript.create();
 
     private final StringRedisTemplate redisTemplate;
     private final DefaultMessageService messageService;
@@ -151,35 +151,5 @@ public class SmsService {
     private String generateCode() {
         SecureRandom random = new SecureRandom();
         return String.format("%06d", random.nextInt(1000000));
-    }
-
-    private static DefaultRedisScript<Long> createSendRateLimitScript() {
-        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
-        script.setResultType(Long.class);
-        script.setScriptText("""
-                local countKey = KEYS[1]
-                local cooldownKey = KEYS[2]
-                local windowMinutes = tonumber(ARGV[1])
-                local maxSendCount = tonumber(ARGV[2])
-                local cooldownSeconds = tonumber(ARGV[3])
-
-                if redis.call('EXISTS', cooldownKey) == 1 then
-                    return -1
-                end
-
-                local sendCount = redis.call('INCR', countKey)
-                if sendCount == 1 then
-                    redis.call('EXPIRE', countKey, windowMinutes * 60)
-                end
-
-                if sendCount > maxSendCount then
-                    redis.call('SET', cooldownKey, 'true', 'EX', cooldownSeconds)
-                    return -2
-                end
-
-                redis.call('SET', cooldownKey, 'true', 'EX', cooldownSeconds)
-                return sendCount
-                """);
-        return script;
     }
 }

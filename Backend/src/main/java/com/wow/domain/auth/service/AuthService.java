@@ -23,6 +23,9 @@ import com.wow.domain.user.repository.UserRepository;
 import com.wow.domain.user.repository.UserTermRepository;
 import com.wow.global.constant.RedisKeys;
 import com.wow.global.util.PhoneNumberUtils;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,10 +36,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -71,7 +70,7 @@ public class AuthService {
             throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
         }
         if (userRepository.existsDuplicate(normalizedName, request.getGender(), request.getBirthDate(), phoneNumber)) {
-            throw new IllegalArgumentException("이미 가입된 회원입니다.");
+            throw new IllegalArgumentException("이미 등록된 회원입니다.");
         }
 
         validatePassword(request.getPw(), request.getUserId());
@@ -215,13 +214,13 @@ public class AuthService {
     public void changePassword(String userId, ChangePasswordRequest request) {
         User user = userRepository.findByUserId(userId)
                 .or(() -> userRepository.findBySsafyOauthId(userId))
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
         if (user.getPw() == null) {
-            throw new IllegalArgumentException("소셜 로그인 계정은 비밀번호 변경을 지원하지 않습니다.");
+            throw new IllegalArgumentException("소셜 로그인 계정은 비밀번호를 변경할 수 없습니다.");
         }
         if (!bCryptPasswordEncoder.matches(request.getCurrentPw(), user.getPw())) {
-            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+            throw new IllegalArgumentException("현재 비밀번호가 올바르지 않습니다.");
         }
 
         validatePassword(request.getNewPw(), userId);
@@ -230,28 +229,28 @@ public class AuthService {
 
     private void validatePassword(String pw, String userId) {
         if (pw == null || pw.length() < 8 || pw.length() > 20) {
-            throw new IllegalArgumentException("비밀번호는 8자 이상 20자 이하로 입력해야 합니다.");
+            throw new IllegalArgumentException("비밀번호는 8자 이상 20자 이하여야 합니다.");
         }
         if (!pw.matches(".*[A-Z].*")) {
-            throw new IllegalArgumentException("비밀번호에는 영문 대문자가 1자 이상 포함되어야 합니다.");
+            throw new IllegalArgumentException("비밀번호에는 대문자가 최소 1자 이상 포함되어야 합니다.");
         }
         if (!pw.matches(".*[a-z].*")) {
-            throw new IllegalArgumentException("비밀번호에는 영문 소문자가 1자 이상 포함되어야 합니다.");
+            throw new IllegalArgumentException("비밀번호에는 소문자가 최소 1자 이상 포함되어야 합니다.");
         }
         if (!pw.matches(".*[0-9].*")) {
-            throw new IllegalArgumentException("비밀번호에는 숫자가 1자 이상 포함되어야 합니다.");
+            throw new IllegalArgumentException("비밀번호에는 숫자가 최소 1자 이상 포함되어야 합니다.");
         }
         if (!pw.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*")) {
-            throw new IllegalArgumentException("비밀번호에는 특수문자가 1자 이상 포함되어야 합니다.");
+            throw new IllegalArgumentException("비밀번호에는 특수문자가 최소 1자 이상 포함되어야 합니다.");
         }
         if (userId != null && userId.equals(pw)) {
             throw new IllegalArgumentException("비밀번호는 아이디와 동일하게 설정할 수 없습니다.");
         }
         if (hasConsecutiveSequence(pw)) {
-            throw new IllegalArgumentException("비밀번호에 연속된 문자 또는 숫자 4자 이상은 사용할 수 없습니다.");
+            throw new IllegalArgumentException("비밀번호에 연속된 문자 또는 숫자 4자 이상을 사용할 수 없습니다.");
         }
         if (hasRepeatedChars(pw)) {
-            throw new IllegalArgumentException("비밀번호에 동일한 문자 또는 숫자 4자 이상은 사용할 수 없습니다.");
+            throw new IllegalArgumentException("비밀번호에 같은 문자 또는 숫자 4자 이상을 반복할 수 없습니다.");
         }
     }
 

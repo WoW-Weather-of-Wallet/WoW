@@ -5,19 +5,18 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.Date;
+import java.util.List;
+import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
-
-import javax.crypto.SecretKey;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
 
 @Component
 public class JwtTokenProvider {
@@ -47,7 +46,7 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // Access Token 생성
+    // Access Token 발급
     public String createAccessToken(String userId, List<String> roles) {
         Instant now = Instant.now();
         Instant expiry = now.plus(accessTokenValidity);
@@ -62,7 +61,7 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    // Refresh Token 생성
+    // Refresh Token 발급
     public String createRefreshToken(String userId) {
         Instant now = Instant.now();
         Instant expiry = now.plus(refreshTokenValidity);
@@ -89,9 +88,7 @@ public class JwtTokenProvider {
     }
 
     public Authentication getAuthentication(String token) {
-
         String userId = getUserIdFromToken(token);
-
         UserDetails user = userDetailsService.loadUserByUsername(userId);
 
         return new UsernamePasswordAuthenticationToken(
@@ -99,7 +96,6 @@ public class JwtTokenProvider {
                 null,
                 user.getAuthorities()
         );
-
     }
 
     public boolean validateToken(String token) {
@@ -116,9 +112,8 @@ public class JwtTokenProvider {
         return claims.getSubject();
     }
 
-    // 설정된 토큰의 유효 기간(Duration) 반환
+    // Access Token 유효 시간을 초 단위로 반환한다.
     public long getAccessTokenValidityInSeconds() {
         return accessTokenValidity.toSeconds();
     }
-
 }
