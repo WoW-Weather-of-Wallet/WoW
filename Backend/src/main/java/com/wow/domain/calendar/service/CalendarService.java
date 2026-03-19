@@ -3,6 +3,8 @@ package com.wow.domain.calendar.service;
 import com.wow.domain.calendar.dto.CalendarHeaderResponse;
 import com.wow.domain.calendar.dto.FlaskPreprocessDto;
 import com.wow.domain.calendar.dto.TransactionConfirmDto;
+import com.wow.domain.calendar.entity.SpendingWeather;
+import com.wow.domain.calendar.repository.CalendarRepository;
 import com.wow.domain.calendar.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,23 +31,43 @@ import java.util.Map;
 @Transactional(readOnly = true)
 public class CalendarService {
 
+    private static final String DEFAULT_WEATHER_NAME = "정보 없음";
+    private static final String DEFAULT_DESCRIPTION = "날씨 정보가 없습니다.";
+
     private final RestTemplate restTemplate;
+    private final CalendarRepository calendarRepository;
     private final TransactionRepository transactionRepository;
 
     @Value("${flask.url}")
     private String flaskUrl;
 
     public CalendarHeaderResponse getCalendarHeader(Long userId, int year, int month) {
+        TodayWeatherInfo todayWeatherInfo = getTodayWeatherInfo(userId);
+
         return CalendarHeaderResponse.builder()
                 .yearMonth(year + "-" + String.format("%02d", month))
-                .weatherName("CLOUDY")
-                .iconCode("cloudy")
-                .description("Check your spending pace")
+                .weatherName(todayWeatherInfo.weatherName())
+                .iconCode(todayWeatherInfo.iconCode())
+                .description(todayWeatherInfo.description())
                 .savedAmount(calculateSavedAmount(userId, year, month))
                 .build();
     }
 
-    public int calculateSavedAmount(Long userId, int year, int month) {
+    private TodayWeatherInfo getTodayWeatherInfo(Long userId) {
+        LocalDate today = LocalDate.now();
+
+        return calendarRepository.findByUserIdAndDateWithWeather(userId, today)
+                .map(calendar -> {
+                    SpendingWeather spendingWeather = calendar.getSpendingWeather();
+                    String weatherName = spendingWeather != null ? spendingWeather.getWeatherName() : DEFAULT_WEATHER_NAME;
+                    String iconCode = spendingWeather != null ? spendingWeather.getIconCode() : null;
+                    String description = calendar.getDescription() != null ? calendar.getDescription() : DEFAULT_DESCRIPTION;
+                    return new TodayWeatherInfo(weatherName, iconCode, description);
+                })
+                .orElse(new TodayWeatherInfo(DEFAULT_WEATHER_NAME, null, DEFAULT_DESCRIPTION));
+    }
+
+    private int calculateSavedAmount(Long userId, int year, int month) {
         YearMonth targetMonth = YearMonth.of(year, month);
         YearMonth currentMonth = YearMonth.from(LocalDate.now());
 
@@ -136,6 +158,9 @@ public class CalendarService {
 
     @Transactional
     public void confirmTransactions(List<TransactionConfirmDto> items) {
-        // TODO: 거래내역 확정 후 DB 저장 로직 추가
+        // TODO: save confirmed transaction records
+    }
+
+    private record TodayWeatherInfo(String weatherName, String iconCode, String description) {
     }
 }
