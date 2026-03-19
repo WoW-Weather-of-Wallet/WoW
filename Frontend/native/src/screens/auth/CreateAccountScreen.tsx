@@ -124,7 +124,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
         }, 250);
         return;
       }
-      setSubmitError(response?.message ?? '이미 사용 중인 아이디예요.');
+      setSubmitError(response?.message ?? '이미 사용 중인 아이디에요.');
     } catch (error: any) {
       const message = extractApiErrorMessage(error, '아이디 중복확인에 실패했어요.');
       setIsIdAvailable(false);
