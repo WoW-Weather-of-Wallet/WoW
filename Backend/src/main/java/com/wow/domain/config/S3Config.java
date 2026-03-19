@@ -11,7 +11,8 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 @Configuration
 public class S3Config {
 
-    @Bean
+    // [fix] 수정 전: @Bean (destroyMethod 없음) | 이유: S3Presigner가 SdkAutoCloseable 구현체인데 리소스 해제 안됨 → 앱 종료 시 리소스 누수
+    @Bean(destroyMethod = "close")
     public S3Presigner s3Presigner(
             @Value("${cloud.aws.credentials.access-key}") String accessKey,
             @Value("${cloud.aws.credentials.secret-key}") String secretKey,
