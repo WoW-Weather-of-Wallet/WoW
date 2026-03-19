@@ -18,13 +18,30 @@ import { Ionicons } from '@expo/vector-icons';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import StepIndicator from '../../components/common/StepIndicator';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
-import { COLORS, wp, hp } from '../../constants/theme';
-import { sendSmsCode } from '../../services/auth';
+import { COLORS, hp } from '../../constants/theme';
+import { checkSignupIdentity, sendSmsCode } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 import { validateName, validatePhone } from '../../utils/validation';
 
 const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 알뜰폰'];
 const TELECOM_PLACEHOLDER = '통신사를 선택해주세요';
+
+const buildBirthDate = (front: string, back: string) => {
+  if (front.length !== 6 || back.length !== 1) {
+    return null;
+  }
+
+  const yearPrefix = ['3', '4', '7', '8'].includes(back) ? '20' : '19';
+  return `${yearPrefix}${front.slice(0, 2)}-${front.slice(2, 4)}-${front.slice(4, 6)}`;
+};
+
+const buildGender = (back: string) => {
+  if (!back) {
+    return null;
+  }
+
+  return parseInt(back, 10) % 2 !== 0 ? 'M' : 'F';
+};
 
 export default function PhoneAuthScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
@@ -37,7 +54,6 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
   const [phone, setPhone] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [termsVisible, setTermsVisible] = useState(false);
-  // 회원가입 payload로 넘길 약관 동의 완료 여부
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -80,12 +96,6 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
     setTimeout(() => phoneRef.current?.focus(), 250);
   };
 
-  /**
-   * 약관 동의 이후 실제 SMS 발송 API 를 호출합니다.
-   * 백엔드가 회원가입 전에 인증 완료 상태를 요구하므로,
-   * 이 단계가 성공해야만 다음 VerifyCode 화면과 CreateAccount 화면이 의미가 있습니다.
-   * 수집한 이름/주민번호 일부/휴대폰/약관동의 여부를 다음 스텝 route param으로 넘깁니다.
-   */
   const handleSendCode = async (agreedTerms = termsAgreed) => {
     if (isSendingCode) {
       return;
@@ -94,10 +104,6 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
     setIsSendingCode(true);
     setSubmitError('');
 
-    /**
-     * [Defense-Log] 백엔드 요청값 검증(P2) 부재에 대응
-     * SMS 발송 전 이름과 전화번호 형식을 프론트엔드에서 먼저 검증합니다.
-     */
     const nameValidation = validateName(name);
     if (!nameValidation.isValid) {
       setSubmitError(nameValidation.message);
@@ -112,7 +118,23 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
       return;
     }
 
+    const birthDate = buildBirthDate(ssnFront, ssnBack);
+    const gender = buildGender(ssnBack);
+
+    if (!birthDate || !gender) {
+      setSubmitError('주민등록번호를 다시 확인해주세요.');
+      setIsSendingCode(false);
+      return;
+    }
+
     try {
+      await checkSignupIdentity({
+        name: name.trim(),
+        gender,
+        birthDate,
+        phoneNumber: phone.replace(/[^0-9]/g, ''),
+      });
+
       await sendSmsCode({ phoneNumber: phone.replace(/[^0-9]/g, '') });
 
       navigation.navigate('VerifyCode', {
@@ -124,14 +146,17 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         termsAgreed: agreedTerms,
       });
     } catch (error: any) {
-      // SMS 발송 실패도 다른 auth 화면과 같은 규칙으로 에러 메시지를 정리합니다.
       const message = extractApiErrorMessage(
         error,
-        '인증번호 발송에 실패했어요. 휴대폰 번호를 다시 확인해주세요.',
+        '인증번호 발송에 실패했어요. 휴대폰번호를 다시 확인해주세요.',
       );
 
       setSubmitError(message);
-      Alert.alert('인증번호 발송 실패', message);
+      if (error?.response?.status === 409) {
+        Alert.alert('가입 안내', message);
+      } else {
+        Alert.alert('인증번호 발송 실패', message);
+      }
     } finally {
       setIsSendingCode(false);
     }
@@ -160,7 +185,6 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
           isActive: telecom !== TELECOM_PLACEHOLDER && phone.length >= 10 && !isSendingCode,
           text: isSendingCode ? '인증번호 발송 중...' : '다음',
           onPress: () => {
-            // [UX-Refinement] 약관 모달이 뜰 때 구슬 진행바가 노치에 가려지는 것을 방지하기 위해 최상단으로 스크롤
             scrollViewRef.current?.scrollTo({ y: 0, animated: true });
             setTermsVisible(true);
           },
@@ -176,7 +200,10 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         ref={scrollViewRef}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: insets.top + CONSTANTS.scrollContentPaddingTop, paddingBottom: insets.bottom + CONSTANTS.scrollContentPaddingBottom },
+          {
+            paddingTop: insets.top + CONSTANTS.scrollContentPaddingTop,
+            paddingBottom: insets.bottom + CONSTANTS.scrollContentPaddingBottom,
+          },
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -262,7 +289,6 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
             {submitError.length > 0 && <Text style={styles.errorText}>{submitError}</Text>}
           </Animated.View>
         )}
-
       </ScrollView>
 
       <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, CONSTANTS.bottomMinPadding) }]}>
@@ -302,7 +328,6 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         flow={route.params?.flow}
         onClose={() => setTermsVisible(false)}
         onConfirm={(agreed) => {
-          // 필수 약관 동의가 끝난 시점의 값을 회원가입 플로우 전체에서 재사용한다.
           setTermsAgreed(agreed);
           setTermsVisible(false);
           handleSendCode(agreed);
@@ -311,5 +336,3 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
     </KeyboardAvoidingView>
   );
 }
-
-
