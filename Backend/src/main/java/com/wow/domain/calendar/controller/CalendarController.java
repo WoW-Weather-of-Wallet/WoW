@@ -1,11 +1,11 @@
 package com.wow.domain.calendar.controller;
 
-import com.wow.domain.calendar.dto.CalendarHeaderResponse;
-import com.wow.domain.calendar.dto.TransactionConfirmDto;
+import com.wow.domain.calendar.dto.*;
 import com.wow.domain.calendar.service.CalendarService;
 import com.wow.domain.security.CustomUserDetails;
 import com.wow.global.exception.BadRequestException;
 import com.wow.global.exception.InvalidTokenException;
+import com.wow.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -48,23 +49,34 @@ public class CalendarController {
     }
 
     @PostMapping("/transactions/csv")
-    public ResponseEntity<?> uploadTransactions(
+    public ResponseEntity<FlaskPreprocessDto> uploadTransactions(
             @RequestPart(value = "bank_file", required = false) MultipartFile bankFile,
             @RequestPart(value = "card_file", required = false) MultipartFile cardFile
-    ) {
+    ) throws Exception {
         return ResponseEntity.ok(calendarService.preprocessTransactions(bankFile, cardFile));
     }
 
+    // ② 미분류 항목 재분류 저장
     @PostMapping("/transactions/overrides")
     public ResponseEntity<?> saveOverrides(@RequestBody Map<String, Object> body) {
         List<Map<String, String>> rows = (List<Map<String, String>>) body.get("rows");
         calendarService.saveOverrides(rows);
-        return ResponseEntity.ok("overrides saved");
+        return ResponseEntity.ok("재분류 저장 완료");
     }
 
-    @PostMapping("/transactions/confirm")
-    public ResponseEntity<?> confirmTransactions(@RequestBody List<TransactionConfirmDto> items) {
-        calendarService.confirmTransactions(items);
-        return ResponseEntity.ok("transactions confirmed");
+    // ③ 최종 확정 후 DB 저장
+    @PostMapping("/transactions/csv/confirm")
+    public ResponseEntity<ApiResponse<TransactionConfirmResponse>> confirmTransactions(
+            @AuthenticationPrincipal CustomUserDetails userDetails,  // ← 토큰에서 자동 추출
+            @RequestBody TransactionConfirmRequest request) {
+
+        Long userId = userDetails.getId();  // ← 하드코딩 제거
+
+        TransactionConfirmResponse response =
+                calendarService.confirmTransactions(userId, request);
+
+        return ResponseEntity
+                .status(201)
+                .body(ApiResponse.success(201, "거래내역 저장 성공", response));
     }
 }

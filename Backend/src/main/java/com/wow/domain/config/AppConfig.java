@@ -10,6 +10,8 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class AppConfig {
 
+    // auth사용
+    // 캔린더 거래내역 불러오는 파트 사용
     // [fix] 수정 전: new RestTemplate() (타임아웃 없음) | 이유: 외부 HTTP 호출이 무한정 대기 → 스레드 고갈 가능
     @Bean
     public RestTemplate restTemplate() {
