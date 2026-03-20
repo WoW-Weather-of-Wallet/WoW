@@ -1,8 +1,11 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import axios from 'axios';
-import { BASE_URL, nativeApi } from './auth';
+import Constants from 'expo-constants';
+import { nativeApi } from './auth';
 import { useAuthStore } from '../store/authStore';
+
+// Android Expo Go 환경 여부 확인 (SDK 53/54 이후 알림 기능 미지원 대응)
+const IS_ANDROID_EXPO_GO = Platform.OS === 'android' && Constants.executionEnvironment === 'storeClient';
 
 // 알림이 도착했을 때의 기본 동작 설정
 Notifications.setNotificationHandler({
@@ -39,12 +42,20 @@ export const fcmService = {
         return null;
       }
 
-      // [테스트용] 엑스포 고(Expo Go) 환경에서 알림 도구 사용을 위한 토큰 출력
-      const expoToken = await Notifications.getExpoPushTokenAsync();
-      console.log('--- 테스트용 엑스포 토큰 시작 ---');
-      console.log(expoToken.data);
-      console.log('--- 테스트용 엑스포 토큰 끝 ---');
-
+      // [P1 Fix] Android Expo Go 환경에서는 네이티브 푸시 기능을 건너뜁니다.
+      if (IS_ANDROID_EXPO_GO) {
+        console.log('[FCM] Android Expo Go 환경: 네이티브 푸시 등록을 건너뜁니다.');
+        
+        // 테스트용 엑스포 토큰은 여전히 확인 가능할 수 있으므로 로깅만 수행
+        try {
+          const expoToken = await Notifications.getExpoPushTokenAsync();
+          console.log('--- 테스트용 엑스포 토큰 ---');
+          console.log(expoToken.data);
+        } catch (e) {
+          console.log('[FCM] Expo Push Token 획득 불가');
+        }
+        return null;
+      }
 
       // 2. 네이티브 FCM 토큰 가져오기
       const tokenData = await Notifications.getDevicePushTokenAsync();
@@ -68,38 +79,38 @@ export const fcmService = {
   async sendTokenToServer(token: string, method: 'POST' | 'DELETE') {
     try {
       const url = '/api/v1/fcm/token';
+      const accessToken = useAuthStore.getState().accessToken;
       
+      // [P1 Fix] 백엔드 규격에 맞게 deviceType 추가
+      const payload = {
+        fcmToken: token,
+        deviceType: Platform.OS.toUpperCase(), // 'ANDROID' 또는 'IOS'
+      };
+
+      const config = accessToken ? {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      } : {};
+
       if (method === 'POST') {
-        await nativeApi.post(url, { fcmToken: token });
+        await nativeApi.post(url, payload, config);
       } else {
-        await nativeApi.delete(url, { data: { fcmToken: token } });
+        await nativeApi.delete(url, { data: payload, ...config });
       }
 
-      console.log(`[FCM] 서버 토큰 ${method === 'POST' ? '등록' : '삭제'} 완료`);
+      console.log(`[FCM] 서버 토큰 ${method === 'POST' ? '등록' : '삭제'} 완료 (${payload.deviceType})`);
     } catch (error) {
       console.error(`[FCM] 서버 통신 실패 (${method}):`, error);
     }
   },
 
-  /**
-   * [테스트 전용] 즉시 로컬 알림을 발생시켜 캘린더 이동 로직을 확인합니다.
-   */
-  async testLocalNotification() {
-    console.log('[fcmService] Triggering local notification for testing...');
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "⚠️ 가계부 작성 알림 (테스트)",
-        body: "오늘의 내역을 추가하려면 클릭하세요!",
-        data: { action: 'add_record' }, 
-      },
-      trigger: null, // 즉시 발송
-    });
-  },
 
   /**
    * 로그아웃 시 토큰 삭제
    */
   async unregisterFcmToken() {
+    // Expo Go 환경이거나 토큰 획득 불가 시 건너뜀
+    if (IS_ANDROID_EXPO_GO) return;
+
     try {
       const tokenData = await Notifications.getDevicePushTokenAsync();
       await this.sendTokenToServer(tokenData.data, 'DELETE');
@@ -108,3 +119,4 @@ export const fcmService = {
     }
   }
 };
+

@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './SettingsScreen.styles';
 import { COLORS, fp, hp, wp } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
+import { fcmService } from '../../services/fcmService';
 import ProfileEditHeader from '../../components/mypage/ProfileEditHeader';
 import SettingSection from '../../components/mypage/SettingSection';
 import SettingItem from '../../components/mypage/SettingItem';
@@ -308,6 +309,14 @@ export default function SettingsScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
+            // [P1 Fix] 로그아웃 시 서버에 등록된 FCM 토큰을 먼저 제거합니다.
+            // 실패하더라도 로그아웃 처리는 계속 진행합니다.
+            try {
+              await fcmService.unregisterFcmToken();
+            } catch (fcmError) {
+              console.warn('[Settings] FCM 토큰 해제 실패:', fcmError);
+            }
+
             await logoutRequest();
           } catch (error) {
             const message = extractApiErrorMessage(
@@ -580,14 +589,14 @@ export default function SettingsScreen() {
                     onChangeText={setConfirmPw}
                     secureTextEntry={!isConfirmPwVisible}
                   />
-                  <TouchableOpacity 
-                    style={styles.inputEyeIcon} 
+                  <TouchableOpacity
+                    style={styles.inputEyeIcon}
                     onPress={() => setIsConfirmPwVisible(!isConfirmPwVisible)}
                   >
-                    <Ionicons 
-                      name={isConfirmPwVisible ? "eye-outline" : "eye-off-outline"} 
-                      size={wp(22)} 
-                      color={COLORS.textTertiary} 
+                    <Ionicons
+                      name={isConfirmPwVisible ? "eye-outline" : "eye-off-outline"}
+                      size={wp(22)}
+                      color={COLORS.textTertiary}
                     />
                   </TouchableOpacity>
                 </View>
