@@ -29,10 +29,12 @@ public class FcmController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "FCM 토큰 삭제", description = "로그아웃 시 기기의 FCM 토큰을 삭제합니다.")
+    @Operation(summary = "FCM 토큰 삭제", description = "로그아웃 시 해당 기기의 FCM 토큰을 삭제합니다.")
     @DeleteMapping("/token")
-    public ResponseEntity<Void> deleteToken(@AuthenticationPrincipal UserDetails userDetails) {
-        fcmService.deleteTokensByUserId(userDetails.getUsername());
+    public ResponseEntity<Void> deleteToken(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody FcmTokenRequest request) {
+        fcmService.deleteToken(userDetails.getUsername(), request.getToken());
         return ResponseEntity.noContent().build();
     }
 
