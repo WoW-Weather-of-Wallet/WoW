@@ -49,6 +49,25 @@ public class CalendarController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/monthly")
+    public ResponseEntity<ApiResponse<List<CalendarMonthlyResponse>>> getCalendarMonthly(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+        if (userDetails == null) {
+            throw new InvalidTokenException("인증 정보가 유효하지 않습니다.");
+        }
+
+        if (month < 1 || month > 12) {
+            throw new BadRequestException("month는 1~12 범위여야 합니다.");
+        }
+
+        Long userId = userDetails.getId();
+        List<CalendarMonthlyResponse> response = calendarService.getCalendarMonthly(userId, year, month);
+        return ResponseEntity.ok(ApiResponse.success(200, "캘린더 조회 성공", response));
+    }
+
     @PostMapping("/transactions/csv")
     public ResponseEntity<FlaskPreprocessDto> uploadTransactions(
             @RequestPart(value = "bank_file", required = false) MultipartFile bankFile,
