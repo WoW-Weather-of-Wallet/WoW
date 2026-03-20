@@ -36,7 +36,7 @@ public class CalendarController {
             description = "캘린더 헤더로 오늘 날씨, 설명, 절약금액을 조회합니다."
     )
     @GetMapping("/header")
-    public ResponseEntity<CalendarHeaderResponse> getCalendarHeader(
+    public ResponseEntity<ApiResponse<CalendarHeaderResponse>> getCalendarHeader(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam int year,
             @RequestParam int month
@@ -51,7 +51,7 @@ public class CalendarController {
 
         Long userId = userDetails.getId();
         CalendarHeaderResponse response = calendarService.getCalendarHeader(userId, year, month);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(200, "\uCEA8\uB9B0\uB354 \uD5E4\uB354 \uC870\uD68C \uC131\uACF5", response));
     }
 
     @Operation(
