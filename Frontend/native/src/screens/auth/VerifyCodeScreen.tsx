@@ -3,22 +3,20 @@ import { View, Text, Alert, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   FadeInDown,
-  useSharedValue,
   useAnimatedStyle,
+  useSharedValue,
 } from 'react-native-reanimated';
 import SecureKeypad from '../../components/common/SecureKeypad';
 import StepIndicator from '../../components/common/StepIndicator';
 import { styles } from './VerifyCodeScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
-import { findUserId, registerSsafy, verifySmsCode } from '../../services/auth';
-import { useAuthStore } from '../../store/authStore';
+import { findUserId, verifySmsCode } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 
 const MAX_CODE_LENGTH = 6;
 
 export default function VerifyCodeScreen({ route, navigation }: any) {
   const insets = useSafeAreaInsets();
-  const loginToStore = useAuthStore((state) => state.login);
   const [code, setCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyError, setVerifyError] = useState('');
@@ -130,48 +128,6 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
     });
   };
 
-  const handleSsafySignup = async () => {
-    const birthDate = getBirthDateFromIdentity();
-    const gender = getGenderFromIdentity();
-
-    if (!birthDate || !gender || !route.params?.pendingToken) {
-      throw new Error('SSAFY 가입 정보가 올바르지 않습니다. 다시 시도해주세요.');
-    }
-
-    const response = await registerSsafy({
-      pendingToken: route.params.pendingToken,
-      gender,
-      birthDate,
-      phoneNumber: route.params.phone,
-      termsAgreed: route.params.termsAgreed === true,
-      alarmEnabled: true,
-    });
-
-    loginToStore({
-      accessToken: response.accessToken,
-      user: response.user,
-    });
-
-    navigation.reset({
-      index: 0,
-      routes: [
-        {
-          name: 'Welcome',
-          params: {
-            signupMode: 'ssafy',
-            ssafyOauthId: response.user.userId,
-            name: response.user.name ?? route.params.name,
-            birthDate,
-            gender,
-            phoneNumber: route.params.phone,
-            termsAgreed: route.params.termsAgreed === true,
-            alarmEnabled: true,
-          },
-        },
-      ],
-    });
-  };
-
   const verifyCodeSubmit = async (finalCode: string) => {
     setIsVerifying(true);
     setVerifyError('');
@@ -193,7 +149,24 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
       }
 
       if (isSsafySignup) {
-        await handleSsafySignup();
+        const birthDate = getBirthDateFromIdentity();
+        const gender = getGenderFromIdentity();
+
+        if (!birthDate || !gender || !route.params?.pendingToken) {
+          throw new Error('SSAFY 가입 정보가 올바르지 않습니다. 다시 시도해주세요.');
+        }
+
+        navigation.replace('Welcome', {
+          signupMode: 'ssafy',
+          pendingToken: route.params.pendingToken,
+          ssafyOauthId: route.params.ssafyOauthId,
+          name: route.params.name,
+          birthDate,
+          gender,
+          phoneNumber: route.params.phone,
+          termsAgreed: route.params.termsAgreed === true,
+          alarmEnabled: true,
+        });
         return;
       }
 
