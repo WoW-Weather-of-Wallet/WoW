@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -19,12 +19,31 @@ import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import StepIndicator from '../../components/common/StepIndicator';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
-import { checkSignupIdentity, checkSsafySignup, sendSmsCode } from '../../services/auth';
+import {
+  checkSignupIdentity,
+  checkSsafySignup,
+  sendSmsCode,
+} from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 import { validateName, validatePhone } from '../../utils/validation';
 
-const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 알뜰폰'];
-const TELECOM_PLACEHOLDER = '통신사를 선택해주세요';
+const TELECOMS = [
+  'SKT',
+  'KT',
+  'LG U+',
+  'SKT \uC54C\uB730\uD3F0',
+  'KT \uC54C\uB730\uD3F0',
+  'LG U+ \uC54C\uB730\uD3F0',
+];
+
+const TELECOM_PLACEHOLDER =
+  '\uD1B5\uC2E0\uC0AC\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694';
+const INVALID_IDENTITY_MESSAGE =
+  '\uC8FC\uBBFC\uB4F1\uB85D\uBC88\uD638\uB97C \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.';
+const SSAFY_TOKEN_EXPIRED_MESSAGE =
+  'SSAFY \uC778\uC99D \uC815\uBCF4\uAC00 \uB9CC\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574 \uC8FC\uC138\uC694.';
+const SEND_CODE_FALLBACK =
+  '\uC778\uC99D\uBC88\uD638 \uC804\uC1A1\uC5D0 \uC2E4\uD328\uD588\uC5B4\uC694. \uC785\uB825\uD55C \uC815\uBCF4\uB97C \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.';
 
 const buildBirthDate = (front: string, back: string) => {
   if (front.length !== 6 || back.length !== 1) {
@@ -43,12 +62,22 @@ const buildGender = (back: string) => {
   return parseInt(back, 10) % 2 !== 0 ? 'M' : 'F';
 };
 
+const decodeUnicodeEscapes = (value: string) =>
+  value.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex: string) =>
+    String.fromCharCode(parseInt(hex, 16)),
+  );
+
 export default function PhoneAuthScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
-  const isSsafySignup = route.params?.signupMode === 'ssafy';
+  const signupMode = route.params?.signupMode === 'ssafy' ? 'ssafy' : 'normal';
+  const isSsafySignup = signupMode === 'ssafy';
+  const initialSsafyName =
+    typeof route.params?.name === 'string'
+      ? decodeUnicodeEscapes(route.params.name).trim()
+      : '';
 
-  const [step, setStep] = useState(isSsafySignup ? 2 : 1);
-  const [name, setName] = useState(route.params?.name ?? '');
+  const [step, setStep] = useState(isSsafySignup && initialSsafyName.length >= 2 ? 2 : 1);
+  const [name, setName] = useState(initialSsafyName);
   const [ssnFront, setSsnFront] = useState('');
   const [ssnBack, setSsnBack] = useState('');
   const [telecom, setTelecom] = useState(TELECOM_PLACEHOLDER);
@@ -64,21 +93,9 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
   const phoneRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  useEffect(() => {
-    if (!isSsafySignup) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      ssnFrontRef.current?.focus();
-    }, 150);
-
-    return () => clearTimeout(timer);
-  }, [isSsafySignup]);
-
   const handleNameSubmit = () => {
     if (name.trim().length >= 2) {
-      setStep((prev: number) => Math.max(prev, 2));
+      setStep((prev) => Math.max(prev, 2));
       setTimeout(() => ssnFrontRef.current?.focus(), 150);
     }
   };
@@ -97,7 +114,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
     setSsnBack(numeric);
 
     if (numeric.length === 1) {
-      setStep((prev: number) => Math.max(prev, 3));
+      setStep((prev) => Math.max(prev, 3));
       ssnBackRef.current?.blur();
       setTimeout(() => setModalVisible(true), 300);
     }
@@ -117,13 +134,11 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
     setIsSendingCode(true);
     setSubmitError('');
 
-    if (!isSsafySignup) {
-      const nameValidation = validateName(name);
-      if (!nameValidation.isValid) {
-        setSubmitError(nameValidation.message);
-        setIsSendingCode(false);
-        return;
-      }
+    const nameValidation = validateName(name);
+    if (!nameValidation.isValid) {
+      setSubmitError(nameValidation.message);
+      setIsSendingCode(false);
+      return;
     }
 
     const phoneValidation = validatePhone(phone);
@@ -137,54 +152,55 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
     const gender = buildGender(ssnBack);
 
     if (!birthDate || !gender) {
-      setSubmitError('생년월일과 성별 정보를 다시 확인해주세요.');
+      setSubmitError(INVALID_IDENTITY_MESSAGE);
       setIsSendingCode(false);
       return;
     }
 
-    const normalizedPhone = phone.replace(/[^0-9]/g, '');
+    const normalizedPhoneNumber = phone.replace(/[^0-9]/g, '');
 
     try {
       if (isSsafySignup) {
         if (!route.params?.pendingToken) {
-          throw new Error('SSAFY 가입 정보가 없습니다. 다시 SSAFY 로그인을 진행해주세요.');
+          throw new Error(SSAFY_TOKEN_EXPIRED_MESSAGE);
         }
 
         await checkSsafySignup({
           pendingToken: route.params.pendingToken,
           gender,
           birthDate,
-          phoneNumber: normalizedPhone,
+          phoneNumber: normalizedPhoneNumber,
         });
       } else {
         await checkSignupIdentity({
           name: name.trim(),
           gender,
           birthDate,
-          phoneNumber: normalizedPhone,
+          phoneNumber: normalizedPhoneNumber,
         });
       }
 
-      await sendSmsCode({ phoneNumber: normalizedPhone });
+      await sendSmsCode({ phoneNumber: normalizedPhoneNumber });
 
       navigation.navigate('VerifyCode', {
         ...route.params,
-        signupMode: isSsafySignup ? 'ssafy' : route.params?.signupMode,
-        name: isSsafySignup ? route.params?.name ?? '' : name.trim(),
+        signupMode,
+        name: name.trim(),
         ssnFront,
         ssnBack,
         telecom,
-        phone: normalizedPhone,
+        phone: normalizedPhoneNumber,
         termsAgreed: agreedTerms,
       });
     } catch (error: any) {
-      const message = extractApiErrorMessage(
-        error,
-        '인증번호 전송에 실패했습니다. 잠시 후 다시 시도해주세요.',
-      );
-
+      const message = extractApiErrorMessage(error, SEND_CODE_FALLBACK);
       setSubmitError(message);
-      Alert.alert(error?.response?.status === 409 ? '가입 불가' : '인증번호 전송 실패', message);
+      Alert.alert(
+        isSsafySignup
+          ? 'SSAFY \uD68C\uC6D0\uAC00\uC785 \uC548\uB0B4'
+          : '\uC778\uC99D\uBC88\uD638 \uC804\uC1A1 \uC2E4\uD328',
+        message,
+      );
     } finally {
       setIsSendingCode(false);
     }
@@ -195,23 +211,28 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
       case 1:
         return {
           isActive: name.trim().length >= 2,
-          text: '다음',
+          text: '\uB2E4\uC74C',
           onPress: handleNameSubmit,
         };
       case 2:
         return {
           isActive: ssnFront.length === 6 && ssnBack.length === 1,
-          text: '다음',
+          text: '\uB2E4\uC74C',
           onPress: () => {
-            setStep((prev: number) => Math.max(prev, 3));
+            setStep((prev) => Math.max(prev, 3));
             ssnBackRef.current?.blur();
             setTimeout(() => setModalVisible(true), 300);
           },
         };
       default:
         return {
-          isActive: telecom !== TELECOM_PLACEHOLDER && phone.length >= 10 && !isSendingCode,
-          text: isSendingCode ? '인증번호 전송 중...' : '다음',
+          isActive:
+            telecom !== TELECOM_PLACEHOLDER &&
+            phone.length >= 10 &&
+            !isSendingCode,
+          text: isSendingCode
+            ? '\uC778\uC99D\uBC88\uD638 \uC804\uC1A1 \uC911...'
+            : '\uB2E4\uC74C',
           onPress: () => {
             scrollViewRef.current?.scrollTo({ y: 0, animated: true });
             setTermsVisible(true);
@@ -242,39 +263,53 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         <StepIndicator currentStep={1} totalSteps={5} />
 
         <Text style={styles.title}>
-          {isSsafySignup
-            ? 'SSAFY 가입을 위해\n본인인증을 진행해주세요.'
-            : '본인 확인을 위해\n인증을 진행해주세요.'}
+          {'\uBCF8\uC778 \uD655\uC778\uC744 \uC704\uD574'}{'\n'}
+          {'\uC778\uC99D\uC774 \uD544\uC694\uD574\uC694.'}
         </Text>
 
-        {!isSsafySignup && (
-          <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
-            <View style={styles.underlineContainer}>
-              <TextInput
-                style={[styles.bareInput, { letterSpacing: name.length > 0 ? 2 : 0 }]}
-                value={name}
-                onChangeText={(value) => {
-                  setName(value);
-                  setSubmitError('');
-                }}
-                placeholder="이름"
-                placeholderTextColor={COLORS.textTertiary}
-                onSubmitEditing={handleNameSubmit}
-                returnKeyType="next"
-                autoFocus
-              />
-            </View>
-          </Animated.View>
-        )}
+        <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
+          <View style={styles.underlineContainer}>
+            <TextInput
+              style={[styles.bareInput, { letterSpacing: name.length > 0 ? 2 : 0 }]}
+              value={name}
+              onChangeText={(value) => {
+                if (isSsafySignup) {
+                  return;
+                }
+                setName(value);
+                setSubmitError('');
+              }}
+              placeholder="\uC774\uB984"
+              placeholderTextColor={COLORS.textTertiary}
+              onSubmitEditing={handleNameSubmit}
+              returnKeyType="next"
+              autoFocus={!isSsafySignup}
+              editable={!isSsafySignup}
+            />
+          </View>
+          {isSsafySignup && (
+            <Text style={{ color: COLORS.textTertiary, marginTop: hp(12) }}>
+              {'SSAFY \uACC4\uC815\uC758 \uC774\uB984\uC740 \uC218\uC815\uD560 \uC218 \uC5C6\uC5B4\uC694.'}
+            </Text>
+          )}
+        </Animated.View>
 
         {step >= 2 && (
           <Animated.View entering={FadeInDown.duration(500)} style={styles.ssnSection}>
-            <View style={[styles.underlineContainer, { flex: 1.1, justifyContent: 'center' }]}>
+            <View
+              style={[
+                styles.underlineContainer,
+                { flex: 1.1, justifyContent: 'center' },
+              ]}
+            >
               <TextInput
                 ref={ssnFrontRef}
                 style={[
                   styles.bareInput,
-                  { textAlign: 'center', letterSpacing: ssnFront.length > 0 ? 4 : 0 },
+                  {
+                    textAlign: 'center',
+                    letterSpacing: ssnFront.length > 0 ? 4 : 0,
+                  },
                 ]}
                 value={ssnFront}
                 onChangeText={handleSsnFrontChange}
@@ -290,7 +325,11 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
                 ref={ssnBackRef}
                 style={[
                   styles.bareInput,
-                  { width: CONSTANTS.ssnBackInputWidth, textAlign: 'center', letterSpacing: 4 },
+                  {
+                    width: CONSTANTS.ssnBackInputWidth,
+                    textAlign: 'center',
+                    letterSpacing: 4,
+                  },
                 ]}
                 value={ssnBack}
                 onChangeText={handleSsnBackChange}
@@ -332,7 +371,9 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
                   setPhone(text.replace(/[^0-9]/g, ''));
                   setSubmitError('');
                 }}
-                placeholder="휴대폰번호 (- 없이 입력)"
+                placeholder={
+                  '\uD734\uB300\uD3F0 \uBC88\uD638 (- \uC5C6\uC774 \uC785\uB825)'
+                }
                 placeholderTextColor={COLORS.textTertiary}
                 keyboardType="number-pad"
                 maxLength={11}
@@ -358,7 +399,12 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
           {isSendingCode ? (
             <ActivityIndicator color={COLORS.textInverse} />
           ) : (
-            <Text style={[styles.confirmButtonText, btnState.isActive && styles.activeButtonText]}>
+            <Text
+              style={[
+                styles.confirmButtonText,
+                btnState.isActive && styles.activeButtonText,
+              ]}
+            >
               {btnState.text}
             </Text>
           )}
@@ -366,10 +412,15 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
       </View>
 
       <Modal visible={modalVisible} transparent animationType="slide">
-        <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setModalVisible(false)}
+        >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>통신사를 선택해주세요</Text>
+              <Text style={styles.modalTitle}>
+                {'\uD1B5\uC2E0\uC0AC\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694'}
+              </Text>
             </View>
             {TELECOMS.map((item) => (
               <TouchableOpacity

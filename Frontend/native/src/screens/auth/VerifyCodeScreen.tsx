@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, Alert, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, {
-  FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated';
+import Animated, { FadeInDown, useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import SecureKeypad from '../../components/common/SecureKeypad';
 import StepIndicator from '../../components/common/StepIndicator';
 import { styles } from './VerifyCodeScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
-import { findUserId, verifySmsCode } from '../../services/auth';
+import { verifySmsCode, findUserId } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 
 const MAX_CODE_LENGTH = 6;
@@ -21,7 +22,7 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyError, setVerifyError] = useState('');
   const shakeTranslateX = useSharedValue(0);
-  const isSsafySignup = route.params?.signupMode === 'ssafy';
+  const signupMode = route.params?.signupMode === 'ssafy' ? 'ssafy' : 'normal';
 
   const getBirthDateFromIdentity = () => {
     const ssnFront = route.params?.ssnFront ?? '';
@@ -76,7 +77,7 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
     const gender = getGenderFromIdentity();
 
     if (!birthDate || !gender) {
-      throw new Error('생년월일 정보가 올바르지 않습니다.');
+      throw new Error('생년월일 정보를 다시 확인해 주세요.');
     }
 
     try {
@@ -95,7 +96,7 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
     } catch (error: any) {
       const message = extractApiErrorMessage(
         error,
-        '일치하는 계정을 찾을 수 없습니다.',
+        '입력한 정보와 일치하는 계정을 찾지 못했어요.',
       );
 
       if (error?.response?.status === 401) {
@@ -148,23 +149,15 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
         return;
       }
 
-      if (isSsafySignup) {
-        const birthDate = getBirthDateFromIdentity();
-        const gender = getGenderFromIdentity();
-
-        if (!birthDate || !gender || !route.params?.pendingToken) {
-          throw new Error('SSAFY 가입 정보가 올바르지 않습니다. 다시 시도해주세요.');
-        }
-
+      if (signupMode === 'ssafy') {
         navigation.replace('Welcome', {
           signupMode: 'ssafy',
           pendingToken: route.params.pendingToken,
-          ssafyOauthId: route.params.ssafyOauthId,
           name: route.params.name,
-          birthDate,
-          gender,
+          birthDate: getBirthDateFromIdentity() ?? undefined,
+          gender: getGenderFromIdentity() ?? undefined,
           phoneNumber: route.params.phone,
-          termsAgreed: route.params.termsAgreed === true,
+          termsAgreed: route.params.termsAgreed,
           alarmEnabled: true,
         });
         return;
@@ -174,19 +167,19 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
     } catch (error: any) {
       let message = extractApiErrorMessage(
         error,
-        '인증번호 확인에 실패했습니다. 다시 시도해주세요.',
+        '인증번호 확인에 실패했어요. 다시 시도해 주세요.',
       );
 
       if (
         (route.params.flow === 'FindId' || route.params.flow === 'FindPw') &&
         error?.response?.status === 401
       ) {
-        message = '일치하는 계정을 찾을 수 없습니다.';
+        message = '입력한 정보와 일치하는 계정을 찾지 못했어요.';
       }
 
       setVerifyError(message);
       setCode('');
-      Alert.alert('인증 실패', message);
+      Alert.alert('인증 오류', message);
     } finally {
       setIsVerifying(false);
     }
@@ -213,12 +206,9 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
         {route.params.flow !== 'FindId' && route.params.flow !== 'FindPw' && (
           <StepIndicator currentStep={2} totalSteps={5} />
         )}
-
         <Animated.View entering={FadeInDown.delay(100).duration(500)}>
-          <Text style={styles.title}>인증번호 6자리를 입력해주세요.</Text>
-          <Text style={styles.subtitle}>
-            휴대폰으로 전송된 인증번호를 입력하면 다음 단계로 이동합니다.
-          </Text>
+          <Text style={styles.title}>인증번호 6자리를 입력해 주세요.</Text>
+          <Text style={styles.subtitle}>문자로 받은 인증번호를 입력하면 다음 단계로 이동해요.</Text>
         </Animated.View>
 
         <Animated.View
@@ -231,7 +221,7 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
         {isVerifying && (
           <View style={styles.loadingRow}>
             <ActivityIndicator color={COLORS.primary} />
-            <Text style={styles.loadingText}>인증번호를 확인하고 있습니다.</Text>
+            <Text style={styles.loadingText}>인증번호를 확인하고 있어요.</Text>
           </View>
         )}
 
