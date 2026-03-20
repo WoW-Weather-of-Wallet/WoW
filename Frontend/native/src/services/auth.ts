@@ -77,28 +77,31 @@ export interface NativeChangePasswordRequest {
   newPw: string;
 }
 
+export interface NativeSsafyCodeLoginResult {
+  type: 'login';
+  code: string;
+}
+
+export interface NativeSsafyDirectLoginResult {
+  type: 'login';
+  accessToken: string;
+  user?: {
+    userId: string;
+    name?: string;
+    role?: string;
+  };
+}
+
+export interface NativeSsafySignupCallbackResult {
+  type: 'signup';
+  pendingToken: string;
+  name?: string;
+}
+
 export type NativeSsafyCallbackResult =
-  | {
-      type: 'login';
-      code: string;
-      accessToken?: never;
-      user?: never;
-    }
-  | {
-      type: 'login';
-      accessToken: string;
-      user?: {
-        userId: string;
-        name?: string;
-        role?: string;
-      };
-      code?: never;
-    }
-  | {
-      type: 'signup';
-      pendingToken: string;
-      name?: string;
-    };
+  | NativeSsafyCodeLoginResult
+  | NativeSsafyDirectLoginResult
+  | NativeSsafySignupCallbackResult;
 
 export interface SmsSendRequest {
   phoneNumber: string;

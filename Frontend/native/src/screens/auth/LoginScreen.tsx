@@ -32,6 +32,8 @@ import {
   exchangeSsafyToken,
   getSsafyLoginUrl,
   login,
+  type NativeSsafyCodeLoginResult,
+  type NativeSsafyDirectLoginResult,
   parseSsafyCallbackUrl,
 } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
@@ -70,17 +72,7 @@ export default function LoginScreen({ navigation }: any) {
 
   useEffect(() => {
     const completeSsafyLogin = async (
-      parsed:
-        | { type: 'login'; code: string }
-        | {
-            type: 'login';
-            accessToken: string;
-            user?: {
-              userId: string;
-              name?: string;
-              role?: string;
-            };
-          },
+      parsed: NativeSsafyCodeLoginResult | NativeSsafyDirectLoginResult,
     ) => {
       if ('accessToken' in parsed) {
         loginToStore({
