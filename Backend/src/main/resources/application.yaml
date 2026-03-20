@@ -5,10 +5,10 @@ spring:
   profiles:
     default: local
 
-#  datasource:
-#    url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
-#    username: ${POSTGRES_USER}
-#    password: ${POSTGRES_PASSWORD}
+  datasource:
+    url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
 
 jwt:
   access-exp-min: 30
@@ -26,9 +26,5 @@ solapi:
   api-secret: ${SOLAPI_API_SECRET}
   sender: ${SOLAPI_SENDER}
 
-<<<<<<< HEAD
-#    // 캔린더 거래내역 불러오는 파트 사용
-=======
->>>>>>> back
 flask:
   url: http://127.0.0.1:5000

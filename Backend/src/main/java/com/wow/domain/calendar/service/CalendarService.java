@@ -214,6 +214,46 @@ public class CalendarService {
         return new TransactionConfirmResponse(entities.size(), representativeDate);
     }
 
+    // ── ④ 거래내역 직접 입력 (다건) ──
+    @Transactional
+    public TransactionCustomResponse createCustomTransaction(
+            Long userId, TransactionCustomRequest request) {
+
+        List<TransactionCustomRequest.TransactionCustomItem> items = request.getItems();
+
+        if (items == null || items.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_STAGE_ID);
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        List<Transaction> entities = items.stream()
+                .map(item -> {
+                    ExpenseCategory category = expenseCategoryRepository
+                            .findById(item.getCategoryId())
+                            .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_STAGE_ID));
+
+                    return Transaction.builder()
+                            .user(user)
+                            .category(category)
+                            .amount(BigDecimal.valueOf(item.getAmount()))
+                            .merchantName(item.getMerchantName())
+                            .transactionAt(item.getTransactionDate().atStartOfDay())
+                            .createdAt(LocalDateTime.now())
+                            .build();
+                })
+                .toList();
+
+        transactionRepository.saveAll(entities);
+
+        List<TransactionCustomResponse.TransactionCustomItem> responseItems = entities.stream()
+                .map(TransactionCustomResponse.TransactionCustomItem::from)
+                .toList();
+
+        return new TransactionCustomResponse(entities.size(), responseItems);
+    }
+
     // ── xls/xlsx → csv 변환 ──
     private String convertXlsToCsv(MultipartFile file) throws Exception {
         StringBuilder csv = new StringBuilder();
