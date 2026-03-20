@@ -3,6 +3,7 @@ package com.wow.domain.fcm.service;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
+import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.Notification;
 import com.wow.domain.fcm.entity.FcmToken;
 import com.wow.domain.fcm.repository.FcmTokenRepository;
@@ -42,6 +43,7 @@ public class FcmService {
     }
 
     public void sendToUser(String userId, String title, String body) {
+
         if (firebaseMessaging == null) {
             log.info("Firebase 미설정 - FCM 전송 건너뜀. userId={}", userId);
             return;
@@ -72,7 +74,11 @@ public class FcmService {
             String response = firebaseMessaging.send(message);
             log.info("FCM 전송 성공: {}", response);
         } catch (FirebaseMessagingException e) {
-            log.info("FCM 전송 실패: token={}, error={}", token, e.getMessage());
+            log.info("FCM 전송 실패: token={}..., error={}", token.substring(0, 10), e.getMessage());
+            if (e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
+                fcmTokenRepository.deleteByToken(token);
+                log.info("만료된 FCM 토큰 삭제: token={}...", token.substring(0, 10));
+            }
         }
 
     }
