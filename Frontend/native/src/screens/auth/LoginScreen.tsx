@@ -44,7 +44,7 @@ export default function LoginScreen({ navigation }: any) {
   const [autoLogin, setAutoLogin] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState('');
-  const handledUrlRef = useRef<string | null>(null);
+  const handledSsafyUrlRef = useRef<string | null>(null);
 
   const headerOpacity = useSharedValue(0);
   const headerTranslateY = useSharedValue(-20);
@@ -62,7 +62,7 @@ export default function LoginScreen({ navigation }: any) {
 
   useEffect(() => {
     const handleSsafyCallback = async (url: string | null) => {
-      if (!url || handledUrlRef.current === url) {
+      if (!url || handledSsafyUrlRef.current === url) {
         return;
       }
 
@@ -71,52 +71,36 @@ export default function LoginScreen({ navigation }: any) {
         return;
       }
 
-      handledUrlRef.current = url;
-      setIsSubmitting(true);
-      setLoginError('');
+      handledSsafyUrlRef.current = url;
+
+      if (parsed.type === 'signup') {
+        navigation.replace('PhoneAuth', {
+          signupMode: 'ssafy',
+          pendingToken: parsed.pendingToken,
+          name: parsed.name,
+        });
+        return;
+      }
 
       try {
-        if (parsed.pendingToken) {
-          navigation.replace('PhoneAuth', {
-            signupMode: 'ssafy',
-            pendingToken: parsed.pendingToken,
-            name: parsed.user?.name,
-          });
-          return;
-        }
+        setIsSubmitting(true);
+        setLoginError('');
 
-        if (parsed.code) {
-          const response = await exchangeSsafyToken(parsed.code);
-
-          loginToStore({
-            accessToken: response.accessToken,
-            user: response.user,
-            autoLogin,
-          });
-
-          navigation.replace('MainTabs');
-          return;
-        }
-
-        if (parsed.accessToken && parsed.user) {
-          loginToStore({
-            accessToken: parsed.accessToken,
-            user: parsed.user,
-            autoLogin,
-          });
-
-          navigation.replace('MainTabs');
-        }
+        const response = await exchangeSsafyToken(parsed.code);
+        loginToStore({
+          accessToken: response.accessToken,
+          user: response.user,
+          autoLogin,
+        });
+        navigation.replace('MainTabs');
       } catch (error: any) {
-        handledUrlRef.current = null;
-
+        handledSsafyUrlRef.current = null;
         const message = extractApiErrorMessage(
           error,
-          'SSAFY 로그인 처리에 실패했습니다. 다시 시도해주세요.',
+          'SSAFY 로그인 처리 중 문제가 발생했습니다. 다시 시도해 주세요.',
         );
-
         setLoginError(message);
-        Alert.alert('SSAFY 로그인 실패', message);
+        Alert.alert('SSAFY 로그인 오류', message);
       } finally {
         setIsSubmitting(false);
       }
@@ -130,9 +114,7 @@ export default function LoginScreen({ navigation }: any) {
       void handleSsafyCallback(url);
     });
 
-    return () => {
-      subscription.remove();
-    };
+    return () => subscription.remove();
   }, [autoLogin, loginToStore, navigation]);
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
@@ -141,17 +123,7 @@ export default function LoginScreen({ navigation }: any) {
   }));
 
   const handleLogin = async () => {
-    if (isSubmitting) {
-      return;
-    }
-
-    if (!userId.trim()) {
-      setLoginError('아이디를 입력해주세요.');
-      return;
-    }
-
-    if (!password.trim()) {
-      setLoginError('비밀번호를 입력해주세요.');
+    if (!userId.trim() || !password.trim() || isSubmitting) {
       return;
     }
 
@@ -174,9 +146,8 @@ export default function LoginScreen({ navigation }: any) {
     } catch (error: any) {
       const message = extractApiErrorMessage(
         error,
-        '로그인에 실패했습니다. 아이디와 비밀번호를 다시 확인해주세요.',
+        '로그인에 실패했어요. 아이디와 비밀번호를 다시 확인해 주세요.',
       );
-
       setLoginError(message);
       Alert.alert('로그인 실패', message);
     } finally {
@@ -203,11 +174,10 @@ export default function LoginScreen({ navigation }: any) {
     } catch (error: any) {
       const message = extractApiErrorMessage(
         error,
-        'SSAFY 로그인 페이지를 열지 못했습니다. 다시 시도해주세요.',
+        'SSAFY 로그인 페이지를 여는 중 문제가 발생했습니다.',
       );
-
       setLoginError(message);
-      Alert.alert('SSAFY 로그인 실패', message);
+      Alert.alert('SSAFY 로그인 오류', message);
     }
   };
 
@@ -232,7 +202,7 @@ export default function LoginScreen({ navigation }: any) {
             <View style={styles.devEntryCard}>
               <Text style={styles.devEntryTitle}>개발용 빠른 진입</Text>
               <Text style={styles.devEntryDescription}>
-                백엔드 연결 없이 화면 흐름만 확인할 때 사용하는 임시 진입 버튼입니다.
+                백엔드 로그인과 별개로 메인 화면 UI를 빠르게 확인할 때 사용합니다.
               </Text>
               <GradientButton
                 title="TEST: 메인 화면 바로가기"
