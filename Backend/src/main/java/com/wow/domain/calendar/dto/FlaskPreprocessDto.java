@@ -12,6 +12,7 @@ public class FlaskPreprocessDto {
 
     private String message;
     private List<RecordDto> records;
+    private List<ItemDto> items;
 
     @JsonProperty("excluded_rows")
     private List<ExcludedDto> excludedRows;
@@ -46,5 +47,28 @@ public class FlaskPreprocessDto {
         private String classificationReason;
         private int amount;
         private int cnt;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class ItemDto {
+        @JsonProperty("transaction_date")
+        private String transactionDate;
+
+        @JsonProperty("merchant_name")
+        private String merchantName;
+
+        @JsonProperty("transaction_detail")
+        private String transactionDetail;
+
+        private int amount;
+
+        @JsonProperty("card_tpbuz_nm_2")
+        private String category;
+
+        @JsonProperty("classification_reason")
+        private String classificationReason;
+
+        private String status;
     }
 }

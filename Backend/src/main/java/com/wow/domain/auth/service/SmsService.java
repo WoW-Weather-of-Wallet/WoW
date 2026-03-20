@@ -46,8 +46,7 @@ public class SmsService {
 
     public void sendCode(String phoneNumber) {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
-        // TEMP: 비밀번호 찾기 로컬 테스트를 위해 SMS 발송 쿨타임/시간당 제한을 잠시 비활성화한다.
-        // validateSendRateLimit(normalized);
+        validateSendRateLimit(normalized);
 
         String code = generateCode();
         redisTemplate.opsForValue().set(
@@ -74,7 +73,7 @@ public class SmsService {
         String savedCode = redisTemplate.opsForValue().get(RedisKeys.SMS_CODE_PREFIX + normalized);
 
         if (savedCode == null) {
-            throw new BadRequestException("인증번호가 만료되었거나 존재하지 않습니다.");
+            throw new BadRequestException("인증번호가 없거나 만료되었습니다.");
         }
 
         if (!MessageDigest.isEqual(
@@ -107,11 +106,11 @@ public class SmsService {
         Long result = executeSendRateLimitScript(countKey, cooldownKey);
 
         if (result == null) {
-            log.error("SMS 전송 제한 Lua 스크립트 결과가 null입니다.");
-            throw new InternalServerException("SMS 전송 제한 처리 중 오류가 발생했습니다.");
+            log.error("SMS rate limit Lua script returned null.");
+            throw new InternalServerException("SMS 발송 중 문제가 발생했습니다.");
         }
         if (result == RATE_LIMIT_RESULT_COOLDOWN_EXISTS) {
-            throw new RateLimitException("인증번호는 1분 후에 다시 요청할 수 있습니다.");
+            throw new RateLimitException("인증번호는 1분 뒤에 다시 요청할 수 있습니다.");
         }
         if (result == RATE_LIMIT_RESULT_LIMIT_EXCEEDED) {
             throw new RateLimitException("인증번호 요청 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.");
