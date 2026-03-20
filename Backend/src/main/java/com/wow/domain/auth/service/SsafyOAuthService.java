@@ -63,6 +63,9 @@ public class SsafyOAuthService {
     @Value("${sso.ssafy.redirect-uri}")
     private String redirectUri;
 
+    @Value("${app.ssafy-app-base-uri:wow://auth/ssafy}")
+    private String ssafyAppBaseUri;
+
     private final RestTemplate restTemplate;
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
@@ -103,7 +106,7 @@ public class SsafyOAuthService {
                     userInfo.getUserId(),
                     Duration.ofSeconds(AUTH_CODE_TTL_SECONDS)
             );
-            return UriComponentsBuilder.fromUriString("wow://auth/ssafy/callback")
+            return UriComponentsBuilder.fromUriString(buildAppRedirectUri("/callback"))
                     .queryParam("code", authCode)
                     .build()
                     .encode()
@@ -119,7 +122,7 @@ public class SsafyOAuthService {
                 Duration.ofMinutes(PENDING_TTL_MINUTES)
         );
 
-        return UriComponentsBuilder.fromUriString("wow://auth/ssafy/register")
+        return UriComponentsBuilder.fromUriString(buildAppRedirectUri("/register"))
                 .queryParam("pendingToken", pendingToken)
                 .build()
                 .encode()
@@ -317,5 +320,12 @@ public class SsafyOAuthService {
                 refreshToken,
                 UserSummaryResponse.from(user)
         );
+    }
+
+    private String buildAppRedirectUri(String suffix) {
+        String normalizedBase = ssafyAppBaseUri.endsWith("/")
+                ? ssafyAppBaseUri.substring(0, ssafyAppBaseUri.length() - 1)
+                : ssafyAppBaseUri;
+        return normalizedBase + suffix;
     }
 }
