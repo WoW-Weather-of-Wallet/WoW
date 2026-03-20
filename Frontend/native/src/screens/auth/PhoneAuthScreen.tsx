@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -19,12 +19,31 @@ import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import StepIndicator from '../../components/common/StepIndicator';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
-import { checkSignupIdentity, sendSmsCode } from '../../services/auth';
+import {
+  checkSignupIdentity,
+  checkSsafySignup,
+  sendSmsCode,
+} from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 import { validateName, validatePhone } from '../../utils/validation';
 
-const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT \uC54C\uB730\uD3F0', 'KT \uC54C\uB730\uD3F0', 'LG U+ \uC54C\uB730\uD3F0'];
-const TELECOM_PLACEHOLDER = '\uD1B5\uC2E0\uC0AC\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694';
+const TELECOMS = [
+  'SKT',
+  'KT',
+  'LG U+',
+  'SKT \uC54C\uB730\uD3F0',
+  'KT \uC54C\uB730\uD3F0',
+  'LG U+ \uC54C\uB730\uD3F0',
+];
+
+const TELECOM_PLACEHOLDER =
+  '\uD1B5\uC2E0\uC0AC\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694';
+const INVALID_IDENTITY_MESSAGE =
+  '\uC8FC\uBBFC\uB4F1\uB85D\uBC88\uD638\uB97C \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.';
+const SSAFY_TOKEN_EXPIRED_MESSAGE =
+  'SSAFY \uC778\uC99D \uC815\uBCF4\uAC00 \uB9CC\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574 \uC8FC\uC138\uC694.';
+const SEND_CODE_FALLBACK =
+  '\uC778\uC99D\uBC88\uD638 \uC804\uC1A1\uC5D0 \uC2E4\uD328\uD588\uC5B4\uC694. \uC785\uB825\uD55C \uC815\uBCF4\uB97C \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.';
 
 const buildBirthDate = (front: string, back: string) => {
   if (front.length !== 6 || back.length !== 1) {
@@ -43,11 +62,19 @@ const buildGender = (back: string) => {
   return parseInt(back, 10) % 2 !== 0 ? 'M' : 'F';
 };
 
+const decodeUnicodeEscapes = (value: string) =>
+  value.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex: string) =>
+    String.fromCharCode(parseInt(hex, 16)),
+  );
+
 export default function PhoneAuthScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
   const signupMode = route.params?.signupMode === 'ssafy' ? 'ssafy' : 'normal';
   const isSsafySignup = signupMode === 'ssafy';
-  const initialSsafyName = typeof route.params?.name === 'string' ? route.params.name.trim() : '';
+  const initialSsafyName =
+    typeof route.params?.name === 'string'
+      ? decodeUnicodeEscapes(route.params.name).trim()
+      : '';
 
   const [step, setStep] = useState(isSsafySignup && initialSsafyName.length >= 2 ? 2 : 1);
   const [name, setName] = useState(initialSsafyName);
@@ -125,7 +152,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
     const gender = buildGender(ssnBack);
 
     if (!birthDate || !gender) {
-      setSubmitError('\uC8FC\uBBFC\uB4F1\uB85D\uBC88\uD638\uB97C \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.');
+      setSubmitError(INVALID_IDENTITY_MESSAGE);
       setIsSendingCode(false);
       return;
     }
@@ -133,16 +160,25 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
     const normalizedPhoneNumber = phone.replace(/[^0-9]/g, '');
 
     try {
-      if (isSsafySignup && !route.params?.pendingToken) {
-        throw new Error('SSAFY \uC778\uC99D \uC815\uBCF4\uAC00 \uB9CC\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574 \uC8FC\uC138\uC694.');
-      }
+      if (isSsafySignup) {
+        if (!route.params?.pendingToken) {
+          throw new Error(SSAFY_TOKEN_EXPIRED_MESSAGE);
+        }
 
-      await checkSignupIdentity({
-        name: name.trim(),
-        gender,
-        birthDate,
-        phoneNumber: normalizedPhoneNumber,
-      });
+        await checkSsafySignup({
+          pendingToken: route.params.pendingToken,
+          gender,
+          birthDate,
+          phoneNumber: normalizedPhoneNumber,
+        });
+      } else {
+        await checkSignupIdentity({
+          name: name.trim(),
+          gender,
+          birthDate,
+          phoneNumber: normalizedPhoneNumber,
+        });
+      }
 
       await sendSmsCode({ phoneNumber: normalizedPhoneNumber });
 
@@ -157,12 +193,14 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         termsAgreed: agreedTerms,
       });
     } catch (error: any) {
-      const message = extractApiErrorMessage(
-        error,
-        '\uC778\uC99D\uBC88\uD638 \uC804\uC1A1\uC5D0 \uC2E4\uD328\uD588\uC5B4\uC694. \uC785\uB825\uD55C \uC815\uBCF4\uB97C \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.',
-      );
+      const message = extractApiErrorMessage(error, SEND_CODE_FALLBACK);
       setSubmitError(message);
-      Alert.alert(isSsafySignup ? 'SSAFY \uD68C\uC6D0\uAC00\uC785 \uC548\uB0B4' : '\uC778\uC99D\uBC88\uD638 \uC804\uC1A1 \uC2E4\uD328', message);
+      Alert.alert(
+        isSsafySignup
+          ? 'SSAFY \uD68C\uC6D0\uAC00\uC785 \uC548\uB0B4'
+          : '\uC778\uC99D\uBC88\uD638 \uC804\uC1A1 \uC2E4\uD328',
+        message,
+      );
     } finally {
       setIsSendingCode(false);
     }
@@ -188,8 +226,13 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         };
       default:
         return {
-          isActive: telecom !== TELECOM_PLACEHOLDER && phone.length >= 10 && !isSendingCode,
-          text: isSendingCode ? '\uC778\uC99D\uBC88\uD638 \uC804\uC1A1 \uC911...' : '\uB2E4\uC74C',
+          isActive:
+            telecom !== TELECOM_PLACEHOLDER &&
+            phone.length >= 10 &&
+            !isSendingCode,
+          text: isSendingCode
+            ? '\uC778\uC99D\uBC88\uD638 \uC804\uC1A1 \uC911...'
+            : '\uB2E4\uC74C',
           onPress: () => {
             scrollViewRef.current?.scrollTo({ y: 0, animated: true });
             setTermsVisible(true);
@@ -201,7 +244,10 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
   const btnState = getButtonState();
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
       <ScrollView
         ref={scrollViewRef}
         contentContainerStyle={[
@@ -217,7 +263,8 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         <StepIndicator currentStep={1} totalSteps={5} />
 
         <Text style={styles.title}>
-          {'\uBCF8\uC778 \uD655\uC778\uC744 \uC704\uD574'}{'\n'}{'\uC778\uC99D\uC774 \uD544\uC694\uD574\uC694.'}
+          {'\uBCF8\uC778 \uD655\uC778\uC744 \uC704\uD574'}{'\n'}
+          {'\uC778\uC99D\uC774 \uD544\uC694\uD574\uC694.'}
         </Text>
 
         <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
@@ -241,16 +288,29 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
             />
           </View>
           {isSsafySignup && (
-            <Text style={{ color: COLORS.textTertiary, marginTop: hp(12) }}>{'SSAFY\uC5D0\uC11C \uC804\uB2EC\uB41C \uC774\uB984\uC774\uB77C \uC218\uC815\uD560 \uC218 \uC5C6\uC5B4\uC694.'}</Text>
+            <Text style={{ color: COLORS.textTertiary, marginTop: hp(12) }}>
+              {'SSAFY \uACC4\uC815\uC758 \uC774\uB984\uC740 \uC218\uC815\uD560 \uC218 \uC5C6\uC5B4\uC694.'}
+            </Text>
           )}
         </Animated.View>
 
         {step >= 2 && (
           <Animated.View entering={FadeInDown.duration(500)} style={styles.ssnSection}>
-            <View style={[styles.underlineContainer, { flex: 1.1, justifyContent: 'center' }]}>
+            <View
+              style={[
+                styles.underlineContainer,
+                { flex: 1.1, justifyContent: 'center' },
+              ]}
+            >
               <TextInput
                 ref={ssnFrontRef}
-                style={[styles.bareInput, { textAlign: 'center', letterSpacing: ssnFront.length > 0 ? 4 : 0 }]}
+                style={[
+                  styles.bareInput,
+                  {
+                    textAlign: 'center',
+                    letterSpacing: ssnFront.length > 0 ? 4 : 0,
+                  },
+                ]}
                 value={ssnFront}
                 onChangeText={handleSsnFrontChange}
                 placeholder="YYMMDD"
@@ -263,7 +323,14 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
             <View style={[styles.underlineContainer, styles.ssnBackContainer]}>
               <TextInput
                 ref={ssnBackRef}
-                style={[styles.bareInput, { width: CONSTANTS.ssnBackInputWidth, textAlign: 'center', letterSpacing: 4 }]}
+                style={[
+                  styles.bareInput,
+                  {
+                    width: CONSTANTS.ssnBackInputWidth,
+                    textAlign: 'center',
+                    letterSpacing: 4,
+                  },
+                ]}
                 value={ssnBack}
                 onChangeText={handleSsnBackChange}
                 keyboardType="number-pad"
@@ -276,11 +343,23 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
 
         {step >= 3 && (
           <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
-            <TouchableOpacity style={styles.telecomSelector} onPress={() => setModalVisible(true)}>
-              <Text style={[styles.telecomText, telecom === TELECOM_PLACEHOLDER && styles.placeholderText]}>
+            <TouchableOpacity
+              style={styles.telecomSelector}
+              onPress={() => setModalVisible(true)}
+            >
+              <Text
+                style={[
+                  styles.telecomText,
+                  telecom === TELECOM_PLACEHOLDER && styles.placeholderText,
+                ]}
+              >
                 {telecom}
               </Text>
-              <Ionicons name="chevron-down" size={CONSTANTS.chevronIconSize} color={COLORS.textPrimary} />
+              <Ionicons
+                name="chevron-down"
+                size={CONSTANTS.chevronIconSize}
+                color={COLORS.textPrimary}
+              />
             </TouchableOpacity>
 
             <View style={[styles.underlineContainer, { marginTop: hp(32) }]}>
@@ -292,7 +371,9 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
                   setPhone(text.replace(/[^0-9]/g, ''));
                   setSubmitError('');
                 }}
-                placeholder="\uD734\uB300\uD3F0 \uBC88\uD638 (- \uC5C6\uC774 \uC785\uB825)"
+                placeholder={
+                  '\uD734\uB300\uD3F0 \uBC88\uD638 (- \uC5C6\uC774 \uC785\uB825)'
+                }
                 placeholderTextColor={COLORS.textTertiary}
                 keyboardType="number-pad"
                 maxLength={11}
@@ -304,7 +385,12 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         )}
       </ScrollView>
 
-      <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, CONSTANTS.bottomMinPadding) }]}>
+      <View
+        style={[
+          styles.bottomContainer,
+          { paddingBottom: Math.max(insets.bottom, CONSTANTS.bottomMinPadding) },
+        ]}
+      >
         <TouchableOpacity
           style={[styles.confirmButton, btnState.isActive && styles.activeButton]}
           disabled={!btnState.isActive}
@@ -313,7 +399,12 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
           {isSendingCode ? (
             <ActivityIndicator color={COLORS.textInverse} />
           ) : (
-            <Text style={[styles.confirmButtonText, btnState.isActive && styles.activeButtonText]}>
+            <Text
+              style={[
+                styles.confirmButtonText,
+                btnState.isActive && styles.activeButtonText,
+              ]}
+            >
               {btnState.text}
             </Text>
           )}
@@ -321,13 +412,22 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
       </View>
 
       <Modal visible={modalVisible} transparent animationType="slide">
-        <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setModalVisible(false)}
+        >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{'\uD1B5\uC2E0\uC0AC\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694'}</Text>
+              <Text style={styles.modalTitle}>
+                {'\uD1B5\uC2E0\uC0AC\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694'}
+              </Text>
             </View>
             {TELECOMS.map((item) => (
-              <TouchableOpacity key={item} style={styles.modalItem} onPress={() => handleTelecomSelect(item)}>
+              <TouchableOpacity
+                key={item}
+                style={styles.modalItem}
+                onPress={() => handleTelecomSelect(item)}
+              >
                 <Text style={styles.modalItemText}>{item}</Text>
               </TouchableOpacity>
             ))}
@@ -349,4 +449,3 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
     </KeyboardAvoidingView>
   );
 }
-

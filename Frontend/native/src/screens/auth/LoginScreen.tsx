@@ -22,6 +22,7 @@ import Animated, {
   FadeInDown,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as WebBrowser from 'expo-web-browser';
 import CustomTextInput from '../../components/common/CustomTextInput';
 import GradientButton from '../../components/common/GradientButton';
 import { useAuthStore } from '../../store/authStore';
@@ -34,6 +35,13 @@ import {
   parseSsafyCallbackUrl,
 } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
+
+WebBrowser.maybeCompleteAuthSession();
+
+const LOGIN_ERROR_FALLBACK =
+  '\uB85C\uADF8\uC778\uC5D0 \uC2E4\uD328\uD588\uC5B4\uC694. \uC544\uC774\uB514\uC640 \uBE44\uBC00\uBC88\uD638\uB97C \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.';
+const SSAFY_ERROR_FALLBACK =
+  'SSAFY \uB85C\uADF8\uC778 \uCC98\uB9AC\uC5D0 \uC2E4\uD328\uD588\uC5B4\uC694. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.';
 
 export default function LoginScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -95,12 +103,9 @@ export default function LoginScreen({ navigation }: any) {
         navigation.replace('MainTabs');
       } catch (error: any) {
         handledSsafyUrlRef.current = null;
-        const message = extractApiErrorMessage(
-          error,
-          'SSAFY 로그인 처리 중 문제가 발생했습니다. 다시 시도해 주세요.',
-        );
+        const message = extractApiErrorMessage(error, SSAFY_ERROR_FALLBACK);
         setLoginError(message);
-        Alert.alert('SSAFY 로그인 오류', message);
+        Alert.alert('SSAFY \uB85C\uADF8\uC778 \uC2E4\uD328', message);
       } finally {
         setIsSubmitting(false);
       }
@@ -144,12 +149,9 @@ export default function LoginScreen({ navigation }: any) {
 
       navigation.replace('MainTabs');
     } catch (error: any) {
-      const message = extractApiErrorMessage(
-        error,
-        '로그인에 실패했어요. 아이디와 비밀번호를 다시 확인해 주세요.',
-      );
+      const message = extractApiErrorMessage(error, LOGIN_ERROR_FALLBACK);
       setLoginError(message);
-      Alert.alert('로그인 실패', message);
+      Alert.alert('\uB85C\uADF8\uC778 \uC2E4\uD328', message);
     } finally {
       setIsSubmitting(false);
     }
@@ -163,21 +165,52 @@ export default function LoginScreen({ navigation }: any) {
     navigation.navigate('AccountRecoveryEntry');
   };
 
+  const handleSsafyLoginResult = async (callbackUrl: string) => {
+    const parsed = parseSsafyCallbackUrl(callbackUrl);
+    if (!parsed) {
+      return;
+    }
+
+    handledSsafyUrlRef.current = callbackUrl;
+
+    if (parsed.type === 'signup') {
+      navigation.replace('PhoneAuth', {
+        signupMode: 'ssafy',
+        pendingToken: parsed.pendingToken,
+        name: parsed.name,
+      });
+      return;
+    }
+
+    const response = await exchangeSsafyToken(parsed.code);
+    loginToStore({
+      accessToken: response.accessToken,
+      user: response.user,
+      autoLogin,
+    });
+    navigation.replace('MainTabs');
+  };
+
   const handleSSAFYLoginPress = async () => {
     if (isSubmitting) {
       return;
     }
 
     try {
+      setIsSubmitting(true);
       setLoginError('');
-      await Linking.openURL(getSsafyLoginUrl());
+
+      const result = await WebBrowser.openAuthSessionAsync(getSsafyLoginUrl());
+
+      if (result.type === 'success' && 'url' in result && result.url) {
+        await handleSsafyLoginResult(result.url);
+      }
     } catch (error: any) {
-      const message = extractApiErrorMessage(
-        error,
-        'SSAFY 로그인 페이지를 여는 중 문제가 발생했습니다.',
-      );
+      const message = extractApiErrorMessage(error, SSAFY_ERROR_FALLBACK);
       setLoginError(message);
-      Alert.alert('SSAFY 로그인 오류', message);
+      Alert.alert('SSAFY \uB85C\uADF8\uC778 \uC2E4\uD328', message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -194,20 +227,25 @@ export default function LoginScreen({ navigation }: any) {
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View style={[styles.headerContainer, headerAnimatedStyle]}>
-            <Text style={styles.headerTitle}>로그인</Text>
+            <Text style={styles.headerTitle}>{'\uB85C\uADF8\uC778'}</Text>
             <View style={styles.headerLine} />
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(160).duration(500).springify()}>
             <View style={styles.devEntryCard}>
-              <Text style={styles.devEntryTitle}>개발용 빠른 진입</Text>
+              <Text style={styles.devEntryTitle}>{'\uAC1C\uBC1C\uC6A9 \uBE60\uB978 \uC9C4\uC785'}</Text>
               <Text style={styles.devEntryDescription}>
-                백엔드 로그인과 별개로 메인 화면 UI를 빠르게 확인할 때 사용합니다.
+                {
+                  '\uD14C\uC2A4\uD2B8 \uC911\uC5D0\uB9CC \uC0AC\uC6A9\uD558\uC138\uC694. \uC784\uC2DC UI \uD655\uC778\uC774\uB098 \uB85C\uCEEC \uD750\uB984 \uC810\uAC80\uC5D0 \uD65C\uC6A9\uD560 \uC218 \uC788\uC5B4\uC694.'
+                }
               </Text>
               <GradientButton
-                title="TEST: 메인 화면 바로가기"
+                title={'TEST: \uAC1C\uBC1C \uACC4\uC815 \uBC14\uB85C \uC785\uC7A5'}
                 onPress={() => {
-                  loginWithDevBypass({ userId: 'dev-main-user', name: '개발자' });
+                  loginWithDevBypass({
+                    userId: 'dev-main-user',
+                    name: '\uAC1C\uBC1C\uC6A9',
+                  });
                   navigation.replace('MainTabs');
                 }}
               />
@@ -219,7 +257,7 @@ export default function LoginScreen({ navigation }: any) {
             style={styles.formContainer}
           >
             <CustomTextInput
-              label="아이디"
+              label={'\uC544\uC774\uB514'}
               value={userId}
               onChangeText={(value) => {
                 setUserId(value);
@@ -230,7 +268,7 @@ export default function LoginScreen({ navigation }: any) {
             />
 
             <CustomTextInput
-              label="비밀번호"
+              label={'\uBE44\uBC00\uBC88\uD638'}
               value={password}
               onChangeText={(value) => {
                 setPassword(value);
@@ -245,12 +283,20 @@ export default function LoginScreen({ navigation }: any) {
 
             <View style={styles.buttonRow}>
               <View style={styles.buttonHalf}>
-                <GradientButton title="회원가입" onPress={handleSignup} variant="outline" />
+                <GradientButton
+                  title={'\uD68C\uC6D0\uAC00\uC785'}
+                  onPress={handleSignup}
+                  variant="outline"
+                />
               </View>
               <View style={styles.buttonGap} />
               <View style={styles.buttonHalf}>
                 <GradientButton
-                  title={isSubmitting ? '로그인 중...' : '로그인'}
+                  title={
+                    isSubmitting
+                      ? '\uB85C\uADF8\uC778 \uC911...'
+                      : '\uB85C\uADF8\uC778'
+                  }
                   onPress={handleLogin}
                 />
               </View>
@@ -269,7 +315,9 @@ export default function LoginScreen({ navigation }: any) {
               style={styles.findAccountButton}
               activeOpacity={0.6}
             >
-              <Text style={styles.findAccountText}>아이디 / 비밀번호 찾기</Text>
+              <Text style={styles.findAccountText}>
+                {'\uC544\uC774\uB514 / \uBE44\uBC00\uBC88\uD638 \uCC3E\uAE30'}
+              </Text>
             </TouchableOpacity>
           </Animated.View>
 
@@ -277,7 +325,7 @@ export default function LoginScreen({ navigation }: any) {
             entering={FadeInDown.delay(450).duration(500).springify()}
             style={styles.autoLoginContainer}
           >
-            <Text style={styles.autoLoginText}>자동 로그인</Text>
+            <Text style={styles.autoLoginText}>{'\uC790\uB3D9 \uB85C\uADF8\uC778'}</Text>
             <Switch
               value={autoLogin}
               onValueChange={setAutoLogin}
@@ -295,7 +343,7 @@ export default function LoginScreen({ navigation }: any) {
             style={styles.dividerContainer}
           >
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>또는</Text>
+            <Text style={styles.dividerText}>{'\uB610\uB294'}</Text>
             <View style={styles.dividerLine} />
           </Animated.View>
 
@@ -311,7 +359,9 @@ export default function LoginScreen({ navigation }: any) {
                 end={{ x: 1, y: 1 }}
                 style={styles.ssafyGradient}
               >
-                <Text style={styles.ssafyButtonText}>SSAFY 계정으로 로그인</Text>
+                <Text style={styles.ssafyButtonText}>
+                  {'SSAFY \uACC4\uC815\uC73C\uB85C \uB85C\uADF8\uC778'}
+                </Text>
               </LinearGradient>
             </TouchableOpacity>
           </Animated.View>

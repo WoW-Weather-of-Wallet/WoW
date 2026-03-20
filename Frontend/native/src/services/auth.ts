@@ -327,6 +327,16 @@ const getParamValue = (params: URLSearchParams, keys: string[]) => {
   return null;
 };
 
+const decodeUnicodeEscapes = (value: string | null) => {
+  if (!value || !value.includes('\\u')) {
+    return value;
+  }
+
+  return value.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex: string) =>
+    String.fromCharCode(parseInt(hex, 16)),
+  );
+};
+
 export const parseSsafyCallbackUrl = (
   url: string,
 ): NativeSsafyCallbackResult | null => {
@@ -346,7 +356,7 @@ export const parseSsafyCallbackUrl = (
       return {
         type: 'signup',
         pendingToken,
-        name: getParamValue(params, ['name', 'userName', 'nickname']) || undefined,
+        name: decodeUnicodeEscapes(getParamValue(params, ['name', 'userName', 'nickname'])) || undefined,
       };
     }
 
