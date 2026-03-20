@@ -1,4 +1,4 @@
-package com.wow.domain.calendar.controller;
+﻿package com.wow.domain.calendar.controller;
 
 import com.wow.domain.calendar.dto.*;
 import com.wow.domain.calendar.service.CalendarService;
@@ -6,6 +6,7 @@ import com.wow.domain.security.CustomUserDetails;
 import com.wow.global.exception.BadRequestException;
 import com.wow.global.exception.InvalidTokenException;
 import com.wow.global.common.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,10 @@ public class CalendarController {
 
     private final CalendarService calendarService;
 
+    @Operation(
+            summary = "캘린더 헤더 조회",
+            description = "캘린더 헤더로 오늘 날씨, 설명, 절약금액을 조회합니다."
+    )
     @GetMapping("/header")
     public ResponseEntity<CalendarHeaderResponse> getCalendarHeader(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -49,6 +54,10 @@ public class CalendarController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "월별 캘린더 내역 조회",
+            description = "현재 월에 해당하는 날짜별 날씨 정보 및 일별 지출 가격을 조회합니다."
+    )
     @GetMapping("/monthly")
     public ResponseEntity<ApiResponse<List<CalendarMonthlyResponse>>> getCalendarMonthly(
             @AuthenticationPrincipal CustomUserDetails userDetails,
