@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "668501513861",
-    "project_id": "wow-app-98b64",
-    "storage_bucket": "wow-app-98b64.firebasestorage.app"
+    "project_number": "1016730500661",
+    "project_id": "weatherofwallet",
+    "storage_bucket": "weatherofwallet.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:668501513861:android:af5df075845adafe98fbec",
+        "mobilesdk_app_id": "1:1016730500661:android:08e8401ee92b8c41fe7b7c",
         "android_client_info": {
           "package_name": "com.wow.app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAvINuM0pBXf5WZ8l5EPPGCkvV1vqnSBWc"
+          "current_key": "AIzaSyCvkLrzcZ3P409VJAZ0jKWxL_XMU6ju604"
         }
       ],
       "services": {
