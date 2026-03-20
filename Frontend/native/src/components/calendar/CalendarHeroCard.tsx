@@ -5,10 +5,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, wp } from '../../constants/theme';
 import { styles } from './CalendarHeroCard.styles';
 import type { CalendarOverview } from '../../mock/calendar';
+import type { CalendarHeaderFetchState } from '../../types/calendar';
 
 interface CalendarHeroCardProps {
   overview: CalendarOverview;
   monthLabel: string;
+  weatherIconName: keyof typeof Ionicons.glyphMap;
+  headerFetchState: CalendarHeaderFetchState;
+  headerErrorMessage: string | null;
   onPressPrevMonth: () => void;
   onPressNextMonth: () => void;
   onPressAdd?: () => void;
@@ -17,6 +21,9 @@ interface CalendarHeroCardProps {
 export default function CalendarHeroCard({
   overview,
   monthLabel,
+  weatherIconName,
+  headerFetchState,
+  headerErrorMessage,
   onPressPrevMonth,
   onPressNextMonth,
   onPressAdd,
@@ -29,7 +36,7 @@ export default function CalendarHeroCard({
       style={styles.heroCard}
     >
       <View style={styles.headerRow}>
-        <Text style={styles.screenTitle}>{overview.title}</Text>
+        <Text style={styles.screenTitle}>캘린더</Text>
         <TouchableOpacity activeOpacity={0.9} style={styles.addButton} onPress={onPressAdd}>
           <Text style={styles.addButtonText}>+ 내역 추가</Text>
         </TouchableOpacity>
@@ -47,7 +54,7 @@ export default function CalendarHeroCard({
 
       <View style={styles.weatherCard}>
         <View style={styles.weatherIconWrap}>
-          <Ionicons name="partly-sunny" size={wp(25)} color={COLORS.weatherSun} />
+          <Ionicons name={weatherIconName} size={wp(25)} color={COLORS.weatherSun} />
         </View>
         <View style={styles.weatherTextBlock}>
           <Text style={styles.weatherTitle}>{overview.weatherTitle}</Text>
@@ -57,8 +64,8 @@ export default function CalendarHeroCard({
 
       <View style={styles.summaryRow}>
         <View>
-          <Text style={styles.summaryLabel}>이번 달 절약 금액</Text>
-          <Text style={styles.summaryAmount}>₩{overview.savingsAmount.toLocaleString()}원</Text>
+          <Text style={styles.summaryLabel}>지난달 대비 절약 금액</Text>
+          <Text style={styles.summaryAmount}>{overview.savingsAmount.toLocaleString()}원</Text>
         </View>
 
         <View style={styles.goalBadge}>
@@ -66,7 +73,27 @@ export default function CalendarHeroCard({
           <Text style={styles.goalBadgeText}>{overview.goalLabel}</Text>
         </View>
       </View>
+
+      <Text style={styles.statusText}>
+        {buildStatusMessage(headerFetchState, headerErrorMessage)}
+      </Text>
     </LinearGradient>
   );
 }
 
+function buildStatusMessage(state: CalendarHeaderFetchState, errorMessage: string | null) {
+  // The calendar body is still mock-driven, so we surface whether the header is live or fallback.
+  if (state === 'loading') {
+    return '헤더 데이터를 불러오는 중입니다.';
+  }
+
+  if (state === 'live') {
+    return '백엔드 캘린더 헤더와 연결되었습니다.';
+  }
+
+  if (state === 'fallback') {
+    return errorMessage ?? '현재 월이 아니거나 로그인되지 않아 기본 헤더를 표시 중입니다.';
+  }
+
+  return '캘린더 헤더 준비 중입니다.';
+}
