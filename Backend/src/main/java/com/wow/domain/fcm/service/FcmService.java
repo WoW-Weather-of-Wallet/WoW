@@ -26,7 +26,7 @@ public class FcmService {
     private FirebaseMessaging firebaseMessaging;
 
     @Transactional
-    public void saveOrUpdateToken(String userId, String token, String deviceType) {
+    public void registerToken(String userId, String token, String deviceType) {
         if (fcmTokenRepository.findByToken(token).isEmpty()) {
             fcmTokenRepository.save(FcmToken.builder()
                     .userId(userId)
@@ -34,6 +34,7 @@ public class FcmService {
                     .deviceType(deviceType)
                     .build());
         }
+
     }
 
     // 특정 기기 토큰만 삭제 (로그아웃 시 해당 기기에서만 알림 해제)

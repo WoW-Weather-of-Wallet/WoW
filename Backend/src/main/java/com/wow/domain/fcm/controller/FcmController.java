@@ -20,12 +20,12 @@ public class FcmController {
 
     private final FcmService fcmService;
 
-    @Operation(summary = "FCM 토큰 등록/갱신", description = "기기의 FCM 토큰을 등록하거나 갱신합니다.")
+    @Operation(summary = "FCM 토큰 등록", description = "기기의 FCM 토큰을 등록합니다. 이미 등록된 토큰이면 무시됩니다.")
     @PostMapping("/token")
     public ResponseEntity<Void> registerToken(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody FcmTokenRequest request) {
-        fcmService.saveOrUpdateToken(userDetails.getUsername(), request.getToken(), request.getDeviceType());
+        fcmService.registerToken(userDetails.getUsername(), request.getToken(), request.getDeviceType());
         return ResponseEntity.ok().build();
     }
 
