@@ -43,12 +43,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class SsafyOAuthService {
 
     private static final Logger log = LoggerFactory.getLogger(SsafyOAuthService.class);
+    private static final Pattern UNICODE_ESCAPE_PATTERN = Pattern.compile("\\\\u([0-9a-fA-F]{4})");
 
     private static final long PENDING_TTL_MINUTES = 30;
     private static final long AUTH_CODE_TTL_SECONDS = 30;
@@ -97,6 +100,7 @@ public class SsafyOAuthService {
 
         SsafyTokenResponse tokenResponse = getAccessToken(code);
         SsafyUserInfo userInfo = getUserInfo(tokenResponse.getAccessToken());
+        String decodedName = decodeUnicodeEscapes(userInfo.getName());
         Optional<User> existingUser = userRepository.findBySsafyOauthId(userInfo.getUserId());
 
         if (existingUser.isPresent()) {
@@ -118,12 +122,13 @@ public class SsafyOAuthService {
         String pendingToken = UUID.randomUUID().toString();
         redisTemplate.opsForValue().set(
                 RedisKeys.SSAFY_PENDING_PREFIX + pendingToken,
-                userInfo.getUserId() + "|" + userInfo.getName(),
+                userInfo.getUserId() + "|" + decodedName,
                 Duration.ofMinutes(PENDING_TTL_MINUTES)
         );
 
         return UriComponentsBuilder.fromUriString(buildAppRedirectUri())
                 .queryParam("pendingToken", pendingToken)
+                .queryParam("name", decodedName)
                 .build()
                 .encode()
                 .toUriString();
@@ -326,5 +331,22 @@ public class SsafyOAuthService {
         return ssafyAppBaseUri.endsWith("/")
                 ? ssafyAppBaseUri.substring(0, ssafyAppBaseUri.length() - 1)
                 : ssafyAppBaseUri;
+    }
+
+    private String decodeUnicodeEscapes(String value) {
+        if (value == null || value.isBlank() || !value.contains("\\u")) {
+            return value;
+        }
+
+        Matcher matcher = UNICODE_ESCAPE_PATTERN.matcher(value);
+        StringBuilder decoded = new StringBuilder();
+
+        while (matcher.find()) {
+            char unicodeChar = (char) Integer.parseInt(matcher.group(1), 16);
+            matcher.appendReplacement(decoded, Matcher.quoteReplacement(String.valueOf(unicodeChar)));
+        }
+
+        matcher.appendTail(decoded);
+        return decoded.toString();
     }
 }
