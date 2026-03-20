@@ -101,6 +101,14 @@ export interface SmsVerifyRequest {
 export interface FindIdRequest {
   name: string;
   birthDate: string;
+  gender: string;
+  phoneNumber: string;
+}
+
+export interface SignupIdentityCheckRequest {
+  name: string;
+  gender: string;
+  birthDate: string;
   phoneNumber: string;
 }
 
@@ -112,6 +120,7 @@ export interface FindPasswordRequest {
   userId: string;
   name: string;
   birthDate: string;
+  gender: string;
   phoneNumber: string;
   newPw: string;
 }
@@ -196,6 +205,14 @@ export const verifySmsCode = async (payload: SmsVerifyRequest) => {
   const response = await nativeApi.post('/api/v1/auth/sms/verify', {
     phoneNumber: normalizePhoneNumber(payload.phoneNumber),
     code: payload.code.trim(),
+  });
+  return response.data;
+};
+
+export const checkSignupIdentity = async (payload: SignupIdentityCheckRequest) => {
+  const response = await nativeApi.post('/api/v1/auth/check-signup-identity', {
+    ...payload,
+    phoneNumber: normalizePhoneNumber(payload.phoneNumber),
   });
   return response.data;
 };

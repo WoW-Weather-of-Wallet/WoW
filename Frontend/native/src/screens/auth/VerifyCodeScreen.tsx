@@ -41,6 +41,16 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
     return `${century}${ssnFront.slice(0, 2)}-${ssnFront.slice(2, 4)}-${ssnFront.slice(4, 6)}`;
   };
 
+  const getGenderFromIdentity = () => {
+    const ssnBack = route.params?.ssnBack ?? '';
+
+    if (ssnBack.length === 0) {
+      return null;
+    }
+
+    return parseInt(ssnBack[0], 10) % 2 !== 0 ? 'M' : 'F';
+  };
+
   const handlePressNumber = (num: string) => {
     if (isVerifying || code.length >= MAX_CODE_LENGTH) {
       return;
@@ -64,8 +74,9 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
 
   const handleFindIdFlow = async () => {
     const birthDate = getBirthDateFromIdentity();
+    const gender = getGenderFromIdentity();
 
-    if (!birthDate) {
+    if (!birthDate || !gender) {
       throw new Error('생년월일 정보가 누락되었어요.');
     }
 
@@ -74,6 +85,7 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
       const result = await findUserId({
         name: route.params.name,
         birthDate,
+        gender,
         phoneNumber: route.params.phone,
       });
 
