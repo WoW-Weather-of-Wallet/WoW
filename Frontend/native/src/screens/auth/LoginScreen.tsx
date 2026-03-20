@@ -69,6 +69,41 @@ export default function LoginScreen({ navigation }: any) {
   }, []);
 
   useEffect(() => {
+    const completeSsafyLogin = async (
+      parsed:
+        | { type: 'login'; code: string }
+        | {
+            type: 'login';
+            accessToken: string;
+            user?: {
+              userId: string;
+              name?: string;
+              role?: string;
+            };
+          },
+    ) => {
+      if ('accessToken' in parsed) {
+        loginToStore({
+          accessToken: parsed.accessToken,
+          user:
+            parsed.user ?? {
+              userId: 'ssafy-user',
+            },
+          autoLogin,
+        });
+        navigation.replace('MainTabs');
+        return;
+      }
+
+      const response = await exchangeSsafyToken(parsed.code);
+      loginToStore({
+        accessToken: response.accessToken,
+        user: response.user,
+        autoLogin,
+      });
+      navigation.replace('MainTabs');
+    };
+
     const handleSsafyCallback = async (url: string | null) => {
       if (!url || handledSsafyUrlRef.current === url) {
         return;
@@ -93,14 +128,7 @@ export default function LoginScreen({ navigation }: any) {
       try {
         setIsSubmitting(true);
         setLoginError('');
-
-        const response = await exchangeSsafyToken(parsed.code);
-        loginToStore({
-          accessToken: response.accessToken,
-          user: response.user,
-          autoLogin,
-        });
-        navigation.replace('MainTabs');
+        await completeSsafyLogin(parsed);
       } catch (error: any) {
         handledSsafyUrlRef.current = null;
         const message = extractApiErrorMessage(error, SSAFY_ERROR_FALLBACK);
@@ -179,6 +207,19 @@ export default function LoginScreen({ navigation }: any) {
         pendingToken: parsed.pendingToken,
         name: parsed.name,
       });
+      return;
+    }
+
+    if ('accessToken' in parsed) {
+      loginToStore({
+        accessToken: parsed.accessToken,
+        user:
+          parsed.user ?? {
+            userId: 'ssafy-user',
+          },
+        autoLogin,
+      });
+      navigation.replace('MainTabs');
       return;
     }
 

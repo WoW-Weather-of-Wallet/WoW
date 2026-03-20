@@ -15,6 +15,18 @@ export interface NativeSignupRequest {
   termsAgreed: boolean;
 }
 
+export interface NativeSsafySignupCheckRequest {
+  pendingToken: string;
+  gender: string;
+  phoneNumber: string;
+  birthDate: string;
+}
+
+export interface NativeSsafyRegisterRequest extends NativeSsafySignupCheckRequest {
+  alarmEnabled: boolean;
+  termsAgreed: boolean;
+}
+
 export interface NativeSignupResponse {
   userId: string;
   name: string;
@@ -69,6 +81,18 @@ export type NativeSsafyCallbackResult =
   | {
       type: 'login';
       code: string;
+      accessToken?: never;
+      user?: never;
+    }
+  | {
+      type: 'login';
+      accessToken: string;
+      user?: {
+        userId: string;
+        name?: string;
+        role?: string;
+      };
+      code?: never;
     }
   | {
       type: 'signup';
@@ -121,7 +145,6 @@ export interface NativeApiErrorResponse {
   httpStatusCode?: number;
   errorMessage?: string;
 }
-
 export const nativeApi = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
@@ -233,12 +256,7 @@ export const exchangeSsafyToken = async (code: string) => {
   return response.data;
 };
 
-export const checkSsafySignup = async (payload: {
-  pendingToken: string;
-  gender: string;
-  birthDate: string;
-  phoneNumber: string;
-}) => {
+export const checkSsafySignup = async (payload: NativeSsafySignupCheckRequest) => {
   const response = await nativeApi.post('/sso/providers/ssafy/check', {
     ...payload,
     phoneNumber: normalizePhoneNumber(payload.phoneNumber),
@@ -246,14 +264,7 @@ export const checkSsafySignup = async (payload: {
   return response.data;
 };
 
-export const registerSsafy = async (payload: {
-  pendingToken: string;
-  phoneNumber: string;
-  gender: string;
-  birthDate: string;
-  termsAgreed: boolean;
-  alarmEnabled: boolean;
-}) => {
+export const registerSsafy = async (payload: NativeSsafyRegisterRequest) => {
   const response = await nativeApi.post<NativeLoginResponse>('/sso/providers/ssafy/register', {
     ...payload,
     phoneNumber: normalizePhoneNumber(payload.phoneNumber),
@@ -342,8 +353,18 @@ export const parseSsafyCallbackUrl = (
 ): NativeSsafyCallbackResult | null => {
   try {
     const params = getSearchParamsFromUrl(url);
+    const accessToken = getParamValue(params, ['accessToken', 'token']);
     const code = getParamValue(params, ['code']);
     const pendingToken = getParamValue(params, ['pendingToken']);
+    const name = decodeUnicodeEscapes(getParamValue(params, ['name', 'userName', 'nickname'])) || undefined;
+
+    if (pendingToken) {
+      return {
+        type: 'signup',
+        pendingToken,
+        name,
+      };
+    }
 
     if (code) {
       return {
@@ -352,11 +373,18 @@ export const parseSsafyCallbackUrl = (
       };
     }
 
-    if (pendingToken) {
+    if (accessToken) {
+      const userId = getParamValue(params, ['userId', 'loginId', 'username']) || 'ssafy-user';
+      const role = getParamValue(params, ['role']) || undefined;
+
       return {
-        type: 'signup',
-        pendingToken,
-        name: decodeUnicodeEscapes(getParamValue(params, ['name', 'userName', 'nickname'])) || undefined,
+        type: 'login',
+        accessToken,
+        user: {
+          userId,
+          name,
+          role,
+        },
       };
     }
 
