@@ -1,5 +1,4 @@
-import React from 'react';
-import { ScrollView, StatusBar, View } from 'react-native';
+import { ScrollView, StatusBar, View, TouchableOpacity, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   mockHomeInsights,
@@ -45,6 +44,7 @@ export default function MainHomeScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+
         <HomeSpendingTypeCard onPress={spendingTypeModal.open} />
         <HomeWeeklyPreviewCard items={mockHomeCalendarPreview} />
         <HomeBudgetReportCard {...mockHomeSummary} onPress={reportModal.open} />

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import StepIndicator from '../../components/common/StepIndicator';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
-import { checkSignupIdentity, sendSmsCode } from '../../services/auth';
+import { checkSignupIdentity, checkSsafySignup, sendSmsCode } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 import { validateName, validatePhone } from '../../utils/validation';
 
@@ -45,9 +45,10 @@ const buildGender = (back: string) => {
 
 export default function PhoneAuthScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
+  const isSsafySignup = route.params?.signupMode === 'ssafy';
 
-  const [step, setStep] = useState(1);
-  const [name, setName] = useState('');
+  const [step, setStep] = useState(isSsafySignup ? 2 : 1);
+  const [name, setName] = useState(route.params?.name ?? '');
   const [ssnFront, setSsnFront] = useState('');
   const [ssnBack, setSsnBack] = useState('');
   const [telecom, setTelecom] = useState(TELECOM_PLACEHOLDER);
@@ -63,9 +64,21 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
   const phoneRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
+  useEffect(() => {
+    if (!isSsafySignup) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      ssnFrontRef.current?.focus();
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [isSsafySignup]);
+
   const handleNameSubmit = () => {
     if (name.trim().length >= 2) {
-      setStep((prev) => Math.max(prev, 2));
+      setStep((prev: number) => Math.max(prev, 2));
       setTimeout(() => ssnFrontRef.current?.focus(), 150);
     }
   };
@@ -84,7 +97,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
     setSsnBack(numeric);
 
     if (numeric.length === 1) {
-      setStep((prev) => Math.max(prev, 3));
+      setStep((prev: number) => Math.max(prev, 3));
       ssnBackRef.current?.blur();
       setTimeout(() => setModalVisible(true), 300);
     }
@@ -104,11 +117,13 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
     setIsSendingCode(true);
     setSubmitError('');
 
-    const nameValidation = validateName(name);
-    if (!nameValidation.isValid) {
-      setSubmitError(nameValidation.message);
-      setIsSendingCode(false);
-      return;
+    if (!isSsafySignup) {
+      const nameValidation = validateName(name);
+      if (!nameValidation.isValid) {
+        setSubmitError(nameValidation.message);
+        setIsSendingCode(false);
+        return;
+      }
     }
 
     const phoneValidation = validatePhone(phone);
@@ -122,41 +137,54 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
     const gender = buildGender(ssnBack);
 
     if (!birthDate || !gender) {
-      setSubmitError('주민등록번호를 다시 확인해주세요.');
+      setSubmitError('생년월일과 성별 정보를 다시 확인해주세요.');
       setIsSendingCode(false);
       return;
     }
 
-    try {
-      await checkSignupIdentity({
-        name: name.trim(),
-        gender,
-        birthDate,
-        phoneNumber: phone.replace(/[^0-9]/g, ''),
-      });
+    const normalizedPhone = phone.replace(/[^0-9]/g, '');
 
-      await sendSmsCode({ phoneNumber: phone.replace(/[^0-9]/g, '') });
+    try {
+      if (isSsafySignup) {
+        if (!route.params?.pendingToken) {
+          throw new Error('SSAFY 가입 정보가 없습니다. 다시 SSAFY 로그인을 진행해주세요.');
+        }
+
+        await checkSsafySignup({
+          pendingToken: route.params.pendingToken,
+          gender,
+          birthDate,
+          phoneNumber: normalizedPhone,
+        });
+      } else {
+        await checkSignupIdentity({
+          name: name.trim(),
+          gender,
+          birthDate,
+          phoneNumber: normalizedPhone,
+        });
+      }
+
+      await sendSmsCode({ phoneNumber: normalizedPhone });
 
       navigation.navigate('VerifyCode', {
-        name: name.trim(),
+        ...route.params,
+        signupMode: isSsafySignup ? 'ssafy' : route.params?.signupMode,
+        name: isSsafySignup ? route.params?.name ?? '' : name.trim(),
         ssnFront,
         ssnBack,
         telecom,
-        phone: phone.replace(/[^0-9]/g, ''),
+        phone: normalizedPhone,
         termsAgreed: agreedTerms,
       });
     } catch (error: any) {
       const message = extractApiErrorMessage(
         error,
-        '인증번호 발송에 실패했어요. 휴대폰번호를 다시 확인해주세요.',
+        '인증번호 전송에 실패했습니다. 잠시 후 다시 시도해주세요.',
       );
 
       setSubmitError(message);
-      if (error?.response?.status === 409) {
-        Alert.alert('가입 안내', message);
-      } else {
-        Alert.alert('인증번호 발송 실패', message);
-      }
+      Alert.alert(error?.response?.status === 409 ? '가입 불가' : '인증번호 전송 실패', message);
     } finally {
       setIsSendingCode(false);
     }
@@ -175,7 +203,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
           isActive: ssnFront.length === 6 && ssnBack.length === 1,
           text: '다음',
           onPress: () => {
-            setStep((prev) => Math.max(prev, 3));
+            setStep((prev: number) => Math.max(prev, 3));
             ssnBackRef.current?.blur();
             setTimeout(() => setModalVisible(true), 300);
           },
@@ -183,7 +211,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
       default:
         return {
           isActive: telecom !== TELECOM_PLACEHOLDER && phone.length >= 10 && !isSendingCode,
-          text: isSendingCode ? '인증번호 발송 중...' : '다음',
+          text: isSendingCode ? '인증번호 전송 중...' : '다음',
           onPress: () => {
             scrollViewRef.current?.scrollTo({ y: 0, animated: true });
             setTermsVisible(true);
@@ -195,7 +223,10 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
   const btnState = getButtonState();
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
       <ScrollView
         ref={scrollViewRef}
         contentContainerStyle={[
@@ -211,33 +242,40 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         <StepIndicator currentStep={1} totalSteps={5} />
 
         <Text style={styles.title}>
-          본인 확인을 위해{'\n'}인증이 필요해요.
+          {isSsafySignup
+            ? 'SSAFY 가입을 위해\n본인인증을 진행해주세요.'
+            : '본인 확인을 위해\n인증을 진행해주세요.'}
         </Text>
 
-        <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
-          <View style={styles.underlineContainer}>
-            <TextInput
-              style={[styles.bareInput, { letterSpacing: name.length > 0 ? 2 : 0 }]}
-              value={name}
-              onChangeText={(value) => {
-                setName(value);
-                setSubmitError('');
-              }}
-              placeholder="이름"
-              placeholderTextColor={COLORS.textTertiary}
-              onSubmitEditing={handleNameSubmit}
-              returnKeyType="next"
-              autoFocus
-            />
-          </View>
-        </Animated.View>
+        {!isSsafySignup && (
+          <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
+            <View style={styles.underlineContainer}>
+              <TextInput
+                style={[styles.bareInput, { letterSpacing: name.length > 0 ? 2 : 0 }]}
+                value={name}
+                onChangeText={(value) => {
+                  setName(value);
+                  setSubmitError('');
+                }}
+                placeholder="이름"
+                placeholderTextColor={COLORS.textTertiary}
+                onSubmitEditing={handleNameSubmit}
+                returnKeyType="next"
+                autoFocus
+              />
+            </View>
+          </Animated.View>
+        )}
 
         {step >= 2 && (
           <Animated.View entering={FadeInDown.duration(500)} style={styles.ssnSection}>
             <View style={[styles.underlineContainer, { flex: 1.1, justifyContent: 'center' }]}>
               <TextInput
                 ref={ssnFrontRef}
-                style={[styles.bareInput, { textAlign: 'center', letterSpacing: ssnFront.length > 0 ? 4 : 0 }]}
+                style={[
+                  styles.bareInput,
+                  { textAlign: 'center', letterSpacing: ssnFront.length > 0 ? 4 : 0 },
+                ]}
                 value={ssnFront}
                 onChangeText={handleSsnFrontChange}
                 placeholder="YYMMDD"
@@ -250,7 +288,10 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
             <View style={[styles.underlineContainer, styles.ssnBackContainer]}>
               <TextInput
                 ref={ssnBackRef}
-                style={[styles.bareInput, { width: CONSTANTS.ssnBackInputWidth, textAlign: 'center', letterSpacing: 4 }]}
+                style={[
+                  styles.bareInput,
+                  { width: CONSTANTS.ssnBackInputWidth, textAlign: 'center', letterSpacing: 4 },
+                ]}
                 value={ssnBack}
                 onChangeText={handleSsnBackChange}
                 keyboardType="number-pad"
@@ -263,11 +304,23 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
 
         {step >= 3 && (
           <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
-            <TouchableOpacity style={styles.telecomSelector} onPress={() => setModalVisible(true)}>
-              <Text style={[styles.telecomText, telecom === TELECOM_PLACEHOLDER && styles.placeholderText]}>
+            <TouchableOpacity
+              style={styles.telecomSelector}
+              onPress={() => setModalVisible(true)}
+            >
+              <Text
+                style={[
+                  styles.telecomText,
+                  telecom === TELECOM_PLACEHOLDER && styles.placeholderText,
+                ]}
+              >
                 {telecom}
               </Text>
-              <Ionicons name="chevron-down" size={CONSTANTS.chevronIconSize} color={COLORS.textPrimary} />
+              <Ionicons
+                name="chevron-down"
+                size={CONSTANTS.chevronIconSize}
+                color={COLORS.textPrimary}
+              />
             </TouchableOpacity>
 
             <View style={[styles.underlineContainer, { marginTop: hp(32) }]}>
@@ -279,7 +332,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
                   setPhone(text.replace(/[^0-9]/g, ''));
                   setSubmitError('');
                 }}
-                placeholder="휴대폰 번호 (- 없이 입력)"
+                placeholder="휴대폰번호 (- 없이 입력)"
                 placeholderTextColor={COLORS.textTertiary}
                 keyboardType="number-pad"
                 maxLength={11}
@@ -291,7 +344,12 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         )}
       </ScrollView>
 
-      <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, CONSTANTS.bottomMinPadding) }]}>
+      <View
+        style={[
+          styles.bottomContainer,
+          { paddingBottom: Math.max(insets.bottom, CONSTANTS.bottomMinPadding) },
+        ]}
+      >
         <TouchableOpacity
           style={[styles.confirmButton, btnState.isActive && styles.activeButton]}
           disabled={!btnState.isActive}
@@ -314,7 +372,11 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
               <Text style={styles.modalTitle}>통신사를 선택해주세요</Text>
             </View>
             {TELECOMS.map((item) => (
-              <TouchableOpacity key={item} style={styles.modalItem} onPress={() => handleTelecomSelect(item)}>
+              <TouchableOpacity
+                key={item}
+                style={styles.modalItem}
+                onPress={() => handleTelecomSelect(item)}
+              >
                 <Text style={styles.modalItemText}>{item}</Text>
               </TouchableOpacity>
             ))}
@@ -330,7 +392,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         onConfirm={(agreed) => {
           setTermsAgreed(agreed);
           setTermsVisible(false);
-          handleSendCode(agreed);
+          void handleSendCode(agreed);
         }}
       />
     </KeyboardAvoidingView>

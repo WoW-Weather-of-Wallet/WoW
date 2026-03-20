@@ -25,6 +25,18 @@ export interface NativeSignupRequest {
   termsAgreed: boolean;
 }
 
+export interface NativeSsafySignupCheckRequest {
+  pendingToken: string;
+  gender: string;
+  phoneNumber: string;
+  birthDate: string;
+}
+
+export interface NativeSsafyRegisterRequest extends NativeSsafySignupCheckRequest {
+  alarmEnabled: boolean;
+  termsAgreed: boolean;
+}
+
 export interface NativeSignupResponse {
   userId: string;
   name: string;
@@ -80,8 +92,10 @@ export interface NativeChangePasswordRequest {
  * SSAFY 로그인 완료 후 앱 딥링크에서 읽어오는 세션/가입 분기 정보
  */
 export interface NativeSsafyCallbackResult {
-  accessToken: string;
-  user: {
+  accessToken?: string;
+  code?: string;
+  pendingToken?: string;
+  user?: {
     userId: string;
     name?: string;
     role?: string;
@@ -139,6 +153,7 @@ export interface NativeApiErrorResponse {
 
 // Shared axios instance for native services.
 // Calendar APIs reuse the same base URL and auth token injection as auth APIs.
+
 export const nativeApi = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
@@ -247,9 +262,32 @@ export const signup = async (payload: NativeSignupRequest) => {
   return response.data;
 };
 
+export const checkSsafySignup = async (payload: NativeSsafySignupCheckRequest) => {
+  const response = await nativeApi.post('/sso/providers/ssafy/check', {
+    ...payload,
+    phoneNumber: normalizePhoneNumber(payload.phoneNumber),
+  });
+  return response.data;
+};
+
+export const registerSsafy = async (payload: NativeSsafyRegisterRequest) => {
+  const response = await nativeApi.post<NativeLoginResponse>('/sso/providers/ssafy/register', {
+    ...payload,
+    phoneNumber: normalizePhoneNumber(payload.phoneNumber),
+  });
+  return response.data;
+};
+
 // 일반 회원가입 완료 후 Welcome 화면에서 호출하는 자동 로그인 API
 export const login = async (payload: NativeLoginRequest) => {
   const response = await nativeApi.post<NativeLoginResponse>('/api/v1/auth/login', payload);
+  return response.data;
+};
+
+export const exchangeSsafyToken = async (code: string) => {
+  const response = await nativeApi.post<NativeLoginResponse>('/sso/providers/ssafy/token', {
+    code,
+  });
   return response.data;
 };
 
@@ -335,19 +373,26 @@ export const parseSsafyCallbackUrl = (
   try {
     const params = getSearchParamsFromUrl(url);
     const accessToken = getParamValue(params, ['accessToken', 'token']);
+    const code = getParamValue(params, ['code']);
+    const pendingToken = getParamValue(params, ['pendingToken']);
 
-    if (!accessToken) {
+    if (!accessToken && !code && !pendingToken) {
       return null;
     }
 
     return {
-      accessToken,
-      user: {
-        userId: getParamValue(params, ['userId', 'loginId', 'username']) || 'ssafy-user',
-        name: getParamValue(params, ['name', 'userName', 'nickname']) || undefined,
-        role: getParamValue(params, ['role']) || undefined,
-      },
-      signupRequired:
+      accessToken: accessToken || undefined,
+      code: code || undefined,
+      pendingToken: pendingToken || undefined,
+      user:
+        accessToken || getParamValue(params, ['userId', 'loginId', 'username'])
+          ? {
+              userId: getParamValue(params, ['userId', 'loginId', 'username']) || 'ssafy-user',
+              name: getParamValue(params, ['name', 'userName', 'nickname']) || undefined,
+              role: getParamValue(params, ['role']) || undefined,
+            }
+          : undefined,
+      signupRequired: Boolean(pendingToken) ||
         getParamValue(params, ['signupRequired', 'needsSignup', 'onboardingRequired']) === 'true',
     };
   } catch (error) {
