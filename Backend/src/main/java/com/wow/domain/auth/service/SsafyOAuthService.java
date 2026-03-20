@@ -106,7 +106,7 @@ public class SsafyOAuthService {
                     userInfo.getUserId(),
                     Duration.ofSeconds(AUTH_CODE_TTL_SECONDS)
             );
-            return UriComponentsBuilder.fromUriString(buildAppRedirectUri("/callback"))
+            return UriComponentsBuilder.fromUriString(buildAppRedirectUri())
                     .queryParam("code", authCode)
                     .build()
                     .encode()
@@ -122,7 +122,7 @@ public class SsafyOAuthService {
                 Duration.ofMinutes(PENDING_TTL_MINUTES)
         );
 
-        return UriComponentsBuilder.fromUriString(buildAppRedirectUri("/register"))
+        return UriComponentsBuilder.fromUriString(buildAppRedirectUri())
                 .queryParam("pendingToken", pendingToken)
                 .build()
                 .encode()
@@ -322,10 +322,9 @@ public class SsafyOAuthService {
         );
     }
 
-    private String buildAppRedirectUri(String suffix) {
-        String normalizedBase = ssafyAppBaseUri.endsWith("/")
+    private String buildAppRedirectUri() {
+        return ssafyAppBaseUri.endsWith("/")
                 ? ssafyAppBaseUri.substring(0, ssafyAppBaseUri.length() - 1)
                 : ssafyAppBaseUri;
-        return normalizedBase + suffix;
     }
 }
