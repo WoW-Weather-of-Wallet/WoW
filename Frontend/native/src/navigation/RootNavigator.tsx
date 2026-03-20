@@ -3,6 +3,7 @@
 // 인증 전 스택과 인증 후 메인 탭을 한 곳에서 관리합니다.
 // =============================================
 
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SplashScreen from '../screens/auth/SplashScreen';
@@ -23,6 +24,9 @@ import TermsPdfScreen from '../screens/common/TermsPdfScreen';
 import AiLoadingScreen from '../screens/ai/AiLoadingScreen';
 import AiResultScreen from '../screens/ai/AiResultScreen';
 import AiNotification from '../components/common/AiNotification';
+import { useNotificationObserver } from '../hooks/useNotificationObserver';
+import { useAuthStore } from '../store/authStore';
+import { fcmService } from '../services/fcmService';
 
 const Stack = createNativeStackNavigator();
 
@@ -35,6 +39,33 @@ const Stack = createNativeStackNavigator();
 export default function RootNavigator() {
   return (
     <NavigationContainer>
+      <NavigationWrapper />
+    </NavigationContainer>
+  );
+}
+
+/**
+ * NavigationWrapper
+ * NavigationContainer 내부에서만 사용할 수 있는 훅(useNavigation 등)을 관리합니다.
+ */
+function NavigationWrapper() {
+  const { isAuthenticated } = useAuthStore();
+
+  // FCM 알림 클릭 감지 및 페이지 이동 옵저버 활성화
+  useNotificationObserver();
+
+  // [FCM] 인증 상태가 되면 토큰을 서버에 등록합니다.
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Zustand 상태 반영 및 axios default header 설정 대기 후 실행
+      setTimeout(() => {
+        fcmService.registerFcmToken();
+      }, 500);
+    }
+  }, [isAuthenticated]);
+
+  return (
+    <>
       <Stack.Navigator
         initialRouteName="Splash"
         screenOptions={{
@@ -177,6 +208,6 @@ export default function RootNavigator() {
         />
       </Stack.Navigator>
       <AiNotification />
-    </NavigationContainer>
+    </>
   );
 }
