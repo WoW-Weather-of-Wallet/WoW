@@ -52,4 +52,5 @@ cloud:
 
 # [added] 이유: 프로덕션에서 Swagger UI 비공개 처리
 app:
+  ssafy-app-base-uri: ${APP_SSAFY_APP_BASE_URI:wow://auth/ssafy}
   swagger-public: false
