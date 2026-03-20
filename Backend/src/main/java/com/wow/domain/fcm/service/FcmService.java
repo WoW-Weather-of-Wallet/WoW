@@ -8,14 +8,12 @@ import com.google.firebase.messaging.Notification;
 import com.wow.domain.fcm.entity.FcmToken;
 import com.wow.domain.fcm.repository.FcmTokenRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FcmService {
@@ -38,20 +36,16 @@ public class FcmService {
 
     @Transactional
     public void deleteTokensByUserId(String userId) {
-
         fcmTokenRepository.deleteByUserId(userId);
     }
 
     public void sendToUser(String userId, String title, String body) {
-
         if (firebaseMessaging == null) {
-            log.info("Firebase 미설정 - FCM 전송 건너뜀. userId={}", userId);
             return;
         }
 
         List<FcmToken> tokens = fcmTokenRepository.findAllByUserId(userId);
         if (tokens.isEmpty()) {
-            log.info("FCM 토큰 없음. userId={}", userId);
             return;
         }
 
@@ -61,7 +55,6 @@ public class FcmService {
     }
 
     private void sendMessage(String token, String title, String body) {
-
         Message message = Message.builder()
                 .setToken(token)
                 .setNotification(Notification.builder()
@@ -71,16 +64,12 @@ public class FcmService {
                 .build();
 
         try {
-            String response = firebaseMessaging.send(message);
-            log.info("FCM 전송 성공: {}", response);
+            firebaseMessaging.send(message);
         } catch (FirebaseMessagingException e) {
-            log.info("FCM 전송 실패: token={}..., error={}", token.substring(0, 10), e.getMessage());
             if (e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
                 fcmTokenRepository.deleteByToken(token);
-                log.info("만료된 FCM 토큰 삭제: token={}...", token.substring(0, 10));
             }
         }
-
     }
 
 }
