@@ -26,19 +26,13 @@ public class FcmService {
 
     @Transactional
     public void saveOrUpdateToken(String userId, String token, String deviceType) {
-        fcmTokenRepository.findByToken(token)
-                .ifPresentOrElse(
-                        existing -> {},
-                        () -> fcmTokenRepository.findByUserIdAndDeviceType(userId, deviceType)
-                                .ifPresentOrElse(
-                                        existing -> existing.updateToken(token),
-                                        () -> fcmTokenRepository.save(FcmToken.builder()
-                                                .userId(userId)
-                                                .token(token)
-                                                .deviceType(deviceType)
-                                                .build())
-                                )
-                );
+        if (fcmTokenRepository.findByToken(token).isEmpty()) {
+            fcmTokenRepository.save(FcmToken.builder()
+                    .userId(userId)
+                    .token(token)
+                    .deviceType(deviceType)
+                    .build());
+        }
     }
 
     @Transactional
