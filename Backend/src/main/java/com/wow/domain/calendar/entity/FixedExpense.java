@@ -1,6 +1,6 @@
 package com.wow.domain.calendar.entity;
 
-import com.wow.domain.expensecategory.entity.ExpenseCategory;
+import com.wow.domain.account.entity.Account;
 import com.wow.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -18,12 +18,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "fixed_expenses")
+@Table(name = "fixed_expense")  // ← 테이블명 수정 (fixed_expenses → fixed_expense)
 public class FixedExpense {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "fixed_expense_id", nullable = false)
+    @Column(name = "id", nullable = false)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,26 +32,32 @@ public class FixedExpense {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private ExpenseCategory category;
+    @JoinColumn(name = "account_id")
+    private Account account;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "transaction_id")
+    private Long transactionId;
+
+    @Column(name = "icon", length = 10)
+    private String icon;
+
+    @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(nullable = false, precision = 18, scale = 4)
-    private BigDecimal amount;
+    @Column(nullable = false)
+    private Integer amount;
 
-    // 매월 결제일 (1~31)
     @Column(name = "due_day", nullable = false)
     private Integer dueDay;
 
-    // 자동이체 여부
-    @Column(name = "is_auto", nullable = false)
+    @Column(name = "is_auto")
     private Boolean isAuto;
 
-    // 활성화 여부
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive;
+    @Column(name = "is_enable")  // ← is_active → is_enable 로 수정
+    private Boolean isEnable;
+
+    @Column(name = "payment_status", length = 20)
+    private String paymentStatus;
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)

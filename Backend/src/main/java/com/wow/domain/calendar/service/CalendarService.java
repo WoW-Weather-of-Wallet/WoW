@@ -233,7 +233,7 @@ public class CalendarService {
                             .amount(BigDecimal.valueOf(item.getAmount()))
                             .merchantName(item.getMerchantName())
                             .transactionAt(item.getTransactionDate().atStartOfDay())
-                            .createdAt(LocalDateTime.now())
+//                            .createdAt(LocalDateTime.now())
                             .build();
                 })
                 .toList();
@@ -268,7 +268,7 @@ public class CalendarService {
                             .amount(BigDecimal.valueOf(item.getAmount()))
                             .merchantName(item.getMerchantName())
                             .transactionAt(item.getTransactionDate().atStartOfDay())
-                            .createdAt(LocalDateTime.now())
+//                            .createdAt(LocalDateTime.now())
                             .build();
                 })
                 .toList();
@@ -289,10 +289,11 @@ public class CalendarService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         List<FixedExpense> fixedExpenses =
-                fixedExpenseRepository.findByUser_IdAndIsActiveTrue(userId);
+                fixedExpenseRepository.findByUser_IdAndIsEnableTrue(userId);
 
         List<FixedExpenseResponse.FixedExpenseItem> items = fixedExpenses.stream()
-                .map(fe -> FixedExpenseResponse.FixedExpenseItem.of(fe, year, month))
+                .map(fe -> FixedExpenseResponse.FixedExpenseItem.of(
+                        fe, year, month, transactionRepository))  // ← transactionRepository 추가
                 .toList();
 
         int totalAmount = items.stream()

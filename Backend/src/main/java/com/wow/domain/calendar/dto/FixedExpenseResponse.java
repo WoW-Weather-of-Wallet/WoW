@@ -1,8 +1,16 @@
 package com.wow.domain.calendar.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.wow.domain.calendar.entity.FixedExpense;
+import com.wow.domain.calendar.repository.TransactionRepository;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Getter
@@ -18,36 +26,79 @@ public class FixedExpenseResponse {
 
         private String name;
         private int amount;
-        private int dueDay;
-        private String paymentStatus;  // "납부완료" or "D-N"
+        private int dueDay;          // 원래 결제일
+        private int actualDueDay;    // 주말 보정된 실제 결제일
+        private String paymentStatus;
 
         @JsonProperty("isAuto")
-        private boolean isAuto;
+        private boolean auto;
 
-        // paymentStatus 계산
-        // 오늘 날짜 기준으로 dueDay와 비교
         public static FixedExpenseItem of(
-                com.wow.domain.calendar.entity.FixedExpense entity,
-                int year, int month) {
+                FixedExpense entity,
+                int year, int month,
+                TransactionRepository transactionRepository) {
 
-            java.time.LocalDate today = java.time.LocalDate.now();
-            java.time.LocalDate dueDate = java.time.LocalDate.of(year, month, entity.getDueDay());
+            // 1) 원래 결제일
+            int dueDay = entity.getDueDay();
 
+            // 2) 주말이면 다음 평일로 이월
+            LocalDate dueDate = adjustToWeekday(year, month, dueDay);
+            int actualDueDay = dueDate.getDayOfMonth();
+
+            // 3) 해당 월 거래내역에서 납부완료 여부 확인
+            LocalDateTime monthStart = LocalDateTime.of(year, month, 1, 0, 0);
+            LocalDateTime monthEnd = LocalDateTime.of(
+                    year, month,
+                    YearMonth.of(year, month).lengthOfMonth(),
+                    23, 59, 59);
+
+            boolean isPaid = transactionRepository
+                    .existsByUser_IdAndMerchantNameAndTransactionAtBetween(
+                            entity.getUser().getId(),
+                            entity.getName(),
+                            monthStart,
+                            monthEnd);
+
+            // 4) paymentStatus 계산
             String paymentStatus;
-            if (!today.isBefore(dueDate)) {
+            if (isPaid) {
                 paymentStatus = "납부완료";
             } else {
-                long daysLeft = java.time.temporal.ChronoUnit.DAYS.between(today, dueDate);
-                paymentStatus = "D-" + daysLeft;
+                LocalDate today = LocalDate.now();
+                if (!today.isBefore(dueDate)) {
+                    paymentStatus = "납부완료";
+                } else {
+                    long daysLeft = ChronoUnit.DAYS.between(today, dueDate);
+                    paymentStatus = "D-" + daysLeft;
+                }
             }
 
             return new FixedExpenseItem(
                     entity.getName(),
                     entity.getAmount().intValue(),
-                    entity.getDueDay(),
+                    dueDay,
+                    actualDueDay,
                     paymentStatus,
                     entity.getIsAuto()
             );
+        }
+
+        // 주말이면 다음 평일(월요일)로 이월
+        private static LocalDate adjustToWeekday(int year, int month, int dueDay) {
+            // 해당 월의 마지막 날 초과 방지
+            int lastDay = YearMonth.of(year, month).lengthOfMonth();
+            int safeDueDay = Math.min(dueDay, lastDay);
+
+            LocalDate date = LocalDate.of(year, month, safeDueDay);
+
+            // 토요일이면 +2일(월요일), 일요일이면 +1일(월요일)
+            if (date.getDayOfWeek() == DayOfWeek.SATURDAY) {
+                date = date.plusDays(2);
+            } else if (date.getDayOfWeek() == DayOfWeek.SUNDAY) {
+                date = date.plusDays(1);
+            }
+
+            return date;
         }
     }
 }
