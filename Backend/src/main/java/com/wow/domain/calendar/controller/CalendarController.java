@@ -51,7 +51,7 @@ public class CalendarController {
 
         Long userId = userDetails.getId();
         CalendarHeaderResponse response = calendarService.getCalendarHeader(userId, year, month);
-        return ResponseEntity.ok(ApiResponse.success(200, "\uCEA8\uB9B0\uB354 \uD5E4\uB354 \uC870\uD68C \uC131\uACF5", response));
+        return ResponseEntity.ok(ApiResponse.success(200, "캘린더 헤더 조회 성공", response));
     }
 
     @Operation(
