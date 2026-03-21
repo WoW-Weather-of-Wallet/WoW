@@ -1,4 +1,4 @@
-﻿package com.wow.domain.calendar.controller;
+package com.wow.domain.calendar.controller;
 
 import com.wow.domain.calendar.dto.*;
 import com.wow.domain.calendar.service.CalendarService;
@@ -80,7 +80,7 @@ public class CalendarController {
     }
 
     @Operation(
-            summary = "일별 캘린더 상세 조회",
+            summary = "일별 거래내역 조회",
             description = "선택한 날짜의 날씨, 지출 요약, 거래 내역, 메모를 조회합니다."
     )
     @GetMapping("/daily")
