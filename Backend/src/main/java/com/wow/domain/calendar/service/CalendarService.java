@@ -69,13 +69,20 @@ public class CalendarService {
         LocalDate today = LocalDate.now();
 
         return calendarRepository.findMonthlyByUserIdWithWeather(userId, startDate, endDate).stream()
-                .map(calendar -> new CalendarMonthlyResponse(
-                        calendar.getDate(),
-                        resolveDayType(calendar.getDate(), today),
-                        calendar.getDailyTotal(),
-                        calendar.getSpendingWeather() != null ? calendar.getSpendingWeather().getIconCode() : null,
-                        resolveForecastCode(calendar.getDate(), today)
-                ))
+                .map(calendar -> {
+                    DayType dayType = resolveDayType(calendar.getDate(), today);
+                    String iconCode = dayType == DayType.FAR_FUTURE
+                            ? null
+                            : (calendar.getSpendingWeather() != null ? calendar.getSpendingWeather().getIconCode() : null);
+
+                    return new CalendarMonthlyResponse(
+                            calendar.getDate(),
+                            dayType,
+                            calendar.getDailyTotal(),
+                            iconCode,
+                            resolveForecastCode(calendar.getDate(), today)
+                    );
+                })
                 .toList();
     }
 
