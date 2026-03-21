@@ -19,6 +19,7 @@ import { styles, CONSTANTS } from './CreateAccountScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import { checkUserId, signup, type NativeSignupRequest } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
+import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { validateId, validatePassword, validateName, validatePhone } from '../../utils/validation';
 
 type CreateAccountRouteParams = {
@@ -30,12 +31,6 @@ type CreateAccountRouteParams = {
   ssnBack?: string;
   termsAgreed?: boolean;
   ssafyOauthId?: string;
-};
-
-type SignupErrorPresentation = {
-  title: string;
-  inlineMessage: string;
-  alertMessage: string;
 };
 
 /**
@@ -75,76 +70,6 @@ const buildGender = (ssnBack?: string) => {
   // 홀수면 남성, 짝수면 여성 (한국 주민등록번호 표준 규칙)
   const isOdd = parseInt(ssnBack, 10) % 2 !== 0;
   return isOdd ? 'M' : 'F';
-};
-
-const buildSignupErrorPresentation = (error: unknown): SignupErrorPresentation => {
-  const fallbackMessage = '회원가입 처리 중 문제가 발생했어요.';
-  const message = extractApiErrorMessage(error, fallbackMessage);
-  const apiError = error as
-    | {
-        response?: {
-          status?: number;
-          data?: {
-            errorMessage?: string;
-          };
-        };
-      }
-    | undefined;
-
-  const status = apiError?.response?.status;
-  const serverMessage = apiError?.response?.data?.errorMessage ?? message;
-
-  // 수정 전 코드:
-  // - 회원가입 실패는 모든 케이스를 같은 제목/본문으로 Alert 처리했습니다.
-  //
-  // 변경 이유:
-  // - SMS 재인증 필요, Solapi 로컬 설정 문제, 일반 저장 실패를 구분하지 않으면
-  //   사용자가 다음 액션을 판단하기 어렵습니다.
-  if (serverMessage.includes('SMS 인증이 필요합니다')) {
-    return {
-      title: '문자 인증 필요',
-      inlineMessage: '문자 인증이 만료되었어요. 인증을 다시 완료한 뒤 계정을 만들어주세요.',
-      alertMessage: '문자 인증이 만료되었어요. 인증번호 확인 단계부터 다시 진행해주세요.',
-    };
-  }
-
-  if (serverMessage.includes('공인 IP')) {
-    return {
-      title: '로컬 SMS 설정 필요',
-      inlineMessage: '현재 로컬 서버 IP가 Solapi에 등록되지 않아 문자 기능을 사용할 수 없어요.',
-      alertMessage: '현재 로컬 서버 공인 IP가 Solapi 허용 IP에 등록되지 않았습니다. 백엔드 로컬 SMS 설정을 확인해주세요.',
-    };
-  }
-
-  if (serverMessage.includes('발신번호')) {
-    return {
-      title: 'SMS 발신 설정 오류',
-      inlineMessage: '문자 발신번호 설정 문제로 회원가입을 진행할 수 없어요.',
-      alertMessage: 'SMS 발신번호가 Solapi에 등록되어 있지 않습니다. 백엔드 설정을 확인해주세요.',
-    };
-  }
-
-  if (serverMessage.includes('API 인증 정보')) {
-    return {
-      title: 'SMS API 설정 오류',
-      inlineMessage: '문자 서비스 인증 설정 문제로 회원가입을 진행할 수 없어요.',
-      alertMessage: 'SMS API 인증 정보가 올바르지 않습니다. 백엔드 환경변수를 확인해주세요.',
-    };
-  }
-
-  if (status === 500) {
-    return {
-      title: '회원가입 저장 실패',
-      inlineMessage: '회원 정보 저장 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.',
-      alertMessage: '회원 정보 저장 중 문제가 발생했어요. 같은 문제가 반복되면 서버 로그를 확인해주세요.',
-    };
-  }
-
-  return {
-    title: '회원가입 실패',
-    inlineMessage: message,
-    alertMessage: message,
-  };
 };
 
 export default function CreateAccountScreen({ route, navigation }: any) {
@@ -302,7 +227,10 @@ export default function CreateAccountScreen({ route, navigation }: any) {
           }),
       );
     } catch (error: any) {
-      const presentation = buildSignupErrorPresentation(error);
+      const presentation = buildAuthErrorPresentation(error, {
+        flow: 'signup',
+        fallbackMessage: '회원가입 처리 중 문제가 발생했어요.',
+      });
       setSubmitError(presentation.inlineMessage);
       Alert.alert(presentation.title, presentation.alertMessage);
     } finally {

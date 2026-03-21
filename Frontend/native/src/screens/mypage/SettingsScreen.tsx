@@ -38,6 +38,7 @@ import {
   type NativeUserProfileResponse,
 } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
+import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { validatePassword } from '../../utils/validation';
 
 type EditMode = 'profile' | 'phone' | 'password' | null;
@@ -181,11 +182,11 @@ export default function SettingsScreen() {
       setIsPhoneVerified(false);
       Alert.alert('인증번호 발송', '인증번호를 문자로 전송했습니다.');
     } catch (error) {
-      const message = extractApiErrorMessage(
-        error,
-        '인증번호를 보내지 못했어요. 다시 시도해주세요.',
-      );
-      Alert.alert('인증번호 발송 실패', message);
+      const presentation = buildAuthErrorPresentation(error, {
+        flow: 'sms-send',
+        fallbackMessage: '인증번호를 보내지 못했어요. 다시 시도해주세요.',
+      });
+      Alert.alert(presentation.title, presentation.alertMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -208,11 +209,11 @@ export default function SettingsScreen() {
       setIsPhoneVerified(true);
       Alert.alert('인증 완료', '휴대폰 번호 인증이 완료되었습니다.');
     } catch (error) {
-      const message = extractApiErrorMessage(
-        error,
-        '인증번호를 확인하지 못했어요. 다시 시도해주세요.',
-      );
-      Alert.alert('인증 실패', message);
+      const presentation = buildAuthErrorPresentation(error, {
+        flow: 'sms-verify',
+        fallbackMessage: '인증번호를 확인하지 못했어요. 다시 시도해주세요.',
+      });
+      Alert.alert(presentation.title, presentation.alertMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -289,13 +290,25 @@ export default function SettingsScreen() {
 
       closeEditor();
     } catch (error) {
-      const message = extractApiErrorMessage(
-        error,
-        editMode === 'password'
-          ? '비밀번호를 변경하지 못했어요.'
-          : '설정 변경을 저장하지 못했어요.',
-      );
-      Alert.alert('설정 저장 실패', message);
+      if (editMode === 'phone') {
+        const presentation = buildAuthErrorPresentation(error, {
+          flow: 'phone-update',
+          fallbackMessage: '휴대폰 번호 변경을 저장하지 못했어요.',
+        });
+        Alert.alert(presentation.title, presentation.alertMessage);
+      } else if (editMode === 'password') {
+        const presentation = buildAuthErrorPresentation(error, {
+          flow: 'password-reset',
+          fallbackMessage: '비밀번호를 변경하지 못했어요.',
+        });
+        Alert.alert(presentation.title, presentation.alertMessage);
+      } else {
+        const message = extractApiErrorMessage(
+          error,
+          '설정 변경을 저장하지 못했어요.',
+        );
+        Alert.alert('설정 저장 실패', message);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -631,5 +644,4 @@ export default function SettingsScreen() {
 
   );
 }
-
 
