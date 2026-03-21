@@ -523,4 +523,3 @@ function resolveCategoryId(category: string) {
 
   return categoryId;
 }
-

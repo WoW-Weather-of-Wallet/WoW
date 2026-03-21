@@ -7,7 +7,22 @@ import { COLORS, RADIUS, hp, wp } from '../../constants/theme';
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.backgroundSecondary },
-  contentContainer: { paddingHorizontal: wp(20), gap: hp(18) },
-  /** 캘린더/내역 탭 전환 영역 배경 */
-  tabWrap: { backgroundColor: COLORS.background, borderRadius: RADIUS.xxl, padding: wp(8) },
+  topDock: {
+    paddingHorizontal: wp(20),
+    paddingBottom: hp(10),
+    backgroundColor: COLORS.backgroundSecondary,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: wp(20),
+    paddingTop: hp(14),
+    gap: hp(18),
+  },
+  tabWrap: {
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.xxl,
+    padding: wp(8),
+  },
 });

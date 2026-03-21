@@ -82,16 +82,15 @@ export default function CalendarScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.backgroundSecondary} />
 
-      <ScrollView
-        contentContainerStyle={[
-          styles.contentContainer,
-          {
-            paddingTop: insets.top + hp(12),
-            paddingBottom: insets.bottom + hp(130),
-          },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={[styles.topDock, { paddingTop: insets.top + hp(12) }]}>
+        {/*
+          원래 화면 기준:
+          - 보라색 히어로 카드가 화면 첫 인상을 만들고 있었습니다.
+
+          변경 이유:
+          - 새 상단 바 대신 기존 히어로 카드를 그대로 고정해, 익숙한 UI를 유지하면서도
+            월 이동과 내역 추가 조작을 항상 상단에서 할 수 있게 맞춥니다.
+        */}
         <CalendarHeroCard
           overview={overview}
           monthLabel={monthLabel}
@@ -102,7 +101,18 @@ export default function CalendarScreen() {
           onPressNextMonth={() => handleMoveMonth('next')}
           onPressAdd={() => setIsAddEntryVisible(true)}
         />
+      </View>
 
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.contentContainer,
+          {
+            paddingBottom: insets.bottom + hp(130),
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.tabWrap}>
           <CalendarTabSwitcher activeTab={activeTab} onChange={setActiveTab} />
         </View>
@@ -184,5 +194,3 @@ export default function CalendarScreen() {
     </View>
   );
 }
-
-
