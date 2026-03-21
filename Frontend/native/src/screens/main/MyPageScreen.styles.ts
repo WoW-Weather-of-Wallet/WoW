@@ -147,118 +147,26 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     color: COLORS.primary,
   },
-  creditCard: {
-    borderRadius: RADIUS.xxl,
-    paddingHorizontal: wp(18),
-    paddingTop: hp(18),
-    paddingBottom: hp(16),
-    marginBottom: hp(12),
-  },
-  creditCardTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: hp(32),
-  },
-  creditCardType: {
-    fontSize: fp(12),
-    fontFamily: FONTS.medium,
-    color: COLORS.cardOverlay1,
-    marginBottom: hp(6),
-  },
-  creditCardName: {
-    fontSize: fp(21),
-    fontFamily: FONTS.bold,
-    color: COLORS.textInverse,
-  },
-  creditCardBottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  creditCardNumber: {
-    fontSize: fp(16),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textInverse,
-    marginBottom: hp(6),
-    letterSpacing: 0.6,
-  },
-  creditCardOwner: {
-    fontSize: fp(12),
-    fontFamily: FONTS.medium,
-    color: COLORS.cardOverlay2,
-  },
-  creditCardBilling: {
-    fontSize: fp(12),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.cardOverlay3,
-  },
-  accountRow: {
-    flexDirection: 'row',
+  emptyStateCard: {
     alignItems: 'center',
-    justifyContent: 'space-between',
     backgroundColor: COLORS.backgroundSecondary,
     borderRadius: RADIUS.xl,
-    paddingHorizontal: wp(14),
-    paddingVertical: hp(14),
-    marginBottom: hp(10),
+    paddingHorizontal: wp(18),
+    paddingVertical: hp(20),
+    gap: hp(8),
   },
-  accountLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    paddingRight: wp(10),
-  },
-  accountIconCircle: {
-    width: wp(42),
-    height: wp(42),
-    borderRadius: wp(21),
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: wp(12),
-  },
-  accountTonePrimary: {
-    backgroundColor: COLORS.accentPrimaryLight,
-  },
-  accountToneMint: {
-    backgroundColor: COLORS.accentMintLight,
-  },
-  accountToneGold: {
-    backgroundColor: COLORS.accentGoldLight,
-  },
-  accountTextBlock: {
-    flex: 1,
-  },
-  accountBankName: {
+  emptyStateTitle: {
     fontSize: fp(15),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    marginBottom: hp(4),
+    textAlign: 'center',
   },
-  accountAlias: {
+  emptyStateDescription: {
     fontSize: fp(12),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.primary,
-    marginBottom: hp(4),
-  },
-  accountNumber: {
-    fontSize: fp(12),
+    lineHeight: fp(18),
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
-  },
-  accountRight: {
-    alignItems: 'flex-end',
-  },
-  accountBalance: {
-    fontSize: fp(16),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    marginBottom: hp(4),
-  },
-  accountBalanceLabel: {
-    fontSize: fp(11),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
+    textAlign: 'center',
   },
   shortcutRow: {
     flexDirection: 'row',
