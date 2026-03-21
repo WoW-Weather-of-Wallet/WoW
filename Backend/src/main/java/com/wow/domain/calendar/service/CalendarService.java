@@ -1,10 +1,12 @@
 package com.wow.domain.calendar.service;
 
 import com.wow.domain.calendar.dto.*;
+import com.wow.domain.calendar.entity.FixedExpense;
 import com.wow.domain.calendar.entity.SpendingWeather;
 import com.wow.domain.calendar.entity.Transaction;
 import com.wow.domain.calendar.repository.CalendarRepository;
 import com.wow.domain.calendar.repository.ExpenseCategoryRepository;
+import com.wow.domain.calendar.repository.FixedExpenseRepository;
 import com.wow.domain.calendar.repository.TransactionRepository;
 import com.wow.domain.expensecategory.entity.ExpenseCategory;
 import com.wow.domain.user.entity.User;
@@ -45,6 +47,8 @@ public class CalendarService {
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
     private final ExpenseCategoryRepository expenseCategoryRepository;
+    private final FixedExpenseRepository fixedExpenseRepository;
+
 
     @Value("${flask.url}")
     private String flaskUrl;
@@ -252,6 +256,26 @@ public class CalendarService {
                 .toList();
 
         return new TransactionCustomResponse(entities.size(), responseItems);
+    }
+
+    // ── ⑤ 고정지출 목록 조회 ──
+    public FixedExpenseResponse getFixedExpenses(Long userId, int year, int month) {
+
+        userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        List<FixedExpense> fixedExpenses =
+                fixedExpenseRepository.findByUser_IdAndIsActiveTrue(userId);
+
+        List<FixedExpenseResponse.FixedExpenseItem> items = fixedExpenses.stream()
+                .map(fe -> FixedExpenseResponse.FixedExpenseItem.of(fe, year, month))
+                .toList();
+
+        int totalAmount = items.stream()
+                .mapToInt(FixedExpenseResponse.FixedExpenseItem::getAmount)
+                .sum();
+
+        return new FixedExpenseResponse(totalAmount, items);
     }
 
     // ── xls/xlsx → csv 변환 ──
