@@ -95,3 +95,6 @@ coverage/
 .parcel-cache/
 .turbo/
 .eslintcache
+
+# 로컬 코딩 컨벤션
+coding_convention.md
