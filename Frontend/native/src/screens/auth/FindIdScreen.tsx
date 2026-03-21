@@ -17,7 +17,7 @@ import { COLORS, wp, hp } from '../../constants/theme';
 import IdentityVerificationForm, { IdentityData } from '../../components/auth/IdentityVerificationForm';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import { sendSmsCode } from '../../services/auth';
-import { extractApiErrorMessage } from '../../utils/error';
+import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 
 export default function FindIdScreen() {
   const navigation = useNavigation<any>();
@@ -47,11 +47,11 @@ export default function FindIdScreen() {
         flow: 'FindId',
       });
     } catch (error) {
-      const message = extractApiErrorMessage(
-        error,
-        '인증번호 발송에 실패했어요. 다시 시도해 주세요.',
-      );
-      Alert.alert('오류', message);
+      const presentation = buildAuthErrorPresentation(error, {
+        flow: 'sms-send',
+        fallbackMessage: '인증번호 발송에 실패했어요. 다시 시도해 주세요.',
+      });
+      Alert.alert(presentation.title, presentation.alertMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -100,5 +100,4 @@ export default function FindIdScreen() {
     </View>
   );
 }
-
 
