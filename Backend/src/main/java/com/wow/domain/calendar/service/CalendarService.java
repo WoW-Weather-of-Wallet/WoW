@@ -65,12 +65,21 @@ public class CalendarService {
 
     public CalendarDailyResponse getCalendarDaily(Long userId, LocalDate date) {
         LocalDate today = LocalDate.now();
+        LocalDateTime dayStart = date.atStartOfDay();
+        LocalDateTime dayEnd = date.plusDays(1).atStartOfDay();
         DailyWeatherInfo weatherInfo = getDailyWeatherInfo(userId, date);
         Integer forecastCode = resolveForecastCode(date, today);
+        List<CalendarDailyResponse.TransactionItem> transactions = transactionRepository
+                .findDailyByUserIdWithCategory(userId, dayStart, dayEnd).stream()
+                .map(transaction -> new CalendarDailyResponse.TransactionItem(
+                        transaction.getMerchantName(),
+                        transaction.getCategory().getCategoryName(),
+                        transaction.getCategory().getCategoryIcon(),
+                        transaction.getAmount().intValue()
+                ))
+                .toList();
 
-        CalendarDailyResponse.Weather weather = forecastCode == null
-                ? null
-                : CalendarDailyResponse.Weather.builder()
+        CalendarDailyResponse.Weather weather = CalendarDailyResponse.Weather.builder()
                 .iconCode(weatherInfo.iconCode())
                 .weatherName(weatherInfo.weatherName())
                 .description(weatherInfo.description())
@@ -85,7 +94,7 @@ public class CalendarService {
                                 .totalExpense(calendar.getDailyTotal() != null ? calendar.getDailyTotal().intValue() : null)
                                 .transactionCount(calendar.getTransactionCount())
                                 .build())
-                        .transactions(List.of())
+                        .transactions(transactions)
                         .memo(calendar.getMemo())
                         .build())
                 .orElseGet(() -> CalendarDailyResponse.builder()
@@ -95,7 +104,7 @@ public class CalendarService {
                                 .totalExpense(null)
                                 .transactionCount(null)
                                 .build())
-                        .transactions(List.of())
+                        .transactions(transactions)
                         .memo(null)
                         .build());
     }
