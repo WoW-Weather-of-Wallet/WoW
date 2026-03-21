@@ -6,6 +6,7 @@ import com.wow.domain.security.CustomUserDetails;
 import com.wow.global.exception.BadRequestException;
 import com.wow.global.exception.InvalidTokenException;
 import com.wow.global.common.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,8 +31,12 @@ public class CalendarController {
 
     private final CalendarService calendarService;
 
+    @Operation(
+            summary = "캘린더 헤더 조회",
+            description = "캘린더 헤더로 오늘 날씨, 설명, 절약금액을 조회합니다."
+    )
     @GetMapping("/header")
-    public ResponseEntity<CalendarHeaderResponse> getCalendarHeader(
+    public ResponseEntity<ApiResponse<CalendarHeaderResponse>> getCalendarHeader(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam int year,
             @RequestParam int month
@@ -46,7 +51,30 @@ public class CalendarController {
 
         Long userId = userDetails.getId();
         CalendarHeaderResponse response = calendarService.getCalendarHeader(userId, year, month);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(200, "캘린더 헤더 조회 성공", response));
+    }
+
+    @Operation(
+            summary = "월별 캘린더 내역 조회",
+            description = "현재 월에 해당하는 날짜별 날씨 정보 및 일별 지출 가격을 조회합니다."
+    )
+    @GetMapping("/monthly")
+    public ResponseEntity<ApiResponse<List<CalendarMonthlyResponse>>> getCalendarMonthly(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+        if (userDetails == null) {
+            throw new InvalidTokenException("인증 정보가 유효하지 않습니다.");
+        }
+
+        if (month < 1 || month > 12) {
+            throw new BadRequestException("month는 1~12 범위여야 합니다.");
+        }
+
+        Long userId = userDetails.getId();
+        List<CalendarMonthlyResponse> response = calendarService.getCalendarMonthly(userId, year, month);
+        return ResponseEntity.ok(ApiResponse.success(200, "캘린더 조회 성공", response));
     }
 
     @PostMapping("/transactions/csv")
