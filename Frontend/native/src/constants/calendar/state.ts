@@ -59,7 +59,10 @@ export function buildFallbackDetail(
   };
 }
 
-const BASE_MONTH_DATE = new Date(2025, 5, 1);
+// Default the calendar to the real current month so live header data appears
+// as soon as the user opens the screen.
+const currentDate = new Date();
+const BASE_MONTH_DATE = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
 
 export function createDisplayedMonth(offset: number) {
   return new Date(BASE_MONTH_DATE.getFullYear(), BASE_MONTH_DATE.getMonth() + offset, 1);

@@ -13,15 +13,14 @@ import { Ionicons } from '@expo/vector-icons';
 import StepIndicator from '../../components/common/StepIndicator';
 import { styles } from './WelcomeScreen.styles';
 import { COLORS, wp, hp } from '../../constants/theme';
-import { login } from '../../services/auth';
+import { login, registerSsafy } from '../../services/auth';
 import { useAuthStore } from '../../store/authStore';
 import { extractApiErrorMessage } from '../../utils/error';
 
 type WelcomeRouteParams = {
-  // CreateAccount 완료 후 Welcome 화면으로 넘기는 가입 정보 요약 데이터
   signupMode?: 'normal' | 'ssafy';
   userId?: string;
-  ssafyOauthId?: string;
+  pendingToken?: string;
   pw?: string;
   name?: string;
   birthDate?: string;
@@ -39,24 +38,55 @@ export default function WelcomeScreen({ route, navigation }: any) {
   const isSsafySignup = signupMode === 'ssafy';
   const [isConfirming, setIsConfirming] = useState(false);
 
-  // Welcome 확인 버튼 처리
-  // 일반 회원가입은 POST /api/v1/auth/login 으로 자동 로그인 후 MainTabs로 이동한다.
-  // SSAFY 회원가입은 이미 열린 세션을 그대로 사용해 MainTabs로 이동한다.
   const handleConfirm = async () => {
     if (isConfirming) {
       return;
     }
 
     if (isSsafySignup) {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainTabs' }],
-      });
+      if (!routeParams.pendingToken || !routeParams.birthDate || !routeParams.gender || !routeParams.phoneNumber) {
+        Alert.alert('회원가입 정보 오류', 'SSAFY 회원가입 정보를 다시 확인해 주세요.');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        });
+        return;
+      }
+
+      setIsConfirming(true);
+      try {
+        const registerResponse = await registerSsafy({
+          pendingToken: routeParams.pendingToken,
+          phoneNumber: routeParams.phoneNumber,
+          birthDate: routeParams.birthDate,
+          gender: routeParams.gender,
+          termsAgreed: routeParams.termsAgreed === true,
+          alarmEnabled: routeParams.alarmEnabled !== false,
+        });
+
+        loginToStore({
+          accessToken: registerResponse.accessToken,
+          user: registerResponse.user,
+        });
+
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainTabs' }],
+        });
+      } catch (error: any) {
+        const message = extractApiErrorMessage(
+          error,
+          'SSAFY 회원가입 완료 중 문제가 발생했습니다. 다시 시도해 주세요.',
+        );
+        Alert.alert('SSAFY 회원가입 실패', message);
+      } finally {
+        setIsConfirming(false);
+      }
       return;
     }
 
     if (!routeParams.userId || !routeParams.pw) {
-      Alert.alert('자동 로그인 실패', '로그인 정보가 없어 다시 로그인해주세요.');
+      Alert.alert('자동 로그인 실패', '로그인 정보가 없어 다시 로그인해 주세요.');
       navigation.reset({
         index: 0,
         routes: [{ name: 'Login' }],
@@ -65,7 +95,6 @@ export default function WelcomeScreen({ route, navigation }: any) {
     }
 
     setIsConfirming(true);
-
     try {
       const loginResponse = await login({
         userId: routeParams.userId,
@@ -84,9 +113,8 @@ export default function WelcomeScreen({ route, navigation }: any) {
     } catch (error: any) {
       const message = extractApiErrorMessage(
         error,
-        '회원가입은 완료됐지만 자동 로그인에 실패했어요. 다시 로그인해주세요.',
+        '회원가입은 완료되었지만 자동 로그인에 실패했어요. 다시 로그인해 주세요.',
       );
-
       Alert.alert('자동 로그인 실패', message);
       navigation.reset({
         index: 0,
@@ -100,11 +128,11 @@ export default function WelcomeScreen({ route, navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.mainLayout}>
-        <ScrollView 
+        <ScrollView
           style={styles.scrollContent}
           contentContainerStyle={[
             styles.scrollContentContainer,
-            { paddingTop: insets.top + hp(44) }
+            { paddingTop: insets.top + hp(44) },
           ]}
           showsVerticalScrollIndicator={false}
         >
@@ -117,20 +145,16 @@ export default function WelcomeScreen({ route, navigation }: any) {
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(180).duration(500)} style={styles.titleBlock}>
-              <Text style={styles.title}>회원가입이 완료되었어요</Text>
+              <Text style={styles.title}>회원가입이 거의 끝났어요</Text>
               <Text style={styles.subtitle}>
-                {routeParams.name ? `${routeParams.name}님 정보를 확인해주세요.` : '가입 정보를 확인해주세요.'}
+                {routeParams.name ? `${routeParams.name}님의 정보를 확인해 주세요.` : '가입 정보를 확인해 주세요.'}
               </Text>
             </Animated.View>
           </View>
 
           <Animated.View entering={FadeInDown.delay(280).duration(500)} style={styles.infoSection}>
-            {/* 회원가입 완료 직후 확인해야 하는 핵심 가입 정보를 요약해서 보여준다. */}
             <View style={styles.infoCard}>
-              <InfoRow
-                label={isSsafySignup ? 'SSAFY ID' : '아이디'}
-                value={routeParams.ssafyOauthId ?? routeParams.userId ?? '-'}
-              />
+              <InfoRow label={isSsafySignup ? '가입 방식' : '아이디'} value={isSsafySignup ? 'SSAFY' : routeParams.userId ?? '-'} />
               <InfoRow label="이름" value={routeParams.name ?? '-'} />
               <InfoRow label="생년월일" value={routeParams.birthDate ?? '-'} />
               <InfoRow
@@ -138,14 +162,14 @@ export default function WelcomeScreen({ route, navigation }: any) {
                 value={routeParams.gender === 'M' ? '남성' : routeParams.gender === 'F' ? '여성' : '-'}
               />
               <InfoRow label="휴대폰" value={routeParams.phoneNumber ?? '-'} />
-              <InfoRow label="약관동의" value={routeParams.termsAgreed ? '완료' : '미완료'} />
-              <InfoRow label="알림" value={routeParams.alarmEnabled ? '허용' : '미허용'} />
+              <InfoRow label="약관 동의" value={routeParams.termsAgreed ? '완료' : '미완료'} />
+              <InfoRow label="알림" value={routeParams.alarmEnabled ? '사용' : '미사용'} />
             </View>
           </Animated.View>
         </ScrollView>
 
-        <Animated.View 
-          entering={FadeInDown.delay(380).duration(500)} 
+        <Animated.View
+          entering={FadeInDown.delay(380).duration(500)}
           style={[styles.bottomSection, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}
         >
           <TouchableOpacity
@@ -173,5 +197,3 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     </View>
   );
 }
-
-

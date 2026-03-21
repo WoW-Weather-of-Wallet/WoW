@@ -1,19 +1,9 @@
 import axios from 'axios';
 
-// =============================================
-// Native auth API client
-// Expo Go 환경에서 안정적으로 쓰기 위해 네이티브 전용 auth 클라이언트를 둡니다.
-// Expo 에서는 EXPO_PUBLIC_* 변수만 런타임에 노출됩니다.
-// 변경 사항:
-// 기존에는 API 서버가 배포 주소로 고정되어 있어서 이 맥북 로컬 백엔드를 띄워도 앱이 원격 서버를 호출했습니다.
-// 이제 Frontend/native/.env 의 EXPO_PUBLIC_API_BASE_URL 을 우선 사용하고,
-// 값이 없을 때만 기존 배포 서버를 fallback 으로 사용합니다.
-// =============================================
 export const BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL || 'https://j14d106.p.ssafy.io';
 
 export interface NativeSignupRequest {
-  // 일반 회원가입은 userId, SSAFY 회원가입은 ssafyOauthId만 채운다.
   userId?: string;
   ssafyOauthId?: string;
   pw: string;
@@ -21,6 +11,18 @@ export interface NativeSignupRequest {
   gender: string;
   phoneNumber: string;
   birthDate: string;
+  alarmEnabled: boolean;
+  termsAgreed: boolean;
+}
+
+export interface NativeSsafySignupCheckRequest {
+  pendingToken: string;
+  gender: string;
+  phoneNumber: string;
+  birthDate: string;
+}
+
+export interface NativeSsafyRegisterRequest extends NativeSsafySignupCheckRequest {
   alarmEnabled: boolean;
   termsAgreed: boolean;
 }
@@ -75,19 +77,31 @@ export interface NativeChangePasswordRequest {
   newPw: string;
 }
 
-/**
- * SSAFY OAuth callback result
- * SSAFY 로그인 완료 후 앱 딥링크에서 읽어오는 세션/가입 분기 정보
- */
-export interface NativeSsafyCallbackResult {
+export interface NativeSsafyCodeLoginResult {
+  type: 'login';
+  code: string;
+}
+
+export interface NativeSsafyDirectLoginResult {
+  type: 'login';
   accessToken: string;
-  user: {
+  user?: {
     userId: string;
     name?: string;
     role?: string;
   };
-  signupRequired: boolean;
 }
+
+export interface NativeSsafySignupCallbackResult {
+  type: 'signup';
+  pendingToken: string;
+  name?: string;
+}
+
+export type NativeSsafyCallbackResult =
+  | NativeSsafyCodeLoginResult
+  | NativeSsafyDirectLoginResult
+  | NativeSsafySignupCallbackResult;
 
 export interface SmsSendRequest {
   phoneNumber: string;
@@ -126,11 +140,17 @@ export interface FindPasswordRequest {
 }
 
 export interface CheckUserIdResponse {
-  // 일반 회원가입의 userId 중복확인 응답
-  // 백엔드 변수명은 isAvailable 이지만, JSON 직렬화 시 available 로 내려올 수 있어 둘 다 대응하도록 정의합니다.
   isAvailable: boolean;
   message?: string;
 }
+
+export interface NativeApiErrorResponse {
+  httpStatusCode?: number;
+  errorMessage?: string;
+}
+
+// Shared axios instance for native services.
+// Calendar APIs reuse the same base URL and auth token injection as auth APIs.
 
 export const nativeApi = axios.create({
   baseURL: BASE_URL,
@@ -182,17 +202,13 @@ nativeApi.interceptors.response.use(
 
 export const setNativeAuthToken = (token: string | null) => {
   if (token) {
-    // 로그인 성공 시 메모리 상의 공통 Authorization 헤더를 갱신합니다.
-    // 현재는 영구 저장소가 아니라 앱 실행 세션 동안만 유지됩니다.
     nativeApi.defaults.headers.common.Authorization = `Bearer ${token}`;
     return;
   }
 
-  // 로그아웃 또는 토큰 만료 처리 시 이전 세션의 Authorization 헤더가 남지 않도록 제거합니다.
   delete nativeApi.defaults.headers.common.Authorization;
 };
 
-// 휴대폰 인증 단계에서 사용하는 SMS 발송 API
 export const sendSmsCode = async (payload: SmsSendRequest) => {
   const response = await nativeApi.post('/api/v1/auth/sms/send', {
     phoneNumber: normalizePhoneNumber(payload.phoneNumber),
@@ -200,7 +216,6 @@ export const sendSmsCode = async (payload: SmsSendRequest) => {
   return response.data;
 };
 
-// VerifyCode 화면에서 사용하는 SMS 인증번호 검증 API
 export const verifySmsCode = async (payload: SmsVerifyRequest) => {
   const response = await nativeApi.post('/api/v1/auth/sms/verify', {
     phoneNumber: normalizePhoneNumber(payload.phoneNumber),
@@ -217,21 +232,17 @@ export const checkSignupIdentity = async (payload: SignupIdentityCheckRequest) =
   return response.data;
 };
 
-// 일반 회원가입의 userId 중복확인 API
-// EAS Build 환경에서 shared 폴더 의존성을 줄이기 위해 native 클라이언트에서 직접 호출한다.
 export const checkUserId = async (userId: string): Promise<CheckUserIdResponse> => {
   const response = await nativeApi.get<any>('/api/v1/auth/check-user-id', {
     params: { userId },
   });
 
-  // 백엔드(Java/Jackson) 직렬화 특성상 isAvailable 이 available 로 내려오는 경우를 모두 처리합니다.
   return {
     isAvailable: response.data.available ?? response.data.isAvailable,
     message: response.data.message,
   };
 };
 
-// 일반/SSAFY 회원가입 공용 signup API
 export const signup = async (payload: NativeSignupRequest) => {
   const response = await nativeApi.post<NativeSignupResponse>('/api/v1/auth/signup', {
     ...payload,
@@ -240,9 +251,31 @@ export const signup = async (payload: NativeSignupRequest) => {
   return response.data;
 };
 
-// 일반 회원가입 완료 후 Welcome 화면에서 호출하는 자동 로그인 API
 export const login = async (payload: NativeLoginRequest) => {
   const response = await nativeApi.post<NativeLoginResponse>('/api/v1/auth/login', payload);
+  return response.data;
+};
+
+export const exchangeSsafyToken = async (code: string) => {
+  const response = await nativeApi.post<NativeLoginResponse>('/sso/providers/ssafy/token', {
+    code,
+  });
+  return response.data;
+};
+
+export const checkSsafySignup = async (payload: NativeSsafySignupCheckRequest) => {
+  const response = await nativeApi.post('/sso/providers/ssafy/check', {
+    ...payload,
+    phoneNumber: normalizePhoneNumber(payload.phoneNumber),
+  });
+  return response.data;
+};
+
+export const registerSsafy = async (payload: NativeSsafyRegisterRequest) => {
+  const response = await nativeApi.post<NativeLoginResponse>('/sso/providers/ssafy/register', {
+    ...payload,
+    phoneNumber: normalizePhoneNumber(payload.phoneNumber),
+  });
   return response.data;
 };
 
@@ -278,7 +311,6 @@ export const deleteAccount = async () => {
   return response.data;
 };
 
-// 아이디 찾기 API
 export const findUserId = async (payload: FindIdRequest): Promise<FindIdResponse> => {
   const response = await nativeApi.post<FindIdResponse>('/api/v1/auth/find/id', {
     ...payload,
@@ -287,7 +319,6 @@ export const findUserId = async (payload: FindIdRequest): Promise<FindIdResponse
   return response.data;
 };
 
-// 비밀번호 찾기 (재설정 권한 확인) API
 export const findPassword = async (payload: FindPasswordRequest) => {
   const response = await nativeApi.post('/api/v1/auth/find/password', {
     ...payload,
@@ -296,10 +327,6 @@ export const findPassword = async (payload: FindPasswordRequest) => {
   return response.data;
 };
 
-/**
- * SSAFY 로그인 시작 URL
- * OAuth 진입과 callback 처리는 백엔드가 담당하므로 프론트는 해당 진입점만 엽니다.
- */
 export const getSsafyLoginUrl = () => `${BASE_URL}/sso/providers/ssafy/login`;
 
 const getSearchParamsFromUrl = (url: string) => {
@@ -318,31 +345,57 @@ const getParamValue = (params: URLSearchParams, keys: string[]) => {
   return null;
 };
 
-/**
- * SSAFY callback URL 파싱
- * 로그인 성공 후 앱으로 돌아온 딥링크에서 세션 정보와 가입 필요 여부를 읽어옵니다.
- */
+const decodeUnicodeEscapes = (value: string | null) => {
+  if (!value || !value.includes('\\u')) {
+    return value;
+  }
+
+  return value.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex: string) =>
+    String.fromCharCode(parseInt(hex, 16)),
+  );
+};
+
 export const parseSsafyCallbackUrl = (
   url: string,
 ): NativeSsafyCallbackResult | null => {
   try {
     const params = getSearchParamsFromUrl(url);
     const accessToken = getParamValue(params, ['accessToken', 'token']);
+    const code = getParamValue(params, ['code']);
+    const pendingToken = getParamValue(params, ['pendingToken']);
+    const name = decodeUnicodeEscapes(getParamValue(params, ['name', 'userName', 'nickname'])) || undefined;
 
-    if (!accessToken) {
-      return null;
+    if (pendingToken) {
+      return {
+        type: 'signup',
+        pendingToken,
+        name,
+      };
     }
 
-    return {
-      accessToken,
-      user: {
-        userId: getParamValue(params, ['userId', 'loginId', 'username']) || 'ssafy-user',
-        name: getParamValue(params, ['name', 'userName', 'nickname']) || undefined,
-        role: getParamValue(params, ['role']) || undefined,
-      },
-      signupRequired:
-        getParamValue(params, ['signupRequired', 'needsSignup', 'onboardingRequired']) === 'true',
-    };
+    if (code) {
+      return {
+        type: 'login',
+        code,
+      };
+    }
+
+    if (accessToken) {
+      const userId = getParamValue(params, ['userId', 'loginId', 'username']) || 'ssafy-user';
+      const role = getParamValue(params, ['role']) || undefined;
+
+      return {
+        type: 'login',
+        accessToken,
+        user: {
+          userId,
+          name,
+          role,
+        },
+      };
+    }
+
+    return null;
   } catch (error) {
     console.log('[SSAFY callback parse failed]', error);
     return null;

@@ -10,7 +10,7 @@ import Animated, { FadeInDown, useSharedValue, useAnimatedStyle } from 'react-na
 import SecureKeypad from '../../components/common/SecureKeypad';
 import StepIndicator from '../../components/common/StepIndicator';
 import { styles } from './VerifyCodeScreen.styles';
-import { COLORS, wp, hp } from '../../constants/theme';
+import { COLORS, hp } from '../../constants/theme';
 import { verifySmsCode, findUserId } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 
@@ -22,8 +22,8 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyError, setVerifyError] = useState('');
   const shakeTranslateX = useSharedValue(0);
+  const signupMode = route.params?.signupMode === 'ssafy' ? 'ssafy' : 'normal';
 
-  // Build the backend birthDate field from the verified identity payload.
   const getBirthDateFromIdentity = () => {
     const ssnFront = route.params?.ssnFront ?? '';
     const ssnBack = route.params?.ssnBack ?? '';
@@ -77,11 +77,10 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
     const gender = getGenderFromIdentity();
 
     if (!birthDate || !gender) {
-      throw new Error('생년월일 정보가 누락되었어요.');
+      throw new Error('생년월일 정보를 다시 확인해 주세요.');
     }
 
     try {
-      // Only call the recovery API after SMS verification succeeds.
       const result = await findUserId({
         name: route.params.name,
         birthDate,
@@ -100,7 +99,6 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
         '입력한 정보와 일치하는 계정을 찾지 못했어요.',
       );
 
-      // Recovery result screens stay split between missing accounts and SSAFY accounts.
       if (error?.response?.status === 401) {
         navigation.navigate('AccountRecoveryResult', {
           name: route.params.name,
@@ -122,7 +120,6 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
   };
 
   const handleFindPasswordFlow = () => {
-    // After SMS verification, move to the screen that submits the new password.
     navigation.navigate('ResetPassword', {
       userId: route.params.userId,
       name: route.params.name,
@@ -152,12 +149,25 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
         return;
       }
 
-      // Signup flow returns to the account creation screen with verified identity data.
+      if (signupMode === 'ssafy') {
+        navigation.replace('Welcome', {
+          signupMode: 'ssafy',
+          pendingToken: route.params.pendingToken,
+          name: route.params.name,
+          birthDate: getBirthDateFromIdentity() ?? undefined,
+          gender: getGenderFromIdentity() ?? undefined,
+          phoneNumber: route.params.phone,
+          termsAgreed: route.params.termsAgreed,
+          alarmEnabled: true,
+        });
+        return;
+      }
+
       navigation.replace('CreateAccount', route.params);
     } catch (error: any) {
       let message = extractApiErrorMessage(
         error,
-        'Failed to verify the code. Please try again.',
+        '인증번호 확인에 실패했어요. 다시 시도해 주세요.',
       );
 
       if (
@@ -197,8 +207,8 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
           <StepIndicator currentStep={2} totalSteps={5} />
         )}
         <Animated.View entering={FadeInDown.delay(100).duration(500)}>
-          <Text style={styles.title}>인증번호 6자리를 입력해주세요.</Text>
-          <Text style={styles.subtitle}>휴대폰으로 받은 인증번호를 입력하면 다음 단계로 이동해요.</Text>
+          <Text style={styles.title}>인증번호 6자리를 입력해 주세요.</Text>
+          <Text style={styles.subtitle}>문자로 받은 인증번호를 입력하면 다음 단계로 이동해요.</Text>
         </Animated.View>
 
         <Animated.View
@@ -224,5 +234,3 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
     </View>
   );
 }
-
-

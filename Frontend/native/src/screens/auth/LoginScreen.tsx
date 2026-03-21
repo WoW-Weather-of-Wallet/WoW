@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -22,20 +22,29 @@ import Animated, {
   FadeInDown,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as WebBrowser from 'expo-web-browser';
 import CustomTextInput from '../../components/common/CustomTextInput';
 import GradientButton from '../../components/common/GradientButton';
 import { useAuthStore } from '../../store/authStore';
 import { styles } from './LoginScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
-import { getSsafyLoginUrl, login, parseSsafyCallbackUrl } from '../../services/auth';
+import {
+  exchangeSsafyToken,
+  getSsafyLoginUrl,
+  login,
+  type NativeSsafyCodeLoginResult,
+  type NativeSsafyDirectLoginResult,
+  parseSsafyCallbackUrl,
+} from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 
-/**
- * LoginScreen
- * 실제 로그인 API 가 연결된 화면입니다.
- * 세션 저장과 Authorization 헤더 갱신은 authStore 에서 한 번에 처리하고,
- * 개발 중 빠른 화면 확인을 위한 테스트 진입 버튼은 그대로 유지합니다.
- */
+WebBrowser.maybeCompleteAuthSession();
+
+const LOGIN_ERROR_FALLBACK =
+  '\uB85C\uADF8\uC778\uC5D0 \uC2E4\uD328\uD588\uC5B4\uC694. \uC544\uC774\uB514\uC640 \uBE44\uBC00\uBC88\uD638\uB97C \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.';
+const SSAFY_ERROR_FALLBACK =
+  'SSAFY \uB85C\uADF8\uC778 \uCC98\uB9AC\uC5D0 \uC2E4\uD328\uD588\uC5B4\uC694. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.';
+
 export default function LoginScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const loginToStore = useAuthStore((state) => state.login);
@@ -45,6 +54,7 @@ export default function LoginScreen({ navigation }: any) {
   const [autoLogin, setAutoLogin] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const handledSsafyUrlRef = useRef<string | null>(null);
 
   const headerOpacity = useSharedValue(0);
   const headerTranslateY = useSharedValue(-20);
@@ -61,50 +71,75 @@ export default function LoginScreen({ navigation }: any) {
   }, []);
 
   useEffect(() => {
-    /**
-     * SSAFY 로그인 완료 후 앱 딥링크 처리
-     * access token 이 포함된 경우 세션을 열고,
-     * signupRequired 값에 따라 CreateAccount 또는 MainTabs로 분기합니다.
-     */
-    const handleSsafyCallback = (url: string | null) => {
-      if (!url) {
+    const completeSsafyLogin = async (
+      parsed: NativeSsafyCodeLoginResult | NativeSsafyDirectLoginResult,
+    ) => {
+      if ('accessToken' in parsed) {
+        loginToStore({
+          accessToken: parsed.accessToken,
+          user:
+            parsed.user ?? {
+              userId: 'ssafy-user',
+            },
+          autoLogin,
+        });
+        navigation.replace('MainTabs');
+        return;
+      }
+
+      const response = await exchangeSsafyToken(parsed.code);
+      loginToStore({
+        accessToken: response.accessToken,
+        user: response.user,
+        autoLogin,
+      });
+      navigation.replace('MainTabs');
+    };
+
+    const handleSsafyCallback = async (url: string | null) => {
+      if (!url || handledSsafyUrlRef.current === url) {
         return;
       }
 
       const parsed = parseSsafyCallbackUrl(url);
-
       if (!parsed) {
         return;
       }
 
-      loginToStore({
-        accessToken: parsed.accessToken,
-        user: parsed.user,
-        autoLogin,
-      });
+      handledSsafyUrlRef.current = url;
 
-      if (parsed.signupRequired) {
-        navigation.replace('CreateAccount', {
+      if (parsed.type === 'signup') {
+        navigation.replace('PhoneAuth', {
           signupMode: 'ssafy',
-          ssafyOauthId: parsed.user.userId,
-          name: parsed.user.name,
-          termsAgreed: true,
+          pendingToken: parsed.pendingToken,
+          name: parsed.name,
         });
         return;
       }
 
-      navigation.replace('MainTabs');
+      try {
+        setIsSubmitting(true);
+        setLoginError('');
+        await completeSsafyLogin(parsed);
+      } catch (error: any) {
+        handledSsafyUrlRef.current = null;
+        const message = extractApiErrorMessage(error, SSAFY_ERROR_FALLBACK);
+        setLoginError(message);
+        Alert.alert('SSAFY \uB85C\uADF8\uC778 \uC2E4\uD328', message);
+      } finally {
+        setIsSubmitting(false);
+      }
     };
 
-    Linking.getInitialURL().then(handleSsafyCallback);
-
-    const subscription = Linking.addEventListener('url', ({ url }) => {
-      handleSsafyCallback(url);
+    Linking.getInitialURL().then((url) => {
+      void handleSsafyCallback(url);
     });
 
-    return () => {
-      subscription.remove();
-    };
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      void handleSsafyCallback(url);
+    });
+
+    return () => subscription.remove();
   }, [autoLogin, loginToStore, navigation]);
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
@@ -112,10 +147,6 @@ export default function LoginScreen({ navigation }: any) {
     transform: [{ translateY: headerTranslateY.value }],
   }));
 
-  /**
-   * 현재 백엔드는 userId / pw 필드명을 사용합니다.
-   * 화면 state 와 요청 DTO 이름이 다르기 때문에 이 지점에서 명시적으로 매핑합니다.
-   */
   const handleLogin = async () => {
     if (!userId.trim() || !password.trim() || isSubmitting) {
       return;
@@ -124,46 +155,23 @@ export default function LoginScreen({ navigation }: any) {
     setIsSubmitting(true);
     setLoginError('');
 
-    /**
-     * [Defense-Log] 백엔드 요청값 검증(P2) 부재에 대응
-     * 로그인 시 아이디/비밀번호가 비어있는지 프론트엔드에서 먼저 체크합니다.
-     */
-    if (!userId.trim()) {
-      setLoginError('아이디를 입력해주세요.');
-      setIsSubmitting(false);
-      return;
-    }
-    if (!password.trim()) {
-      setLoginError('비밀번호를 입력해주세요.');
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
       const response = await login({
         userId: userId.trim(),
         pw: password,
       });
 
-      // 로그인 성공 시 세션 상태와 Authorization 헤더를 authStore 한 곳에서 같이 동기화합니다.
       loginToStore({
         accessToken: response.accessToken,
         user: response.user,
         autoLogin,
       });
 
-      // 현재는 스크린 트리를 완전히 갈아끼우기보다, 로그인 성공 시 메인 탭으로 명시적으로 이동합니다.
       navigation.replace('MainTabs');
     } catch (error: any) {
-      // 로그인/회원가입/SMS 인증이 서로 다른 에러 필드명을 내려줘도
-      // 화면 문구는 shared 헬퍼 한 곳에서 통일된 우선순위로 가져옵니다.
-      const message = extractApiErrorMessage(
-        error,
-        '로그인에 실패했어요. 아이디와 비밀번호를 다시 확인해주세요.',
-      );
-
+      const message = extractApiErrorMessage(error, LOGIN_ERROR_FALLBACK);
       setLoginError(message);
-      Alert.alert('로그인 실패', message);
+      Alert.alert('\uB85C\uADF8\uC778 \uC2E4\uD328', message);
     } finally {
       setIsSubmitting(false);
     }
@@ -177,30 +185,65 @@ export default function LoginScreen({ navigation }: any) {
     navigation.navigate('AccountRecoveryEntry');
   };
 
-  const handleSSAFYLogin = async () => {
-    console.log('SSAFY OAuth 연결 예정');
+  const handleSsafyLoginResult = async (callbackUrl: string) => {
+    const parsed = parseSsafyCallbackUrl(callbackUrl);
+    if (!parsed) {
+      return;
+    }
+
+    handledSsafyUrlRef.current = callbackUrl;
+
+    if (parsed.type === 'signup') {
+      navigation.replace('PhoneAuth', {
+        signupMode: 'ssafy',
+        pendingToken: parsed.pendingToken,
+        name: parsed.name,
+      });
+      return;
+    }
+
+    if ('accessToken' in parsed) {
+      loginToStore({
+        accessToken: parsed.accessToken,
+        user:
+          parsed.user ?? {
+            userId: 'ssafy-user',
+          },
+        autoLogin,
+      });
+      navigation.replace('MainTabs');
+      return;
+    }
+
+    const response = await exchangeSsafyToken(parsed.code);
+    loginToStore({
+      accessToken: response.accessToken,
+      user: response.user,
+      autoLogin,
+    });
+    navigation.replace('MainTabs');
   };
 
-  /**
-   * SSAFY 로그인 버튼 액션
-   * 백엔드 OAuth 진입점을 열고, 이후 앱으로 돌아오는 딥링크는 useEffect 에서 처리합니다.
-   */
   const handleSSAFYLoginPress = async () => {
     if (isSubmitting) {
       return;
     }
 
     try {
+      setIsSubmitting(true);
       setLoginError('');
-      await Linking.openURL(getSsafyLoginUrl());
-    } catch (error: any) {
-      const message = extractApiErrorMessage(
-        error,
-        'SSAFY 로그인 페이지를 여는 중 문제가 발생했습니다.',
-      );
 
+      const result = await WebBrowser.openAuthSessionAsync(getSsafyLoginUrl());
+
+      if (result.type === 'success' && 'url' in result && result.url) {
+        await handleSsafyLoginResult(result.url);
+      }
+    } catch (error: any) {
+      const message = extractApiErrorMessage(error, SSAFY_ERROR_FALLBACK);
       setLoginError(message);
-      Alert.alert('SSAFY 로그인 오류', message);
+      Alert.alert('SSAFY \uB85C\uADF8\uC778 \uC2E4\uD328', message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -217,22 +260,25 @@ export default function LoginScreen({ navigation }: any) {
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View style={[styles.headerContainer, headerAnimatedStyle]}>
-            <Text style={styles.headerTitle}>로그인</Text>
+            <Text style={styles.headerTitle}>{'\uB85C\uADF8\uC778'}</Text>
             <View style={styles.headerLine} />
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(160).duration(500).springify()}>
-            {/* 개발 중 메인 UI 를 바로 확인해야 할 때 쓰는 임시 진입입니다. */}
             <View style={styles.devEntryCard}>
-              <Text style={styles.devEntryTitle}>개발용 빠른 진입</Text>
+              <Text style={styles.devEntryTitle}>{'\uAC1C\uBC1C\uC6A9 \uBE60\uB978 \uC9C4\uC785'}</Text>
               <Text style={styles.devEntryDescription}>
-                백엔드 로그인과 별개로 메인 화면 UI 를 빠르게 확인할 때 사용합니다.
+                {
+                  '\uD14C\uC2A4\uD2B8 \uC911\uC5D0\uB9CC \uC0AC\uC6A9\uD558\uC138\uC694. \uC784\uC2DC UI \uD655\uC778\uC774\uB098 \uB85C\uCEEC \uD750\uB984 \uC810\uAC80\uC5D0 \uD65C\uC6A9\uD560 \uC218 \uC788\uC5B4\uC694.'
+                }
               </Text>
               <GradientButton
-                title="TEST: 메인 화면 바로가기"
+                title={'TEST: \uAC1C\uBC1C \uACC4\uC815 \uBC14\uB85C \uC785\uC7A5'}
                 onPress={() => {
-                  // 개발자 우회 진입도 실제 로그인과 같은 authStore 를 타게 해서 화면 분기를 일관되게 맞춥니다.
-                  loginWithDevBypass({ userId: 'dev-main-user', name: '개발자' });
+                  loginWithDevBypass({
+                    userId: 'dev-main-user',
+                    name: '\uAC1C\uBC1C\uC6A9',
+                  });
                   navigation.replace('MainTabs');
                 }}
               />
@@ -244,7 +290,7 @@ export default function LoginScreen({ navigation }: any) {
             style={styles.formContainer}
           >
             <CustomTextInput
-              label="아이디"
+              label={'\uC544\uC774\uB514'}
               value={userId}
               onChangeText={(value) => {
                 setUserId(value);
@@ -255,7 +301,7 @@ export default function LoginScreen({ navigation }: any) {
             />
 
             <CustomTextInput
-              label="비밀번호"
+              label={'\uBE44\uBC00\uBC88\uD638'}
               value={password}
               onChangeText={(value) => {
                 setPassword(value);
@@ -270,12 +316,20 @@ export default function LoginScreen({ navigation }: any) {
 
             <View style={styles.buttonRow}>
               <View style={styles.buttonHalf}>
-                <GradientButton title="회원가입" onPress={handleSignup} variant="outline" />
+                <GradientButton
+                  title={'\uD68C\uC6D0\uAC00\uC785'}
+                  onPress={handleSignup}
+                  variant="outline"
+                />
               </View>
               <View style={styles.buttonGap} />
               <View style={styles.buttonHalf}>
                 <GradientButton
-                  title={isSubmitting ? '로그인 중...' : '로그인'}
+                  title={
+                    isSubmitting
+                      ? '\uB85C\uADF8\uC778 \uC911...'
+                      : '\uB85C\uADF8\uC778'
+                  }
                   onPress={handleLogin}
                 />
               </View>
@@ -294,7 +348,9 @@ export default function LoginScreen({ navigation }: any) {
               style={styles.findAccountButton}
               activeOpacity={0.6}
             >
-              <Text style={styles.findAccountText}>아이디 / 비밀번호 찾기</Text>
+              <Text style={styles.findAccountText}>
+                {'\uC544\uC774\uB514 / \uBE44\uBC00\uBC88\uD638 \uCC3E\uAE30'}
+              </Text>
             </TouchableOpacity>
           </Animated.View>
 
@@ -302,7 +358,7 @@ export default function LoginScreen({ navigation }: any) {
             entering={FadeInDown.delay(450).duration(500).springify()}
             style={styles.autoLoginContainer}
           >
-            <Text style={styles.autoLoginText}>자동 로그인</Text>
+            <Text style={styles.autoLoginText}>{'\uC790\uB3D9 \uB85C\uADF8\uC778'}</Text>
             <Switch
               value={autoLogin}
               onValueChange={setAutoLogin}
@@ -320,7 +376,7 @@ export default function LoginScreen({ navigation }: any) {
             style={styles.dividerContainer}
           >
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>또는</Text>
+            <Text style={styles.dividerText}>{'\uB610\uB294'}</Text>
             <View style={styles.dividerLine} />
           </Animated.View>
 
@@ -336,17 +392,16 @@ export default function LoginScreen({ navigation }: any) {
                 end={{ x: 1, y: 1 }}
                 style={styles.ssafyGradient}
               >
-                <Text style={styles.ssafyButtonText}>SSAFY 계정으로 로그인</Text>
+                <Text style={styles.ssafyButtonText}>
+                  {'SSAFY \uACC4\uC815\uC73C\uB85C \uB85C\uADF8\uC778'}
+                </Text>
               </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
 
-          {/* 시스템 네비게이션 바와의 겹침 방지를 위한 동적 여백 추가 */}
           <View style={{ height: Math.max(insets.bottom, hp(20)) }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
 }
-
-
