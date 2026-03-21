@@ -59,7 +59,7 @@ export default function FixedExpenseSection({
                 - 카테고리 요약 행만 있고, 실제 연결 항목은 여기서 볼 수 없었습니다.
 
                 변경 이유:
-                - 사용자가 "주거/통신 같은 카테고리 박스"를 눌렀을 때만 상세를 열어
+                - 사용자가 "인테리어/가정용품, 시스템/통신 같은 카테고리 박스"를 눌렀을 때만 상세를 열어
                   카테고리는 상세 조회에서만 보이게 맞춥니다.
               */}
               <TouchableOpacity activeOpacity={0.9} style={styles.rowCard} onPress={() => onToggleExpand(item.id)}>

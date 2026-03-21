@@ -39,7 +39,7 @@ export default function FixedExpenseDetailSheet({
 }: FixedExpenseDetailSheetProps) {
   const [paymentDay, setPaymentDay] = useState(11);
 
-  const recommendedCategory = useMemo(() => item?.category ?? '여가', [item]);
+  const recommendedCategory = useMemo(() => item?.category ?? '공연관람', [item]);
 
   useEffect(() => {
     if (!visible || !item) {

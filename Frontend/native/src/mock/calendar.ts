@@ -115,12 +115,12 @@ export const mockCalendarTransactions: CalendarTransactionGroup[] = [
     dateLabel: '6월 12일 (목)',
     dailySpent: 407100,
     items: [
-      { id: 'tx-12-1', title: '스타벅스 강남점', category: '식비', amount: 6800, time: '09:11', icon: 'cafe-outline', iconTone: '#F1E9E0' },
-      { id: 'tx-12-2', title: '지하철 교통카드', category: '교통', amount: 1350, time: '08:22', icon: 'train-outline', iconTone: '#DBEAFE' },
-      { id: 'tx-12-3', title: '쿠팡', category: '쇼핑', amount: 45000, time: '18:42', icon: 'cart-outline', iconTone: '#EEF4E2' },
-      { id: 'tx-12-4', title: '배민라이더스', category: '식비', amount: 18500, time: '19:35', icon: 'restaurant-outline', iconTone: '#FDE2E2' },
-      { id: 'tx-12-5', title: '올리브영', category: '의료', amount: 8500, time: '20:11', icon: 'medical-outline', iconTone: '#FFE8F1' },
-      { id: 'tx-12-6', title: '월급', category: '기타', amount: -2800000, time: '07:30', icon: 'wallet-outline', iconTone: '#EAF8E7' },
+      { id: 'tx-12-1', title: '스타벅스 강남점', category: '커피/음료', amount: 6800, time: '09:11', icon: 'cafe-outline', iconTone: '#F1E9E0' },
+      { id: 'tx-12-2', title: '지하철 교통카드', category: '교통서비스', amount: 1350, time: '08:22', icon: 'train-outline', iconTone: '#DBEAFE' },
+      { id: 'tx-12-3', title: '쿠팡', category: '인터넷쇼핑', amount: 45000, time: '18:42', icon: 'cart-outline', iconTone: '#EEF4E2' },
+      { id: 'tx-12-4', title: '배민라이더스', category: '외식', amount: 18500, time: '19:35', icon: 'restaurant-outline', iconTone: '#FDE2E2' },
+      { id: 'tx-12-5', title: '올리브영', category: '화장품소매', amount: 8500, time: '20:11', icon: 'medical-outline', iconTone: '#FFE8F1' },
+      { id: 'tx-12-6', title: '월급', category: '수리서비스', amount: -2800000, time: '07:30', icon: 'wallet-outline', iconTone: '#EAF8E7' },
     ],
   },
   {
@@ -128,11 +128,11 @@ export const mockCalendarTransactions: CalendarTransactionGroup[] = [
     dateLabel: '6월 11일 (수)',
     dailySpent: 112500,
     items: [
-      { id: 'tx-11-1', title: 'CGV 영화', category: '여가', amount: 15000, time: '22:14', icon: 'game-controller-outline', iconTone: '#F1ECFF' },
-      { id: 'tx-11-2', title: '스타벅스 강남점', category: '식비', amount: 6800, time: '10:05', icon: 'cafe-outline', iconTone: '#F1E9E0' },
-      { id: 'tx-11-3', title: '지하철 교통카드', category: '교통', amount: 2500, time: '08:12', icon: 'train-outline', iconTone: '#DBEAFE' },
-      { id: 'tx-11-4', title: '쿠팡', category: '쇼핑', amount: 18000, time: '20:11', icon: 'cart-outline', iconTone: '#EEF4E2' },
-      { id: 'tx-11-5', title: '맥주 한잔', category: '식비', amount: 32000, time: '21:08', icon: 'wine-outline', iconTone: '#FDE7C7' },
+      { id: 'tx-11-1', title: 'CGV 영화', category: '공연관람', amount: 15000, time: '22:14', icon: 'game-controller-outline', iconTone: '#F1ECFF' },
+      { id: 'tx-11-2', title: '스타벅스 강남점', category: '커피/음료', amount: 6800, time: '10:05', icon: 'cafe-outline', iconTone: '#F1E9E0' },
+      { id: 'tx-11-3', title: '지하철 교통카드', category: '교통서비스', amount: 2500, time: '08:12', icon: 'train-outline', iconTone: '#DBEAFE' },
+      { id: 'tx-11-4', title: '쿠팡', category: '인터넷쇼핑', amount: 18000, time: '20:11', icon: 'cart-outline', iconTone: '#EEF4E2' },
+      { id: 'tx-11-5', title: '맥주 한잔', category: '육류/회식', amount: 32000, time: '21:08', icon: 'wine-outline', iconTone: '#FDE7C7' },
     ],
   },
   {
@@ -140,8 +140,8 @@ export const mockCalendarTransactions: CalendarTransactionGroup[] = [
     dateLabel: '6월 10일 (화)',
     dailySpent: 9300,
     items: [
-      { id: 'tx-10-1', title: '지하철 교통카드', category: '교통', amount: 2500, time: '08:22', icon: 'train-outline', iconTone: '#DBEAFE' },
-      { id: 'tx-10-2', title: '스타벅스 강남점', category: '식비', amount: 6800, time: '10:05', icon: 'cafe-outline', iconTone: '#F1E9E0' },
+      { id: 'tx-10-1', title: '지하철 교통카드', category: '교통서비스', amount: 2500, time: '08:22', icon: 'train-outline', iconTone: '#DBEAFE' },
+      { id: 'tx-10-2', title: '스타벅스 강남점', category: '커피/음료', amount: 6800, time: '10:05', icon: 'cafe-outline', iconTone: '#F1E9E0' },
     ],
   },
   {
@@ -149,8 +149,8 @@ export const mockCalendarTransactions: CalendarTransactionGroup[] = [
     dateLabel: '6월 1일 (일)',
     dailySpent: 21500,
     items: [
-      { id: 'tx-1-1', title: '편의점', category: '식비', amount: 12000, time: '11:05', icon: 'storefront-outline', iconTone: '#E9EEFF' },
-      { id: 'tx-1-2', title: '카페', category: '식비', amount: 9500, time: '15:42', icon: 'cafe-outline', iconTone: '#F3EBDD' },
+      { id: 'tx-1-1', title: '편의점', category: '음/식료품소매', amount: 12000, time: '11:05', icon: 'storefront-outline', iconTone: '#E9EEFF' },
+      { id: 'tx-1-2', title: '카페', category: '커피/음료', amount: 9500, time: '15:42', icon: 'cafe-outline', iconTone: '#F3EBDD' },
     ],
   },
 ];
@@ -166,8 +166,8 @@ export const mockCalendarDayDetails: Record<string, CalendarDayDetail> = {
     transactionCount: 2,
     memo: '장보기와 카페 지출이 겹쳐서 예상보다 지출이 컸다.',
     items: [
-      { id: 'detail-1', title: '편의점', category: '식비', amount: 12000, time: '11:05', icon: 'storefront-outline', iconTone: '#E9EEFF' },
-      { id: 'detail-2', title: '카페', category: '식비', amount: 9500, time: '15:42', icon: 'cafe-outline', iconTone: '#F3EBDD' },
+      { id: 'detail-1', title: '편의점', category: '음/식료품소매', amount: 12000, time: '11:05', icon: 'storefront-outline', iconTone: '#E9EEFF' },
+      { id: 'detail-2', title: '카페', category: '커피/음료', amount: 9500, time: '15:42', icon: 'cafe-outline', iconTone: '#F3EBDD' },
     ],
   },
   '2025-06-18': {
@@ -210,7 +210,7 @@ export const mockFixedExpensesTotal = 91900;
 export const mockFixedExpenses: FixedExpenseItem[] = [
   {
     id: 'housing',
-    title: '주거',
+    title: '인테리어/가정용품',
     subtitle: '0건',
     amount: 0,
     statusLabel: '등록 전',
@@ -222,7 +222,7 @@ export const mockFixedExpenses: FixedExpenseItem[] = [
   },
   {
     id: 'subscription',
-    title: '통신',
+    title: '시스템/통신',
     subtitle: '2건',
     amount: 31900,
     statusLabel: 'D-3',
@@ -234,7 +234,7 @@ export const mockFixedExpenses: FixedExpenseItem[] = [
   },
   {
     id: 'leisure',
-    title: '여가',
+    title: '공연관람',
     subtitle: '1건',
     amount: 60000,
     statusLabel: 'D-19',
@@ -247,7 +247,7 @@ export const mockFixedExpenses: FixedExpenseItem[] = [
   },
   {
     id: 'fitness',
-    title: '의료',
+    title: '건강/뷰티/마사지',
     subtitle: '매월 1회 등록',
     amount: 60000,
     statusLabel: 'D-19',
@@ -259,7 +259,7 @@ export const mockFixedExpenses: FixedExpenseItem[] = [
   },
   {
     id: 'phone',
-    title: '통신',
+    title: '시스템/통신',
     subtitle: '0건',
     amount: 0,
     statusLabel: '',
@@ -275,7 +275,7 @@ export const mockManageFixedExpenses = [
   {
     id: 'rent',
     title: '월세',
-    subtitle: '매월 5일 주거',
+    subtitle: '매월 5일 인테리어/가정용품',
     amount: 456789,
     icon: 'home-outline',
     iconTone: '#F3EBDD',
@@ -284,7 +284,7 @@ export const mockManageFixedExpenses = [
   {
     id: 'netflix',
     title: '넷플릭스',
-    subtitle: '매월 5일 통신',
+    subtitle: '매월 5일 시스템/통신',
     amount: 17000,
     icon: 'tv-outline',
     iconTone: '#111111',
@@ -293,7 +293,7 @@ export const mockManageFixedExpenses = [
   {
     id: 'youtube',
     title: '유튜브 프리미엄',
-    subtitle: '매월 10일 통신',
+    subtitle: '매월 10일 시스템/통신',
     amount: 14900,
     icon: 'logo-youtube',
     iconTone: '#EEF1FF',
@@ -302,7 +302,7 @@ export const mockManageFixedExpenses = [
   {
     id: 'gym',
     title: '헬스장',
-    subtitle: '매월 1일 의료',
+    subtitle: '매월 1일 건강/뷰티/마사지',
     amount: 60000,
     icon: 'barbell-outline',
     iconTone: '#FFF5E8',
@@ -311,7 +311,7 @@ export const mockManageFixedExpenses = [
   {
     id: 'mobile',
     title: '휴대폰 요금',
-    subtitle: '매월 15일 통신',
+    subtitle: '매월 15일 시스템/통신',
     amount: 55000,
     icon: 'phone-portrait-outline',
     iconTone: '#F7F1D9',
@@ -320,12 +320,12 @@ export const mockManageFixedExpenses = [
 ];
 
 export const mockSelectableTransactions = [
-  { id: 'pick-1', dateLabel: '2025-06-12', title: '지하철 교통카드', category: '교통', amount: 2500, icon: 'train-outline', iconTone: '#DBEAFE' },
-  { id: 'pick-2', dateLabel: '2025-06-12', title: '쿠팡', category: '쇼핑', amount: 48000, icon: 'cart-outline', iconTone: '#EEF4E2' },
-  { id: 'pick-3', dateLabel: '2025-06-11', title: 'CGV 영화', category: '여가', amount: 55000, icon: 'game-controller-outline', iconTone: '#F1ECFF' },
-  { id: 'pick-4', dateLabel: '2025-06-10', title: '올리브영', category: '의료', amount: 18000, icon: 'medical-outline', iconTone: '#FFE8F1' },
-  { id: 'pick-5', dateLabel: '2025-06-01', title: '편의점', category: '식비', amount: 12000, icon: 'storefront-outline', iconTone: '#E9EEFF' },
-  { id: 'pick-6', dateLabel: '2025-06-01', title: '카페', category: '식비', amount: 9500, icon: 'cafe-outline', iconTone: '#F3EBDD' },
+  { id: 'pick-1', dateLabel: '2025-06-12', title: '지하철 교통카드', category: '교통서비스', amount: 2500, icon: 'train-outline', iconTone: '#DBEAFE' },
+  { id: 'pick-2', dateLabel: '2025-06-12', title: '쿠팡', category: '인터넷쇼핑', amount: 48000, icon: 'cart-outline', iconTone: '#EEF4E2' },
+  { id: 'pick-3', dateLabel: '2025-06-11', title: 'CGV 영화', category: '공연관람', amount: 55000, icon: 'game-controller-outline', iconTone: '#F1ECFF' },
+  { id: 'pick-4', dateLabel: '2025-06-10', title: '올리브영', category: '화장품소매', amount: 18000, icon: 'medical-outline', iconTone: '#FFE8F1' },
+  { id: 'pick-5', dateLabel: '2025-06-01', title: '편의점', category: '음/식료품소매', amount: 12000, icon: 'storefront-outline', iconTone: '#E9EEFF' },
+  { id: 'pick-6', dateLabel: '2025-06-01', title: '카페', category: '커피/음료', amount: 9500, icon: 'cafe-outline', iconTone: '#F3EBDD' },
 ];
 
 export const mockHomeCalendarPreview = mockCalendarDays.slice(0, 7);

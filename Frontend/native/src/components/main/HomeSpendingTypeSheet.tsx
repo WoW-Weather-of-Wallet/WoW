@@ -29,8 +29,17 @@ export default function HomeSpendingTypeSheet({
 
       <View style={styles.introBox}>
         <Text style={styles.introText}>
-          식비가 전체 지출의 <Text style={styles.accent}>35%</Text>로 가장 높은
-          비중을 차지해요. 경험과 맛에 적극 투자하는 라이프스타일이에요.
+          {/*
+            이전 문구:
+            - "식비", "문화·여가"처럼 넓은 생활 카테고리 표현이 남아 있었습니다.
+
+            변경 이유:
+            - 이번 작업에서는 프론트 전역 카테고리를 expense_category 기준으로
+              일치시키는 것이 목적이므로, 상세 설명도 실제 분류명으로 맞춥니다.
+          */}
+          외식이 전체 지출의 <Text style={styles.accent}>35%</Text>로 가장 높은
+          비중을 차지해요. 커피/음료와 공연관람까지 함께 높은 편이라 경험
+          소비가 강한 라이프스타일이에요.
         </Text>
       </View>
 
@@ -44,21 +53,20 @@ export default function HomeSpendingTypeSheet({
 
       <Text style={styles.sheetSectionTitle}>AI가 이렇게 판단한 이유</Text>
       <ReasonHighlightCard
-        title="식비 비중 압도적 1위"
-        description="전체 지출의 35%가 식비예요. 또래 평균보다 높은 편이라 맛집 탐방과 외식에 적극적인 패턴으로 보여요."
+        title="외식 비중 압도적 1위"
+        description="전체 지출의 35%가 외식이에요. 또래 평균보다 높은 편이라 맛집 탐방과 식사 경험에 적극적인 패턴으로 보여요."
         tone="red"
       />
       <ReasonHighlightCard
-        title="문화·여가 소비도 활발"
-        description="문화와 여가 지출이 상위권이라 새로운 경험을 찾아다니는 성향이 함께 보입니다."
+        title="공연관람 소비도 활발"
+        description="공연관람과 커피/음료 지출이 상위권이라 새로운 경험과 외부 활동을 즐기는 성향이 함께 보입니다."
         tone="purple"
       />
       <ReasonHighlightCard
         title="절약 포인트 제안"
-        description="식비를 월 3만원만 줄여도 연간 36만원을 아낄 수 있어요. 집밥 챌린지나 구독 정리를 함께 추천해요."
+        description="외식과 커피/음료를 월 3만원만 줄여도 연간 36만원을 아낄 수 있어요. 집밥 챌린지나 카페 지출 정리를 함께 추천해요."
         tone="green"
       />
     </BottomSheetModal>
   );
 }
-

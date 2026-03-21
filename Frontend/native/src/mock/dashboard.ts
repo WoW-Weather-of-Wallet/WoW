@@ -73,7 +73,7 @@ export const mockHomeSummary = {
   dailyChangeAmount: -4200,
   scheduledPaymentAmount: 101000,
   scheduledPaymentHint: '지금 페이스라면',
-  spendingTypeDescription: '식비가 전체의 35%를 차지해요. 경험과 맛에 투자하는 라이프스타일!',
+  spendingTypeDescription: '외식과 커피/음료 비중이 높아요. 경험과 맛에 적극 투자하는 라이프스타일!',
 };
 
 export const mockHomeInsights: HomeInsight[] = [
@@ -94,17 +94,17 @@ export const mockHomeInsights: HomeInsight[] = [
   {
     id: 'risk-alert',
     label: '지출 위험 구간',
-    value: '식비',
+    value: '외식',
     changeText: '예산 대비 88% 사용',
     tone: 'warning',
   },
 ];
 
 export const mockSpendingCategories: HomeSpendingCategory[] = [
-  { id: 'food', label: '식비', amount: 402000, ratio: 0.88, icon: 'restaurant-outline', color: '#F97316' },
-  { id: 'transport', label: '교통', amount: 124000, ratio: 0.52, icon: 'subway-outline', color: '#2563EB' },
-  { id: 'shopping', label: '쇼핑', amount: 198000, ratio: 0.61, icon: 'bag-handle-outline', color: '#A855F7' },
-  { id: 'cafe', label: '카페', amount: 71000, ratio: 0.34, icon: 'cafe-outline', color: '#14B8A6' },
+  { id: 'dining-out', label: '외식', amount: 402000, ratio: 0.88, icon: 'restaurant-outline', color: '#F97316' },
+  { id: 'transport', label: '교통서비스', amount: 124000, ratio: 0.52, icon: 'subway-outline', color: '#2563EB' },
+  { id: 'shopping', label: '인터넷쇼핑', amount: 198000, ratio: 0.61, icon: 'bag-handle-outline', color: '#A855F7' },
+  { id: 'cafe', label: '커피/음료', amount: 71000, ratio: 0.34, icon: 'cafe-outline', color: '#14B8A6' },
 ];
 
 export const mockScheduleItems: HomeScheduleItem[] = [

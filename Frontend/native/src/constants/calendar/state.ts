@@ -1,4 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import {
+  CALENDAR_ENTRY_CATEGORIES,
+  DEFAULT_CALENDAR_CATEGORY,
+} from './addEntry';
 import type { CalendarDayDetail, CalendarDayItem } from '../../mock/calendar';
 
 export interface ManageFixedExpenseItem {
@@ -14,24 +18,44 @@ export interface ManageFixedExpenseItem {
   paymentDay?: number;
 }
 
+const CATEGORY_ICON_TONES: Record<string, string> = {
+  인터넷쇼핑: '#EEF4E2',
+  '인테리어/가정용품': '#F3EBDD',
+  교통서비스: '#DBEAFE',
+  '음/식료품소매': '#E9EEFF',
+  외식: '#FDE2E2',
+  '제과/제빵/떡/케익': '#FDE7C7',
+  '커피/음료': '#F1E9E0',
+  패스트푸드: '#FFE7D6',
+  '자동차/유지비': '#E5EEF8',
+  '시스템/통신': '#F7F1D9',
+  '건강/기호식품': '#EAF8E7',
+  분식: '#FFE9E2',
+  '육류/회식': '#F3D7D3',
+  '선물/완구': '#F8E7F7',
+  '병원/의료': '#FFE8F1',
+  화장품소매: '#FCE7F3',
+  공연관람: '#F1ECFF',
+  '의약/의료품': '#FDEDED',
+  '건강/뷰티/마사지': '#FFF5E8',
+  수리서비스: '#ECECEC',
+};
+
 export const CATEGORY_META: Record<
   string,
   { icon: keyof typeof Ionicons.glyphMap; iconTone: string }
-> = {
-  식비: { icon: 'restaurant-outline', iconTone: '#FDE2E2' },
-  교통: { icon: 'bus-outline', iconTone: '#DBEAFE' },
-  쇼핑: { icon: 'bag-handle-outline', iconTone: '#EEF4E2' },
-  여가: { icon: 'game-controller-outline', iconTone: '#F1ECFF' },
-  주거: { icon: 'home-outline', iconTone: '#F3EBDD' },
-  의료: { icon: 'medical-outline', iconTone: '#FFE8F1' },
-  통신: { icon: 'phone-portrait-outline', iconTone: '#F7F1D9' },
-  기타: { icon: 'wallet-outline', iconTone: '#ECECEC' },
-};
+> = CALENDAR_ENTRY_CATEGORIES.reduce((acc, category) => {
+  acc[category.key] = {
+    icon: category.icon,
+    iconTone: CATEGORY_ICON_TONES[category.key] ?? '#ECECEC',
+  };
+  return acc;
+}, {} as Record<string, { icon: keyof typeof Ionicons.glyphMap; iconTone: string }>);
 
 export function extractCategoryFromSubtitle(subtitle: string) {
   const knownCategories = Object.keys(CATEGORY_META);
   const matched = knownCategories.find((category) => subtitle.includes(category));
-  return matched ?? '기타';
+  return matched ?? DEFAULT_CALENDAR_CATEGORY;
 }
 
 export function formatDateTitle(dateKey: string) {

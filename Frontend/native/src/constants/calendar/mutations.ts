@@ -6,6 +6,7 @@ import type {
 } from '../../mock/calendar';
 import type { ManualCalendarEntryDraft } from '../../types/calendar';
 import { CATEGORY_META, buildFallbackDetail, formatDateTitle } from './state';
+import { DEFAULT_CALENDAR_CATEGORY } from './addEntry';
 
 export interface ManualEntryPatch {
   itemsByDate: Map<string, CalendarTransactionItem[]>;
@@ -18,7 +19,7 @@ export function buildManualEntryPatch(entries: ManualCalendarEntryDraft[]): Manu
   const timestamp = Date.now();
 
   entries.forEach((entry, index) => {
-    const categoryMeta = CATEGORY_META[entry.category] ?? CATEGORY_META.기타;
+    const categoryMeta = CATEGORY_META[entry.category] ?? CATEGORY_META[DEFAULT_CALENDAR_CATEGORY];
     const transactionItem: CalendarTransactionItem = {
       id: `manual-${entry.dateKey}-${timestamp}-${index}`,
       title: entry.merchantName,

@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { CalendarEntryCategoryKey } from '../constants/calendar/addEntry';
+import {
+  DEFAULT_CALENDAR_CATEGORY,
+  type CalendarEntryCategoryKey,
+} from '../constants/calendar/addEntry';
 import type {
   CalendarUploadFile,
   ManualCalendarEntryDraft,
@@ -19,7 +22,8 @@ export function useCalendarAddEntryForm({
 }: UseCalendarAddEntryFormParams) {
   const [activeMode, setActiveMode] = useState<EntryMode>('direct');
   const [dateKey, setDateKey] = useState(defaultDateKey);
-  const [selectedCategory, setSelectedCategory] = useState<CalendarEntryCategoryKey>('식비');
+  const [selectedCategory, setSelectedCategory] =
+    useState<CalendarEntryCategoryKey>(DEFAULT_CALENDAR_CATEGORY);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<ManualEntryPaymentMethod>('card');
   const [merchantName, setMerchantName] = useState('');
@@ -34,7 +38,7 @@ export function useCalendarAddEntryForm({
 
     setActiveMode('direct');
     setDateKey(defaultDateKey);
-    setSelectedCategory('식비');
+    setSelectedCategory(DEFAULT_CALENDAR_CATEGORY);
     setSelectedPaymentMethod('card');
     setMerchantName('');
     setAmountInput('');

@@ -34,6 +34,7 @@ import {
 } from '../constants/calendar/mutations';
 import {
   CALENDAR_ENTRY_CATEGORIES,
+  DEFAULT_CALENDAR_CATEGORY,
   type CalendarEntryCategoryKey,
 } from '../constants/calendar/addEntry';
 import { confirmCalendarTransactions, getCalendarHeader } from '../services/calendar';
@@ -520,33 +521,10 @@ function resolveWeatherIconName(iconCode?: string | null) {
 }
 
 function buildCategoryIdMap() {
-  return CALENDAR_ENTRY_CATEGORIES.reduce<Record<string, number>>((acc, category) => {
-    acc[category.key] = mapCategoryIconToId(category.icon);
+  return CALENDAR_ENTRY_CATEGORIES.reduce<Record<string, number>>((acc, category, index) => {
+    acc[category.key] = index + 1;
     return acc;
   }, {});
-}
-
-function mapCategoryIconToId(icon: string) {
-  switch (icon) {
-    case 'restaurant-outline':
-      return 5;
-    case 'bus-outline':
-      return 3;
-    case 'bag-handle-outline':
-      return 1;
-    case 'game-controller-outline':
-      return 17;
-    case 'medical-outline':
-      return 15;
-    case 'phone-portrait-outline':
-      return 10;
-    case 'home-outline':
-      return 2;
-    case 'pricetag-outline':
-      return 11;
-    default:
-      return 1;
-  }
 }
 
 function buildConfirmRequests(entries: ManualCalendarEntryDraft[]): CalendarConfirmRequest[] {
@@ -570,7 +548,7 @@ function resolveCategoryId(category: string) {
   const categoryId = CATEGORY_ID_BY_KEY[category];
 
   if (!categoryId) {
-    throw new Error(`???? ID ??? ????: ${String(category)}`);
+    throw new Error(`카테고리 ID를 찾을 수 없어요: ${String(category)}`);
   }
 
   return categoryId;
