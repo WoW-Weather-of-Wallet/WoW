@@ -1,9 +1,12 @@
 package com.wow.domain.calendar.controller;
 
+import com.wow.domain.calendar.dto.FixedExpenseAddRequest;
+import com.wow.domain.calendar.dto.FixedExpenseAddResponse;
 import com.wow.domain.calendar.dto.FixedExpenseManageResponse;
 import com.wow.domain.calendar.service.FixedExpenseService;
 import com.wow.domain.security.CustomUserDetails;
 import com.wow.global.common.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,5 +33,24 @@ public class FixedExpenseController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(200, "고정지출 목록 조회 성공", response));
+    }
+
+
+    // 거래내역 응답 DTO에 추가
+    // boolean isFixed = fixedExpenseRepository.existsByTransaction_Id(transaction.getId());
+    // 고정지출 항목 추가 (거래내역에서 선택)
+    @PostMapping
+    public ResponseEntity<ApiResponse<FixedExpenseAddResponse>> addFixedExpense(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody FixedExpenseAddRequest request) {
+
+        Long userId = userDetails.getId();
+
+        FixedExpenseAddResponse response =
+                fixedExpenseService.addFixedExpense(userId, request);
+
+        return ResponseEntity
+                .status(201)
+                .body(ApiResponse.success(201, "고정지출 추가 성공", response));
     }
 }

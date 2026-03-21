@@ -1,19 +1,20 @@
 package com.wow.domain.calendar.service;
 
+import com.wow.domain.calendar.repository.ExpenseCategoryRepository;
 import com.wow.domain.calendar.dto.*;
 import com.wow.domain.calendar.entity.DayType;
 import com.wow.domain.calendar.entity.FixedExpense;
 import com.wow.domain.calendar.entity.SpendingWeather;
 import com.wow.domain.calendar.entity.Transaction;
 import com.wow.domain.calendar.repository.CalendarRepository;
-import com.wow.domain.calendar.repository.ExpenseCategoryRepository;
 import com.wow.domain.calendar.repository.FixedExpenseRepository;
 import com.wow.domain.calendar.repository.TransactionRepository;
 import com.wow.domain.expensecategory.entity.ExpenseCategory;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
-import com.wow.global.common.BusinessException;
-import com.wow.global.common.ErrorCode;
+import com.wow.global.exception.BadRequestException;
+import com.wow.global.exception.DuplicateException;
+import com.wow.global.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
@@ -50,7 +51,6 @@ public class CalendarService {
     private final ExpenseCategoryRepository expenseCategoryRepository;
     private final FixedExpenseRepository fixedExpenseRepository;
 
-
     @Value("${flask.url}")
     private String flaskUrl;
 
@@ -77,7 +77,8 @@ public class CalendarService {
                     DayType dayType = resolveDayType(calendar.getDate(), today);
                     String iconCode = dayType == DayType.FAR_FUTURE
                             ? null
-                            : (calendar.getSpendingWeather() != null ? calendar.getSpendingWeather().getIconCode() : null);
+                            : (calendar.getSpendingWeather() != null
+                            ? calendar.getSpendingWeather().getIconCode() : null);
 
                     return new CalendarMonthlyResponse(
                             calendar.getDate(),
@@ -96,9 +97,12 @@ public class CalendarService {
         return calendarRepository.findByUserIdAndDateWithWeather(userId, today)
                 .map(calendar -> {
                     SpendingWeather spendingWeather = calendar.getSpendingWeather();
-                    String weatherName = spendingWeather != null ? spendingWeather.getWeatherName() : DEFAULT_WEATHER_NAME;
-                    String iconCode = spendingWeather != null ? spendingWeather.getIconCode() : null;
-                    String description = calendar.getDescription() != null ? calendar.getDescription() : DEFAULT_DESCRIPTION;
+                    String weatherName = spendingWeather != null
+                            ? spendingWeather.getWeatherName() : DEFAULT_WEATHER_NAME;
+                    String iconCode = spendingWeather != null
+                            ? spendingWeather.getIconCode() : null;
+                    String description = calendar.getDescription() != null
+                            ? calendar.getDescription() : DEFAULT_DESCRIPTION;
                     return new TodayWeatherInfo(weatherName, iconCode, description);
                 })
                 .orElse(new TodayWeatherInfo(DEFAULT_WEATHER_NAME, null, DEFAULT_DESCRIPTION));
@@ -111,11 +115,9 @@ public class CalendarService {
         if (targetMonth.equals(currentMonth)) {
             return calculateCurrentMonthSavedAmount(userId, targetMonth);
         }
-
         if (targetMonth.equals(currentMonth.minusMonths(1))) {
             return calculatePreviousMonthSavedAmount(userId, targetMonth);
         }
-
         return 0;
     }
 
@@ -207,17 +209,16 @@ public class CalendarService {
         List<TransactionConfirmRequest.TransactionItem> items = request.getItems();
 
         if (items == null || items.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_STAGE_ID);
+            throw new BadRequestException("거래내역 항목이 비어있습니다.");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
         LocalDate representativeDate = items.get(0).getTransactionDate();
         LocalDateTime dayStart = representativeDate.atStartOfDay();
         LocalDateTime dayEnd = representativeDate.atTime(23, 59, 59);
 
-        // 같은 날짜 기존 데이터 삭제 (덮어쓰기)
         transactionRepository.deleteByUser_IdAndTransactionAtBetween(
                 userId, dayStart, dayEnd);
 
@@ -225,7 +226,7 @@ public class CalendarService {
                 .map(item -> {
                     ExpenseCategory category = expenseCategoryRepository
                             .findById(item.getCategoryId())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_STAGE_ID));
+                            .orElseThrow(() -> new BadRequestException("존재하지 않는 카테고리입니다."));
 
                     return Transaction.builder()
                             .user(user)
@@ -233,7 +234,6 @@ public class CalendarService {
                             .amount(BigDecimal.valueOf(item.getAmount()))
                             .merchantName(item.getMerchantName())
                             .transactionAt(item.getTransactionDate().atStartOfDay())
-//                            .createdAt(LocalDateTime.now())
                             .build();
                 })
                 .toList();
@@ -250,17 +250,17 @@ public class CalendarService {
         List<TransactionCustomRequest.TransactionCustomItem> items = request.getItems();
 
         if (items == null || items.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_STAGE_ID);
+            throw new BadRequestException("거래내역 항목이 비어있습니다.");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
         List<Transaction> entities = items.stream()
                 .map(item -> {
                     ExpenseCategory category = expenseCategoryRepository
                             .findById(item.getCategoryId())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_STAGE_ID));
+                            .orElseThrow(() -> new BadRequestException("존재하지 않는 카테고리입니다."));
 
                     return Transaction.builder()
                             .user(user)
@@ -268,7 +268,6 @@ public class CalendarService {
                             .amount(BigDecimal.valueOf(item.getAmount()))
                             .merchantName(item.getMerchantName())
                             .transactionAt(item.getTransactionDate().atStartOfDay())
-//                            .createdAt(LocalDateTime.now())
                             .build();
                 })
                 .toList();
@@ -286,14 +285,14 @@ public class CalendarService {
     public FixedExpenseResponse getFixedExpenses(Long userId, int year, int month) {
 
         userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
         List<FixedExpense> fixedExpenses =
                 fixedExpenseRepository.findByUser_IdAndIsEnableTrue(userId);
 
         List<FixedExpenseResponse.FixedExpenseItem> items = fixedExpenses.stream()
                 .map(fe -> FixedExpenseResponse.FixedExpenseItem.of(
-                        fe, year, month, transactionRepository))  // ← transactionRepository 추가
+                        fe, year, month, transactionRepository))
                 .toList();
 
         int totalAmount = items.stream()
@@ -335,25 +334,15 @@ public class CalendarService {
     }
 
     private DayType resolveDayType(LocalDate targetDate, LocalDate today) {
-        if (targetDate.isBefore(today)) {
-            return DayType.PAST;
-        }
-        if (targetDate.isEqual(today)) {
-            return DayType.TODAY;
-        }
-        if (!targetDate.isAfter(today.plusDays(7))) {
-            return DayType.NEAR_FUTURE;
-        }
+        if (targetDate.isBefore(today)) return DayType.PAST;
+        if (targetDate.isEqual(today)) return DayType.TODAY;
+        if (!targetDate.isAfter(today.plusDays(7))) return DayType.NEAR_FUTURE;
         return DayType.FAR_FUTURE;
     }
 
     private Integer resolveForecastCode(LocalDate targetDate, LocalDate today) {
-        if (targetDate.isBefore(today)) {
-            return 0;
-        }
-        if (!targetDate.isAfter(today.plusDays(7))) {
-            return 1;
-        }
+        if (targetDate.isBefore(today)) return 0;
+        if (!targetDate.isAfter(today.plusDays(7))) return 1;
         return null;
     }
 

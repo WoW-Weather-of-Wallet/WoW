@@ -1,12 +1,17 @@
 package com.wow.domain.calendar.service;
 
+import com.wow.domain.calendar.dto.FixedExpenseAddRequest;
+import com.wow.domain.calendar.dto.FixedExpenseAddResponse;
 import com.wow.domain.calendar.dto.FixedExpenseManageResponse;
 import com.wow.domain.calendar.entity.FixedExpense;
+import com.wow.domain.calendar.entity.Transaction;
 import com.wow.domain.calendar.repository.FixedExpenseRepository;
 import com.wow.domain.calendar.repository.TransactionRepository;
+import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
-import com.wow.global.common.BusinessException;
-import com.wow.global.common.ErrorCode;
+import com.wow.global.exception.BadRequestException;
+import com.wow.global.exception.DuplicateException;
+import com.wow.global.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +27,11 @@ public class FixedExpenseService {
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
 
-    // 관리페이지 전체 목록 조회
     public FixedExpenseManageResponse getFixedExpenseManage(
             Long userId, int year, int month) {
 
         userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
         List<FixedExpense> fixedExpenses =
                 fixedExpenseRepository.findByUser_IdOrderByDueDayAsc(userId);
@@ -37,12 +41,54 @@ public class FixedExpenseService {
                         fe, year, month, transactionRepository))
                 .toList();
 
-        // 활성화된 항목만 합계 계산
         int totalAmount = items.stream()
                 .filter(item -> Boolean.TRUE.equals(item.getIsEnable()))
                 .mapToInt(FixedExpenseManageResponse.FixedExpenseManageItem::getAmount)
                 .sum();
 
         return new FixedExpenseManageResponse(totalAmount, items);
+    }
+
+    @Transactional
+    public FixedExpenseAddResponse addFixedExpense(
+            Long userId, FixedExpenseAddRequest request) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+        Transaction transaction = transactionRepository.findById(request.getTransactionId())
+                .orElseThrow(() -> new BadRequestException("존재하지 않는 거래내역입니다."));
+
+        if (fixedExpenseRepository.existsByTransaction_Id(request.getTransactionId())) {
+            throw new DuplicateException("이미 고정지출로 등록된 거래내역입니다.");
+        }
+
+        if (fixedExpenseRepository.existsByUser_IdAndName(userId, transaction.getMerchantName())) {
+            throw new DuplicateException("이미 고정지출로 등록된 거래내역입니다.");
+        }
+
+        String icon = null;
+        if (transaction.getCategory() != null) {
+            icon = transaction.getCategory().getCategoryIcon();
+        }
+
+        FixedExpense fixedExpense = FixedExpense.builder()
+                .user(user)
+                .transaction(transaction)
+                .icon(icon)
+                .name(transaction.getMerchantName())
+                .amount(transaction.getAmount().intValue())
+                .dueDay(request.getDueDay())
+                .isAuto(request.getIsAuto() != null ? request.getIsAuto() : false)
+                .isEnable(true)
+                .build();
+
+        fixedExpenseRepository.save(fixedExpense);
+
+        return new FixedExpenseAddResponse(
+                fixedExpense.getId(),
+                fixedExpense.getName(),
+                true
+        );
     }
 }
