@@ -1,0 +1,21 @@
+import React from 'react';
+import Svg, { Path, G, Polygon } from 'react-native-svg';
+
+export default function HeavyRainIcon({ size = 48, color = '#1E3A8A' }) {
+  const cloudColor = '#475569';
+  const lightningColor = '#EAB308';
+  const cloudPath = "M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z";
+
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <G transform="translate(0, 0)">
+        {/* 비: 구름 뒤쪽에서 내리도록 먼저 렌더링, 약간 왼쪽 이동 및 상단 길이 연장 */}
+        <Path d="M5.5 23l1.5-5 M9.5 23l1.5-5 M13.5 23l1.5-5 M17.5 23l1.5-5" stroke={color} strokeWidth="2" strokeLinecap="round" />
+        {/* 구름 */}
+        <Path d={cloudPath} fill={cloudColor} />
+        {/* 번개: 구름 내부(정중앙)에 쏙 들어가도록 크기 축소 (Y=9~18) */}
+        <Polygon points="13,9 10,15 12,15 11,19 15,13 12.5,13 13.5,9" fill={lightningColor} />
+      </G>
+    </Svg>
+  );
+}

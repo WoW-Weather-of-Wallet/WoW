@@ -46,5 +46,5 @@ import { SPENDING_TYPES } from '@shared/constants/spendingTypes'
 
 `react/.env` 파일 생성:
 ```
-VITE_API_BASE_URL=http://localhost:8080
+VITE_API_BASE_URL=http://192.168.70.7:8080
 ```

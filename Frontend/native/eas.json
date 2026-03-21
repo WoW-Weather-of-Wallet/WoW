@@ -9,14 +9,14 @@
       "distribution": "internal",
       "channel": "development",
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.9:8080"
+        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.7:8080"
       }
     },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.9:8080"
+        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.7:8080"
       },
       "android": {
         "buildType": "apk"
@@ -26,7 +26,7 @@
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.9:8080"
+        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.7:8080"
       },
       "android": {
         "buildType": "apk"
@@ -36,7 +36,7 @@
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.9:8080"
+        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.7:8080"
       },
       "ios": {
         "simulator": true
@@ -46,7 +46,7 @@
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.9:8080"
+        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.7:8080"
       },
       "ios": {
         "image": "latest"
