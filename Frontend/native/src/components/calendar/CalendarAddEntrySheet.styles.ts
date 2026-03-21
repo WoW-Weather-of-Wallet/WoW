@@ -125,6 +125,20 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     color: COLORS.primary,
   },
+  paymentBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(4),
+    backgroundColor: COLORS.primary50,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: wp(8),
+    paddingVertical: hp(4),
+  },
+  paymentBadgeText: {
+    fontSize: fp(11),
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+  },
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -153,6 +167,34 @@ export const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   categoryChipTextActive: {
+    color: COLORS.white,
+  },
+  paymentMethodGrid: {
+    flexDirection: 'row',
+    gap: wp(10),
+  },
+  paymentMethodChip: {
+    flex: 1,
+    minHeight: hp(48),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: wp(6),
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.chipBorder,
+    backgroundColor: COLORS.white,
+  },
+  paymentMethodChipActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  paymentMethodChipText: {
+    fontSize: fp(14),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
+  },
+  paymentMethodChipTextActive: {
     color: COLORS.white,
   },
   primaryButton: {

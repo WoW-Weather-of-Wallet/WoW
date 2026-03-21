@@ -27,6 +27,7 @@ import type {
   CalendarUploadFile,
   CalendarUploadPreviewGroup,
   ManualCalendarEntryDraft,
+  ManualEntryPaymentMethod,
 } from '../../types/calendar';
 import { styles } from './CalendarAddEntrySheet.styles';
 
@@ -49,6 +50,15 @@ const ENTRY_MODES: Array<{
   { key: 'excel', label: '파일 업로드', icon: 'folder-open-outline' },
 ];
 
+const PAYMENT_METHOD_OPTIONS: Array<{
+  key: ManualEntryPaymentMethod;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}> = [
+  { key: 'card', label: '카드', icon: 'card-outline' },
+  { key: 'cash', label: '현금', icon: 'cash-outline' },
+];
+
 const INITIAL_UPLOAD_GROUPS: CalendarUploadPreviewGroup[] = [];
 
 export default function CalendarAddEntrySheet({
@@ -62,6 +72,7 @@ export default function CalendarAddEntrySheet({
     activeMode,
     dateKey,
     selectedCategory,
+    selectedPaymentMethod,
     merchantName,
     amountInput,
     draftEntries,
@@ -70,6 +81,7 @@ export default function CalendarAddEntrySheet({
     setActiveMode,
     setDateKey,
     setSelectedCategory,
+    setSelectedPaymentMethod,
     setMerchantName,
     setAmountInput,
     setSelectedExcelFile,
@@ -258,6 +270,8 @@ export default function CalendarAddEntrySheet({
         merchantName: item.merchantName,
         category: item.categoryLabel,
         amount: item.amount,
+        // 업로드 데이터는 현재 기획 기준상 카드 소비로 취급합니다.
+        paymentMethod: 'card',
         categoryId: item.categoryId,
       })),
     );
@@ -344,6 +358,16 @@ export default function CalendarAddEntrySheet({
                           <View style={styles.draftBadge}>
                             <Text style={styles.draftBadgeText}>{draft.category}</Text>
                           </View>
+                          <View style={styles.paymentBadge}>
+                            <Ionicons
+                              name={draft.paymentMethod === 'cash' ? 'cash-outline' : 'card-outline'}
+                              size={wp(12)}
+                              color={COLORS.primary}
+                            />
+                            <Text style={styles.paymentBadgeText}>
+                              {draft.paymentMethod === 'cash' ? '현금' : '카드'}
+                            </Text>
+                          </View>
                         </View>
 
                         <TouchableOpacity
@@ -379,6 +403,40 @@ export default function CalendarAddEntrySheet({
                         style={[styles.categoryChipText, isActive && styles.categoryChipTextActive]}
                       >
                         {category.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <FieldLabel label="결제수단" />
+              {/*
+                백엔드 DTO에는 아직 결제수단 필드가 없어서,
+                현재 단계에서는 프론트 입력/미리보기 흐름에서만 필수 선택으로 관리합니다.
+              */}
+              <View style={styles.paymentMethodGrid}>
+                {PAYMENT_METHOD_OPTIONS.map((method) => {
+                  const isActive = selectedPaymentMethod === method.key;
+
+                  return (
+                    <TouchableOpacity
+                      key={method.key}
+                      activeOpacity={0.88}
+                      style={[styles.paymentMethodChip, isActive && styles.paymentMethodChipActive]}
+                      onPress={() => setSelectedPaymentMethod(method.key)}
+                    >
+                      <Ionicons
+                        name={method.icon}
+                        size={wp(15)}
+                        color={isActive ? COLORS.white : COLORS.textSecondary}
+                      />
+                      <Text
+                        style={[
+                          styles.paymentMethodChipText,
+                          isActive && styles.paymentMethodChipTextActive,
+                        ]}
+                      >
+                        {method.label}
                       </Text>
                     </TouchableOpacity>
                   );

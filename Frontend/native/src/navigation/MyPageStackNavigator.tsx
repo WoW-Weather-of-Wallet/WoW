@@ -1,0 +1,23 @@
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import MyPageScreen from '../screens/main/MyPageScreen';
+import SettingsScreen from '../screens/mypage/SettingsScreen';
+
+const Stack = createNativeStackNavigator();
+
+/**
+ * 마이페이지 탭 안에서 설정 화면까지 함께 관리합니다.
+ * 이렇게 두면 설정으로 진입해도 하단 탭 바가 유지됩니다.
+ */
+export default function MyPageStackNavigator() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MyPageHome" component={MyPageScreen} />
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+    </Stack.Navigator>
+  );
+}

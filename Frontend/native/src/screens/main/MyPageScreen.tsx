@@ -3,7 +3,6 @@ import {
   View,
   Text,
   ScrollView,
-  StyleSheet,
   TouchableOpacity,
   StatusBar,
   ActivityIndicator,
@@ -11,16 +10,9 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GradientButton from '../../components/common/GradientButton';
-import {
-  mockMyAccounts,
-  mockMyCards,
-  mockProfileStats,
-  mockUserShortcuts,
-} from '../../mock/dashboard';
-import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, hp, wp } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
 import { fcmService } from '../../services/fcmService';
 import {
@@ -31,6 +23,23 @@ import {
 import { extractApiErrorMessage } from '../../utils/error';
 
 import { styles } from './MyPageScreen.styles';
+
+const LIVE_SHORTCUTS = [
+  {
+    id: 'profile-settings',
+    title: '내 정보 설정',
+    description: '이름, 휴대폰 번호, 비밀번호를 바로 관리합니다.',
+    icon: 'person-circle-outline' as const,
+    action: 'settings',
+  },
+  {
+    id: 'push-settings',
+    title: '알림 설정 확인',
+    description: '현재 계정 알림 사용 여부를 설정 화면에서 확인합니다.',
+    icon: 'notifications-outline' as const,
+    action: 'settings',
+  },
+] as const;
 
 /**
  * MyPageScreen
@@ -80,6 +89,23 @@ export default function MyPageScreen() {
   const displayBadge = profile?.loginType === 'SSAFY' ? 'SSAFY 회원' : '일반 회원';
   const displayOnboardingStatus = profile?.phoneNumber ? '완료' : '진행 중';
   const displayLinkedAccounts = '준비중';
+  const profileInfoCards = [
+    {
+      id: 'login-type',
+      label: '가입 유형',
+      value: displayBadge,
+    },
+    {
+      id: 'phone',
+      label: '휴대폰',
+      value: profile?.phoneNumber ? '연결됨' : '미등록',
+    },
+    {
+      id: 'alarm',
+      label: '알림',
+      value: profile?.alarmEnabled ? '사용 중' : '꺼짐',
+    },
+  ] as const;
 
   const handleLogout = async () => {
     if (isLoggingOut) {
@@ -169,7 +195,15 @@ export default function MyPageScreen() {
         </TouchableOpacity>
 
         <View style={styles.statsRow}>
-          {mockProfileStats.map((stat) => (
+          {/*
+            이전 코드:
+            - 연결 계좌 수, 카드 수, 리포트 상태를 mock 데이터로 보여주고 있었습니다.
+
+            변경 이유:
+            - 사용자관리 영역은 이제 실데이터만 사용해야 하므로,
+              프로필 API에서 바로 확인 가능한 값만 요약 카드로 노출합니다.
+          */}
+          {profileInfoCards.map((stat) => (
             <View key={stat.id} style={styles.statCard}>
               <Text style={styles.statValue}>{stat.value}</Text>
               <Text style={styles.statLabel}>{stat.label}</Text>
@@ -180,79 +214,29 @@ export default function MyPageScreen() {
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>보유 카드</Text>
-            <Text style={styles.sectionAction}>전체 보기</Text>
+            <Text style={styles.sectionAction}>실연동 대기</Text>
           </View>
-
-          {mockMyCards.map((card) => (
-            <TouchableOpacity
-              key={card.id}
-              activeOpacity={0.85}
-              onPress={() => console.log(`${card.id} 카드 상세 연결 예정`)}
-            >
-              <LinearGradient
-                colors={[card.themeStart, card.themeEnd]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.creditCard}
-              >
-                <View style={styles.creditCardTopRow}>
-                  <View>
-                    <Text style={styles.creditCardType}>{card.cardType}</Text>
-                    <Text style={styles.creditCardName}>{card.cardName}</Text>
-                  </View>
-                  <Ionicons name="card-outline" size={wp(22)} color={COLORS.textInverse} />
-                </View>
-
-                <View style={styles.creditCardBottomRow}>
-                  <View>
-                    <Text style={styles.creditCardNumber}>**** **** **** {card.lastDigits}</Text>
-                    <Text style={styles.creditCardOwner}>{card.ownerName}</Text>
-                  </View>
-                  <Text style={styles.creditCardBilling}>{card.billingDay}</Text>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
+          <View style={styles.emptyStateCard}>
+            <Ionicons name="card-outline" size={wp(24)} color={COLORS.primary} />
+            <Text style={styles.emptyStateTitle}>연결된 카드 데이터가 아직 없습니다.</Text>
+            <Text style={styles.emptyStateDescription}>
+              사용자관리에서는 더 이상 mock 카드를 보여주지 않고, 실연동 API가 준비되면 여기에 표시합니다.
+            </Text>
+          </View>
         </View>
 
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>연결 계좌</Text>
-            <Text style={styles.sectionAction}>잔액 보기</Text>
+            <Text style={styles.sectionAction}>실연동 대기</Text>
           </View>
-
-          {mockMyAccounts.map((account) => {
-            const toneStyle =
-              account.tone === 'primary'
-                ? styles.accountTonePrimary
-                : account.tone === 'mint'
-                  ? styles.accountToneMint
-                  : styles.accountToneGold;
-
-            return (
-              <TouchableOpacity
-                key={account.id}
-                style={styles.accountRow}
-                activeOpacity={0.82}
-                onPress={() => console.log(`${account.id} 계좌 상세 연결 예정`)}
-              >
-                <View style={styles.accountLeft}>
-                  <View style={[styles.accountIconCircle, toneStyle]}>
-                    <Ionicons name="wallet-outline" size={wp(18)} color={COLORS.textPrimary} />
-                  </View>
-                  <View style={styles.accountTextBlock}>
-                    <Text style={styles.accountBankName}>{account.bankName}</Text>
-                    <Text style={styles.accountAlias}>{account.accountAlias}</Text>
-                    <Text style={styles.accountNumber}>{account.accountNumberMasked}</Text>
-                  </View>
-                </View>
-                <View style={styles.accountRight}>
-                  <Text style={styles.accountBalance}>{account.balance.toLocaleString()}원</Text>
-                  <Text style={styles.accountBalanceLabel}>현재 잔액</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+          <View style={styles.emptyStateCard}>
+            <Ionicons name="wallet-outline" size={wp(24)} color={COLORS.primary} />
+            <Text style={styles.emptyStateTitle}>연결된 계좌 데이터가 아직 없습니다.</Text>
+            <Text style={styles.emptyStateDescription}>
+              계좌 연동 API가 열리기 전까지는 가짜 잔액을 노출하지 않고 빈 상태로 유지합니다.
+            </Text>
+          </View>
         </View>
 
         <View style={styles.sectionCard}>
@@ -261,12 +245,12 @@ export default function MyPageScreen() {
             <Text style={styles.sectionAction}>관리</Text>
           </View>
 
-          {mockUserShortcuts.map((shortcut) => (
+          {LIVE_SHORTCUTS.map((shortcut) => (
             <TouchableOpacity
               key={shortcut.id}
               style={styles.shortcutRow}
               activeOpacity={0.8}
-              onPress={() => console.log(`${shortcut.id} 메뉴 이동 예정`)}
+              onPress={() => navigation.navigate('Settings')}
             >
               <View style={styles.shortcutLeft}>
                 <View style={styles.shortcutIconCircle}>

@@ -78,6 +78,7 @@ export function buildMonthDays(
   displayedMonth: Date,
   today: Date,
   sourceDaysByKey: Map<string, CalendarDayItem>,
+  memoDateKeys: Set<string>,
 ) {
   const year = displayedMonth.getFullYear();
   const month = displayedMonth.getMonth();
@@ -101,13 +102,19 @@ export function buildMonthDays(
     const isFuture = targetDate > today;
 
     calendarDays.push(
-      sourceDay ?? {
-        dateKey,
-        dayNumber,
-        tone: TONE_SEQUENCE[(dayNumber - 1) % TONE_SEQUENCE.length],
-        isCurrentMonth: true,
-        isFuture,
-      },
+      sourceDay
+        ? {
+            ...sourceDay,
+            hasMemo: memoDateKeys.has(dateKey),
+          }
+        : {
+            dateKey,
+            dayNumber,
+            tone: TONE_SEQUENCE[(dayNumber - 1) % TONE_SEQUENCE.length],
+            hasMemo: memoDateKeys.has(dateKey),
+            isCurrentMonth: true,
+            isFuture,
+          },
     );
   }
 

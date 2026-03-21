@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CalendarEntryCategoryKey } from '../constants/calendar/addEntry';
-import type { CalendarUploadFile, ManualCalendarEntryDraft } from '../types/calendar';
+import type {
+  CalendarUploadFile,
+  ManualCalendarEntryDraft,
+  ManualEntryPaymentMethod,
+} from '../types/calendar';
 
 type EntryMode = 'direct' | 'excel';
 
@@ -16,6 +20,8 @@ export function useCalendarAddEntryForm({
   const [activeMode, setActiveMode] = useState<EntryMode>('direct');
   const [dateKey, setDateKey] = useState(defaultDateKey);
   const [selectedCategory, setSelectedCategory] = useState<CalendarEntryCategoryKey>('식비');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<ManualEntryPaymentMethod>('card');
   const [merchantName, setMerchantName] = useState('');
   const [amountInput, setAmountInput] = useState('');
   const [draftEntries, setDraftEntries] = useState<ManualCalendarEntryDraft[]>([]);
@@ -29,6 +35,7 @@ export function useCalendarAddEntryForm({
     setActiveMode('direct');
     setDateKey(defaultDateKey);
     setSelectedCategory('식비');
+    setSelectedPaymentMethod('card');
     setMerchantName('');
     setAmountInput('');
     setDraftEntries([]);
@@ -52,6 +59,7 @@ export function useCalendarAddEntryForm({
         merchantName: merchantName.trim(),
         category: selectedCategory,
         amount: Number(amountInput),
+        paymentMethod: selectedPaymentMethod,
       },
     ]);
     setMerchantName('');
@@ -66,6 +74,7 @@ export function useCalendarAddEntryForm({
     activeMode,
     dateKey,
     selectedCategory,
+    selectedPaymentMethod,
     merchantName,
     amountInput,
     draftEntries,
@@ -74,6 +83,7 @@ export function useCalendarAddEntryForm({
     setActiveMode,
     setDateKey,
     setSelectedCategory,
+    setSelectedPaymentMethod,
     setMerchantName,
     setAmountInput,
     setSelectedExcelFile,

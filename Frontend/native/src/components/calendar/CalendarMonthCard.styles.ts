@@ -41,6 +41,9 @@ export const styles = StyleSheet.create({
     paddingVertical: hp(7),
     position: 'relative',
   },
+  dayCellMemo: {
+    backgroundColor: COLORS.noticeBackground,
+  },
   dayCellSelected: {
     backgroundColor: COLORS.primary,
     shadowColor: COLORS.primary,
@@ -67,6 +70,20 @@ export const styles = StyleSheet.create({
   dayNumberPadding: {
     color: 'transparent',
   },
+  memoBadge: {
+    minHeight: hp(14),
+    justifyContent: 'center',
+    marginBottom: hp(2),
+  },
+  memoBadgeSelected: {
+    opacity: 0.92,
+  },
+  memoEmoji: {
+    fontSize: fp(11),
+  },
+  memoEmojiSelected: {
+    color: COLORS.white,
+  },
   cellIndicator: {
     minHeight: hp(16),
     alignItems: 'center',
@@ -75,19 +92,11 @@ export const styles = StyleSheet.create({
   cellIndicatorPadding: {
     opacity: 0,
   },
-  toneDot: {
-    width: wp(6),
-    height: wp(6),
-    borderRadius: wp(3),
-  },
-  toneDotSelected: {
-    backgroundColor: COLORS.white,
-  },
   amountText: {
     minHeight: fp(11),
     fontSize: fp(9),
     fontFamily: FONTS.medium,
-    color: COLORS.amountGreen,
+    color: COLORS.spentRed,
     marginTop: hp(5),
   },
   amountTextSelected: {

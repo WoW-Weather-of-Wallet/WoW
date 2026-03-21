@@ -28,6 +28,12 @@ export default function CalendarHeroCard({
   onPressNextMonth,
   onPressAdd,
 }: CalendarHeroCardProps) {
+  // 이전 시도:
+  // - 월 이동을 별도 상단 바로 분리했지만, 기존 화면 흐름과 시각 톤이 너무 달라졌습니다.
+  //
+  // 변경 이유:
+  // - 사용자가 익숙한 기존 구조를 유지하면서도, 보라색 히어로 카드 자체만 상단에 고정되게
+  //   만들기 위해 월 이동 UI를 다시 카드 내부로 되돌립니다.
   return (
     <LinearGradient
       colors={[COLORS.calendarHeroStart, COLORS.calendarHeroEnd]}

@@ -166,11 +166,15 @@ function normalizeCalendarUploadSummary(
 }
 
 export async function getCalendarHeader(params: CalendarHeaderParams) {
-  const response = await nativeApi.get<CalendarHeaderResponse>('/api/v1/calendar/header', {
+  const response = await nativeApi.get<CalendarApiResponse<CalendarHeaderResponse>>(
+    '/api/v1/calendar/header',
+    {
     params,
-  });
+    },
+  );
 
-  return response.data;
+  // 캘린더 헤더만 ApiResponse 래퍼를 사용하므로 여기서 한 번만 벗겨서 화면 코드를 단순하게 유지합니다.
+  return response.data.data;
 }
 
 export async function uploadCalendarTransactions(payload: CalendarUploadRequest) {

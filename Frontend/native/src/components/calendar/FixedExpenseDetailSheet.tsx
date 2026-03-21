@@ -25,8 +25,6 @@ interface FixedExpenseDetailSheetProps {
   onSubmit: (payload: { category: string; paymentDay: number }) => void;
 }
 
-const CATEGORY_OPTIONS = ['식비', '교통', '쇼핑', '여가', '주거', '의료', '통신', '기타'] as const;
-
 /**
  * 거래를 고정지출로 등록하거나 수정할 때 쓰는 세부 설정 시트입니다.
  */
@@ -39,7 +37,6 @@ export default function FixedExpenseDetailSheet({
   onClose,
   onSubmit,
 }: FixedExpenseDetailSheetProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>('여가');
   const [paymentDay, setPaymentDay] = useState(11);
 
   const recommendedCategory = useMemo(() => item?.category ?? '여가', [item]);
@@ -49,8 +46,6 @@ export default function FixedExpenseDetailSheet({
       return;
     }
 
-    // 수정 진입 시에는 기존 값을 유지하고, 신규 등록이면 거래 카테고리 기준으로 시작합니다.
-    setSelectedCategory(initialCategory ?? item.category);
     setPaymentDay(initialPaymentDay ?? 11);
   }, [initialCategory, initialPaymentDay, item, visible]);
 
@@ -83,30 +78,19 @@ export default function FixedExpenseDetailSheet({
       </View>
 
       <View style={styles.aiHintCard}>
-        <Text style={styles.aiHintTitle}>AI 추천: "{recommendedCategory}" 카테고리</Text>
+        {/*
+          이전 코드:
+          - 등록 단계에서 카테고리 선택 칩을 직접 바꾸게 되어 있었습니다.
+
+          변경 이유:
+          - 이번 요구사항에서는 카테고리를 설정 단계에서 제거하고,
+            상세 조회에서만 보이게 해야 하므로 안내만 남기고 선택 UI는 제거합니다.
+        */}
+        <Text style={styles.aiHintTitle}>카테고리는 상세 조회에서만 확인</Text>
         <Text style={styles.aiHintText}>
-          거래명과 기존 소비 흐름을 기준으로 가장 가까운 카테고리를 먼저 제안합니다.
+          등록 단계에서는 카테고리를 고르지 않고, 현재 거래 기준 분류를 그대로 유지합니다.
+          현재 분류는 "{recommendedCategory}"로 연결됩니다.
         </Text>
-      </View>
-
-      <Text style={styles.sectionTitle}>카테고리 선택</Text>
-      <View style={styles.categoryWrap}>
-        {CATEGORY_OPTIONS.map((category) => {
-          const isSelected = selectedCategory === category;
-
-          return (
-            <TouchableOpacity
-              key={category}
-              activeOpacity={0.86}
-              style={[styles.categoryChip, isSelected && styles.categoryChipSelected]}
-              onPress={() => setSelectedCategory(category)}
-            >
-              <Text style={[styles.categoryChipText, isSelected && styles.categoryChipTextSelected]}>
-                {category}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
       </View>
 
       <Text style={styles.sectionTitle}>매월 납부일</Text>
@@ -131,11 +115,10 @@ export default function FixedExpenseDetailSheet({
       <TouchableOpacity
         activeOpacity={0.88}
         style={styles.submitButton}
-        onPress={() => onSubmit({ category: selectedCategory, paymentDay })}
+        onPress={() => onSubmit({ category: initialCategory ?? item.category, paymentDay })}
       >
         <Text style={styles.submitButtonText}>{submitLabel}</Text>
       </TouchableOpacity>
     </BottomSheetModal>
   );
 }
-

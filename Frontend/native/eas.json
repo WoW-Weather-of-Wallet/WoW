@@ -7,11 +7,17 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "channel": "development"
+      "channel": "development",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.9:8080"
+      }
     },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.9:8080"
+      },
       "android": {
         "buildType": "apk"
       }
@@ -19,6 +25,9 @@
     "android-apk": {
       "distribution": "internal",
       "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.9:8080"
+      },
       "android": {
         "buildType": "apk"
       }
@@ -26,6 +35,9 @@
     "ios-simulator": {
       "distribution": "internal",
       "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.9:8080"
+      },
       "ios": {
         "simulator": true
       }
@@ -33,6 +45,9 @@
     "ios-device": {
       "distribution": "internal",
       "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.70.9:8080"
+      },
       "ios": {
         "image": "latest"
       }
@@ -40,6 +55,9 @@
     "production": {
       "autoIncrement": true,
       "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://j14d106.p.ssafy.io"
+      },
       "android": {
         "buildType": "app-bundle"
       },
