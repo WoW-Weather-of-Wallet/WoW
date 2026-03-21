@@ -26,26 +26,23 @@ public class FixedExpenseResponse {
 
         private String name;
         private int amount;
-        private int dueDay;          // 원래 결제일
-        private int actualDueDay;    // 주말 보정된 실제 결제일
+        private int dueDay;
+        private int actualDueDay;
         private String paymentStatus;
+        private String categoryName;    // ← private으로 선언만
 
         @JsonProperty("isAuto")
-        private boolean auto;
+        private boolean isAuto;
 
         public static FixedExpenseItem of(
                 FixedExpense entity,
                 int year, int month,
                 TransactionRepository transactionRepository) {
 
-            // 1) 원래 결제일
             int dueDay = entity.getDueDay();
-
-            // 2) 주말이면 다음 평일로 이월
             LocalDate dueDate = adjustToWeekday(year, month, dueDay);
             int actualDueDay = dueDate.getDayOfMonth();
 
-            // 3) 해당 월 거래내역에서 납부완료 여부 확인
             LocalDateTime monthStart = LocalDateTime.of(year, month, 1, 0, 0);
             LocalDateTime monthEnd = LocalDateTime.of(
                     year, month,
@@ -59,7 +56,13 @@ public class FixedExpenseResponse {
                             monthStart,
                             monthEnd);
 
-            // 4) paymentStatus 계산
+            // categoryName — transaction 통해서 접근
+            String categoryName = null;
+            if (entity.getTransaction() != null
+                    && entity.getTransaction().getCategory() != null) {
+                categoryName = entity.getTransaction().getCategory().getCategoryName();
+            }
+
             String paymentStatus;
             if (isPaid) {
                 paymentStatus = "납부완료";
@@ -75,29 +78,25 @@ public class FixedExpenseResponse {
 
             return new FixedExpenseItem(
                     entity.getName(),
-                    entity.getAmount().intValue(),
+                    entity.getAmount(),
                     dueDay,
                     actualDueDay,
                     paymentStatus,
+                    categoryName,       // ← 추가
                     entity.getIsAuto()
             );
         }
 
-        // 주말이면 다음 평일(월요일)로 이월
         private static LocalDate adjustToWeekday(int year, int month, int dueDay) {
-            // 해당 월의 마지막 날 초과 방지
             int lastDay = YearMonth.of(year, month).lengthOfMonth();
             int safeDueDay = Math.min(dueDay, lastDay);
-
             LocalDate date = LocalDate.of(year, month, safeDueDay);
 
-            // 토요일이면 +2일(월요일), 일요일이면 +1일(월요일)
             if (date.getDayOfWeek() == DayOfWeek.SATURDAY) {
                 date = date.plusDays(2);
             } else if (date.getDayOfWeek() == DayOfWeek.SUNDAY) {
                 date = date.plusDays(1);
             }
-
             return date;
         }
     }

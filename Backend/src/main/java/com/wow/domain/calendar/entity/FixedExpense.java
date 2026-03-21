@@ -35,8 +35,9 @@ public class FixedExpense {
     @JoinColumn(name = "account_id")
     private Account account;
 
-    @Column(name = "transaction_id")
-    private Long transactionId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "transaction_id")
+    private Transaction transaction;
 
     @Column(name = "icon", length = 10)
     private String icon;

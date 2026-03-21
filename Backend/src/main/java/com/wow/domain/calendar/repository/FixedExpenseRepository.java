@@ -6,4 +6,9 @@ import java.util.List;
 
 public interface FixedExpenseRepository extends JpaRepository<FixedExpense, Long> {
 
-    List<FixedExpense> findByUser_IdAndIsEnableTrue(Long userId);}
+    // 캘린더용 — 활성화된 것만
+    List<FixedExpense> findByUser_IdAndIsEnableTrue(Long userId);
+
+    // 관리페이지용 — 전체 (결제일 순 정렬)
+    List<FixedExpense> findByUser_IdOrderByDueDayAsc(Long userId);
+}
