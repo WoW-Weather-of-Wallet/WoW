@@ -12,7 +12,8 @@ export const styles = StyleSheet.create({
   weekdayRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: hp(14),
+    // 첫째 주 시작점을 더 끌어올리기 위해 헤더 아래 간격을 없앱니다.
+    marginBottom: 0,
   },
   weekdayLabel: {
     flex: 1,
@@ -30,7 +31,9 @@ export const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    rowGap: hp(10),
+    // 첫째 주만 당기면 균형이 깨져서 전체 주간 간격을 함께 조금 줄입니다.
+    rowGap: hp(7),
+    marginTop: -hp(2),
   },
   dayCell: {
     width: '14.28%',
@@ -39,10 +42,8 @@ export const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     borderRadius: RADIUS.lg,
     paddingVertical: hp(7),
+    paddingTop: hp(7),
     position: 'relative',
-  },
-  dayCellMemo: {
-    backgroundColor: COLORS.noticeBackground,
   },
   dayCellSelected: {
     backgroundColor: COLORS.primary,
@@ -71,18 +72,17 @@ export const styles = StyleSheet.create({
     color: 'transparent',
   },
   memoBadge: {
-    minHeight: hp(14),
+    position: 'absolute',
+    top: -hp(2),
+    right: -wp(1),
+    minWidth: wp(18),
+    height: hp(18),
+    alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: hp(2),
+    zIndex: 2,
   },
   memoBadgeSelected: {
     opacity: 0.92,
-  },
-  memoEmoji: {
-    fontSize: fp(11),
-  },
-  memoEmojiSelected: {
-    color: COLORS.white,
   },
   cellIndicator: {
     minHeight: hp(16),

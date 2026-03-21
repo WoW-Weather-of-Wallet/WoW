@@ -104,6 +104,17 @@ export default function CalendarScreen() {
           onPressNextMonth={() => handleMoveMonth('next')}
           onPressAdd={() => setIsAddEntryVisible(true)}
         />
+
+        {/*
+          변경 이유:
+          - 캘린더/전체내역 토글은 화면 문맥 전환 역할이라 스크롤에 밀려 내려가면
+            사용성이 떨어집니다.
+          - 히어로 카드 바로 아래 고정 영역으로 올려, 화면 어디서든 같은 위치에서
+            보기 전환이 가능하도록 정리합니다.
+        */}
+        <View style={styles.tabWrap}>
+          <CalendarTabSwitcher activeTab={activeTab} onChange={setActiveTab} />
+        </View>
       </View>
 
       <ScrollView
@@ -116,10 +127,6 @@ export default function CalendarScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.tabWrap}>
-          <CalendarTabSwitcher activeTab={activeTab} onChange={setActiveTab} />
-        </View>
-
         {activeTab === 'calendar' ? (
           <>
             <CalendarMonthCard
