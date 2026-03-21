@@ -188,10 +188,9 @@ export default function CalendarAddEntrySheet({
     setBackendSummaryError(null);
     setConfirmErrorMessage(null);
     setIsBackendSummaryLoading(true);
+    let nextGroups: CalendarUploadPreviewGroup[] = [];
 
     try {
-      let nextGroups: CalendarUploadPreviewGroup[] = [];
-
       if (isCsvFile(nextFile.name, nextFile.mimeType)) {
         const csvText = await FileSystem.readAsStringAsync(nextFile.uri, {
           encoding: FileSystem.EncodingType.UTF8,
@@ -224,10 +223,17 @@ export default function CalendarAddEntrySheet({
       const summary = await uploadCalendarTransactions(buildUploadRequest(nextFile));
       setBackendSummary(summary);
 
-      // Prefer the backend item-level classification result when it is available.
-      // This keeps the visible upload list aligned with Flask auto-classification.
+      // 수정 전 코드:
+      // - 백엔드 item-level classification 결과로 업로드 리스트를 통째로 덮어썼습니다.
+      //
+      // 변경 이유:
+      // - 현재 기획은 "분류는 프론트에서 관리"이므로, 화면에 보이는 category/status는
+      //   로컬 분류 결과를 유지해야 합니다.
+      // - 백엔드 응답은 요약 통계와 설명 보조 정보만 덧붙이는 용도로 사용합니다.
       if (summary.items.length > 0) {
-        setUploadGroups(buildUploadGroupsFromBackendItems(summary.items));
+        setUploadGroups((current) =>
+          mergeUploadGroupsWithBackendItems(current.length > 0 ? current : nextGroups, summary.items),
+        );
         setUploadErrorMessage(null);
       }
     } catch (error) {
@@ -816,35 +822,42 @@ function SummaryStatCard({ label, value }: { label: string; value: string }) {
 }
 
 
-function buildUploadGroupsFromBackendItems(items: CalendarUploadBackendItem[]) {
-  const groupedItems = new Map<string, CalendarUploadPreviewGroup['items']>();
+function mergeUploadGroupsWithBackendItems(
+  groups: CalendarUploadPreviewGroup[],
+  backendItems: CalendarUploadBackendItem[],
+) {
+  const backendItemByKey = new Map<string, CalendarUploadBackendItem>();
 
-  items.forEach((item, index) => {
-    const dateKey = item.transactionDate;
-    if (!dateKey) {
+  backendItems.forEach((item) => {
+    if (!item.transactionDate) {
       return;
     }
 
-    const nextItem = {
-      id: `backend-${dateKey}-${index}`,
-      merchantName: item.merchantName,
-      amount: item.amount,
-      categoryLabel: item.category || '?? ??',
-      status: item.status,
-      description: item.transactionDetail || item.classificationReason || undefined,
-      categoryId: item.categoryId,
-    };
-
-    groupedItems.set(dateKey, [...(groupedItems.get(dateKey) ?? []), nextItem]);
+    const lookupKey = `${item.transactionDate}::${item.merchantName}::${item.amount}`;
+    backendItemByKey.set(lookupKey, item);
   });
 
-  return Array.from(groupedItems.entries())
-    .sort((a, b) => (a[0] < b[0] ? 1 : -1))
-    .map(([dateKey, groupedDateItems]) => ({
-      dateKey,
-      totalCount: groupedDateItems.length,
-      items: groupedDateItems,
-    }));
+  return groups.map((group) => ({
+    ...group,
+    items: group.items.map((item) => {
+      const lookupKey = `${group.dateKey}::${item.merchantName}::${item.amount}`;
+      const matchedBackendItem = backendItemByKey.get(lookupKey);
+
+      if (!matchedBackendItem) {
+        return item;
+      }
+
+      // 프론트 분류(categoryLabel / status)는 유지하고,
+      // 백엔드는 거래 설명과 분류 사유를 보강하는 정보원으로만 사용합니다.
+      return {
+        ...item,
+        description:
+          matchedBackendItem.transactionDetail ||
+          matchedBackendItem.classificationReason ||
+          item.description,
+      };
+    }),
+  }));
 }
 
 function formatDateLabel(dateKey: string) {
@@ -865,7 +878,8 @@ function buildFileSummary(file: CalendarUploadFile) {
 
 function buildUploadRequest(file: CalendarUploadFile) {
   const lowerName = file.name.toLowerCase();
-  const isCardFile = lowerName.includes('card') || lowerName.includes('카드');
+  const isCsvFile = lowerName.endsWith('.csv');
+  const isCardFile = isCsvFile || lowerName.includes('card') || lowerName.includes('카드');
 
   return {
     bankFile: isCardFile ? null : file,

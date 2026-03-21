@@ -16,7 +16,7 @@ import { styles } from './ResetPasswordScreen.styles';
 import { COLORS, wp, hp } from '../../constants/theme';
 import CustomTextInput from '../../components/common/CustomTextInput';
 import { findPassword } from '../../services/auth';
-import { extractApiErrorMessage } from '../../utils/error';
+import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { validatePassword } from '../../utils/validation';
 
 export default function ResetPasswordScreen() {
@@ -89,11 +89,11 @@ export default function ResetPasswordScreen() {
         [{ text: '확인', onPress: () => navigation.navigate('Login') }],
       );
     } catch (error: any) {
-      const message = extractApiErrorMessage(
-        error,
-        '비밀번호 변경에 실패했어요. 다시 시도해 주세요.',
-      );
-      Alert.alert('오류', message);
+      const presentation = buildAuthErrorPresentation(error, {
+        flow: 'password-reset',
+        fallbackMessage: '비밀번호 변경에 실패했어요. 다시 시도해 주세요.',
+      });
+      Alert.alert(presentation.title, presentation.alertMessage);
       setIsSubmitting(false);
     }
   };
@@ -172,5 +172,3 @@ export default function ResetPasswordScreen() {
     </View>
   );
 }
-
-

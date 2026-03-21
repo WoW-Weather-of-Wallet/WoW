@@ -13,6 +13,7 @@ import { styles } from './VerifyCodeScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import { verifySmsCode, findUserId } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
+import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 
 const MAX_CODE_LENGTH = 6;
 
@@ -169,17 +170,27 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
         error,
         '인증번호 확인에 실패했어요. 다시 시도해 주세요.',
       );
+      let alertTitle = '인증 오류';
+      let alertMessage = message;
 
       if (
         (route.params.flow === 'FindId' || route.params.flow === 'FindPw') &&
         error?.response?.status === 401
       ) {
         message = '입력한 정보와 일치하는 계정을 찾지 못했어요.';
+      } else {
+        const presentation = buildAuthErrorPresentation(error, {
+          flow: 'sms-verify',
+          fallbackMessage: '인증번호 확인에 실패했어요. 다시 시도해 주세요.',
+        });
+        message = presentation.inlineMessage;
+        alertTitle = presentation.title;
+        alertMessage = presentation.alertMessage;
       }
 
       setVerifyError(message);
       setCode('');
-      Alert.alert('인증 오류', message);
+      Alert.alert(alertTitle, alertMessage);
     } finally {
       setIsVerifying(false);
     }

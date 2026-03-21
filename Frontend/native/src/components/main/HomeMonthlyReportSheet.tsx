@@ -54,10 +54,9 @@ export default function HomeMonthlyReportSheet({
       <View style={styles.insightCard}>
         <Ionicons name="bar-chart-outline" size={wp(22)} color={COLORS.primary} />
         <Text style={styles.insightText}>
-          지난달보다 +70,000원 더 썼어요. 식비가 주요 원인이에요.
+          지난달보다 +70,000원 더 썼어요. 외식과 커피/음료 지출이 주요 원인이에요.
         </Text>
       </View>
     </BottomSheetModal>
   );
 }
-

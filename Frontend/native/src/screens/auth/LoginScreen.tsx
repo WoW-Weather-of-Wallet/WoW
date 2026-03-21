@@ -45,6 +45,73 @@ const LOGIN_ERROR_FALLBACK =
 const SSAFY_ERROR_FALLBACK =
   'SSAFY \uB85C\uADF8\uC778 \uCC98\uB9AC\uC5D0 \uC2E4\uD328\uD588\uC5B4\uC694. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.';
 
+const buildLoginErrorPresentation = (
+  error: unknown,
+  mode: 'general' | 'ssafy',
+) => {
+  const fallbackMessage = mode === 'general' ? LOGIN_ERROR_FALLBACK : SSAFY_ERROR_FALLBACK;
+  const message = extractApiErrorMessage(error, fallbackMessage);
+  const apiError = error as
+    | {
+        message?: string;
+        response?: {
+          status?: number;
+          data?: {
+            errorMessage?: string;
+          };
+        };
+      }
+    | undefined;
+
+  const status = apiError?.response?.status;
+  const serverMessage = apiError?.response?.data?.errorMessage ?? message;
+  const normalizedMessage = serverMessage.toLowerCase();
+
+  // 수정 전 코드:
+  // - 로그인 실패도 일반 문자열만 Alert로 띄워 원인별 다음 행동을 판단하기 어려웠습니다.
+  //
+  // 변경 이유:
+  // - 일반 로그인과 SSAFY 로그인은 실패 원인이 다르므로
+  //   사용자에게 다시 입력할지, 잠시 후 재시도할지, 서버 설정을 볼지 구분해서 안내합니다.
+  if (mode === 'general' && status === 401) {
+    return {
+      title: '로그인 정보 확인',
+      inlineMessage: '아이디 또는 비밀번호가 올바르지 않아요. 다시 확인해주세요.',
+      alertMessage: '아이디 또는 비밀번호가 올바르지 않아요. 다시 확인해주세요.',
+    };
+  }
+
+  if (mode === 'ssafy' && normalizedMessage.includes('취소')) {
+    return {
+      title: 'SSAFY 로그인 취소',
+      inlineMessage: 'SSAFY 로그인을 취소했어요.',
+      alertMessage: 'SSAFY 로그인을 취소했어요. 필요하면 다시 시도해주세요.',
+    };
+  }
+
+  if (mode === 'ssafy' && /ssafy|oauth|token/.test(normalizedMessage)) {
+    return {
+      title: 'SSAFY 로그인 실패',
+      inlineMessage: 'SSAFY 인증 처리 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.',
+      alertMessage: 'SSAFY 인증 서버 처리 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.',
+    };
+  }
+
+  if (status === 500) {
+    return {
+      title: mode === 'general' ? '로그인 처리 실패' : 'SSAFY 로그인 처리 실패',
+      inlineMessage: '서버 처리 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.',
+      alertMessage: '서버 처리 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.',
+    };
+  }
+
+  return {
+    title: mode === 'general' ? '로그인 실패' : 'SSAFY 로그인 실패',
+    inlineMessage: message,
+    alertMessage: message,
+  };
+};
+
 export default function LoginScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const loginToStore = useAuthStore((state) => state.login);
@@ -149,9 +216,9 @@ export default function LoginScreen({ navigation }: any) {
         return true;
       } catch (error: any) {
         handledSsafyUrlRef.current = null;
-        const message = extractApiErrorMessage(error, SSAFY_ERROR_FALLBACK);
-        setLoginError(message);
-        Alert.alert('SSAFY \uB85C\uADF8\uC778 \uC2E4\uD328', message);
+        const presentation = buildLoginErrorPresentation(error, 'ssafy');
+        setLoginError(presentation.inlineMessage);
+        Alert.alert(presentation.title, presentation.alertMessage);
         return true;
       } finally {
         if (processingSsafyUrlRef.current === url) {
@@ -202,9 +269,9 @@ export default function LoginScreen({ navigation }: any) {
 
       navigation.replace('MainTabs');
     } catch (error: any) {
-      const message = extractApiErrorMessage(error, LOGIN_ERROR_FALLBACK);
-      setLoginError(message);
-      Alert.alert('\uB85C\uADF8\uC778 \uC2E4\uD328', message);
+      const presentation = buildLoginErrorPresentation(error, 'general');
+      setLoginError(presentation.inlineMessage);
+      Alert.alert(presentation.title, presentation.alertMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -233,9 +300,9 @@ export default function LoginScreen({ navigation }: any) {
         await processSsafyCallbackUrl(result.url);
       }
     } catch (error: any) {
-      const message = extractApiErrorMessage(error, SSAFY_ERROR_FALLBACK);
-      setLoginError(message);
-      Alert.alert('SSAFY \uB85C\uADF8\uC778 \uC2E4\uD328', message);
+      const presentation = buildLoginErrorPresentation(error, 'ssafy');
+      setLoginError(presentation.inlineMessage);
+      Alert.alert(presentation.title, presentation.alertMessage);
     } finally {
       if (!processingSsafyUrlRef.current) {
         setIsSubmitting(false);

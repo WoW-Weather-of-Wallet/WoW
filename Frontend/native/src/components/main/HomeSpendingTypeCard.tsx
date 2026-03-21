@@ -42,11 +42,18 @@ export default function HomeSpendingTypeCard({ onPress }: HomeSpendingTypeCardPr
         </View>
 
         <Text style={styles.description}>
-          식비 비중이 가장 높고 새로운 맛과 경험에 적극적으로 투자하는 소비
-          패턴이에요.
+          {/*
+            이전 문구:
+            - "식비"처럼 프론트 내부 표현을 그대로 사용하고 있었습니다.
+
+            변경 이유:
+            - 소비 유형 설명에서도 백엔드 expense_category 명칭과 동일한 표현을
+              우선 보여줘야 화면 전체 분류 기준이 흔들리지 않습니다.
+          */}
+          외식과 커피/음료 비중이 높고 새로운 맛과 경험에 적극적으로 투자하는
+          소비 패턴이에요.
         </Text>
       </SurfaceCard>
     </TouchableOpacity>
   );
 }
-

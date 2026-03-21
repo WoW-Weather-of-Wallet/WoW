@@ -16,6 +16,7 @@ import { COLORS, wp, hp } from '../../constants/theme';
 import { login, registerSsafy } from '../../services/auth';
 import { useAuthStore } from '../../store/authStore';
 import { extractApiErrorMessage } from '../../utils/error';
+import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 
 type WelcomeRouteParams = {
   signupMode?: 'normal' | 'ssafy';
@@ -74,11 +75,11 @@ export default function WelcomeScreen({ route, navigation }: any) {
           routes: [{ name: 'MainTabs' }],
         });
       } catch (error: any) {
-        const message = extractApiErrorMessage(
-          error,
-          'SSAFY 회원가입 완료 중 문제가 발생했습니다. 다시 시도해 주세요.',
-        );
-        Alert.alert('SSAFY 회원가입 실패', message);
+        const presentation = buildAuthErrorPresentation(error, {
+          flow: 'signup',
+          fallbackMessage: 'SSAFY 회원가입 완료 중 문제가 발생했습니다. 다시 시도해 주세요.',
+        });
+        Alert.alert(presentation.title, presentation.alertMessage);
       } finally {
         setIsConfirming(false);
       }

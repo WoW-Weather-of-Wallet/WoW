@@ -28,8 +28,8 @@ const CLUSTER_DATA = {
 const OVERSPENDING_DATA = [
   { name: '커피/음료', myRate: 23.3, avgRate: 8.9, saveAmt: 16322 },
   { name: '육류/회식', myRate: 19.3, avgRate: 7.7, saveAmt: 11186 },
-  { name: '음/식료/소매', myRate: 5.6, avgRate: 0.0, saveAmt: 936 },
-  { name: '제과/제빵/케익', myRate: 5.2, avgRate: 0.1, saveAmt: 814 },
+  { name: '음/식료품소매', myRate: 5.6, avgRate: 0.0, saveAmt: 936 },
+  { name: '제과/제빵/떡/케익', myRate: 5.2, avgRate: 0.1, saveAmt: 814 },
 ];
 
 const CATEGORY_DATA = [
@@ -39,8 +39,8 @@ const CATEGORY_DATA = [
   { name: '서적/도서', price: 121500, myRate: 12.1, avgRate: 11.2, diff: '+0.9%p', isOver: true },
   { name: '사무/교육용품', price: 115700, myRate: 11.6, avgRate: 21.8, diff: '-10.3%p', isOver: false },
   { name: '음/식료품소매', price: 55700, myRate: 5.6, avgRate: 0.0, diff: '+5.6%p', isOver: true },
-  { name: '제과/제빵/떡', price: 52200, myRate: 5.2, avgRate: 0.0, diff: '+5.2%p', isOver: true },
-  { name: '외식/기타', price: 26200, myRate: 2.6, avgRate: 0.0, diff: '+2.6%p', isOver: true },
+  { name: '제과/제빵/떡/케익', price: 52200, myRate: 5.2, avgRate: 0.0, diff: '+5.2%p', isOver: true },
+  { name: '외식', price: 26200, myRate: 2.6, avgRate: 0.0, diff: '+2.6%p', isOver: true },
 ];
 
 /**

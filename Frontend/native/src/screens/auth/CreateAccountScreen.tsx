@@ -19,6 +19,7 @@ import { styles, CONSTANTS } from './CreateAccountScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import { checkUserId, signup, type NativeSignupRequest } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
+import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { validateId, validatePassword, validateName, validatePhone } from '../../utils/validation';
 
 type CreateAccountRouteParams = {
@@ -226,9 +227,12 @@ export default function CreateAccountScreen({ route, navigation }: any) {
           }),
       );
     } catch (error: any) {
-      const message = extractApiErrorMessage(error, '회원가입 처리 중 문제가 발생했어요.');
-      setSubmitError(message);
-      Alert.alert('회원가입 실패', message);
+      const presentation = buildAuthErrorPresentation(error, {
+        flow: 'signup',
+        fallbackMessage: '회원가입 처리 중 문제가 발생했어요.',
+      });
+      setSubmitError(presentation.inlineMessage);
+      Alert.alert(presentation.title, presentation.alertMessage);
     } finally {
       setIsSubmitting(false);
     }

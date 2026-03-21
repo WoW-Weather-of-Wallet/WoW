@@ -24,7 +24,7 @@ import {
   checkSsafySignup,
   sendSmsCode,
 } from '../../services/auth';
-import { extractApiErrorMessage } from '../../utils/error';
+import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { validateName, validatePhone } from '../../utils/validation';
 
 const TELECOMS = [
@@ -193,13 +193,16 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         termsAgreed: agreedTerms,
       });
     } catch (error: any) {
-      const message = extractApiErrorMessage(error, SEND_CODE_FALLBACK);
-      setSubmitError(message);
+      const presentation = buildAuthErrorPresentation(error, {
+        flow: 'sms-send',
+        fallbackMessage: SEND_CODE_FALLBACK,
+      });
+      setSubmitError(presentation.inlineMessage);
       Alert.alert(
         isSsafySignup
           ? 'SSAFY \uD68C\uC6D0\uAC00\uC785 \uC548\uB0B4'
-          : '\uC778\uC99D\uBC88\uD638 \uC804\uC1A1 \uC2E4\uD328',
-        message,
+          : presentation.title,
+        presentation.alertMessage,
       );
     } finally {
       setIsSendingCode(false);
