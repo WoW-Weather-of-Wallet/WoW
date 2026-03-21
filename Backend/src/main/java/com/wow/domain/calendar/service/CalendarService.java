@@ -52,7 +52,7 @@ public class CalendarService {
 
     // ── 캘린더 헤더 ──
     public CalendarHeaderResponse getCalendarHeader(Long userId, int year, int month) {
-        TodayWeatherInfo todayWeatherInfo = getTodayWeatherInfo(userId);
+        DailyWeatherInfo todayWeatherInfo = getDailyWeatherInfo(userId, LocalDate.now());
 
         return CalendarHeaderResponse.builder()
                 .yearMonth(year + "-" + String.format("%02d", month))
@@ -61,6 +61,43 @@ public class CalendarService {
                 .description(todayWeatherInfo.description())
                 .savedAmount(calculateSavedAmount(userId, year, month))
                 .build();
+    }
+
+    public CalendarDailyResponse getCalendarDaily(Long userId, LocalDate date) {
+        LocalDate today = LocalDate.now();
+        DailyWeatherInfo weatherInfo = getDailyWeatherInfo(userId, date);
+        Integer forecastCode = resolveForecastCode(date, today);
+
+        CalendarDailyResponse.Weather weather = forecastCode == null
+                ? null
+                : CalendarDailyResponse.Weather.builder()
+                .iconCode(weatherInfo.iconCode())
+                .weatherName(weatherInfo.weatherName())
+                .description(weatherInfo.description())
+                .isForecast(forecastCode)
+                .build();
+
+        return calendarRepository.findByUserIdAndDateWithWeather(userId, date)
+                .map(calendar -> CalendarDailyResponse.builder()
+                        .date(date)
+                        .weather(weather)
+                        .summary(CalendarDailyResponse.Summary.builder()
+                                .totalExpense(calendar.getDailyTotal() != null ? calendar.getDailyTotal().intValue() : null)
+                                .transactionCount(calendar.getTransactionCount())
+                                .build())
+                        .transactions(List.of())
+                        .memo(calendar.getMemo())
+                        .build())
+                .orElseGet(() -> CalendarDailyResponse.builder()
+                        .date(date)
+                        .weather(weather)
+                        .summary(CalendarDailyResponse.Summary.builder()
+                                .totalExpense(null)
+                                .transactionCount(null)
+                                .build())
+                        .transactions(List.of())
+                        .memo(null)
+                        .build());
     }
 
     public List<CalendarMonthlyResponse> getCalendarMonthly(Long userId, int year, int month) {
@@ -86,18 +123,16 @@ public class CalendarService {
                 .toList();
     }
 
-    private TodayWeatherInfo getTodayWeatherInfo(Long userId) {
-        LocalDate today = LocalDate.now();
-
-        return calendarRepository.findByUserIdAndDateWithWeather(userId, today)
+    private DailyWeatherInfo getDailyWeatherInfo(Long userId, LocalDate date) {
+        return calendarRepository.findByUserIdAndDateWithWeather(userId, date)
                 .map(calendar -> {
                     SpendingWeather spendingWeather = calendar.getSpendingWeather();
                     String weatherName = spendingWeather != null ? spendingWeather.getWeatherName() : DEFAULT_WEATHER_NAME;
                     String iconCode = spendingWeather != null ? spendingWeather.getIconCode() : null;
                     String description = calendar.getDescription() != null ? calendar.getDescription() : DEFAULT_DESCRIPTION;
-                    return new TodayWeatherInfo(weatherName, iconCode, description);
+                    return new DailyWeatherInfo(weatherName, iconCode, description);
                 })
-                .orElse(new TodayWeatherInfo(DEFAULT_WEATHER_NAME, null, DEFAULT_DESCRIPTION));
+                .orElse(new DailyWeatherInfo(DEFAULT_WEATHER_NAME, null, DEFAULT_DESCRIPTION));
     }
 
     private int calculateSavedAmount(Long userId, int year, int month) {
@@ -332,5 +367,5 @@ public class CalendarService {
         return null;
     }
 
-    private record TodayWeatherInfo(String weatherName, String iconCode, String description) {}
+    private record DailyWeatherInfo(String weatherName, String iconCode, String description) {}
 }

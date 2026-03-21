@@ -18,7 +18,7 @@ public record CalendarDailyResponse(
             String iconCode,
             String weatherName,
             String description,
-            Boolean isForecast
+            Integer isForecast
     ) {}
 
     @Builder
