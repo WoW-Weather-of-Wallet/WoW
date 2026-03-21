@@ -6,6 +6,7 @@ export { default as HomeScheduleSection } from './HomeScheduleSection';
 export { default as HomeSpendingTypeCard } from './HomeSpendingTypeCard';
 export { default as HomeSpendingTypeSheet } from './HomeSpendingTypeSheet';
 export { default as HomeWeeklyPreviewCard } from './HomeWeeklyPreviewCard';
+export { default as HomeTodayWeatherCard } from './HomeTodayWeatherCard';
 export { default as LegendList } from './LegendList';
 export { default as ReasonHighlightCard } from './ReasonHighlightCard';
 export { default as SheetIconHeader } from './SheetIconHeader';

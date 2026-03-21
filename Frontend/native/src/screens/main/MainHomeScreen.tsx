@@ -18,6 +18,7 @@ import {
   HomeScheduleSection,
   HomeSpendingTypeCard,
   HomeSpendingTypeSheet,
+  HomeTodayWeatherCard,
   HomeWeeklyPreviewCard,
 } from '../../components/main';
 
@@ -45,6 +46,7 @@ export default function MainHomeScreen() {
         showsVerticalScrollIndicator={false}
       >
 
+        <HomeTodayWeatherCard />
         <HomeSpendingTypeCard onPress={spendingTypeModal.open} />
         <HomeWeeklyPreviewCard items={mockHomeCalendarPreview} />
         <HomeBudgetReportCard {...mockHomeSummary} onPress={reportModal.open} />
