@@ -1,6 +1,7 @@
 package com.wow.domain.calendar.service;
 
 import com.wow.domain.calendar.dto.*;
+import com.wow.domain.calendar.entity.DayType;
 import com.wow.domain.calendar.entity.FixedExpense;
 import com.wow.domain.calendar.entity.SpendingWeather;
 import com.wow.domain.calendar.entity.Transaction;
@@ -64,6 +65,29 @@ public class CalendarService {
                 .description(todayWeatherInfo.description())
                 .savedAmount(calculateSavedAmount(userId, year, month))
                 .build();
+    }
+
+    public List<CalendarMonthlyResponse> getCalendarMonthly(Long userId, int year, int month) {
+        LocalDate startDate = YearMonth.of(year, month).atDay(1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+        LocalDate today = LocalDate.now();
+
+        return calendarRepository.findMonthlyByUserIdWithWeather(userId, startDate, endDate).stream()
+                .map(calendar -> {
+                    DayType dayType = resolveDayType(calendar.getDate(), today);
+                    String iconCode = dayType == DayType.FAR_FUTURE
+                            ? null
+                            : (calendar.getSpendingWeather() != null ? calendar.getSpendingWeather().getIconCode() : null);
+
+                    return new CalendarMonthlyResponse(
+                            calendar.getDate(),
+                            dayType,
+                            calendar.getDailyTotal(),
+                            iconCode,
+                            resolveForecastCode(calendar.getDate(), today)
+                    );
+                })
+                .toList();
     }
 
     private TodayWeatherInfo getTodayWeatherInfo(Long userId) {
@@ -307,6 +331,29 @@ public class CalendarService {
             }
         }
         return csv.toString();
+    }
+
+    private DayType resolveDayType(LocalDate targetDate, LocalDate today) {
+        if (targetDate.isBefore(today)) {
+            return DayType.PAST;
+        }
+        if (targetDate.isEqual(today)) {
+            return DayType.TODAY;
+        }
+        if (!targetDate.isAfter(today.plusDays(7))) {
+            return DayType.NEAR_FUTURE;
+        }
+        return DayType.FAR_FUTURE;
+    }
+
+    private Integer resolveForecastCode(LocalDate targetDate, LocalDate today) {
+        if (targetDate.isBefore(today)) {
+            return 0;
+        }
+        if (!targetDate.isAfter(today.plusDays(7))) {
+            return 1;
+        }
+        return null;
     }
 
     private record TodayWeatherInfo(String weatherName, String iconCode, String description) {}
