@@ -111,4 +111,10 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     color: COLORS.white,
   },
+  statusText: {
+    marginTop: hp(12),
+    fontSize: fp(11),
+    fontFamily: FONTS.medium,
+    color: COLORS.calendarHeroSubText,
+  },
 });

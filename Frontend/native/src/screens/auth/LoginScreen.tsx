@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -32,6 +32,8 @@ import {
   exchangeSsafyToken,
   getSsafyLoginUrl,
   login,
+  type NativeSsafyCodeLoginResult,
+  type NativeSsafyDirectLoginResult,
   parseSsafyCallbackUrl,
 } from '../../services/auth';
 import { extractApiErrorMessage } from '../../utils/error';
@@ -53,6 +55,7 @@ export default function LoginScreen({ navigation }: any) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState('');
   const handledSsafyUrlRef = useRef<string | null>(null);
+  const processingSsafyUrlRef = useRef<string | null>(null);
 
   const headerOpacity = useSharedValue(0);
   const headerTranslateY = useSharedValue(-20);
@@ -68,59 +71,109 @@ export default function LoginScreen({ navigation }: any) {
     );
   }, []);
 
-  useEffect(() => {
-    const handleSsafyCallback = async (url: string | null) => {
-      if (!url || handledSsafyUrlRef.current === url) {
+  const completeSsafyLogin = useCallback(
+    async (parsed: NativeSsafyCodeLoginResult | NativeSsafyDirectLoginResult) => {
+      if ('accessToken' in parsed) {
+        loginToStore({
+          accessToken: parsed.accessToken,
+          user:
+            parsed.user ?? {
+              userId: 'ssafy-user',
+            },
+          autoLogin,
+        });
+        navigation.replace('MainTabs');
         return;
+      }
+
+      const response = await exchangeSsafyToken(parsed.code);
+      loginToStore({
+        accessToken: response.accessToken,
+        user: response.user,
+        autoLogin,
+      });
+      navigation.replace('MainTabs');
+    },
+    [autoLogin, loginToStore, navigation],
+  );
+
+  const processSsafyCallbackUrl = useCallback(
+    async (url: string | null) => {
+      if (!url) {
+        return false;
+      }
+
+      if (
+        handledSsafyUrlRef.current === url ||
+        processingSsafyUrlRef.current === url
+      ) {
+        return true;
       }
 
       const parsed = parseSsafyCallbackUrl(url);
       if (!parsed) {
-        return;
+        return false;
       }
 
-      handledSsafyUrlRef.current = url;
-
-      if (parsed.type === 'signup') {
-        navigation.replace('PhoneAuth', {
-          signupMode: 'ssafy',
-          pendingToken: parsed.pendingToken,
-          name: parsed.name,
-        });
-        return;
-      }
+      /*
+       * 수정 전 코드:
+       * - Linking 리스너용 handleSsafyCallback
+       * - openAuthSessionAsync 성공 결과용 handleSsafyLoginResult
+       * 위 두 함수가 같은 URL을 각각 처리했습니다.
+       *
+       * 변경 이유:
+       * - 플랫폼에 따라 같은 SSAFY 콜백이 Linking 과 auth session 결과로 동시에 들어올 수 있습니다.
+       * - 그러면 코드 교환이나 화면 이동이 두 번 실행될 가능성이 있어, URL 단위로 "처리 중" 상태를 함께 막아야 합니다.
+       */
+      processingSsafyUrlRef.current = url;
 
       try {
         setIsSubmitting(true);
         setLoginError('');
 
-        const response = await exchangeSsafyToken(parsed.code);
-        loginToStore({
-          accessToken: response.accessToken,
-          user: response.user,
-          autoLogin,
-        });
-        navigation.replace('MainTabs');
+        if (parsed.type === 'signup') {
+          navigation.replace('PhoneAuth', {
+            signupMode: 'ssafy',
+            pendingToken: parsed.pendingToken,
+            name: parsed.name,
+          });
+          handledSsafyUrlRef.current = url;
+          return true;
+        }
+
+        // 새 코드:
+        // - SSAFY 로그인 완료 로직은 한 함수에서만 수행합니다.
+        // - 같은 URL 이 한 번 더 들어오면 handled/processing ref 에서 바로 차단합니다.
+        await completeSsafyLogin(parsed);
+        handledSsafyUrlRef.current = url;
+        return true;
       } catch (error: any) {
         handledSsafyUrlRef.current = null;
         const message = extractApiErrorMessage(error, SSAFY_ERROR_FALLBACK);
         setLoginError(message);
         Alert.alert('SSAFY \uB85C\uADF8\uC778 \uC2E4\uD328', message);
+        return true;
       } finally {
+        if (processingSsafyUrlRef.current === url) {
+          processingSsafyUrlRef.current = null;
+        }
         setIsSubmitting(false);
       }
-    };
+    },
+    [completeSsafyLogin, navigation],
+  );
 
+  useEffect(() => {
     Linking.getInitialURL().then((url) => {
-      void handleSsafyCallback(url);
+      void processSsafyCallbackUrl(url);
     });
 
     const subscription = Linking.addEventListener('url', ({ url }) => {
-      void handleSsafyCallback(url);
+      void processSsafyCallbackUrl(url);
     });
 
     return () => subscription.remove();
-  }, [autoLogin, loginToStore, navigation]);
+  }, [processSsafyCallbackUrl]);
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
@@ -165,32 +218,6 @@ export default function LoginScreen({ navigation }: any) {
     navigation.navigate('AccountRecoveryEntry');
   };
 
-  const handleSsafyLoginResult = async (callbackUrl: string) => {
-    const parsed = parseSsafyCallbackUrl(callbackUrl);
-    if (!parsed) {
-      return;
-    }
-
-    handledSsafyUrlRef.current = callbackUrl;
-
-    if (parsed.type === 'signup') {
-      navigation.replace('PhoneAuth', {
-        signupMode: 'ssafy',
-        pendingToken: parsed.pendingToken,
-        name: parsed.name,
-      });
-      return;
-    }
-
-    const response = await exchangeSsafyToken(parsed.code);
-    loginToStore({
-      accessToken: response.accessToken,
-      user: response.user,
-      autoLogin,
-    });
-    navigation.replace('MainTabs');
-  };
-
   const handleSSAFYLoginPress = async () => {
     if (isSubmitting) {
       return;
@@ -203,14 +230,16 @@ export default function LoginScreen({ navigation }: any) {
       const result = await WebBrowser.openAuthSessionAsync(getSsafyLoginUrl());
 
       if (result.type === 'success' && 'url' in result && result.url) {
-        await handleSsafyLoginResult(result.url);
+        await processSsafyCallbackUrl(result.url);
       }
     } catch (error: any) {
       const message = extractApiErrorMessage(error, SSAFY_ERROR_FALLBACK);
       setLoginError(message);
       Alert.alert('SSAFY \uB85C\uADF8\uC778 \uC2E4\uD328', message);
     } finally {
-      setIsSubmitting(false);
+      if (!processingSsafyUrlRef.current) {
+        setIsSubmitting(false);
+      }
     }
   };
 
