@@ -50,7 +50,15 @@
     "plugins": [
       "expo-splash-screen",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ],
     "runtimeVersion": {
       "policy": "appVersion"
