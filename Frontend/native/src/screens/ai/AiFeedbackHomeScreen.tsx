@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -114,6 +115,7 @@ const CAROUSEL_DATA = [
 
 export default function AiFeedbackHomeScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const { status } = useAiStore();
   const [activeIndex, setActiveIndex] = React.useState(0);
   const scrollRef = React.useRef<ScrollView>(null);
@@ -138,7 +140,8 @@ export default function AiFeedbackHomeScreen({ navigation }: any) {
           styles.scrollContent, 
           { 
             paddingTop: insets.top + hp(20), 
-            paddingBottom: insets.bottom + hp(80) 
+            // 플로팅 탭 바 높이를 실제 값으로 반영해 마지막 CTA가 가려지지 않게 맞춥니다.
+            paddingBottom: tabBarHeight + hp(24),
           }
         ]}
         showsVerticalScrollIndicator={false}

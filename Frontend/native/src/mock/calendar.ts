@@ -16,6 +16,7 @@ export interface CalendarDayItem {
   amount?: number;
   tone: 'primary' | 'mint' | 'gold' | 'rose';
   weatherTone?: CalendarWeatherTone;
+  hasMemo?: boolean;
   isCurrentMonth: boolean;
   isToday?: boolean;
   isFuture?: boolean;
@@ -163,7 +164,7 @@ export const mockCalendarDayDetails: Record<string, CalendarDayDetail> = {
     weatherTemperature: '22도',
     spentAmount: 21500,
     transactionCount: 2,
-    memo: '',
+    memo: '장보기와 카페 지출이 겹쳐서 예상보다 지출이 컸다.',
     items: [
       { id: 'detail-1', title: '편의점', category: '식비', amount: 12000, time: '11:05', icon: 'storefront-outline', iconTone: '#E9EEFF' },
       { id: 'detail-2', title: '카페', category: '식비', amount: 9500, time: '15:42', icon: 'cafe-outline', iconTone: '#F3EBDD' },
@@ -177,7 +178,7 @@ export const mockCalendarDayDetails: Record<string, CalendarDayDetail> = {
     weatherTemperature: '--',
     spentAmount: null,
     transactionCount: null,
-    memo: '',
+    memo: '다음 주 정기결제 전에 잔액 확인 필요.',
     items: [],
   },
   '2025-06-19': {

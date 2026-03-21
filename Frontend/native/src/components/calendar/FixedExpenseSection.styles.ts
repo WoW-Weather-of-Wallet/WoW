@@ -26,12 +26,6 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
   },
-  filterLabel: {
-    marginLeft: wp(4),
-    fontSize: fp(14),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.primary,
-  },
   manageText: {
     fontSize: fp(14),
     fontFamily: FONTS.semiBold,
@@ -45,6 +39,9 @@ export const styles = StyleSheet.create({
   },
   list: {
     gap: hp(12),
+  },
+  groupBlock: {
+    gap: hp(8),
   },
   rowCard: {
     flexDirection: 'row',
@@ -99,5 +96,68 @@ export const styles = StyleSheet.create({
     fontSize: fp(18),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
+  },
+  detailPanel: {
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.backgroundSecondary,
+    paddingHorizontal: wp(14),
+    paddingVertical: hp(12),
+    gap: hp(10),
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: wp(12),
+  },
+  detailTextBlock: {
+    flex: 1,
+    gap: hp(4),
+  },
+  detailTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(8),
+    flexWrap: 'wrap',
+  },
+  detailTitle: {
+    fontSize: fp(14),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  detailCategoryBadge: {
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primary50,
+    paddingHorizontal: wp(8),
+    paddingVertical: hp(4),
+  },
+  detailCategoryBadgeText: {
+    fontSize: fp(11),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.primary,
+  },
+  detailSubtitle: {
+    fontSize: fp(12),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  detailRight: {
+    alignItems: 'flex-end',
+    gap: hp(4),
+  },
+  detailAmount: {
+    fontSize: fp(14),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  detailStatus: {
+    fontSize: fp(11),
+    fontFamily: FONTS.medium,
+    color: COLORS.textTertiary,
+  },
+  emptyDetailText: {
+    fontSize: fp(12),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
   },
 });

@@ -24,7 +24,9 @@ export function buildManualEntryPatch(entries: ManualCalendarEntryDraft[]): Manu
       title: entry.merchantName,
       category: entry.category,
       amount: entry.amount,
-      time: '직접 입력',
+      // 백엔드 DTO에는 아직 결제수단 필드가 없어서,
+      // 프론트 표시용으로만 직접 입력 구분을 time 문구에 함께 남깁니다.
+      time: `직접 입력 · ${entry.paymentMethod === 'cash' ? '현금' : '카드'}`,
       icon: categoryMeta.icon,
       iconTone: categoryMeta.iconTone,
     };
