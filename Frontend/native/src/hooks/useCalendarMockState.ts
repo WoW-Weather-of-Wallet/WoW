@@ -87,14 +87,23 @@ export function useCalendarMockState() {
     () => new Map(calendarDaySource.map((day) => [day.dateKey, day])),
     [calendarDaySource],
   );
+  const memoDateKeys = useMemo(
+    () =>
+      new Set(
+        Object.values(calendarDayDetails)
+          .filter((detail) => detail.memo.trim().length > 0)
+          .map((detail) => detail.dateKey),
+      ),
+    [calendarDayDetails],
+  );
   const displayedMonth = useMemo(
     () => createDisplayedMonth(displayedMonthOffset),
     [displayedMonthOffset],
   );
   const monthLabel = useMemo(() => formatMonthLabel(displayedMonth), [displayedMonth]);
   const calendarDays = useMemo(
-    () => buildMonthDays(displayedMonth, today, sourceDaysByKey),
-    [displayedMonth, sourceDaysByKey, today],
+    () => buildMonthDays(displayedMonth, today, sourceDaysByKey, memoDateKeys),
+    [displayedMonth, memoDateKeys, sourceDaysByKey, today],
   );
   const historyMonthKey = useMemo(
     () =>
@@ -192,6 +201,15 @@ export function useCalendarMockState() {
     () => manageItems.find((item) => item.id === editingManageId) ?? null,
     [editingManageId, manageItems],
   );
+  const fixedExpenseDetailsByCategory = useMemo(
+    () =>
+      manageItems.reduce<Record<string, ManageFixedExpenseItem[]>>((acc, item) => {
+        const category = item.category ?? extractCategoryFromSubtitle(item.subtitle);
+        acc[category] = [...(acc[category] ?? []), item];
+        return acc;
+      }, {}),
+    [manageItems],
+  );
   const filteredTransactionGroups = useMemo(
     () => transactionGroups.filter((group) => group.id.startsWith(historyMonthKey)),
     [historyMonthKey, transactionGroups],
@@ -217,6 +235,14 @@ export function useCalendarMockState() {
 
   function handleMoveMonth(direction: 'prev' | 'next') {
     setDisplayedMonthOffset((current) => current + (direction === 'next' ? 1 : -1));
+  }
+
+  function handleToggleFixedExpenseExpand(id: string) {
+    // 요약 카드에서는 카테고리만 보이고,
+    // 상세 카드는 클릭했을 때만 열리도록 확장 상태를 별도로 관리합니다.
+    setFixedExpenseItems((current) =>
+      current.map((item) => (item.id === id ? { ...item, isExpanded: !item.isExpanded } : item)),
+    );
   }
 
   function handleRegisterFixedExpense(payload: { category: string; paymentDay: number }) {
@@ -385,6 +411,29 @@ export function useCalendarMockState() {
     setIsAddEntryVisible(false);
   }
 
+  function handleSaveMemo() {
+    if (!selectedDateKey) {
+      return;
+    }
+
+    const nextMemo = memoValue.trim();
+
+    // 메모 저장 API는 아직 연결하지 않았습니다.
+    // 캘린더 셀 표시(UI 비교)만 먼저 확인하기 위해 현재는 로컬 상태에만 반영합니다.
+    // TODO: 백엔드 메모 API가 준비되면 여기서 서버 저장을 연결합니다.
+    setCalendarDayDetails((current) => {
+      const currentDetail = current[selectedDateKey] ?? buildFallbackDetail(selectedDateKey);
+
+      return {
+        ...current,
+        [selectedDateKey]: {
+          ...currentDetail,
+          memo: nextMemo,
+        },
+      };
+    });
+  }
+
   return {
     overview,
     monthLabel,
@@ -393,6 +442,7 @@ export function useCalendarMockState() {
     selectedDateKey,
     memoValue,
     fixedExpenseItems,
+    fixedExpenseDetailsByCategory,
     manageItems,
     transactionGroups: filteredTransactionGroups,
     isManageModalVisible,
@@ -412,6 +462,7 @@ export function useCalendarMockState() {
     emptyHistoryTitle: `${monthLabel} 거래 내역이 없어요`,
     emptyHistoryDescription: `${monthLabel}에 등록된 소비 내역이 아직 없어요.`,
     handleMoveMonth,
+    handleToggleFixedExpenseExpand,
     setActiveTab,
     setSelectedDateKey,
     setMemoValue,
@@ -426,6 +477,7 @@ export function useCalendarMockState() {
     handleDeleteManageItem,
     handleEditManageItem,
     handleSaveManualEntries,
+    handleSaveMemo,
   };
 }
 

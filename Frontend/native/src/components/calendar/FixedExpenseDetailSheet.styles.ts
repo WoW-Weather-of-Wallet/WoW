@@ -60,32 +60,6 @@ export const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     marginBottom: hp(12),
   },
-  categoryWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: wp(8),
-    marginBottom: hp(18),
-  },
-  categoryChip: {
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
-    paddingHorizontal: wp(14),
-    paddingVertical: hp(10),
-  },
-  categoryChipSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.chipSelectedBackground,
-  },
-  categoryChipText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textSecondary,
-  },
-  categoryChipTextSelected: {
-    color: COLORS.primary,
-  },
   stepperCard: {
     flexDirection: 'row',
     alignItems: 'center',

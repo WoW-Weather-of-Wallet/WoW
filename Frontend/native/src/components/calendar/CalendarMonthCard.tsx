@@ -43,6 +43,7 @@ export default function CalendarMonthCard({
         {days.map((day) => {
           const isSelected = selectedDateKey === day.dateKey;
           const isPaddingCell = !day.isCurrentMonth;
+          const hasMemo = day.hasMemo && !isPaddingCell;
 
           return (
             <TouchableOpacity
@@ -52,11 +53,24 @@ export default function CalendarMonthCard({
               style={[
                 styles.dayCell,
                 isPaddingCell && styles.dayCellPadding,
+                hasMemo && !isSelected && styles.dayCellMemo,
                 isSelected && styles.dayCellSelected,
                 day.isFuture && styles.dayCellFuture,
               ]}
               onPress={() => onSelectDate(day.dateKey)}
             >
+              {/*
+                메모 표시안 비교:
+                - 연한 노란색 셀 배경
+                - 날짜 위 메모 이모지
+                두 방식을 같은 날짜에 함께 보여주고, 실제 화면에서 어떤 방식이 더 읽히는지 비교합니다.
+              */}
+              {hasMemo ? (
+                <View style={[styles.memoBadge, isSelected && styles.memoBadgeSelected]}>
+                  <Text style={[styles.memoEmoji, isSelected && styles.memoEmojiSelected]}>📝</Text>
+                </View>
+              ) : null}
+
               <Text
                 style={[
                   styles.dayNumber,

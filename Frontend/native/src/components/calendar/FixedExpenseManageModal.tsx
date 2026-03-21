@@ -102,7 +102,7 @@ export default function FixedExpenseManageModal({
                       {item.title}
                     </Text>
                     <Text style={styles.itemSubtitle} numberOfLines={2}>
-                      {item.subtitle}
+                      {stripCategoryFromSubtitle(item.subtitle)}
                     </Text>
                   </View>
                 </View>
@@ -147,3 +147,6 @@ export default function FixedExpenseManageModal({
   );
 }
 
+function stripCategoryFromSubtitle(subtitle: string) {
+  return subtitle.replace(/\s(식비|교통|쇼핑|여가|주거|의료|통신|기타)$/, '').trim();
+}

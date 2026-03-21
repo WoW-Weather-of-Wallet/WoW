@@ -1,11 +1,14 @@
 ﻿import type { CalendarEntryCategoryKey } from '../constants/calendar/addEntry';
 
+export type ManualEntryPaymentMethod = 'card' | 'cash';
+
 export interface ManualCalendarEntryDraft {
   id: string;
   dateKey: string;
   merchantName: string;
   category: string;
   amount: number;
+  paymentMethod: ManualEntryPaymentMethod;
   categoryId?: number;
 }
 

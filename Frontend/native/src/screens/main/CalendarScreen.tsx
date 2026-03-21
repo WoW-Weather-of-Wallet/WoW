@@ -29,6 +29,7 @@ export default function CalendarScreen() {
     selectedDateKey,
     memoValue,
     fixedExpenseItems,
+    fixedExpenseDetailsByCategory,
     manageItems,
     transactionGroups,
     isManageModalVisible,
@@ -58,10 +59,12 @@ export default function CalendarScreen() {
     setSelectedTransactionId,
     setEditingManageId,
     handleRegisterFixedExpense,
+    handleToggleFixedExpenseExpand,
     handleToggleManageItem,
     handleDeleteManageItem,
     handleEditManageItem,
     handleSaveManualEntries,
+    handleSaveMemo,
   } = useCalendarMockState();
 
   const route = useRoute<any>();
@@ -127,6 +130,8 @@ export default function CalendarScreen() {
             <FixedExpenseSection
               totalAmount={fixedExpensesTotal}
               items={fixedExpenseItems}
+              detailItemsByCategory={fixedExpenseDetailsByCategory}
+              onToggleExpand={handleToggleFixedExpenseExpand}
               onPressManage={() => setIsManageModalVisible(true)}
             />
           </>
@@ -153,6 +158,7 @@ export default function CalendarScreen() {
         visible={selectedDetail !== null}
         memoValue={memoValue}
         onChangeMemo={setMemoValue}
+        onSaveMemo={handleSaveMemo}
         onClose={() => setSelectedDateKey(null)}
       />
 

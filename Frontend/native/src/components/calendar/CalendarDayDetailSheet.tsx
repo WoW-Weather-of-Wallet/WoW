@@ -11,6 +11,7 @@ interface CalendarDayDetailSheetProps {
   visible: boolean;
   memoValue: string;
   onChangeMemo: (value: string) => void;
+  onSaveMemo: () => void;
   onClose: () => void;
 }
 
@@ -30,6 +31,7 @@ export default function CalendarDayDetailSheet({
   visible,
   memoValue,
   onChangeMemo,
+  onSaveMemo,
   onClose,
 }: CalendarDayDetailSheetProps) {
   if (!detail) {
@@ -105,10 +107,9 @@ export default function CalendarDayDetailSheet({
         />
       </View>
 
-      <TouchableOpacity activeOpacity={0.88} style={styles.saveButton}>
+      <TouchableOpacity activeOpacity={0.88} style={styles.saveButton} onPress={onSaveMemo}>
         <Text style={styles.saveButtonText}>메모 저장</Text>
       </TouchableOpacity>
     </BottomSheetModal>
   );
 }
-
