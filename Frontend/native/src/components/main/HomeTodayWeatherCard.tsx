@@ -43,22 +43,22 @@ export default function HomeTodayWeatherCard() {
     <View className="mb-4 overflow-hidden rounded-3xl bg-primary shadow-sm">
       {/* 카드 내부 배경 (그라데이션 느낌을 위한 불투명도 조절) */}
       <View className="bg-primary-light/10 p-5">
-        <View className="flex-row items-center justify-between">
-          <View>
+        <View className="flex-row items-center">
+          {/* 소비 날씨 이미지 커스텀 아이콘 (왼쪽 배치) */}
+          <View className="h-16 w-16 items-center justify-center rounded-2xl bg-white/20">
+            <WeatherIcon size={wp(36)} color="#FFFFFF" />
+          </View>
+
+          <View className="ml-4 flex-1">
             <View className="flex-row items-center">
               <Text className="text-sm font-medium text-white/80">오늘의 소비날씨</Text>
               <Text className="ml-2 text-xs font-semibold text-white/60">{dateString} {dayString}</Text>
             </View>
-            <View className="mt-2 flex-row items-baseline">
+            <View className="mt-1 flex-row items-baseline">
               <Text className="text-3xl font-bold text-white">
                 {weatherData.type}
               </Text>
             </View>
-          </View>
-
-          {/* 소비 날씨 이미지 커스텀 아이콘 */}
-          <View className="h-16 w-16 items-center justify-center rounded-2xl bg-white/20">
-            <WeatherIcon size={wp(36)} color="#FFFFFF" />
           </View>
         </View>
 
