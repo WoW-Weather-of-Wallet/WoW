@@ -164,7 +164,36 @@ export const nativeApi = axios.create({
 export const normalizePhoneNumber = (phoneNumber: string) =>
   phoneNumber.replace(/[^0-9]/g, '');
 
+const PUBLIC_API_PREFIXES = [
+  '/api/v1/auth/signup',
+  '/api/v1/auth/login',
+  '/api/v1/auth/sms/send',
+  '/api/v1/auth/sms/verify',
+  '/api/v1/auth/check-signup-identity',
+  '/api/v1/auth/check-user-id',
+  '/api/v1/auth/refresh',
+  '/api/v1/auth/find/',
+  '/api/v1/terms',
+  '/sso/providers/ssafy/',
+] as const;
+
+const isPublicApiRequest = (url?: string) =>
+  Boolean(url) && PUBLIC_API_PREFIXES.some((prefix) => url!.startsWith(prefix));
+
 nativeApi.interceptors.request.use((config) => {
+  /*
+   * 이전 코드:
+   * - login 이후 전역 Authorization 헤더가 nativeApi 기본값으로 남아 있었습니다.
+   * - 그래서 회원가입, 문자 인증, SSAFY signup check 같은 공개 API에도 stale 토큰이 함께 전송될 수 있었습니다.
+   *
+   * 변경 이유:
+   * - 공개 API는 인증 없이 호출되어야 하고, 남아 있던 토큰 때문에 백엔드 JWT 필터가 401을 반환할 수 있습니다.
+   * - 공개 경로는 요청 직전에 Authorization 헤더를 제거해 기존 세션 영향을 차단합니다.
+   */
+  if (isPublicApiRequest(config.url)) {
+    delete config.headers.Authorization;
+  }
+
   console.log('[API request]', config.method?.toUpperCase(), `${config.baseURL}${config.url}`);
   if (config.method?.toUpperCase() === 'GET' && config.params) {
     console.log('[API request params]', config.params);
