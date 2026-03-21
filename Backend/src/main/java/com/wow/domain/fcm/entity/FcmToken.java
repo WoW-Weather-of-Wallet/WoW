@@ -45,4 +45,9 @@ public class FcmToken {
         this.token = newToken;
     }
 
+    // 기기를 다른 계정으로 전환 시 userId 업데이트
+    public void updateUserId(String newUserId) {
+        this.userId = newUserId;
+    }
+
 }

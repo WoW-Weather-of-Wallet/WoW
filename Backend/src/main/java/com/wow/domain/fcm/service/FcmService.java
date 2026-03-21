@@ -27,14 +27,16 @@ public class FcmService {
 
     @Transactional
     public void registerToken(String userId, String token, String deviceType) {
-        if (fcmTokenRepository.findByToken(token).isEmpty()) {
-            fcmTokenRepository.save(FcmToken.builder()
-                    .userId(userId)
-                    .token(token)
-                    .deviceType(deviceType)
-                    .build());
-        }
-
+        // 토큰이 이미 존재하면 userId 업데이트 (기기 계정 전환 시), 없으면 새로 저장
+        fcmTokenRepository.findByToken(token)
+                .ifPresentOrElse(
+                        existing -> existing.updateUserId(userId),
+                        () -> fcmTokenRepository.save(FcmToken.builder()
+                                .userId(userId)
+                                .token(token)
+                                .deviceType(deviceType)
+                                .build())
+                );
     }
 
     // 특정 기기 토큰만 삭제 (로그아웃 시 해당 기기에서만 알림 해제)
