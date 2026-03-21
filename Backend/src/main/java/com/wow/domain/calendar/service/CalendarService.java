@@ -1,6 +1,7 @@
 package com.wow.domain.calendar.service;
 
 import com.wow.domain.calendar.dto.*;
+import com.wow.domain.calendar.entity.Calendar;
 import com.wow.domain.calendar.entity.DayType;
 import com.wow.domain.calendar.entity.SpendingWeather;
 import com.wow.domain.calendar.entity.Transaction;
@@ -32,6 +33,7 @@ import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -67,7 +69,10 @@ public class CalendarService {
         LocalDate today = LocalDate.now();
         LocalDateTime dayStart = date.atStartOfDay();
         LocalDateTime dayEnd = date.plusDays(1).atStartOfDay();
-        DailyWeatherInfo weatherInfo = getDailyWeatherInfo(userId, date);
+        Optional<Calendar> calendarOptional = calendarRepository.findByUserIdAndDateWithWeather(userId, date);
+        DailyWeatherInfo weatherInfo = calendarOptional
+                .map(this::toDailyWeatherInfo)
+                .orElseGet(this::defaultDailyWeatherInfo);
         Integer forecastCode = resolveForecastCode(date, today);
         List<CalendarDailyResponse.TransactionItem> transactions = transactionRepository
                 .findDailyByUserIdWithCategory(userId, dayStart, dayEnd).stream()
@@ -86,7 +91,7 @@ public class CalendarService {
                 .isForecast(forecastCode)
                 .build();
 
-        return calendarRepository.findByUserIdAndDateWithWeather(userId, date)
+        return calendarOptional
                 .map(calendar -> CalendarDailyResponse.builder()
                         .date(date)
                         .weather(weather)
@@ -134,14 +139,20 @@ public class CalendarService {
 
     private DailyWeatherInfo getDailyWeatherInfo(Long userId, LocalDate date) {
         return calendarRepository.findByUserIdAndDateWithWeather(userId, date)
-                .map(calendar -> {
-                    SpendingWeather spendingWeather = calendar.getSpendingWeather();
-                    String weatherName = spendingWeather != null ? spendingWeather.getWeatherName() : DEFAULT_WEATHER_NAME;
-                    String iconCode = spendingWeather != null ? spendingWeather.getIconCode() : null;
-                    String description = calendar.getDescription() != null ? calendar.getDescription() : DEFAULT_DESCRIPTION;
-                    return new DailyWeatherInfo(weatherName, iconCode, description);
-                })
-                .orElse(new DailyWeatherInfo(DEFAULT_WEATHER_NAME, null, DEFAULT_DESCRIPTION));
+                .map(this::toDailyWeatherInfo)
+                .orElseGet(this::defaultDailyWeatherInfo);
+    }
+
+    private DailyWeatherInfo toDailyWeatherInfo(Calendar calendar) {
+        SpendingWeather spendingWeather = calendar.getSpendingWeather();
+        String weatherName = spendingWeather != null ? spendingWeather.getWeatherName() : DEFAULT_WEATHER_NAME;
+        String iconCode = spendingWeather != null ? spendingWeather.getIconCode() : null;
+        String description = calendar.getDescription() != null ? calendar.getDescription() : DEFAULT_DESCRIPTION;
+        return new DailyWeatherInfo(weatherName, iconCode, description);
+    }
+
+    private DailyWeatherInfo defaultDailyWeatherInfo() {
+        return new DailyWeatherInfo(DEFAULT_WEATHER_NAME, null, DEFAULT_DESCRIPTION);
     }
 
     private int calculateSavedAmount(Long userId, int year, int month) {
