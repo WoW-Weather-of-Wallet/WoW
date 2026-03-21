@@ -144,13 +144,12 @@ export interface CheckUserIdResponse {
   message?: string;
 }
 
+
 export interface NativeApiErrorResponse {
   httpStatusCode?: number;
   errorMessage?: string;
 }
 
-// Shared axios instance for native services.
-// Calendar APIs reuse the same base URL and auth token injection as auth APIs.
 
 export const nativeApi = axios.create({
   baseURL: BASE_URL,
