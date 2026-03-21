@@ -19,7 +19,6 @@ import FindPwScreen from '../screens/auth/FindPwScreen';
 import AccountRecoveryResultScreen from '../screens/auth/AccountRecoveryResultScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import MainTabNavigator from './MainTabNavigator';
-import SettingsScreen from '../screens/mypage/SettingsScreen';
 import TermsPdfScreen from '../screens/common/TermsPdfScreen';
 import AiLoadingScreen from '../screens/ai/AiLoadingScreen';
 import AiResultScreen from '../screens/ai/AiResultScreen';
@@ -168,15 +167,6 @@ function NavigationWrapper() {
           name="MainTabs"
           component={MainTabNavigator}
           options={{ gestureEnabled: false }}
-        />
-
-        <Stack.Screen
-          name="Settings"
-          component={SettingsScreen}
-          options={{
-            gestureEnabled: true,
-            animation: 'slide_from_right',
-          }}
         />
 
         <Stack.Screen

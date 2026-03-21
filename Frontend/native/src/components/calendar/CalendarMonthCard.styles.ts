@@ -75,19 +75,11 @@ export const styles = StyleSheet.create({
   cellIndicatorPadding: {
     opacity: 0,
   },
-  toneDot: {
-    width: wp(6),
-    height: wp(6),
-    borderRadius: wp(3),
-  },
-  toneDotSelected: {
-    backgroundColor: COLORS.white,
-  },
   amountText: {
     minHeight: fp(11),
     fontSize: fp(9),
     fontFamily: FONTS.medium,
-    color: COLORS.amountGreen,
+    color: COLORS.spentRed,
     marginTop: hp(5),
   },
   amountTextSelected: {

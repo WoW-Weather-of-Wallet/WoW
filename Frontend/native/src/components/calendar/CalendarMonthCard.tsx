@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import SurfaceCard from '../common/SurfaceCard';
 import { WEATHER_ICONS, WEEKDAY_LABELS } from '../../constants/calendar/ui';
 import { COLORS, wp } from '../../constants/theme';
-import { styles, toneDotColors } from './CalendarMonthCard.styles';
+import { styles } from './CalendarMonthCard.styles';
 import type { CalendarDayItem } from '../../mock/calendar';
 
 interface CalendarMonthCardProps {
@@ -74,15 +74,7 @@ export default function CalendarMonthCard({
                     size={wp(13)}
                     color={isSelected ? COLORS.textInverse : COLORS.primary}
                   />
-                ) : (
-                  <View
-                    style={[
-                      styles.toneDot,
-                      { backgroundColor: toneDotColors[day.tone] },
-                      isSelected && styles.toneDotSelected,
-                    ]}
-                  />
-                )}
+                ) : null}
               </View>
 
               <Text
@@ -107,4 +99,3 @@ export default function CalendarMonthCard({
     </SurfaceCard>
   );
 }
-
