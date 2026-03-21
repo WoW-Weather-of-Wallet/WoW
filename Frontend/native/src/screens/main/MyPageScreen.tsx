@@ -22,6 +22,7 @@ import {
 } from '../../mock/dashboard';
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
+import { fcmService } from '../../services/fcmService';
 import {
   getProfile,
   logout as logoutRequest,
@@ -88,6 +89,13 @@ export default function MyPageScreen() {
     setIsLoggingOut(true);
 
     try {
+      // [P1 Fix] 로그아웃 시 서버에 등록된 FCM 토큰을 먼저 제거합니다.
+      try {
+        await fcmService.unregisterFcmToken();
+      } catch (fcmError) {
+        console.warn('[MyPage] FCM 토큰 해제 실패:', fcmError);
+      }
+
       await logoutRequest();
     } catch (error) {
       const message = extractApiErrorMessage(

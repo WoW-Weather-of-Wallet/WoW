@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, StatusBar, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { mockSelectableTransactions } from '../../mock/calendar';
 import { COLORS, hp } from '../../constants/theme';
 import { styles } from './CalendarScreen.styles';
@@ -59,6 +60,20 @@ export default function CalendarScreen() {
     handleEditManageItem,
     handleSaveManualEntries,
   } = useCalendarMockState();
+
+  const route = useRoute<any>();
+  const navigation = useNavigation<any>();
+
+  // [UX-Fix] 알림 클릭 등을 통한 딥링크(네비게이션 파라미터) 처리
+  React.useEffect(() => {
+    if (route.params?.action === 'add_record') {
+      // 내역 추가 모달 열기
+      setIsAddEntryVisible(true);
+      
+      // 처리 후 파라미터 초기화 (다시 들어왔을 때 또 열리지 않도록)
+      navigation.setParams({ action: undefined });
+    }
+  }, [route.params?.action]);
 
   return (
     <View style={styles.container}>

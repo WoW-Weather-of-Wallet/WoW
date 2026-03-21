@@ -33,6 +33,7 @@
       },
       "package": "com.wow.app",
       "versionCode": 2,
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "CAMERA",
         "READ_MEDIA_IMAGES",
@@ -42,7 +43,8 @@
         "READ_PHONE_STATE",
         "CALL_PHONE",
         "USE_BIOMETRIC",
-        "USE_FINGERPRINT"
+        "USE_FINGERPRINT",
+        "RECEIVE_BOOT_COMPLETED"
       ]
     },
     "plugins": [

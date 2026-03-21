@@ -117,11 +117,14 @@ export interface CheckUserIdResponse {
   message?: string;
 }
 
+<<<<<<< HEAD
 export interface NativeApiErrorResponse {
   httpStatusCode?: number;
   errorMessage?: string;
 }
 
+=======
+>>>>>>> fa9b4068bb455db1bb549fb3e9e79c7b3cb2401a
 export const nativeApi = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
