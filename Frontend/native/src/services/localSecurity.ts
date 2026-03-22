@@ -1,6 +1,7 @@
 import * as Crypto from 'expo-crypto';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 export interface LocalSecurityPreferences {
   biometricEnabled: boolean;
@@ -15,6 +16,7 @@ export interface BiometricAuthResult {
 }
 
 const LOCAL_SECURITY_KEY = 'wow.local.security.v1';
+const IS_TEMPORARY_IOS_BIOMETRIC_DISABLED = Platform.OS === 'ios';
 
 const DEFAULT_LOCAL_SECURITY_PREFERENCES: LocalSecurityPreferences = {
   biometricEnabled: false,
@@ -85,6 +87,7 @@ export const clearPinCode = async () =>
     pinEnabled: false,
     pinHash: undefined,
     pinSalt: undefined,
+    biometricEnabled: false,
   }));
 
 export const verifyPinCode = async (pin: string, preferences?: LocalSecurityPreferences) => {
@@ -107,6 +110,14 @@ export const setBiometricEnabled = async (enabled: boolean) =>
 export const authenticateWithBiometrics = async (
   promptMessage = '생체 인증으로 확인해주세요.',
 ): Promise<BiometricAuthResult> => {
+  // TODO(iOS): 이번 주 범위에서는 iOS 생체 인증 QA를 보류합니다.
+  if (IS_TEMPORARY_IOS_BIOMETRIC_DISABLED) {
+    return {
+      success: false,
+      errorMessage: '이번 주에는 iOS 생체 인증을 사용하지 않습니다.',
+    };
+  }
+
   const hasHardware = await LocalAuthentication.hasHardwareAsync();
   const isEnrolled = await LocalAuthentication.isEnrolledAsync();
 

@@ -4,7 +4,7 @@
 // =============================================
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import {
   NavigationContainer,
   createNavigationContainerRef,
@@ -27,7 +27,7 @@ import TermsPdfScreen from '../screens/common/TermsPdfScreen';
 import AiLoadingScreen from '../screens/ai/AiLoadingScreen';
 import AiResultScreen from '../screens/ai/AiResultScreen';
 import AiNotification from '../components/common/AiNotification';
-import AppLockModal from '../components/auth/AppLockModal';
+import QuickLoginGate from '../components/auth/QuickLoginGate';
 import { useNotificationObserver } from '../hooks/useNotificationObserver';
 import { useAuthStore } from '../store/authStore';
 import { fcmService } from '../services/fcmService';
@@ -35,13 +35,18 @@ import { clearPersistedAuthSession } from '../services/sessionStorage';
 import {
   authenticateWithBiometrics,
   hasLocalSecurityEnabled,
+  setBiometricEnabled,
   verifyPinCode,
 } from '../services/localSecurity';
-import { registerNativeAuthLifecycleCallbacks } from '../services/auth';
+import {
+  logout as logoutRequest,
+  registerNativeAuthLifecycleCallbacks,
+} from '../services/auth';
 import { useLocalSecurityStore } from '../store/localSecurityStore';
 
 const Stack = createNativeStackNavigator();
 const navigationRef = createNavigationContainerRef<any>();
+const BACKGROUND_LOCK_THRESHOLD_MS = 10 * 60 * 1000;
 
 /**
  * RootNavigator
@@ -74,10 +79,12 @@ function NavigationWrapper() {
     isAppLocked,
     lockReason,
     loadPreferences,
+    refreshPreferences,
     lockApp,
     unlockApp,
   } = useLocalSecurityStore();
   const appStateRef = useRef(AppState.currentState);
+  const backgroundEnteredAtRef = useRef<number | null>(null);
   const restoredLockHandledRef = useRef(false);
   const [lockError, setLockError] = useState('');
   const [isBiometricLoading, setIsBiometricLoading] = useState(false);
@@ -146,8 +153,8 @@ function NavigationWrapper() {
       try {
         const result = await authenticateWithBiometrics(
           reason === 'launch'
-            ? '앱을 열기 위해 생체 인증을 진행해주세요.'
-            : '앱 잠금 해제를 위해 생체 인증을 진행해주세요.',
+            ? '앱을 열기 위해 생체인증을 진행해주세요.'
+            : '간편로그인을 위해 생체인증을 진행해주세요.',
         );
 
         if (result.success) {
@@ -184,12 +191,21 @@ function NavigationWrapper() {
       const previousAppState = appStateRef.current;
       appStateRef.current = nextAppState;
 
-      if (
-        isAuthenticated &&
-        /inactive|background/.test(previousAppState) &&
-        nextAppState === 'active'
-      ) {
-        void startAppUnlock('resume');
+      if (nextAppState === 'background') {
+        backgroundEnteredAtRef.current = Date.now();
+      }
+
+      if (isAuthenticated && previousAppState === 'background' && nextAppState === 'active') {
+        const enteredAt = backgroundEnteredAtRef.current;
+        backgroundEnteredAtRef.current = null;
+
+        if (!enteredAt) {
+          return;
+        }
+
+        if (Date.now() - enteredAt >= BACKGROUND_LOCK_THRESHOLD_MS) {
+          void startAppUnlock('resume');
+        }
       }
     });
 
@@ -200,7 +216,7 @@ function NavigationWrapper() {
     async (pin: string) => {
       const isValid = await verifyPinCode(pin, preferences);
       if (!isValid) {
-        setLockError('간편 비밀번호가 올바르지 않아요.');
+        setLockError('간편비밀번호가 올바르지 않아요.');
         return false;
       }
 
@@ -215,7 +231,43 @@ function NavigationWrapper() {
     void startAppUnlock(lockReason ?? 'resume');
   }, [lockReason, startAppUnlock]);
 
+  const handleToggleBiometric = useCallback(
+    async (enabled: boolean) => {
+      if (!preferences.pinEnabled || Platform.OS === 'ios') {
+        return;
+      }
+
+      if (enabled) {
+        const result = await authenticateWithBiometrics(
+          '다음부터 생체인증 사용을 위해 본인 확인을 진행해주세요.',
+        );
+
+        if (!result.success) {
+          setLockError(result.errorMessage ?? '생체 인증에 실패했어요.');
+          return;
+        }
+      }
+
+      await setBiometricEnabled(enabled);
+      await refreshPreferences();
+      setLockError('');
+    },
+    [preferences.pinEnabled, refreshPreferences],
+  );
+
   const handleLockLogout = useCallback(async () => {
+    try {
+      await fcmService.unregisterFcmToken();
+    } catch (error) {
+      console.warn('[QuickLogin] FCM unregister failed:', error);
+    }
+
+    try {
+      await logoutRequest();
+    } catch (error) {
+      console.warn('[QuickLogin] logout request failed:', error);
+    }
+
     await clearPersistedAuthSession();
     logout();
     unlockApp();
@@ -363,16 +415,20 @@ function NavigationWrapper() {
         />
       </Stack.Navigator>
       <AiNotification />
-      <AppLockModal
+      <QuickLoginGate
         visible={isAuthenticated && isAppLocked}
-        biometricEnabled={preferences.biometricEnabled}
+        biometricAvailable={preferences.pinEnabled && Platform.OS !== 'ios'}
+        biometricEnabled={preferences.pinEnabled && preferences.biometricEnabled}
         pinEnabled={preferences.pinEnabled}
         isBiometricLoading={isBiometricLoading}
         errorMessage={lockError}
         onSubmitPin={handleSubmitPin}
         onPressBiometric={handleBiometricPress}
-        onPressLogout={() => {
+        onPressDifferentAccount={() => {
           void handleLockLogout();
+        }}
+        onToggleBiometric={(enabled) => {
+          void handleToggleBiometric(enabled);
         }}
       />
     </>

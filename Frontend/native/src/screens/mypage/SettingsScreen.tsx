@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StatusBar,
@@ -50,6 +51,7 @@ import { validatePassword } from '../../utils/validation';
 
 type EditMode = 'profile' | 'phone' | 'password' | null;
 type PinModalStep = 'create' | 'confirm' | 'verify-current' | 'new' | 'confirm-new';
+type PinModalMode = 'setup' | 'change' | 'disable';
 
 /**
  * 휴대폰 번호를 마스킹 처리합니다. (01012345678 -> 010-****-5678)
@@ -97,6 +99,7 @@ export default function SettingsScreen() {
   const [isTermsModalVisible, setIsTermsModalVisible] = useState(false);
   const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
   const [isPinModalVisible, setIsPinModalVisible] = useState(false);
+  const [pinModalMode, setPinModalMode] = useState<PinModalMode>('setup');
   const [pinModalStep, setPinModalStep] = useState<PinModalStep>('create');
   const [pinInput, setPinInput] = useState('');
   const [pinDraft, setPinDraft] = useState('');
@@ -193,6 +196,7 @@ export default function SettingsScreen() {
 
   const closePinModal = () => {
     setIsPinModalVisible(false);
+    setPinModalMode('setup');
     setPinModalStep('create');
     setPinInput('');
     setPinDraft('');
@@ -204,6 +208,7 @@ export default function SettingsScreen() {
     setPinError('');
     setPinInput('');
     setPinDraft('');
+    setPinModalMode(securityPreferences.pinEnabled ? 'change' : 'setup');
     setPinModalStep(securityPreferences.pinEnabled ? 'verify-current' : 'create');
     setIsPinModalVisible(true);
   };
@@ -211,17 +216,17 @@ export default function SettingsScreen() {
   const getPinModalTitle = () => {
     switch (pinModalStep) {
       case 'create':
-        return '간편 비밀번호 설정';
+        return '간편비밀번호 설정';
       case 'confirm':
-        return '간편 비밀번호 확인';
+        return pinModalMode === 'disable' ? '간편비밀번호 해제' : '간편비밀번호 확인';
       case 'verify-current':
-        return '기존 비밀번호 확인';
+        return pinModalMode === 'disable' ? '현재 비밀번호 확인' : '기존 비밀번호 확인';
       case 'new':
-        return '새 간편 비밀번호';
+        return '새 간편비밀번호';
       case 'confirm-new':
         return '새 비밀번호 확인';
       default:
-        return '간편 비밀번호';
+        return '간편비밀번호';
     }
   };
 
@@ -234,7 +239,9 @@ export default function SettingsScreen() {
       case 'confirm-new':
         return '같은 번호를 한 번 더 입력해주세요.';
       case 'verify-current':
-        return '현재 사용 중인 간편 비밀번호를 입력해주세요.';
+        return pinModalMode === 'disable'
+          ? '해제를 위해 현재 사용 중인 간편비밀번호를 입력해주세요.'
+          : '현재 사용 중인 간편비밀번호를 입력해주세요.';
       default:
         return '';
     }
@@ -275,12 +282,23 @@ export default function SettingsScreen() {
         const isValid = await verifyPinCode(nextValue, securityPreferences);
         if (!isValid) {
           setPinInput('');
-          setPinError('현재 간편 비밀번호가 올바르지 않아요.');
+          setPinError('현재 간편비밀번호가 올바르지 않아요.');
           return;
         }
 
         setPinInput('');
         setPinError('');
+
+        if (pinModalMode === 'disable') {
+          await removePinCode();
+          Alert.alert(
+            '해제 완료',
+            '간편로그인용 간편비밀번호와 생체인증 사용 설정이 함께 해제되었어요.',
+          );
+          closePinModal();
+          return;
+        }
+
         setPinModalStep('new');
         return;
       }
@@ -288,7 +306,7 @@ export default function SettingsScreen() {
       if (nextValue !== pinDraft) {
         setPinInput('');
         setPinDraft('');
-        setPinError('간편 비밀번호가 일치하지 않아요. 처음부터 다시 입력해주세요.');
+        setPinError('간편비밀번호가 일치하지 않아요. 처음부터 다시 입력해주세요.');
         setPinModalStep(pinModalStep === 'confirm' ? 'create' : 'new');
         return;
       }
@@ -296,7 +314,7 @@ export default function SettingsScreen() {
       await persistPinCode(nextValue);
       Alert.alert(
         '설정 완료',
-        '다음부터 앱을 다시 열 때 간편 비밀번호로 잠금을 해제할 수 있어요.',
+        '다음부터 앱을 다시 열 때 간편로그인으로 사용할 수 있어요.',
       );
       closePinModal();
     } finally {
@@ -335,8 +353,8 @@ export default function SettingsScreen() {
       Alert.alert(
         enabled ? '생체 인증 사용' : '생체 인증 해제',
         enabled
-          ? '다음부터 앱을 다시 열 때 생체 인증으로 잠금을 해제할 수 있어요.'
-          : '이제 생체 인증 없이도 앱을 열 수 있어요.',
+          ? '다음부터 간편로그인 화면에서 생체인증을 사용할 수 있어요.'
+          : '이제 간편로그인 화면에서 생체인증을 사용하지 않아요.',
       );
     } finally {
       setIsUpdatingSecurity(false);
@@ -344,17 +362,12 @@ export default function SettingsScreen() {
   };
 
   const handleClearPinCode = () => {
-    Alert.alert('간편 비밀번호 해제', '등록된 간편 비밀번호를 해제할까요?', [
-      { text: '취소', style: 'cancel' },
-      {
-        text: '해제',
-        style: 'destructive',
-        onPress: async () => {
-          await removePinCode();
-          Alert.alert('해제 완료', '간편 비밀번호 잠금이 해제되었어요.');
-        },
-      },
-    ]);
+    setPinError('');
+    setPinInput('');
+    setPinDraft('');
+    setPinModalMode('disable');
+    setPinModalStep('verify-current');
+    setIsPinModalVisible(true);
   };
 
   const handleSendPhoneCode = async () => {
@@ -573,6 +586,8 @@ export default function SettingsScreen() {
   const phoneDisplay = maskPhoneNumber(profile?.phoneNumber ?? '');
   const biometricDescription = securityPreferences.biometricEnabled ? '사용 중' : '꺼짐';
   const pinDescription = securityPreferences.pinEnabled ? '설정됨' : '미설정';
+  const canShowBiometricSetting =
+    securityPreferences.pinEnabled && Platform.OS !== 'ios';
 
   return (
     <View style={styles.container}>
@@ -627,26 +642,35 @@ export default function SettingsScreen() {
 
         <SettingSection title="보안 설정">
           <SettingItem
-            label="생체 인증 잠금"
-            value={biometricDescription}
-            type="toggle"
-            isToggled={securityPreferences.biometricEnabled}
-            onToggle={(enabled) => {
-              void handleToggleBiometric(enabled);
-            }}
-          />
-          <View style={styles.toggleRow}>
-            <Text style={styles.toggleDescription}>
-              자동로그인을 유지하더라도 앱을 다시 열 때는 생체 인증이나 간편 비밀번호로 한 번 더 확인합니다.
-            </Text>
-          </View>
-          <SettingItem
-            label={securityPreferences.pinEnabled ? '간편 비밀번호 변경' : '간편 비밀번호 설정'}
+            label={securityPreferences.pinEnabled ? '간편비밀번호 변경' : '간편비밀번호 설정'}
             value={pinDescription}
             onPress={openPinEditor}
           />
+          <View style={styles.toggleRow}>
+            <Text style={styles.toggleDescription}>
+              계정 로그인은 유지하고, 앱을 다시 열 때만 간편로그인으로 본인 확인을 진행합니다.
+            </Text>
+          </View>
+          {canShowBiometricSetting ? (
+            <>
+              <SettingItem
+                label="생체인증 사용"
+                value={biometricDescription}
+                type="toggle"
+                isToggled={securityPreferences.biometricEnabled}
+                onToggle={(enabled) => {
+                  void handleToggleBiometric(enabled);
+                }}
+              />
+              <View style={styles.toggleRow}>
+                <Text style={styles.toggleDescription}>
+                  생체인증은 간편비밀번호가 등록된 경우에만 보조 수단으로 사용할 수 있어요.
+                </Text>
+              </View>
+            </>
+          ) : null}
           {securityPreferences.pinEnabled ? (
-            <SettingItem label="간편 비밀번호 해제" isDanger onPress={handleClearPinCode} />
+            <SettingItem label="간편비밀번호 해제" isDanger onPress={handleClearPinCode} />
           ) : null}
         </SettingSection>
 
