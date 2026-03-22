@@ -50,9 +50,9 @@ export default function HomeTodayWeatherCard() {
           </View>
 
           <View className="ml-4 flex-1">
-            <View className="flex-row items-center">
+            <View className="flex-row items-center justify-between">
               <Text className="text-sm font-medium text-white/80">오늘의 소비날씨</Text>
-              <Text className="ml-2 text-xs font-semibold text-white/60">{dateString} {dayString}</Text>
+              <Text className="text-sm font-semibold text-white/70">{dateString} {dayString}</Text>
             </View>
             <View className="mt-1 flex-row items-baseline">
               <Text className="text-3xl font-bold text-white">
