@@ -1,5 +1,6 @@
 import { ScrollView, StatusBar, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import {
   mockHomeInsights,
   mockHomeSummary,
@@ -25,6 +26,7 @@ import {
 // 메인 홈 화면은 데이터를 조합하고 섹션 컴포넌트를 배치하는 역할만 담당합니다.
 export default function MainHomeScreen() {
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const reportModal = useModalState();
   const spendingTypeModal = useModalState();
 
@@ -40,7 +42,7 @@ export default function MainHomeScreen() {
           styles.contentContainer,
           {
             paddingTop: insets.top + hp(12),
-            paddingBottom: insets.bottom + hp(130),
+            paddingBottom: tabBarHeight + hp(30),
           },
         ]}
         showsVerticalScrollIndicator={false}

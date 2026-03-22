@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -61,6 +62,7 @@ const maskPhoneNumber = (phone: string) => {
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const navigation = useNavigation<any>();
   const logout = useAuthStore((state) => state.logout);
   const updateUser = useAuthStore((state) => state.updateUser);
@@ -392,7 +394,10 @@ export default function SettingsScreen() {
         <View style={styles.headerRight} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + hp(20) }]}
+      >
         <ProfileEditHeader
           name={profile?.name ?? '사용자'}
           onEditPress={handleEditProfilePhoto}

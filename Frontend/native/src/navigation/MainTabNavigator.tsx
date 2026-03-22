@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MainHomeScreen from '../screens/main/MainHomeScreen';
 import CalendarScreen from '../screens/main/CalendarScreen';
-import AiFeedbackHomeScreen from '../screens/ai/AiFeedbackHomeScreen';
+import AiFeedbackStackNavigator from './AiFeedbackStackNavigator';
 import MyPageStackNavigator from './MyPageStackNavigator';
 import { styles } from './MainTabNavigator.styles';
 import { COLORS, hp } from '../constants/theme';
@@ -72,7 +72,7 @@ export default function MainTabNavigator() {
       />
       <Tab.Screen
         name="AiFeedback"
-        component={AiFeedbackHomeScreen}
+        component={AiFeedbackStackNavigator}
         options={{ tabBarLabel: 'AI 피드백' }}
       />
       <Tab.Screen

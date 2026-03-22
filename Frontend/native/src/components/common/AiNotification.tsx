@@ -40,7 +40,10 @@ const AiNotification = () => {
 
   const handlePress = () => {
     hideToast();
-    navigation.navigate('AiResult');
+    navigation.navigate('MainTabs', {
+      screen: 'AiFeedback',
+      params: { screen: 'AiResult' },
+    });
   };
 
   return (

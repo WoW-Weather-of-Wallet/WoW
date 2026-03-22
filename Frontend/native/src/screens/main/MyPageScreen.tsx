@@ -11,6 +11,7 @@ import {
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import GradientButton from '../../components/common/GradientButton';
 import { COLORS, hp, wp } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
@@ -49,6 +50,7 @@ const LIVE_SHORTCUTS = [
 export default function MyPageScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
+  const tabBarHeight = useBottomTabBarHeight();
   const logout = useAuthStore((state) => state.logout);
   const sessionUser = useAuthStore((state) => state.user);
   const [profile, setProfile] = useState<NativeUserProfileResponse | null>(null);
@@ -145,14 +147,14 @@ export default function MyPageScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.backgroundSecondary} />
       <ScrollView
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.contentContainer,
           {
             paddingTop: insets.top + hp(12),
-            paddingBottom: insets.bottom + hp(130),
+            paddingBottom: tabBarHeight + hp(30),
           },
         ]}
-        showsVerticalScrollIndicator={false}
       >
         <TouchableOpacity
           style={styles.profileCard}

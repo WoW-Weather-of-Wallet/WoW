@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useAiStore } from '../../store/aiStore';
 import Animated, { 
   FadeInDown, 
   useSharedValue, 
@@ -132,6 +134,8 @@ const AnimatedBar = ({ targetWidth, color, delay = 0 }: { targetWidth: number, c
 
 export default function AiResultScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
+  const { reset } = useAiStore();
   const userName = '사용자'; 
   const [isTableExpanded, setIsTableExpanded] = useState(false);
 
@@ -332,14 +336,14 @@ export default function AiResultScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={[
-          styles.scrollContent, 
-          { paddingTop: insets.top + 20 }
+          styles.scrollContent,
+          { paddingTop: insets.top + 20, paddingBottom: tabBarHeight + hp(40) }
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.duration(800)}
           style={styles.header}
         >
@@ -374,7 +378,8 @@ export default function AiResultScreen({ navigation }: any) {
           <GradientButton 
             title="확인 완료" 
             onPress={() => {
-              navigation.navigate('MainTabs');
+              reset();
+              navigation.navigate('AiFeedbackHome');
             }}
           />
         </Animated.View>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, StatusBar, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { mockSelectableTransactions } from '../../mock/calendar';
 import { COLORS, hp } from '../../constants/theme';
@@ -21,6 +22,7 @@ import {
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const {
     overview,
     monthLabel,
@@ -111,7 +113,7 @@ export default function CalendarScreen() {
         contentContainerStyle={[
           styles.contentContainer,
           {
-            paddingBottom: insets.bottom + hp(130),
+            paddingBottom: tabBarHeight + hp(30),
           },
         ]}
         showsVerticalScrollIndicator={false}

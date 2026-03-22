@@ -20,8 +20,6 @@ import AccountRecoveryResultScreen from '../screens/auth/AccountRecoveryResultSc
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import MainTabNavigator from './MainTabNavigator';
 import TermsPdfScreen from '../screens/common/TermsPdfScreen';
-import AiLoadingScreen from '../screens/ai/AiLoadingScreen';
-import AiResultScreen from '../screens/ai/AiResultScreen';
 import AiNotification from '../components/common/AiNotification';
 import { useNotificationObserver } from '../hooks/useNotificationObserver';
 import { useAuthStore } from '../store/authStore';
@@ -175,25 +173,6 @@ function NavigationWrapper() {
           options={{
             gestureEnabled: true,
             animation: 'slide_from_right',
-          }}
-        />
-
-        {/* AI 분석 흐름 */}
-        <Stack.Screen
-          name="AiLoading"
-          component={AiLoadingScreen}
-          options={{
-            gestureEnabled: false,
-            animation: 'fade',
-          }}
-        />
-
-        <Stack.Screen
-          name="AiResult"
-          component={AiResultScreen}
-          options={{
-            gestureEnabled: false,
-            animation: 'slide_from_bottom',
           }}
         />
       </Stack.Navigator>
