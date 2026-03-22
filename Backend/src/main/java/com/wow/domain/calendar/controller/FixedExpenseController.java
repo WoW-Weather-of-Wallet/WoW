@@ -68,4 +68,17 @@ public class FixedExpenseController {
         return ResponseEntity.ok(
                 ApiResponse.success(200, "고정지출 수정 성공", response));
     }
+
+    // 고정지출 항목 삭제
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteFixedExpense(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long id) {
+
+        Long userId = userDetails.getId();
+        fixedExpenseService.deleteFixedExpense(userId, id);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "고정지출 삭제 성공", null));
+    }
 }

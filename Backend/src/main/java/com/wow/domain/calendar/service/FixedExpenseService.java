@@ -108,4 +108,18 @@ public class FixedExpenseService {
                 fixedExpense.getName()
         );
     }
+
+    @Transactional
+    public void deleteFixedExpense(Long userId, Long fixedExpenseId) {
+
+        FixedExpense fixedExpense = fixedExpenseRepository.findById(fixedExpenseId)
+                .orElseThrow(() -> new NotFoundException("고정지출 항목을 찾을 수 없습니다."));
+
+        // 본인 소유 확인
+        if (!fixedExpense.getUser().getId().equals(userId)) {
+            throw new BadRequestException("삭제 권한이 없습니다.");
+        }
+
+        fixedExpenseRepository.delete(fixedExpense);
+    }
 }
