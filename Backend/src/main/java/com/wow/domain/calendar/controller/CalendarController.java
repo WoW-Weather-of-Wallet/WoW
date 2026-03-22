@@ -9,6 +9,7 @@ import com.wow.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -75,6 +77,24 @@ public class CalendarController {
         Long userId = userDetails.getId();
         List<CalendarMonthlyResponse> response = calendarService.getCalendarMonthly(userId, year, month);
         return ResponseEntity.ok(ApiResponse.success(200, "캘린더 조회 성공", response));
+    }
+
+    @Operation(
+            summary = "일별 거래내역 조회",
+            description = "선택한 날짜의 날씨, 지출 요약, 거래 내역, 메모를 조회합니다."
+    )
+    @GetMapping("/daily")
+    public ResponseEntity<ApiResponse<CalendarDailyResponse>> getCalendarDaily(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        if (userDetails == null) {
+            throw new InvalidTokenException("인증이 필요하거나 유효하지 않은 토큰입니다.");
+        }
+
+        Long userId = userDetails.getId();
+        CalendarDailyResponse response = calendarService.getCalendarDaily(userId, date);
+        return ResponseEntity.ok(ApiResponse.success(200, "일일 요약 조회 성공", response));
     }
 
     @PostMapping("/transactions/csv")

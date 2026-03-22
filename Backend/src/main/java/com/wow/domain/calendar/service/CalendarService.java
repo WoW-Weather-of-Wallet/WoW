@@ -1,12 +1,13 @@
 package com.wow.domain.calendar.service;
 
-import com.wow.domain.calendar.repository.ExpenseCategoryRepository;
 import com.wow.domain.calendar.dto.*;
+import com.wow.domain.calendar.entity.Calendar;
 import com.wow.domain.calendar.entity.DayType;
 import com.wow.domain.calendar.entity.FixedExpense;
 import com.wow.domain.calendar.entity.SpendingWeather;
 import com.wow.domain.calendar.entity.Transaction;
 import com.wow.domain.calendar.repository.CalendarRepository;
+import com.wow.domain.expensecategory.repository.ExpenseCategoryRepository;
 import com.wow.domain.calendar.repository.FixedExpenseRepository;
 import com.wow.domain.calendar.repository.TransactionRepository;
 import com.wow.domain.expensecategory.entity.ExpenseCategory;
@@ -35,6 +36,7 @@ import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -56,7 +58,7 @@ public class CalendarService {
 
     // ── 캘린더 헤더 ──
     public CalendarHeaderResponse getCalendarHeader(Long userId, int year, int month) {
-        TodayWeatherInfo todayWeatherInfo = getTodayWeatherInfo(userId);
+        DailyWeatherInfo todayWeatherInfo = getDailyWeatherInfo(userId, LocalDate.now());
 
         return CalendarHeaderResponse.builder()
                 .yearMonth(year + "-" + String.format("%02d", month))
@@ -65,6 +67,55 @@ public class CalendarService {
                 .description(todayWeatherInfo.description())
                 .savedAmount(calculateSavedAmount(userId, year, month))
                 .build();
+    }
+
+    public CalendarDailyResponse getCalendarDaily(Long userId, LocalDate date) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime dayStart = date.atStartOfDay();
+        LocalDateTime dayEnd = date.plusDays(1).atStartOfDay();
+        Optional<Calendar> calendarOptional = calendarRepository.findByUserIdAndDateWithWeather(userId, date);
+        DailyWeatherInfo weatherInfo = calendarOptional
+                .map(this::toDailyWeatherInfo)
+                .orElseGet(this::defaultDailyWeatherInfo);
+        Integer forecastCode = resolveForecastCode(date, today);
+        List<CalendarDailyResponse.TransactionItem> transactions = transactionRepository
+                .findDailyByUserIdWithCategory(userId, dayStart, dayEnd).stream()
+                .map(transaction -> new CalendarDailyResponse.TransactionItem(
+                        transaction.getMerchantName(),
+                        transaction.getCategory().getCategoryName(),
+                        transaction.getCategory().getCategoryIcon(),
+                        transaction.getAmount().intValue()
+                ))
+                .toList();
+
+        CalendarDailyResponse.Weather weather = CalendarDailyResponse.Weather.builder()
+                .iconCode(weatherInfo.iconCode())
+                .weatherName(weatherInfo.weatherName())
+                .description(weatherInfo.description())
+                .isForecast(forecastCode)
+                .build();
+
+        return calendarOptional
+                .map(calendar -> CalendarDailyResponse.builder()
+                        .date(date)
+                        .weather(weather)
+                        .summary(CalendarDailyResponse.Summary.builder()
+                                .totalExpense(calendar.getDailyTotal() != null ? calendar.getDailyTotal().intValue() : null)
+                                .transactionCount(calendar.getTransactionCount())
+                                .build())
+                        .transactions(transactions)
+                        .memo(calendar.getMemo())
+                        .build())
+                .orElseGet(() -> CalendarDailyResponse.builder()
+                        .date(date)
+                        .weather(weather)
+                        .summary(CalendarDailyResponse.Summary.builder()
+                                .totalExpense(null)
+                                .transactionCount(null)
+                                .build())
+                        .transactions(transactions)
+                        .memo(null)
+                        .build());
     }
 
     public List<CalendarMonthlyResponse> getCalendarMonthly(Long userId, int year, int month) {
@@ -91,21 +142,22 @@ public class CalendarService {
                 .toList();
     }
 
-    private TodayWeatherInfo getTodayWeatherInfo(Long userId) {
-        LocalDate today = LocalDate.now();
+    private DailyWeatherInfo getDailyWeatherInfo(Long userId, LocalDate date) {
+        return calendarRepository.findByUserIdAndDateWithWeather(userId, date)
+                .map(this::toDailyWeatherInfo)
+                .orElseGet(this::defaultDailyWeatherInfo);
+    }
 
-        return calendarRepository.findByUserIdAndDateWithWeather(userId, today)
-                .map(calendar -> {
-                    SpendingWeather spendingWeather = calendar.getSpendingWeather();
-                    String weatherName = spendingWeather != null
-                            ? spendingWeather.getWeatherName() : DEFAULT_WEATHER_NAME;
-                    String iconCode = spendingWeather != null
-                            ? spendingWeather.getIconCode() : null;
-                    String description = calendar.getDescription() != null
-                            ? calendar.getDescription() : DEFAULT_DESCRIPTION;
-                    return new TodayWeatherInfo(weatherName, iconCode, description);
-                })
-                .orElse(new TodayWeatherInfo(DEFAULT_WEATHER_NAME, null, DEFAULT_DESCRIPTION));
+    private DailyWeatherInfo toDailyWeatherInfo(Calendar calendar) {
+        SpendingWeather spendingWeather = calendar.getSpendingWeather();
+        String weatherName = spendingWeather != null ? spendingWeather.getWeatherName() : DEFAULT_WEATHER_NAME;
+        String iconCode = spendingWeather != null ? spendingWeather.getIconCode() : null;
+        String description = calendar.getDescription() != null ? calendar.getDescription() : DEFAULT_DESCRIPTION;
+        return new DailyWeatherInfo(weatherName, iconCode, description);
+    }
+
+    private DailyWeatherInfo defaultDailyWeatherInfo() {
+        return new DailyWeatherInfo(DEFAULT_WEATHER_NAME, null, DEFAULT_DESCRIPTION);
     }
 
     private int calculateSavedAmount(Long userId, int year, int month) {
@@ -115,9 +167,11 @@ public class CalendarService {
         if (targetMonth.equals(currentMonth)) {
             return calculateCurrentMonthSavedAmount(userId, targetMonth);
         }
+
         if (targetMonth.equals(currentMonth.minusMonths(1))) {
             return calculatePreviousMonthSavedAmount(userId, targetMonth);
         }
+
         return 0;
     }
 
@@ -219,6 +273,7 @@ public class CalendarService {
         LocalDateTime dayStart = representativeDate.atStartOfDay();
         LocalDateTime dayEnd = representativeDate.atTime(23, 59, 59);
 
+        // 같은 날짜 기존 데이터 삭제 (덮어쓰기)
         transactionRepository.deleteByUser_IdAndTransactionAtBetween(
                 userId, dayStart, dayEnd);
 
@@ -234,6 +289,7 @@ public class CalendarService {
                             .amount(BigDecimal.valueOf(item.getAmount()))
                             .merchantName(item.getMerchantName())
                             .transactionAt(item.getTransactionDate().atStartOfDay())
+                            .createdAt(LocalDateTime.now())
                             .build();
                 })
                 .toList();
@@ -268,6 +324,7 @@ public class CalendarService {
                             .amount(BigDecimal.valueOf(item.getAmount()))
                             .merchantName(item.getMerchantName())
                             .transactionAt(item.getTransactionDate().atStartOfDay())
+                            .createdAt(LocalDateTime.now())
                             .build();
                 })
                 .toList();
@@ -334,17 +391,27 @@ public class CalendarService {
     }
 
     private DayType resolveDayType(LocalDate targetDate, LocalDate today) {
-        if (targetDate.isBefore(today)) return DayType.PAST;
-        if (targetDate.isEqual(today)) return DayType.TODAY;
-        if (!targetDate.isAfter(today.plusDays(7))) return DayType.NEAR_FUTURE;
+        if (targetDate.isBefore(today)) {
+            return DayType.PAST;
+        }
+        if (targetDate.isEqual(today)) {
+            return DayType.TODAY;
+        }
+        if (!targetDate.isAfter(today.plusDays(7))) {
+            return DayType.NEAR_FUTURE;
+        }
         return DayType.FAR_FUTURE;
     }
 
     private Integer resolveForecastCode(LocalDate targetDate, LocalDate today) {
-        if (targetDate.isBefore(today)) return 0;
-        if (!targetDate.isAfter(today.plusDays(7))) return 1;
+        if (targetDate.isBefore(today)) {
+            return 0;
+        }
+        if (!targetDate.isAfter(today.plusDays(7))) {
+            return 1;
+        }
         return null;
     }
 
-    private record TodayWeatherInfo(String weatherName, String iconCode, String description) {}
+    private record DailyWeatherInfo(String weatherName, String iconCode, String description) {}
 }

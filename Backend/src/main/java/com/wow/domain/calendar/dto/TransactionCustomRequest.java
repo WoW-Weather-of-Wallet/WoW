@@ -19,7 +19,7 @@ public class TransactionCustomRequest {
     public static class TransactionCustomItem {
 
         @NotNull(message = "카테고리 ID를 입력해주세요.")
-        private Long categoryId;
+        private Integer categoryId;
 
         @NotBlank(message = "가맹점명을 입력해주세요.")
         private String merchantName;

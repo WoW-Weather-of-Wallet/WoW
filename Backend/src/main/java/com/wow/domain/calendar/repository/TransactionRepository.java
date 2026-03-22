@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
@@ -21,6 +22,21 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
               and t.transactionAt < :end
             """)
     BigDecimal sumAmountByUserAndRange(
+            @Param("userId") Long userId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+    @Query("""
+            select t
+            from Transaction t
+            join fetch t.category c
+            where t.user.id = :userId
+              and t.transactionAt >= :start
+              and t.transactionAt < :end
+            order by t.transactionAt asc, t.id asc
+            """)
+    List<Transaction> findDailyByUserIdWithCategory(
             @Param("userId") Long userId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
