@@ -34,7 +34,7 @@ public class FixedExpenseController {
     }
 
     // 고정지출 항목 추가 (거래내역에서 선택)
-    @PostMapping
+    @PostMapping("/from-transaction")
     public ResponseEntity<ApiResponse<FixedExpenseAddResponse>> addFixedExpense(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody FixedExpenseAddRequest request) {
