@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, StatusBar, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useFocusEffect, useRoute, useNavigation } from '@react-navigation/native';
 import { mockSelectableTransactions } from '../../mock/calendar';
 import { COLORS, hp } from '../../constants/theme';
@@ -23,6 +24,7 @@ import {
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const hasCheckedGuideRef = React.useRef(false);
   const [isGuideVisible, setIsGuideVisible] = React.useState(false);
   const {
@@ -80,7 +82,7 @@ export default function CalendarScreen() {
     if (route.params?.action === 'add_record') {
       // 내역 추가 모달 열기
       setIsAddEntryVisible(true);
-      
+
       // 처리 후 파라미터 초기화 (다시 들어왔을 때 또 열리지 않도록)
       navigation.setParams({ action: undefined });
     }
@@ -166,7 +168,7 @@ export default function CalendarScreen() {
         contentContainerStyle={[
           styles.contentContainer,
           {
-            paddingBottom: insets.bottom + hp(130),
+            paddingBottom: tabBarHeight + hp(30),
           },
         ]}
         showsVerticalScrollIndicator={false}

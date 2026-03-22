@@ -116,7 +116,7 @@ const CAROUSEL_DATA = [
 export default function AiFeedbackHomeScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
-  const { status } = useAiStore();
+  const { status, startAnalysis, simulateAnalysis } = useAiStore();
   const [activeIndex, setActiveIndex] = React.useState(0);
   const scrollRef = React.useRef<ScrollView>(null);
   
@@ -196,6 +196,10 @@ export default function AiFeedbackHomeScreen({ navigation }: any) {
           <GradientButton 
             title={status === 'loading' ? "분석 확인하기" : "피드백 시작하기"} 
             onPress={() => {
+              if (status === 'idle' || status === 'error') {
+                startAnalysis();
+                simulateAnalysis();
+              }
               navigation.navigate('AiLoading');
             }}
           />

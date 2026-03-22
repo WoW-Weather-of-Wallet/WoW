@@ -19,11 +19,11 @@ export default function HomeTodayWeatherCard() {
   useEffect(() => {
     // 5가지 소비 날씨 조건 정의 (임시 랜덤 표출)
     const weathers = [
-      { type: '맑음', hint: '지출 관리의 정석! 맑은 날씨가 계속될 거예요.', icon: SunnyIcon },
-      { type: '구름', hint: '구름 낀 날씨네요. 조금만 더 신경 쓰면 맑아질 거예요.', icon: CloudyIcon },
-      { type: '흐림', hint: '흐린 날씨예요. 불필요한 지출이 없는지 확인해 보세요.', icon: OvercastIcon },
-      { type: '비', hint: '비가 내리고 있어요! 꼭 필요한 지출만 하는 것이 좋겠어요.', icon: RainIcon },
-      { type: '폭우', hint: '폭우 경보! 우산(비상금)이 젖기 전에 지출을 멈춰주세요!', icon: HeavyRainIcon },
+      { type: '맑음', hint: <Text>지출 관리의 정석! <Text className="font-sans-extrabold text-white">맑은 날씨</Text>가 계속될 거예요.</Text>, icon: SunnyIcon },
+      { type: '구름', hint: <Text>구름 낀 날씨네요. <Text className="font-sans-extrabold text-white">조금만 더 신경 쓰면</Text> 맑아질 거예요.</Text>, icon: CloudyIcon },
+      { type: '흐림', hint: <Text>흐린 날씨예요. <Text className="font-sans-extrabold text-white">불필요한 지출</Text>이 없는지 확인해 보세요.</Text>, icon: OvercastIcon },
+      { type: '비', hint: <Text>비가 내리고 있어요! <Text className="font-sans-extrabold text-white">꼭 필요한 지출만</Text> 하는 것이 좋겠어요.</Text>, icon: RainIcon },
+      { type: '폭우', hint: <Text>폭우 경보! <Text className="font-sans-extrabold text-white">우산(비상금)</Text>이 젖기 전에 지출을 멈춰주세요!</Text>, icon: HeavyRainIcon },
     ];
     const randomIndex = Math.floor(Math.random() * weathers.length);
     setWeatherData(weathers[randomIndex]);
@@ -50,9 +50,9 @@ export default function HomeTodayWeatherCard() {
           </View>
 
           <View className="ml-4 flex-1">
-            <View className="flex-row items-center">
+            <View className="flex-row items-center justify-between">
               <Text className="text-sm font-medium text-white/80">오늘의 소비날씨</Text>
-              <Text className="ml-2 text-xs font-semibold text-white/60">{dateString} {dayString}</Text>
+              <Text className="text-sm font-semibold text-white/70">{dateString} {dayString}</Text>
             </View>
             <View className="mt-1 flex-row items-baseline">
               <Text className="text-3xl font-bold text-white">

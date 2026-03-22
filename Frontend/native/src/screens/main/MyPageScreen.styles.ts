@@ -15,10 +15,12 @@ export const styles = StyleSheet.create({
     gap: hp(18),
   },
   profileCard: {
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.xxl,
     padding: wp(20),
     gap: hp(18),
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
   },
   profileHeaderRow: {
     flexDirection: 'row',
@@ -51,6 +53,10 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
     marginBottom: hp(4),
+  },
+  profileNameHighlight: {
+    fontFamily: FONTS.extraBold,
+    color: COLORS.primaryDark,
   },
   profileBadge: {
     alignSelf: 'flex-start',
@@ -127,10 +133,12 @@ export const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   sectionCard: {
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.xxl,
     padding: wp(18),
     gap: hp(14),
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
   },
   sectionHeaderRow: {
     flexDirection: 'row',

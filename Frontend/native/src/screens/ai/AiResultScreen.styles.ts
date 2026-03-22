@@ -27,7 +27,20 @@ export const styles = StyleSheet.create({
     marginTop: hp(4),
   },
   highlight: {
-    color: COLORS.primary,
+    color: COLORS.primaryDark,
+    fontFamily: FONTS.bold,
+  },
+  highlightExtraBold: {
+    color: COLORS.primaryDark,
+    fontFamily: FONTS.extraBold,
+  },
+  highlightBlack: {
+    color: COLORS.primaryDark,
+    fontFamily: FONTS.black,
+  },
+  userNameHighlight: {
+    fontFamily: FONTS.extraBold,
+    color: COLORS.primaryDark,
   },
   
   /**
@@ -35,14 +48,11 @@ export const styles = StyleSheet.create({
    */
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: RADIUS.xl,
+    borderRadius: RADIUS.xxl,
     padding: wp(20),
     marginBottom: hp(24),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
   },
   cardTitle: {
     fontSize: fp(18),
@@ -217,8 +227,12 @@ export const styles = StyleSheet.create({
     lineHeight: fp(22),
   },
   feedbackHighlight: {
-    color: COLORS.primary,
-    fontFamily: FONTS.bold,
+    color: COLORS.primaryDark,
+    fontFamily: FONTS.extraBold,
+  },
+  feedbackHighlightStrong: {
+    color: COLORS.primaryDark,
+    fontFamily: FONTS.black,
   },
 
   /**

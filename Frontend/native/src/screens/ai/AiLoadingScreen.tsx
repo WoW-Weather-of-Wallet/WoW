@@ -15,6 +15,7 @@ import { COLORS, wp, hp } from '../../constants/theme';
 import { styles } from './AiLoadingScreen.styles';
 import { useAiStore } from '../../store/aiStore';
 import { useIsFocused } from '@react-navigation/native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 /**
  * [UX-Plan] 로딩 단계별 구성을 정의합니다.
@@ -116,40 +117,46 @@ export default function AiLoadingScreen({ navigation }: any) {
   const [currentStep, setCurrentStep] = useState(0);
   const progress = useSharedValue(0);
   const isFocused = useIsFocused(); // 현재 화면에 머물고 있는지 확인
-  const { startAnalysis, simulateAnalysis, hideToast } = useAiStore();
+  const tabBarHeight = useBottomTabBarHeight();
+  const { hideToast, status } = useAiStore();
 
+  // 1. [DELETED] 분석 시작 로직은 이제 AiFeedbackHomeScreen 버튼에서 직접 처리합니다.
+  
+  // 2. 백그라운드나 다른 탭에 다녀왔을 때, 이미 성공 상태라면 즉시 결과 화면으로 이동
+  useEffect(() => {
+    if (isFocused && status === 'success') {
+      hideToast();
+      navigation.replace('AiResult');
+    }
+  }, [isFocused, status, navigation, hideToast]);
+
+  // 3. 내부 UI 애니메이션 진행 (페이지 진입 시 1회 실행)
   useEffect(() => {
     let timeout: NodeJS.Timeout;
-    
-    // 분석 시작 및 시뮬레이션 동시 실행 (이제 화면을 나가도 스토어에서 8초 뒤 완료 처리됨)
-    startAnalysis();
-    simulateAnalysis();
 
-    const runStep = (stepIndex: number) => {
-      if (stepIndex >= LOADING_STEPS.length) {
-        // [Logic] 애니메이션이 모두 끝났을 때
-        if (isFocused) {
-          hideToast(); // 화면에 있으면 토스트는 안 보여줍니다.
-          navigation.replace('AiResult');
-        }
-        return;
+    const runStep = (index: number) => {
+      if (index >= LOADING_STEPS.length) return;
+
+      setCurrentStep(index);
+      const step = LOADING_STEPS[index];
+      
+      progress.value = withTiming((index + 1) / LOADING_STEPS.length, {
+        duration: step.duration,
+      });
+
+      if (index < LOADING_STEPS.length - 1) {
+        timeout = setTimeout(() => {
+          runStep(index + 1);
+        }, step.duration);
       }
-      
-      setCurrentStep(stepIndex);
-      const nextProgress = (stepIndex + 1) / LOADING_STEPS.length;
-      progress.value = withTiming(nextProgress, { duration: LOADING_STEPS[stepIndex].duration });
-      
-      timeout = setTimeout(() => {
-        runStep(stepIndex + 1);
-      }, LOADING_STEPS[stepIndex].duration);
     };
 
     runStep(0);
-    
+
     return () => {
       clearTimeout(timeout);
     };
-  }, [hideToast, isFocused, navigation, progress, simulateAnalysis, startAnalysis]);  // 실제 서비스에서는 Background Task나 Store Action으로 관리하는 것이 더 안전함.
+  }, [progress]);
 
   const animatedProgressStyle = useAnimatedStyle(() => ({
     width: `${progress.value * 100}%`,
@@ -189,7 +196,7 @@ export default function AiLoadingScreen({ navigation }: any) {
         )}
       </Animated.View>
 
-      <View style={styles.progressBarContainer}>
+      <View style={[styles.progressBarContainer, { bottom: tabBarHeight + hp(30) }]}>
         <Animated.View style={[styles.progressBarFill, animatedProgressStyle]} />
       </View>
     </View>

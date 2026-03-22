@@ -36,7 +36,7 @@ export default function HomeBudgetReportCard({
           <View style={styles.flex1}>
             <Text style={styles.eyebrow}>{monthLabel} 소비 리포트</Text>
             <Text style={styles.heroTitle}>
-              {userName}님{'\n'}이번 달 예산 흐름을 한눈에 확인해보세요
+              <Text style={styles.heroTitleHighlight}>{userName}</Text>님{'\n'}이번 달 예산 흐름을 한눈에 확인해보세요
             </Text>
           </View>
           <View style={styles.aiBadge}>
