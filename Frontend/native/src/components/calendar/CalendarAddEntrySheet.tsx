@@ -893,11 +893,11 @@ function buildOverrideRows(
       return [
         {
           merchant_name: item.merchantName,
-          card_tpbuz_nm_2: String(item.categoryLabel),
-          transaction_date: group.dateKey,
-          transaction_detail: matchedBackendItem.transactionDetail,
-          amount: String(item.amount),
-          classification_reason: matchedBackendItem.classificationReason,
+          category: String(item.categoryLabel),
+          reason:
+            matchedBackendItem.classificationReason ||
+            matchedBackendItem.transactionDetail ||
+            '프론트에서 재분류한 항목입니다.',
         },
       ];
     }),

@@ -185,11 +185,8 @@ export interface CalendarCustomResponse {
 
 export interface CalendarOverrideRow {
   merchant_name: string;
-  card_tpbuz_nm_2: string;
-  transaction_date?: string;
-  transaction_detail?: string;
-  amount?: string;
-  classification_reason?: string;
+  category: string;
+  reason?: string;
 }
 
 export type CalendarHeaderFetchState = 'idle' | 'loading' | 'live' | 'fallback';

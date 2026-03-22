@@ -199,13 +199,6 @@ export function useCalendarMockState() {
           return;
         }
 
-        const nextCalendarDaySource = monthlyResponse.map((item) =>
-          mapMonthlyResponseToCalendarDay(item),
-        );
-        setCalendarDaySource((current) =>
-          replaceMonthCalendarDaySource(current, displayedMonth, nextCalendarDaySource),
-        );
-
         const monthDateKeys = buildMonthDateKeys(displayedMonth);
         const dailyResponses = await Promise.all(
           monthDateKeys.map(async (dateKey) => {
@@ -238,6 +231,14 @@ export function useCalendarMockState() {
             monthGroups.push(mappedGroup);
           }
         });
+
+        const nextCalendarDaySource = mergeMonthlyAndDailyCalendarDays(
+          monthlyResponse,
+          dailyResponses,
+        );
+        setCalendarDaySource((current) =>
+          replaceMonthCalendarDaySource(current, displayedMonth, nextCalendarDaySource),
+        );
 
         setCalendarDayDetails((current) =>
           replaceMonthCalendarDayDetails(current, displayedMonth, monthDetails),
@@ -688,6 +689,8 @@ function mapMonthlyResponseToCalendarDay(
 function mapDailyResponseToDetail(response: CalendarDailyResponse): CalendarDayDetail {
   const weatherLabel = response.weather.weatherName || '정보 없음';
   const weatherHint = response.weather.description || '날씨 정보가 없습니다.';
+  const derivedSpentAmount = calculateDailySpentAmount(response);
+  const derivedTransactionCount = calculateDailyTransactionCount(response);
 
   return {
     dateKey: response.date,
@@ -695,8 +698,8 @@ function mapDailyResponseToDetail(response: CalendarDailyResponse): CalendarDayD
     weatherLabel,
     weatherHint,
     weatherTemperature: response.weather.isForecast === 1 ? '예측' : '실측',
-    spentAmount: response.summary.totalExpense,
-    transactionCount: response.summary.transactionCount,
+    spentAmount: derivedSpentAmount,
+    transactionCount: derivedTransactionCount,
     memo: response.memo ?? '',
     items: response.transactions.map((transaction, index) =>
       mapDailyTransactionItem(response.date, transaction, index),
@@ -712,7 +715,7 @@ function mapDailyResponseToTransactionGroup(response: CalendarDailyResponse): Ca
   return {
     id: response.date,
     dateLabel: formatMonthDayTitle(response.date),
-    dailySpent: response.summary.totalExpense ?? 0,
+    dailySpent: calculateDailySpentAmount(response) ?? 0,
     items: response.transactions.map((transaction, index) =>
       mapDailyTransactionItem(response.date, transaction, index),
     ),
@@ -776,6 +779,87 @@ function resolveWeatherTone(iconCode: string | null | undefined) {
   }
 
   return 'cloudy' as const;
+}
+
+function mergeMonthlyAndDailyCalendarDays(
+  monthlyResponse: CalendarMonthlyResponse[],
+  dailyResponses: Array<CalendarDailyResponse | null>,
+) {
+  const dayMap = new Map<string, CalendarDayItem>();
+
+  monthlyResponse.forEach((item) => {
+    dayMap.set(item.date, mapMonthlyResponseToCalendarDay(item));
+  });
+
+  dailyResponses.forEach((response) => {
+    if (!response) {
+      return;
+    }
+
+    const spentAmount = calculateDailySpentAmount(response);
+    const existingDay = dayMap.get(response.date);
+
+    if (existingDay) {
+      if (spentAmount !== null && (existingDay.amount == null || existingDay.amount === 0)) {
+        dayMap.set(response.date, {
+          ...existingDay,
+          amount: spentAmount,
+        });
+      }
+      return;
+    }
+
+    if (spentAmount === null && response.transactions.length === 0) {
+      return;
+    }
+
+    dayMap.set(response.date, {
+      dateKey: response.date,
+      dayNumber: Number(response.date.slice(-2)),
+      amount: spentAmount ?? undefined,
+      tone: resolveCalendarToneFromAmount(spentAmount),
+      weatherTone: resolveWeatherTone(response.weather.iconCode),
+      isCurrentMonth: true,
+      isToday: false,
+      isFuture: false,
+    });
+  });
+
+  return Array.from(dayMap.values()).sort((left, right) =>
+    left.dateKey > right.dateKey ? 1 : -1,
+  );
+}
+
+function calculateDailySpentAmount(response: CalendarDailyResponse) {
+  if (response.summary.totalExpense !== null) {
+    return response.summary.totalExpense;
+  }
+
+  if (response.transactions.length === 0) {
+    return null;
+  }
+
+  return response.transactions.reduce((sum, transaction) => sum + Math.max(transaction.amount, 0), 0);
+}
+
+function calculateDailyTransactionCount(response: CalendarDailyResponse) {
+  if (response.summary.transactionCount !== null) {
+    return response.summary.transactionCount;
+  }
+
+  return response.transactions.length > 0 ? response.transactions.length : null;
+}
+
+function resolveCalendarToneFromAmount(amount: number | null) {
+  if ((amount ?? 0) >= 100000) {
+    return 'rose' as const;
+  }
+
+  if ((amount ?? 0) >= 50000) {
+    return 'gold' as const;
+  }
+
+  return 'mint' as const;
 }
 
 function buildMonthDateKeys(displayedMonth: Date) {
