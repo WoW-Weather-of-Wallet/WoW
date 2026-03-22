@@ -6,7 +6,7 @@ import com.wow.domain.calendar.entity.DayType;
 import com.wow.domain.calendar.entity.SpendingWeather;
 import com.wow.domain.calendar.entity.Transaction;
 import com.wow.domain.calendar.repository.CalendarRepository;
-import com.wow.domain.calendar.repository.ExpenseCategoryRepository;
+import com.wow.domain.expensecategory.repository.ExpenseCategoryRepository;
 import com.wow.domain.calendar.repository.TransactionRepository;
 import com.wow.domain.expensecategory.entity.ExpenseCategory;
 import com.wow.domain.user.entity.User;
