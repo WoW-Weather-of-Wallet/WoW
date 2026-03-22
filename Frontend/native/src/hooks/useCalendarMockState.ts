@@ -12,10 +12,13 @@ import {
   type FixedExpenseItem,
 } from '../mock/calendar';
 import type {
+  CalendarBackendDayType,
   CalendarConfirmRequest,
+  CalendarDailyResponse,
   CalendarHeaderFetchState,
   CalendarHeaderResponse,
   ManualCalendarEntryDraft,
+  CalendarMonthlyResponse,
 } from '../types/calendar';
 import {
   buildMonthDays,
@@ -37,7 +40,13 @@ import {
   DEFAULT_CALENDAR_CATEGORY,
   type CalendarEntryCategoryKey,
 } from '../constants/calendar/addEntry';
-import { confirmCalendarTransactions, getCalendarHeader } from '../services/calendar';
+import {
+  confirmCalendarTransactions,
+  createCustomCalendarTransactions,
+  getCalendarDaily,
+  getCalendarHeader,
+  getCalendarMonthly,
+} from '../services/calendar';
 import { useAuthStore } from '../store/authStore';
 
 type CalendarTab = 'calendar' | 'history';
@@ -167,6 +176,78 @@ export function useCalendarMockState() {
         setLiveHeader(null);
         setHeaderFetchState('fallback');
         setHeaderErrorMessage('캘린더 헤더를 불러오지 못했어요. 잠시 후 다시 시도해주세요.');
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [accessToken, displayedMonth]);
+
+  useEffect(() => {
+    if (!accessToken) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const year = displayedMonth.getFullYear();
+    const month = displayedMonth.getMonth() + 1;
+
+    getCalendarMonthly({ year, month })
+      .then(async (monthlyResponse) => {
+        if (isCancelled) {
+          return;
+        }
+
+        const nextCalendarDaySource = monthlyResponse.map((item) =>
+          mapMonthlyResponseToCalendarDay(item),
+        );
+        setCalendarDaySource((current) =>
+          replaceMonthCalendarDaySource(current, displayedMonth, nextCalendarDaySource),
+        );
+
+        const monthDateKeys = buildMonthDateKeys(displayedMonth);
+        const dailyResponses = await Promise.all(
+          monthDateKeys.map(async (dateKey) => {
+            try {
+              return await getCalendarDaily({ date: dateKey });
+            } catch (error) {
+              console.warn('Failed to load calendar daily detail', dateKey, error);
+              return null;
+            }
+          }),
+        );
+
+        if (isCancelled) {
+          return;
+        }
+
+        const monthDetails: Record<string, CalendarDayDetail> = {};
+        const monthGroups: CalendarTransactionGroup[] = [];
+
+        dailyResponses.forEach((dailyResponse) => {
+          if (!dailyResponse) {
+            return;
+          }
+
+          const mappedDetail = mapDailyResponseToDetail(dailyResponse);
+          monthDetails[mappedDetail.dateKey] = mappedDetail;
+
+          const mappedGroup = mapDailyResponseToTransactionGroup(dailyResponse);
+          if (mappedGroup) {
+            monthGroups.push(mappedGroup);
+          }
+        });
+
+        setCalendarDayDetails((current) =>
+          replaceMonthCalendarDayDetails(current, displayedMonth, monthDetails),
+        );
+        setTransactionGroups((current) =>
+          replaceMonthTransactionGroups(current, displayedMonth, monthGroups),
+        );
+      })
+      .catch((error) => {
+        console.warn('Failed to load calendar month from backend', error);
       });
 
     return () => {
@@ -396,6 +477,22 @@ export function useCalendarMockState() {
     }
 
     if (accessToken) {
+      await createCustomCalendarTransactions(buildCustomRequest(entries));
+    }
+
+    const patch = buildManualEntryPatch(entries);
+    setTransactionGroups((current) => mergeTransactionGroups(current, patch));
+    setCalendarDaySource((current) => mergeCalendarDaySource(current, patch));
+    setCalendarDayDetails((current) => mergeCalendarDayDetails(current, patch));
+    setIsAddEntryVisible(false);
+  }
+
+  async function handleSaveExcelEntries(entries: ManualCalendarEntryDraft[]) {
+    if (entries.length === 0) {
+      return;
+    }
+
+    if (accessToken) {
       const requests = buildConfirmRequests(entries);
 
       for (const request of requests) {
@@ -482,6 +579,7 @@ export function useCalendarMockState() {
     handleDeleteManageItem,
     handleEditManageItem,
     handleSaveManualEntries,
+    handleSaveExcelEntries,
     handleSaveMemo,
   };
 }
@@ -531,6 +629,17 @@ function buildCategoryIdMap() {
   }, {});
 }
 
+function buildCustomRequest(entries: ManualCalendarEntryDraft[]) {
+  return {
+    items: entries.map((entry) => ({
+      merchantName: entry.merchantName,
+      amount: entry.amount,
+      categoryId: entry.categoryId ?? resolveCategoryId(entry.category),
+      transactionDate: entry.dateKey,
+    })),
+  };
+}
+
 function buildConfirmRequests(entries: ManualCalendarEntryDraft[]): CalendarConfirmRequest[] {
   const groupedEntries = new Map<string, ManualCalendarEntryDraft[]>();
 
@@ -556,4 +665,167 @@ function resolveCategoryId(category: string) {
   }
 
   return categoryId;
+}
+
+function mapMonthlyResponseToCalendarDay(
+  item: CalendarMonthlyResponse,
+): CalendarDayItem {
+  const [, , dayRaw] = item.date.split('-').map(Number);
+  const isFuture = item.dayType === 'NEAR_FUTURE' || item.dayType === 'FAR_FUTURE';
+
+  return {
+    dateKey: item.date,
+    dayNumber: dayRaw,
+    amount: item.dailyTotal ?? undefined,
+    tone: resolveCalendarTone(item.dayType, item.dailyTotal),
+    weatherTone: resolveWeatherTone(item.iconCode),
+    isCurrentMonth: true,
+    isToday: item.dayType === 'TODAY',
+    isFuture,
+  };
+}
+
+function mapDailyResponseToDetail(response: CalendarDailyResponse): CalendarDayDetail {
+  const weatherLabel = response.weather.weatherName || '정보 없음';
+  const weatherHint = response.weather.description || '날씨 정보가 없습니다.';
+
+  return {
+    dateKey: response.date,
+    title: formatMonthDayTitle(response.date),
+    weatherLabel,
+    weatherHint,
+    weatherTemperature: response.weather.isForecast === 1 ? '예측' : '실측',
+    spentAmount: response.summary.totalExpense,
+    transactionCount: response.summary.transactionCount,
+    memo: response.memo ?? '',
+    items: response.transactions.map((transaction, index) =>
+      mapDailyTransactionItem(response.date, transaction, index),
+    ),
+  };
+}
+
+function mapDailyResponseToTransactionGroup(response: CalendarDailyResponse): CalendarTransactionGroup | null {
+  if (response.transactions.length === 0) {
+    return null;
+  }
+
+  return {
+    id: response.date,
+    dateLabel: formatMonthDayTitle(response.date),
+    dailySpent: response.summary.totalExpense ?? 0,
+    items: response.transactions.map((transaction, index) =>
+      mapDailyTransactionItem(response.date, transaction, index),
+    ),
+  };
+}
+
+function mapDailyTransactionItem(
+  dateKey: string,
+  transaction: CalendarDailyResponse['transactions'][number],
+  index: number,
+): CalendarTransactionGroup['items'][number] {
+  const categoryMeta = CATEGORY_META[transaction.category] ?? CATEGORY_META[DEFAULT_CALENDAR_CATEGORY];
+
+  return {
+    id: `${dateKey}-transaction-${index}`,
+    title: transaction.merchantName,
+    category: transaction.category,
+    amount: transaction.amount,
+    icon: categoryMeta.icon,
+    iconTone: categoryMeta.iconTone,
+  };
+}
+
+function resolveCalendarTone(dayType: CalendarBackendDayType, dailyTotal: number | null) {
+  if (dayType === 'TODAY') {
+    return 'primary' as const;
+  }
+
+  if ((dailyTotal ?? 0) >= 100000) {
+    return 'rose' as const;
+  }
+
+  if ((dailyTotal ?? 0) >= 50000) {
+    return 'gold' as const;
+  }
+
+  return 'mint' as const;
+}
+
+function resolveWeatherTone(iconCode: string | null | undefined) {
+  const normalizedCode = iconCode?.toLowerCase();
+
+  if (!normalizedCode) {
+    return undefined;
+  }
+
+  if (normalizedCode.includes('rain')) {
+    return 'rainy' as const;
+  }
+
+  if (normalizedCode.includes('cloud')) {
+    return 'cloudy' as const;
+  }
+
+  if (normalizedCode.includes('sun')) {
+    return 'sunny' as const;
+  }
+
+  if (normalizedCode.includes('clear')) {
+    return 'clear' as const;
+  }
+
+  return 'cloudy' as const;
+}
+
+function buildMonthDateKeys(displayedMonth: Date) {
+  const year = displayedMonth.getFullYear();
+  const month = displayedMonth.getMonth();
+  const lastDate = new Date(year, month + 1, 0).getDate();
+
+  return Array.from({ length: lastDate }, (_, index) => {
+    const day = index + 1;
+    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  });
+}
+
+function replaceMonthCalendarDaySource(
+  current: CalendarDayItem[],
+  displayedMonth: Date,
+  nextDays: CalendarDayItem[],
+) {
+  const monthPrefix = getMonthPrefix(displayedMonth);
+  return [...current.filter((day) => !day.dateKey.startsWith(monthPrefix)), ...nextDays];
+}
+
+function replaceMonthCalendarDayDetails(
+  current: Record<string, CalendarDayDetail>,
+  displayedMonth: Date,
+  nextDetails: Record<string, CalendarDayDetail>,
+) {
+  const monthPrefix = getMonthPrefix(displayedMonth);
+  const filteredEntries = Object.entries(current).filter(([dateKey]) => !dateKey.startsWith(monthPrefix));
+
+  return Object.fromEntries([...filteredEntries, ...Object.entries(nextDetails)]);
+}
+
+function replaceMonthTransactionGroups(
+  current: CalendarTransactionGroup[],
+  displayedMonth: Date,
+  nextGroups: CalendarTransactionGroup[],
+) {
+  const monthPrefix = getMonthPrefix(displayedMonth);
+  return [...current.filter((group) => !group.id.startsWith(monthPrefix)), ...nextGroups].sort((a, b) =>
+    a.id < b.id ? 1 : -1,
+  );
+}
+
+function getMonthPrefix(displayedMonth: Date) {
+  return `${displayedMonth.getFullYear()}-${String(displayedMonth.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function formatMonthDayTitle(dateKey: string) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const weekday = ['일', '월', '화', '수', '목', '금', '토'][new Date(year, month - 1, day).getDay()];
+  return `${month}월 ${day}일 (${weekday})`;
 }

@@ -5,8 +5,15 @@ import type {
   CalendarApiResponse,
   CalendarConfirmRequest,
   CalendarConfirmResponse,
+  CalendarCustomRequest,
+  CalendarCustomResponse,
+  CalendarDailyParams,
+  CalendarDailyResponse,
   CalendarHeaderParams,
   CalendarHeaderResponse,
+  CalendarMonthlyParams,
+  CalendarMonthlyResponse,
+  CalendarOverrideRow,
   CalendarUploadBackendSummary,
   CalendarUploadFile,
   CalendarUploadRequest,
@@ -177,6 +184,28 @@ export async function getCalendarHeader(params: CalendarHeaderParams) {
   return response.data.data;
 }
 
+export async function getCalendarMonthly(params: CalendarMonthlyParams) {
+  const response = await nativeApi.get<CalendarApiResponse<CalendarMonthlyResponse[]>>(
+    '/api/v1/calendar/monthly',
+    {
+      params,
+    },
+  );
+
+  return response.data.data;
+}
+
+export async function getCalendarDaily(params: CalendarDailyParams) {
+  const response = await nativeApi.get<CalendarApiResponse<CalendarDailyResponse>>(
+    '/api/v1/calendar/daily',
+    {
+      params,
+    },
+  );
+
+  return response.data.data;
+}
+
 export async function uploadCalendarTransactions(payload: CalendarUploadRequest) {
   const formData = new FormData();
 
@@ -203,7 +232,26 @@ export async function confirmCalendarTransactions(payload: CalendarConfirmReques
     payload,
   );
 
-  return response.data;
+  return response.data.data;
+}
+
+export async function createCustomCalendarTransactions(payload: CalendarCustomRequest) {
+  const response = await nativeApi.post<CalendarApiResponse<CalendarCustomResponse>>(
+    '/api/v1/calendar/transactions/custom',
+    payload,
+  );
+
+  return response.data.data;
+}
+
+export async function saveCalendarOverrides(rows: CalendarOverrideRow[]) {
+  if (rows.length === 0) {
+    return;
+  }
+
+  await nativeApi.post('/api/v1/calendar/transactions/overrides', {
+    rows,
+  });
 }
 
 export function getCalendarApiErrorMessage(error: unknown, fallbackMessage: string) {
