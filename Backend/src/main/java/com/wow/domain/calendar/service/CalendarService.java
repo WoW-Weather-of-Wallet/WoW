@@ -1,27 +1,24 @@
 package com.wow.domain.calendar.service;
 
 import com.wow.domain.calendar.dto.*;
+import com.wow.domain.calendar.entity.*;
 import com.wow.domain.calendar.entity.Calendar;
-import com.wow.domain.calendar.entity.DayType;
-import com.wow.domain.calendar.entity.FixedExpense;
-import com.wow.domain.calendar.entity.SpendingWeather;
-import com.wow.domain.calendar.entity.Transaction;
 import com.wow.domain.calendar.repository.CalendarRepository;
-import com.wow.domain.expensecategory.repository.ExpenseCategoryRepository;
 import com.wow.domain.calendar.repository.FixedExpenseRepository;
 import com.wow.domain.calendar.repository.TransactionRepository;
 import com.wow.domain.expensecategory.entity.ExpenseCategory;
+import com.wow.domain.expensecategory.repository.ExpenseCategoryRepository;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.global.exception.BadRequestException;
-import com.wow.global.exception.DuplicateException;
 import com.wow.global.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -29,14 +26,15 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -414,4 +412,69 @@ public class CalendarService {
     }
 
     private record DailyWeatherInfo(String weatherName, String iconCode, String description) {}
+
+    // 전체 거래내역 조회
+    public CalendarTransactionResponse getCalendarTransactions(
+            Long userId, int year, int month) {
+
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 해당 월 시작/끝
+        LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
+        LocalDateTime end = LocalDateTime.of(year, month,
+                YearMonth.of(year, month).lengthOfMonth(), 23, 59, 59);
+
+        // 거래내역 조회
+        List<Transaction> transactions =
+                transactionRepository
+                        .findByUser_IdAndTransactionAtBetweenOrderByTransactionAtDesc(
+                                userId, start, end);
+
+        // 고정지출 가맹점명 목록 한번에 조회 (핀 표시용)
+        Set<String> fixedNames = fixedExpenseRepository.findNamesByUserId(userId);
+
+        // 월 총 지출 합계
+        int totalAmount = transactions.stream()
+                .mapToInt(t -> t.getAmount().intValue())
+                .sum();
+
+        // 날짜별 그룹핑
+        Map<LocalDate, List<Transaction>> groupedByDate = transactions.stream()
+                .collect(Collectors.groupingBy(
+                        t -> t.getTransactionAt().toLocalDate(),
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        // DailyItem 생성
+        List<CalendarTransactionResponse.DailyItem> items = groupedByDate.entrySet().stream()
+                .map(entry -> {
+                    List<CalendarTransactionResponse.TransactionItem> txItems =
+                            entry.getValue().stream()
+                                    .map(t -> new CalendarTransactionResponse.TransactionItem(
+                                            t.getId(),
+                                            t.getCategory() != null
+                                                    ? t.getCategory().getCategoryIcon() : null,
+                                            t.getMerchantName(),
+                                            t.getCategory() != null
+                                                    ? t.getCategory().getCategoryName() : null,
+                                            t.getAmount().intValue(),
+                                            fixedNames.contains(t.getMerchantName())
+                                    ))
+                                    .toList();
+
+                    return new CalendarTransactionResponse.DailyItem(
+                            entry.getKey().toString(),
+                            txItems
+                    );
+                })
+                .toList();
+
+        return new CalendarTransactionResponse(
+                year + "-" + String.format("%02d", month),
+                totalAmount,
+                items
+        );
+    }
 }

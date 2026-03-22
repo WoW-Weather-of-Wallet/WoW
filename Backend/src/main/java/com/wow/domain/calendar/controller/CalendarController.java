@@ -160,4 +160,20 @@ public class CalendarController {
         return ResponseEntity.ok(
                 ApiResponse.success(200, "고정지출 목록 조회 성공", response));
     }
+
+    // 전체 거래내역 조회
+    @GetMapping("/transactions")
+    public ResponseEntity<ApiResponse<CalendarTransactionResponse>> getCalendarTransactions(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam int year,
+            @RequestParam int month) {
+
+        Long userId = userDetails.getId();
+
+        CalendarTransactionResponse response =
+                calendarService.getCalendarTransactions(userId, year, month);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "전체 거래내역 조회 성공", response));
+    }
 }
