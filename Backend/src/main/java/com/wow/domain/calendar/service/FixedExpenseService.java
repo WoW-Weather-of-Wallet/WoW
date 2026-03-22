@@ -122,4 +122,24 @@ public class FixedExpenseService {
 
         fixedExpenseRepository.delete(fixedExpense);
     }
+
+    // 토글(직접입력형식)
+    @Transactional
+    public FixedExpenseEnableResponse updateFixedExpenseEnable(
+            Long userId, Long fixedExpenseId, FixedExpenseEnableRequest request) {
+
+        FixedExpense fixedExpense = fixedExpenseRepository.findById(fixedExpenseId)
+                .orElseThrow(() -> new NotFoundException("고정지출 항목을 찾을 수 없습니다."));
+
+        if (!fixedExpense.getUser().getId().equals(userId)) {
+            throw new BadRequestException("수정 권한이 없습니다.");
+        }
+
+        fixedExpense.updateEnable(request.getIsEnable());
+
+        return new FixedExpenseEnableResponse(
+                fixedExpense.getId(),
+                fixedExpense.getIsEnable()
+        );
+    }
 }
