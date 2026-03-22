@@ -1,8 +1,6 @@
 package com.wow.domain.calendar.service;
 
-import com.wow.domain.calendar.dto.FixedExpenseAddRequest;
-import com.wow.domain.calendar.dto.FixedExpenseAddResponse;
-import com.wow.domain.calendar.dto.FixedExpenseManageResponse;
+import com.wow.domain.calendar.dto.*;
 import com.wow.domain.calendar.entity.FixedExpense;
 import com.wow.domain.calendar.entity.Transaction;
 import com.wow.domain.calendar.repository.FixedExpenseRepository;
@@ -89,6 +87,25 @@ public class FixedExpenseService {
                 fixedExpense.getId(),
                 fixedExpense.getName(),
                 true
+        );
+    }
+
+    @Transactional
+    public FixedExpenseUpdateResponse updateFixedExpense(
+            Long userId, Long fixedExpenseId, FixedExpenseUpdateRequest request) {
+
+        FixedExpense fixedExpense = fixedExpenseRepository.findById(fixedExpenseId)
+                .orElseThrow(() -> new NotFoundException("고정지출 항목을 찾을 수 없습니다."));
+
+        if (!fixedExpense.getUser().getId().equals(userId)) {
+            throw new BadRequestException("수정 권한이 없습니다.");
+        }
+
+        fixedExpense.update(request.getIcon(), request.getAmount(), request.getDueDay());
+
+        return new FixedExpenseUpdateResponse(
+                fixedExpense.getId(),
+                fixedExpense.getName()
         );
     }
 }

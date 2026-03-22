@@ -3,13 +3,15 @@ package com.wow.domain.calendar.entity;
 import com.wow.domain.account.entity.Account;
 import com.wow.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -63,4 +65,11 @@ public class FixedExpense {
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    // FixedExpense.java에 추가
+    public void update(String icon, Integer amount, Integer dueDay) {
+        if (icon != null) this.icon = icon;
+        if (amount != null) this.amount = amount;
+        if (dueDay != null) this.dueDay = dueDay;
+    }
 }

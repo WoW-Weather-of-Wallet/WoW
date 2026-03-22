@@ -3,6 +3,8 @@ package com.wow.domain.calendar.controller;
 import com.wow.domain.calendar.dto.FixedExpenseAddRequest;
 import com.wow.domain.calendar.dto.FixedExpenseAddResponse;
 import com.wow.domain.calendar.dto.FixedExpenseManageResponse;
+import com.wow.domain.calendar.dto.FixedExpenseUpdateRequest;
+import com.wow.domain.calendar.dto.FixedExpenseUpdateResponse;
 import com.wow.domain.calendar.service.FixedExpenseService;
 import com.wow.domain.security.CustomUserDetails;
 import com.wow.global.common.ApiResponse;
@@ -35,9 +37,6 @@ public class FixedExpenseController {
                 ApiResponse.success(200, "고정지출 목록 조회 성공", response));
     }
 
-
-    // 거래내역 응답 DTO에 추가
-    // boolean isFixed = fixedExpenseRepository.existsByTransaction_Id(transaction.getId());
     // 고정지출 항목 추가 (거래내역에서 선택)
     @PostMapping
     public ResponseEntity<ApiResponse<FixedExpenseAddResponse>> addFixedExpense(
@@ -52,5 +51,21 @@ public class FixedExpenseController {
         return ResponseEntity
                 .status(201)
                 .body(ApiResponse.success(201, "고정지출 추가 성공", response));
+    }
+
+    // 고정지출 수정 (아이콘, 금액, 결제일만 변경 가능)
+    @PatchMapping("/{id}")
+    public ResponseEntity<ApiResponse<FixedExpenseUpdateResponse>> updateFixedExpense(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long id,
+            @RequestBody FixedExpenseUpdateRequest request) {
+
+        Long userId = userDetails.getId();
+
+        FixedExpenseUpdateResponse response =
+                fixedExpenseService.updateFixedExpense(userId, id, request);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "고정지출 수정 성공", response));
     }
 }
