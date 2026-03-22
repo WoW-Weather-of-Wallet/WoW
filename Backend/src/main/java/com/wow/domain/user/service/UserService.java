@@ -1,6 +1,7 @@
 package com.wow.domain.user.service;
 
 import com.wow.domain.auth.service.SmsService;
+import com.wow.domain.fcm.service.FcmService;
 import com.wow.domain.user.dto.UpdatePhoneRequest;
 import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.dto.UserProfileResponse;
@@ -23,6 +24,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final SmsService smsService;
     private final StringRedisTemplate redisTemplate;
+    private final FcmService fcmService;
 
     @Transactional(readOnly = true)
     public UserProfileResponse getProfile(String userId) {
@@ -46,6 +48,8 @@ public class UserService {
         // [added] 이유: 탈퇴 후 동일 userId 재사용 시 이전 로그인 차단 상태가 남아 신규 가입자가 즉시 차단될 수 있음 → 삭제 시 rate limit 키 함께 정리
         redisTemplate.delete(RedisKeys.LOGIN_ATTEMPT_PREFIX + redisKey);
         redisTemplate.delete(RedisKeys.LOGIN_BLOCK_PREFIX + redisKey);
+        // 탈퇴 시 해당 유저의 모든 FCM 토큰 삭제
+        fcmService.deleteTokensByUserId(redisKey);
 
         userRepository.delete(user);
     }
