@@ -11,6 +11,7 @@ interface LoginSessionPayload {
   accessToken: string;
   user: AuthUser;
   autoLogin?: boolean;
+  source?: 'manual' | 'restored' | 'ssafy';
 }
 
 interface DevSessionPayload {
@@ -23,8 +24,10 @@ interface AuthState {
   accessToken: string | null;
   user: AuthUser | null;
   autoLoginEnabled: boolean;
+  sessionSource: 'manual' | 'restored' | 'ssafy' | 'dev' | null;
   login: (payload: LoginSessionPayload) => void;
   loginWithDevBypass: (payload?: DevSessionPayload) => void;
+  updateAccessToken: (accessToken: string | null) => void;
   updateUser: (payload: Partial<AuthUser>) => void;
   logout: () => void;
 }
@@ -39,8 +42,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   accessToken: null,
   user: null,
   autoLoginEnabled: false,
+  sessionSource: null,
 
-  login: ({ accessToken, user, autoLogin = false }) => {
+  login: ({ accessToken, user, autoLogin = false, source = 'manual' }) => {
     // 로그인 성공 시 공통 Authorization 헤더를 즉시 동기화해 이후 API 호출이 같은 세션을 사용하게 합니다.
     setNativeAuthToken(accessToken);
 
@@ -49,6 +53,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       accessToken,
       user,
       autoLoginEnabled: autoLogin,
+      sessionSource: source,
     });
   },
 
@@ -66,7 +71,17 @@ export const useAuthStore = create<AuthState>((set) => ({
         role: 'DEV',
       },
       autoLoginEnabled: false,
+      sessionSource: 'dev',
     });
+  },
+
+  updateAccessToken: (accessToken) => {
+    setNativeAuthToken(accessToken);
+
+    set((state) => ({
+      accessToken,
+      isAuthenticated: Boolean(accessToken) || state.isAuthenticated,
+    }));
   },
 
   updateUser: (payload) => {
@@ -89,6 +104,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       accessToken: null,
       user: null,
       autoLoginEnabled: false,
+      sessionSource: null,
     });
   },
 }));

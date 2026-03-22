@@ -6,6 +6,7 @@ import { WEATHER_ICONS, WEEKDAY_LABELS } from '../../constants/calendar/ui';
 import { COLORS, wp } from '../../constants/theme';
 import { styles } from './CalendarMonthCard.styles';
 import type { CalendarDayItem } from '../../mock/calendar';
+import MemoIcon from '../../../assets/imgs/calendar/MemoIcon';
 
 interface CalendarMonthCardProps {
   days: CalendarDayItem[];
@@ -53,21 +54,27 @@ export default function CalendarMonthCard({
               style={[
                 styles.dayCell,
                 isPaddingCell && styles.dayCellPadding,
-                hasMemo && !isSelected && styles.dayCellMemo,
                 isSelected && styles.dayCellSelected,
                 day.isFuture && styles.dayCellFuture,
               ]}
               onPress={() => onSelectDate(day.dateKey)}
             >
               {/*
-                메모 표시안 비교:
-                - 연한 노란색 셀 배경
-                - 날짜 위 메모 이모지
-                두 방식을 같은 날짜에 함께 보여주고, 실제 화면에서 어떤 방식이 더 읽히는지 비교합니다.
+                변경 전:
+                - 메모 날짜에 연한 노란 배경과 이모지를 함께 표시했습니다.
+
+                변경 이유:
+                - 배경이 들어가면 날짜 숫자 위치가 시각적으로 밀려 보이고 셀 강조가 과해집니다.
+                - 날짜 숫자는 기존 위치를 유지하고, 메모 표시는 상단 겹침 배지로만 처리합니다.
               */}
               {hasMemo ? (
                 <View style={[styles.memoBadge, isSelected && styles.memoBadgeSelected]}>
-                  <Text style={[styles.memoEmoji, isSelected && styles.memoEmojiSelected]}>📝</Text>
+                  {/*
+                    변경 이유:
+                    - 이모지 대신 디자인 자산 아이콘을 사용해 앱 전반의 시각 톤을 맞춥니다.
+                    - SVG 아이콘은 플랫폼별 렌더링 차이가 적어서 크기/위치 조정도 안정적입니다.
+                  */}
+                  <MemoIcon size={11} />
                 </View>
               ) : null}
 

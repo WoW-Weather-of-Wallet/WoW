@@ -86,11 +86,39 @@ export const styles = StyleSheet.create({
     padding: wp(20),
     gap: hp(12),
   },
+  pinModalCard: {
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.xl,
+    paddingHorizontal: wp(20),
+    paddingVertical: hp(20),
+    gap: hp(14),
+  },
   modalTitle: {
     fontSize: fp(18),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
     marginBottom: hp(4),
+  },
+  pinModalDescription: {
+    fontSize: fp(13),
+    lineHeight: fp(19),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  pinIndicatorRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: wp(10),
+    marginTop: hp(4),
+  },
+  pinIndicatorDot: {
+    width: wp(12),
+    height: wp(12),
+    borderRadius: wp(6),
+    backgroundColor: COLORS.gray100,
+  },
+  pinIndicatorDotFilled: {
+    backgroundColor: COLORS.primary,
   },
 
   /* ── 입력 필드 ── */

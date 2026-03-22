@@ -3,8 +3,12 @@
 // 인증 전 스택과 인증 후 메인 탭을 한 곳에서 관리합니다.
 // =============================================
 
-import React, { useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState, Platform } from 'react-native';
+import {
+  NavigationContainer,
+  createNavigationContainerRef,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SplashScreen from '../screens/auth/SplashScreen';
 import AccessPermissionScreen from '../screens/auth/AccessPermissionScreen';
@@ -23,11 +27,27 @@ import TermsPdfScreen from '../screens/common/TermsPdfScreen';
 import AiLoadingScreen from '../screens/ai/AiLoadingScreen';
 import AiResultScreen from '../screens/ai/AiResultScreen';
 import AiNotification from '../components/common/AiNotification';
+import QuickLoginGate from '../components/auth/QuickLoginGate';
 import { useNotificationObserver } from '../hooks/useNotificationObserver';
 import { useAuthStore } from '../store/authStore';
 import { fcmService } from '../services/fcmService';
+import { clearPersistedAuthSession } from '../services/sessionStorage';
+import {
+  authenticateWithBiometrics,
+  hasLocalSecurityEnabled,
+  setBiometricEnabled,
+  verifyPinCode,
+} from '../services/localSecurity';
+import {
+  logout as logoutRequest,
+  registerNativeAuthLifecycleCallbacks,
+} from '../services/auth';
+import { useLocalSecurityStore } from '../store/localSecurityStore';
 
 const Stack = createNativeStackNavigator();
+const navigationRef = createNavigationContainerRef<any>();
+const BACKGROUND_LOCK_THRESHOLD_MS = 10 * 60 * 1000;
+// const BACKGROUND_LOCK_THRESHOLD_MS = 0; // 테스트용: 백그라운드 복귀 즉시 간편로그인
 
 /**
  * RootNavigator
@@ -37,7 +57,7 @@ const Stack = createNativeStackNavigator();
  */
 export default function RootNavigator() {
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <NavigationWrapper />
     </NavigationContainer>
   );
@@ -48,10 +68,55 @@ export default function RootNavigator() {
  * NavigationContainer 내부에서만 사용할 수 있는 훅(useNavigation 등)을 관리합니다.
  */
 function NavigationWrapper() {
-  const { isAuthenticated } = useAuthStore();
+  const {
+    isAuthenticated,
+    sessionSource,
+    logout,
+    updateAccessToken,
+  } = useAuthStore();
+  const {
+    preferences,
+    isLoaded,
+    isAppLocked,
+    lockReason,
+    loadPreferences,
+    refreshPreferences,
+    lockApp,
+    unlockApp,
+  } = useLocalSecurityStore();
+  const appStateRef = useRef(AppState.currentState);
+  const backgroundEnteredAtRef = useRef<number | null>(null);
+  const restoredLockHandledRef = useRef(false);
+  const [lockError, setLockError] = useState('');
+  const [isBiometricLoading, setIsBiometricLoading] = useState(false);
 
   // FCM 알림 클릭 감지 및 페이지 이동 옵저버 활성화
   useNotificationObserver();
+
+  useEffect(() => {
+    void loadPreferences();
+  }, [loadPreferences]);
+
+  useEffect(() => {
+    registerNativeAuthLifecycleCallbacks({
+      onAccessTokenRefreshed: (accessToken) => {
+        updateAccessToken(accessToken);
+      },
+      onSessionExpired: () => {
+        logout();
+        unlockApp();
+
+        if (navigationRef.isReady()) {
+          navigationRef.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+          });
+        }
+      },
+    });
+
+    return () => registerNativeAuthLifecycleCallbacks({});
+  }, [logout, unlockApp, updateAccessToken]);
 
   // [FCM] 인증 상태가 되면 토큰을 서버에 등록합니다.
   useEffect(() => {
@@ -62,6 +127,159 @@ function NavigationWrapper() {
       }, 500);
     }
   }, [isAuthenticated]);
+
+  const startAppUnlock = useCallback(
+    async (reason: 'launch' | 'resume') => {
+      if (!isAuthenticated) {
+        return;
+      }
+
+      const currentPreferences = isLoaded
+        ? preferences
+        : await loadPreferences();
+
+      if (!hasLocalSecurityEnabled(currentPreferences)) {
+        return;
+      }
+
+      setLockError('');
+      lockApp(reason);
+
+      if (!currentPreferences.biometricEnabled) {
+        return;
+      }
+
+      setIsBiometricLoading(true);
+
+      try {
+        const result = await authenticateWithBiometrics(
+          reason === 'launch'
+            ? '앱을 열기 위해 생체인증을 진행해주세요.'
+            : '간편로그인을 위해 생체인증을 진행해주세요.',
+        );
+
+        if (result.success) {
+          setLockError('');
+          unlockApp();
+          return;
+        }
+
+        if (!currentPreferences.pinEnabled) {
+          setLockError(result.errorMessage ?? '생체 인증에 실패했어요.');
+        }
+      } finally {
+        setIsBiometricLoading(false);
+      }
+    },
+    [isAuthenticated, isLoaded, loadPreferences, lockApp, preferences, unlockApp],
+  );
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      restoredLockHandledRef.current = false;
+      unlockApp();
+      return;
+    }
+
+    if (sessionSource === 'restored' && isLoaded && !restoredLockHandledRef.current) {
+      restoredLockHandledRef.current = true;
+      void startAppUnlock('launch');
+    }
+  }, [isAuthenticated, isLoaded, sessionSource, startAppUnlock, unlockApp]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      const previousAppState = appStateRef.current;
+      appStateRef.current = nextAppState;
+
+      if (nextAppState === 'background') {
+        backgroundEnteredAtRef.current = Date.now();
+      }
+
+      if (isAuthenticated && previousAppState === 'background' && nextAppState === 'active') {
+        const enteredAt = backgroundEnteredAtRef.current;
+        backgroundEnteredAtRef.current = null;
+
+        if (!enteredAt) {
+          return;
+        }
+
+        if (Date.now() - enteredAt >= BACKGROUND_LOCK_THRESHOLD_MS) {
+          void startAppUnlock('resume');
+        }
+      }
+    });
+
+    return () => subscription.remove();
+  }, [isAuthenticated, startAppUnlock]);
+
+  const handleSubmitPin = useCallback(
+    async (pin: string) => {
+      const isValid = await verifyPinCode(pin, preferences);
+      if (!isValid) {
+        setLockError('간편비밀번호가 올바르지 않아요.');
+        return false;
+      }
+
+      setLockError('');
+      unlockApp();
+      return true;
+    },
+    [preferences, unlockApp],
+  );
+
+  const handleBiometricPress = useCallback(() => {
+    void startAppUnlock(lockReason ?? 'resume');
+  }, [lockReason, startAppUnlock]);
+
+  const handleToggleBiometric = useCallback(
+    async (enabled: boolean) => {
+      if (!preferences.pinEnabled || Platform.OS === 'ios') {
+        return;
+      }
+
+      if (enabled) {
+        const result = await authenticateWithBiometrics(
+          '다음부터 생체인증 사용을 위해 본인 확인을 진행해주세요.',
+        );
+
+        if (!result.success) {
+          setLockError(result.errorMessage ?? '생체 인증에 실패했어요.');
+          return;
+        }
+      }
+
+      await setBiometricEnabled(enabled);
+      await refreshPreferences();
+      setLockError('');
+    },
+    [preferences.pinEnabled, refreshPreferences],
+  );
+
+  const handleLockLogout = useCallback(async () => {
+    try {
+      await fcmService.unregisterFcmToken();
+    } catch (error) {
+      console.warn('[QuickLogin] FCM unregister failed:', error);
+    }
+
+    try {
+      await logoutRequest();
+    } catch (error) {
+      console.warn('[QuickLogin] logout request failed:', error);
+    }
+
+    await clearPersistedAuthSession();
+    logout();
+    unlockApp();
+
+    if (navigationRef.isReady()) {
+      navigationRef.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    }
+  }, [logout, unlockApp]);
 
   return (
     <>
@@ -198,6 +416,22 @@ function NavigationWrapper() {
         />
       </Stack.Navigator>
       <AiNotification />
+      <QuickLoginGate
+        visible={isAuthenticated && isAppLocked}
+        biometricAvailable={preferences.pinEnabled && Platform.OS !== 'ios'}
+        biometricEnabled={preferences.pinEnabled && preferences.biometricEnabled}
+        pinEnabled={preferences.pinEnabled}
+        isBiometricLoading={isBiometricLoading}
+        errorMessage={lockError}
+        onSubmitPin={handleSubmitPin}
+        onPressBiometric={handleBiometricPress}
+        onPressDifferentAccount={() => {
+          void handleLockLogout();
+        }}
+        onToggleBiometric={(enabled) => {
+          void handleToggleBiometric(enabled);
+        }}
+      />
     </>
   );
 }

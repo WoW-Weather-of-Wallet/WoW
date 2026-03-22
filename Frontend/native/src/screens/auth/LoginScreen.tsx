@@ -36,6 +36,7 @@ import {
   type NativeSsafyDirectLoginResult,
   parseSsafyCallbackUrl,
 } from '../../services/auth';
+import { savePersistedAuthSession } from '../../services/sessionStorage';
 import { extractApiErrorMessage } from '../../utils/error';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -154,10 +155,18 @@ export default function LoginScreen({ navigation }: any) {
       }
 
       const response = await exchangeSsafyToken(parsed.code);
+      if (autoLogin && response.refreshToken) {
+        await savePersistedAuthSession({
+          refreshToken: response.refreshToken,
+          user: response.user,
+          autoLoginEnabled: true,
+        });
+      }
       loginToStore({
         accessToken: response.accessToken,
         user: response.user,
         autoLogin,
+        source: 'ssafy',
       });
       navigation.replace('MainTabs');
     },
@@ -260,6 +269,14 @@ export default function LoginScreen({ navigation }: any) {
         userId: userId.trim(),
         pw: password,
       });
+
+      if (autoLogin && response.refreshToken) {
+        await savePersistedAuthSession({
+          refreshToken: response.refreshToken,
+          user: response.user,
+          autoLoginEnabled: true,
+        });
+      }
 
       loginToStore({
         accessToken: response.accessToken,
