@@ -39,14 +39,14 @@ const OVERSPENDING_DATA = [
 ];
 
 const CATEGORY_DATA = [
-  { name: '커피/음료', price: 233500, myRate: 23.3, avgRate: 8.9, diff: '+14.4%p', isOver: true },
-  { name: '육류/회식', price: 193200, myRate: 19.3, avgRate: 7.7, diff: '+11.6%p', isOver: true },
-  { name: '분식', price: 167600, myRate: 16.8, avgRate: 18.2, diff: '-1.5%p', isOver: false },
-  { name: '서적/도서', price: 121500, myRate: 12.1, avgRate: 11.2, diff: '+0.9%p', isOver: true },
-  { name: '사무/교육용품', price: 115700, myRate: 11.6, avgRate: 21.8, diff: '-10.3%p', isOver: false },
-  { name: '음/식료품소매', price: 55700, myRate: 5.6, avgRate: 0.0, diff: '+5.6%p', isOver: true },
-  { name: '제과/제빵/떡/케익', price: 52200, myRate: 5.2, avgRate: 0.0, diff: '+5.2%p', isOver: true },
-  { name: '외식', price: 26200, myRate: 2.6, avgRate: 0.0, diff: '+2.6%p', isOver: true },
+  { name: '커피/음료', price: 233500, myRate: 23.3, avgRate: 8.9, diff: '+14.4%', isOver: true },
+  { name: '육류/회식', price: 193200, myRate: 19.3, avgRate: 7.7, diff: '+11.6%', isOver: true },
+  { name: '분식', price: 167600, myRate: 16.8, avgRate: 18.2, diff: '-1.5%', isOver: false },
+  { name: '서적/도서', price: 121500, myRate: 12.1, avgRate: 11.2, diff: '+0.9%', isOver: true },
+  { name: '사무/교육용품', price: 115700, myRate: 11.6, avgRate: 21.8, diff: '-10.3%', isOver: false },
+  { name: '음/식료품소매', price: 55700, myRate: 5.6, avgRate: 0.0, diff: '+5.6%', isOver: true },
+  { name: '제과/제빵/떡/케익', price: 52200, myRate: 5.2, avgRate: 0.0, diff: '+5.2%', isOver: true },
+  { name: '외식', price: 26200, myRate: 2.6, avgRate: 0.0, diff: '+2.6%', isOver: true },
 ];
 
 /**
@@ -213,7 +213,6 @@ export default function AiResultScreen({ navigation }: any) {
                 type="percentage"
                 style={styles.barLegendText}
               />
-              <Text style={styles.barLegendText}>%</Text>
             </View>
             <View style={{ flexDirection: 'row' }}>
               <Text style={styles.barLegendText}>기준 비율: </Text>
@@ -223,13 +222,21 @@ export default function AiResultScreen({ navigation }: any) {
                 type="percentage"
                 style={styles.barLegendText}
               />
-              <Text style={styles.barLegendText}>%</Text>
             </View>
           </View>
         </View>
       ))}
     </Animated.View>
   );
+
+  /**
+   * 카테고리 이름 지정 폭스 대비 축약 도우미 함수 (글자 잘림 및 레이아웃 쏠림 현상 방지)
+   */
+  const formatCategoryName = (name: string) => {
+    if (name.includes('제과/제빵')) return '제과/제빵';
+    if (name.includes('소매')) return name.replace('소매', ''); // 예: 음/식료품소매 -> 음/식료품
+    return name;
+  };
 
   /**
    * [UI-Component] 카테고리별 소비 현황 비교 표 (확장 기능 포함)
@@ -242,10 +249,10 @@ export default function AiResultScreen({ navigation }: any) {
       <Text style={styles.cardTitle}>카테고리별 소비 현황 vs 클러스터 기준</Text>
       <View style={styles.tableContainer}>
         <View style={styles.tableHeader}>
-          <View style={styles.tableCellCat}><Text style={styles.tableHeaderText}>카테고리</Text></View>
-          <View style={styles.tableCellPrice}><Text style={styles.tableHeaderText}>지출금액</Text></View>
-          <View style={styles.tableCellPct}><Text style={styles.tableHeaderText}>내 비율</Text></View>
-          <View style={styles.tableCellDiff}><Text style={styles.tableHeaderText}>차이</Text></View>
+          <View style={[styles.tableCellCat, styles.vLine]}><Text style={styles.tableHeaderText}>카테고리</Text></View>
+          <View style={[styles.tableCellPrice, styles.vLine]}><Text style={[styles.tableHeaderText, { textAlign: 'right' }]}>지출금액</Text></View>
+          <View style={[styles.tableCellPct, styles.vLine]}><Text style={[styles.tableHeaderText, { textAlign: 'right' }]}>내 비율</Text></View>
+          <View style={styles.tableCellDiff}><Text style={[styles.tableHeaderText, { textAlign: 'right' }]}>차이</Text></View>
         </View>
         
         {visibleTableData.map((item, index) => (
@@ -253,27 +260,27 @@ export default function AiResultScreen({ navigation }: any) {
             key={index} 
             style={[styles.tableRow, (index === visibleTableData.length - 1 && !isTableExpanded) && { borderBottomWidth: 0 }]}
           >
-            <View style={styles.tableCellCat}>
-              <Text style={styles.tableDataText} numberOfLines={1}>{item.name}</Text>
+            <View style={[styles.tableCellCat, styles.vLine]}>
+              <Text style={styles.tableDataText} numberOfLines={1}>{formatCategoryName(item.name)}</Text>
             </View>
-            <View style={styles.tableCellPrice}>
+            <View style={[styles.tableCellPrice, styles.vLine]}>
               <AnimatedNumber 
                 value={item.price as number} 
                 delay={800 + index * 50}
                 type="price"
-                style={styles.tableDataText}
+                style={[styles.tableDataText, { textAlign: 'right' }]}
               />
             </View>
-            <View style={styles.tableCellPct}>
+            <View style={[styles.tableCellPct, styles.vLine]}>
               <AnimatedNumber 
                 value={item.myRate as number} 
                 delay={800 + index * 50}
                 type="percentage"
-                style={styles.tableDataText}
+                style={[styles.tableDataText, { textAlign: 'right' }]}
               />
             </View>
             <View style={styles.tableCellDiff}>
-              <Text style={[styles.tableDataText, item.isOver ? styles.textDanger : styles.textSafe]}>
+              <Text style={[styles.tableDataText, item.isOver ? styles.textDanger : styles.textSafe, { textAlign: 'right' }]}>
                 {item.diff}
               </Text>
             </View>
@@ -376,9 +383,6 @@ export default function AiResultScreen({ navigation }: any) {
           style={styles.card}
         >
           <View style={styles.clusterBadgeContainer}>
-            <View style={styles.clusterBadge}>
-              <Text style={styles.clusterBadgeText}>클러스터 1</Text>
-            </View>
             <Text style={styles.clusterTitle}>{CLUSTER_DATA.name}</Text>
           </View>
           <Text style={styles.clusterDesc}>{CLUSTER_DATA.desc}</Text>

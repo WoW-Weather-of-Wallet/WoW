@@ -105,4 +105,25 @@ export const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: COLORS.switchTrackFalse,
   },
+  /* ── 추가된 스타일 ── */
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: wp(12),
+    padding: wp(4),
+  },
+  inputError: {
+    borderColor: COLORS.error,
+  },
+  errorText: {
+    fontSize: fp(12),
+    fontFamily: FONTS.medium,
+    color: COLORS.error,
+    marginTop: hp(4),
+    marginLeft: wp(4),
+  },
 });
