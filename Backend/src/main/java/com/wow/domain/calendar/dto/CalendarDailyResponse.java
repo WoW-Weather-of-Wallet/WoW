@@ -7,6 +7,7 @@ import java.util.List;
 
 @Builder
 public record CalendarDailyResponse(
+        Long calendarId,
         LocalDate date,
         Weather weather,
         Summary summary,
