@@ -97,6 +97,7 @@ public class CalendarService {
 
         return calendarOptional
                 .map(calendar -> CalendarDailyResponse.builder()
+                        .calendarId(calendar.getId())
                         .date(date)
                         .weather(weather)
                         .summary(CalendarDailyResponse.Summary.builder()
@@ -107,6 +108,7 @@ public class CalendarService {
                         .memo(calendar.getMemo())
                         .build())
                 .orElseGet(() -> CalendarDailyResponse.builder()
+                        .calendarId(null)
                         .date(date)
                         .weather(weather)
                         .summary(CalendarDailyResponse.Summary.builder()
