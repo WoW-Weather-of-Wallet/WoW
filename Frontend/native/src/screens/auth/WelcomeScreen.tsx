@@ -14,6 +14,7 @@ import StepIndicator from '../../components/common/StepIndicator';
 import { styles } from './WelcomeScreen.styles';
 import { COLORS, wp, hp } from '../../constants/theme';
 import { login, registerSsafy } from '../../services/auth';
+import { savePersistedAuthSession } from '../../services/sessionStorage';
 import { useAuthStore } from '../../store/authStore';
 import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
@@ -65,9 +66,19 @@ export default function WelcomeScreen({ route, navigation }: any) {
           alarmEnabled: routeParams.alarmEnabled !== false,
         });
 
+        if (registerResponse.refreshToken) {
+          await savePersistedAuthSession({
+            refreshToken: registerResponse.refreshToken,
+            user: registerResponse.user,
+            autoLoginEnabled: true,
+          });
+        }
+
         loginToStore({
           accessToken: registerResponse.accessToken,
           user: registerResponse.user,
+          autoLogin: true,
+          source: 'ssafy',
         });
 
         navigation.reset({
@@ -102,9 +113,18 @@ export default function WelcomeScreen({ route, navigation }: any) {
         pw: routeParams.pw,
       });
 
+      if (loginResponse.refreshToken) {
+        await savePersistedAuthSession({
+          refreshToken: loginResponse.refreshToken,
+          user: loginResponse.user,
+          autoLoginEnabled: true,
+        });
+      }
+
       loginToStore({
         accessToken: loginResponse.accessToken,
         user: loginResponse.user,
+        autoLogin: true,
       });
 
       navigation.reset({

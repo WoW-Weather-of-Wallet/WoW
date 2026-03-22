@@ -2,14 +2,16 @@ import React from 'react';
 import { ScrollView, StatusBar, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useRoute, useNavigation } from '@react-navigation/native';
 import { mockSelectableTransactions } from '../../mock/calendar';
 import { COLORS, hp } from '../../constants/theme';
 import { styles } from './CalendarScreen.styles';
 import { useCalendarMockState } from '../../hooks/useCalendarMockState';
+import { setHideCalendarGuide, shouldHideCalendarGuide } from '../../services/guidePreference';
 import {
   CalendarAddEntrySheet,
   CalendarDayDetailSheet,
+  CalendarGuideModal,
   FixedExpenseDetailSheet,
   CalendarHeroCard,
   CalendarMonthCard,
@@ -23,6 +25,8 @@ import {
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const hasCheckedGuideRef = React.useRef(false);
+  const [isGuideVisible, setIsGuideVisible] = React.useState(false);
   const {
     overview,
     monthLabel,
@@ -77,11 +81,50 @@ export default function CalendarScreen() {
     if (route.params?.action === 'add_record') {
       // 내역 추가 모달 열기
       setIsAddEntryVisible(true);
-      
+
       // 처리 후 파라미터 초기화 (다시 들어왔을 때 또 열리지 않도록)
       navigation.setParams({ action: undefined });
     }
   }, [route.params?.action]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      let isCancelled = false;
+
+      if (hasCheckedGuideRef.current) {
+        return () => {
+          isCancelled = true;
+        };
+      }
+
+      hasCheckedGuideRef.current = true;
+
+      shouldHideCalendarGuide()
+        .then((hideGuide) => {
+          if (!isCancelled && !hideGuide) {
+            setIsGuideVisible(true);
+          }
+        })
+        .catch((error) => {
+          console.warn('Failed to load calendar guide preference', error);
+          if (!isCancelled) {
+            setIsGuideVisible(true);
+          }
+        });
+
+      return () => {
+        isCancelled = true;
+      };
+    }, []),
+  );
+
+  const handleCloseGuide = React.useCallback(async (hideForever: boolean) => {
+    setIsGuideVisible(false);
+
+    if (hideForever) {
+      await setHideCalendarGuide(true);
+    }
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -106,6 +149,17 @@ export default function CalendarScreen() {
           onPressNextMonth={() => handleMoveMonth('next')}
           onPressAdd={() => setIsAddEntryVisible(true)}
         />
+
+        {/*
+          변경 이유:
+          - 캘린더/전체내역 토글은 화면 문맥 전환 역할이라 스크롤에 밀려 내려가면
+            사용성이 떨어집니다.
+          - 히어로 카드 바로 아래 고정 영역으로 올려, 화면 어디서든 같은 위치에서
+            보기 전환이 가능하도록 정리합니다.
+        */}
+        <View style={styles.tabWrap}>
+          <CalendarTabSwitcher activeTab={activeTab} onChange={setActiveTab} />
+        </View>
       </View>
 
       <ScrollView
@@ -118,10 +172,6 @@ export default function CalendarScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.tabWrap}>
-          <CalendarTabSwitcher activeTab={activeTab} onChange={setActiveTab} />
-        </View>
-
         {activeTab === 'calendar' ? (
           <>
             <CalendarMonthCard
@@ -198,6 +248,11 @@ export default function CalendarScreen() {
           setEditingManageId(null);
         }}
         onSubmit={handleRegisterFixedExpense}
+      />
+
+      <CalendarGuideModal
+        visible={isGuideVisible}
+        onClose={handleCloseGuide}
       />
     </View>
   );

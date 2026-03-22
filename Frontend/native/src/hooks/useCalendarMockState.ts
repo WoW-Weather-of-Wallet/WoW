@@ -433,6 +433,10 @@ export function useCalendarMockState() {
         },
       };
     });
+
+    // API가 아직 없어서 저장 결과를 서버에서 재조회할 수 없으므로,
+    // 로컬 반영 직후 시트를 닫아 캘린더 셀 아이콘 변화를 바로 확인할 수 있게 둡니다.
+    setSelectedDateKey(null);
   }
 
   return {

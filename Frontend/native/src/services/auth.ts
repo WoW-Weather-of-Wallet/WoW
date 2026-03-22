@@ -1,4 +1,9 @@
 import axios from 'axios';
+import {
+  clearPersistedAuthSession,
+  loadPersistedAuthSession,
+  savePersistedAuthSession,
+} from './sessionStorage';
 
 export const BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL || 'https://j14d106.p.ssafy.io';
@@ -50,6 +55,13 @@ export interface NativeLoginResponse {
     name?: string;
     role?: string;
   };
+}
+
+export interface NativeTokenRefreshResponse {
+  accessToken: string;
+  expiresIn: number;
+  refreshToken: string;
+  refreshExpiresIn: number;
 }
 
 export interface NativeUserProfileResponse {
@@ -150,8 +162,27 @@ export interface NativeApiErrorResponse {
   errorMessage?: string;
 }
 
+interface NativeAuthLifecycleCallbacks {
+  onAccessTokenRefreshed?: (accessToken: string) => void;
+  onSessionExpired?: () => void;
+}
+
+type RetryableNativeRequest = {
+  _retry?: boolean;
+  headers?: Record<string, string>;
+  url?: string;
+};
 
 export const nativeApi = axios.create({
+  baseURL: BASE_URL,
+  timeout: 10000,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+const refreshApi = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
   withCredentials: true,
@@ -178,6 +209,15 @@ const PUBLIC_API_PREFIXES = [
 
 const isPublicApiRequest = (url?: string) =>
   Boolean(url) && PUBLIC_API_PREFIXES.some((prefix) => url!.startsWith(prefix));
+
+let nativeAuthLifecycleCallbacks: NativeAuthLifecycleCallbacks = {};
+let refreshPromise: Promise<NativeTokenRefreshResponse> | null = null;
+
+export const registerNativeAuthLifecycleCallbacks = (
+  callbacks: NativeAuthLifecycleCallbacks,
+) => {
+  nativeAuthLifecycleCallbacks = callbacks;
+};
 
 nativeApi.interceptors.request.use((config) => {
   /*
@@ -208,7 +248,7 @@ nativeApi.interceptors.response.use(
     console.log('[API response data]', response.data);
     return response;
   },
-  (error) => {
+  async (error) => {
     console.log('[API error message]', error?.message);
     console.log('[API error code]', error?.code);
     console.log('[API error status]', error?.response?.status);
@@ -224,7 +264,52 @@ nativeApi.interceptors.response.use(
         url: error?.config?.url,
       }),
     );
-    return Promise.reject(error);
+
+    const originalRequest = error?.config as RetryableNativeRequest | undefined;
+    const shouldSkipRefresh =
+      !originalRequest ||
+      originalRequest._retry ||
+      isPublicApiRequest(originalRequest.url) ||
+      error?.response?.status !== 401;
+
+    if (shouldSkipRefresh) {
+      return Promise.reject(error);
+    }
+
+    try {
+      const storedSession = await loadPersistedAuthSession();
+      if (!storedSession?.autoLoginEnabled || !storedSession.refreshToken) {
+        return Promise.reject(error);
+      }
+
+      if (!refreshPromise) {
+        refreshPromise = refreshSession(storedSession.refreshToken);
+      }
+
+      const refreshedSession = await refreshPromise;
+      await savePersistedAuthSession({
+        ...storedSession,
+        refreshToken: refreshedSession.refreshToken,
+      });
+
+      setNativeAuthToken(refreshedSession.accessToken);
+      nativeAuthLifecycleCallbacks.onAccessTokenRefreshed?.(refreshedSession.accessToken);
+
+      originalRequest._retry = true;
+      originalRequest.headers = {
+        ...originalRequest.headers,
+        Authorization: `Bearer ${refreshedSession.accessToken}`,
+      };
+
+      return nativeApi(originalRequest as any);
+    } catch (refreshError) {
+      await clearPersistedAuthSession();
+      setNativeAuthToken(null);
+      nativeAuthLifecycleCallbacks.onSessionExpired?.();
+      return Promise.reject(refreshError);
+    } finally {
+      refreshPromise = null;
+    }
   },
 );
 
@@ -281,6 +366,13 @@ export const signup = async (payload: NativeSignupRequest) => {
 
 export const login = async (payload: NativeLoginRequest) => {
   const response = await nativeApi.post<NativeLoginResponse>('/api/v1/auth/login', payload);
+  return response.data;
+};
+
+export const refreshSession = async (refreshToken: string) => {
+  const response = await refreshApi.post<NativeTokenRefreshResponse>('/api/v1/auth/refresh', {
+    refreshToken,
+  });
   return response.data;
 };
 
