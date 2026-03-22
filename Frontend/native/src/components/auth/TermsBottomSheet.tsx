@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  ActivityIndicator,
   Modal,
   Pressable,
   Text,
@@ -11,7 +12,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, hp, wp } from '../../constants/theme';
-import { TERM_DOCUMENTS, TermDocumentKey } from '../../constants/terms';
+import { TermDocumentKey } from '../../constants/terms';
+import { useTermDocuments } from '../../hooks/useTermDocuments';
 import { styles } from './TermsBottomSheet.styles';
 
 interface TermsBottomSheetProps {
@@ -29,6 +31,7 @@ export default function TermsBottomSheet({
 }: TermsBottomSheetProps) {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
+  const { documents, isLoading } = useTermDocuments(visible);
   const [allAgreed, setAllAgreed] = useState(false);
   const [agreements, setAgreements] = useState({
     service: false,
@@ -60,10 +63,10 @@ export default function TermsBottomSheet({
   };
 
   const handleViewDocument = (key: TermDocumentKey) => {
-    const document = TERM_DOCUMENTS[key];
+    const document = documents[key];
 
     if (!document.url) {
-      Alert.alert('준비 중', '이 약관의 PDF 링크는 아직 연결되지 않았습니다.');
+      Alert.alert('불러오기 실패', '약관 문서를 아직 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
       return;
     }
 
@@ -99,9 +102,18 @@ export default function TermsBottomSheet({
           <View style={styles.divider} />
 
           <View style={styles.agreementsList}>
+            {isLoading ? (
+              <View style={styles.row}>
+                <View style={styles.rowLeft}>
+                  <ActivityIndicator size="small" color={COLORS.primary} />
+                  <Text style={styles.rowText}>약관 정보를 불러오는 중입니다.</Text>
+                </View>
+              </View>
+            ) : null}
+
             {!isRecovery ? (
               <AgreementRow
-                title={TERM_DOCUMENTS.service.title}
+                title={documents.service.title}
                 checked={agreements.service}
                 onToggle={() => toggleAgreement('service')}
                 onViewPress={() => handleViewDocument('service')}
@@ -109,14 +121,14 @@ export default function TermsBottomSheet({
             ) : null}
 
             <AgreementRow
-              title={TERM_DOCUMENTS.privacy.title}
+              title={documents.privacy.title}
               checked={agreements.privacy}
               onToggle={() => toggleAgreement('privacy')}
               onViewPress={() => handleViewDocument('privacy')}
             />
 
             <AgreementRow
-              title={TERM_DOCUMENTS.telecom.title}
+              title={documents.telecom.title}
               checked={agreements.telecom}
               onToggle={() => toggleAgreement('telecom')}
               onViewPress={() => handleViewDocument('telecom')}
@@ -178,4 +190,3 @@ function AgreementRow({
     </View>
   );
 }
-

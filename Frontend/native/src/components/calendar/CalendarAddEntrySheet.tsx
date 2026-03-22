@@ -19,6 +19,7 @@ import { COLORS, wp } from '../../constants/theme';
 import { useCalendarAddEntryForm } from '../../hooks/useCalendarAddEntryForm';
 import {
   getCalendarApiErrorMessage,
+  saveCalendarOverrides,
   uploadCalendarTransactions,
 } from '../../services/calendar';
 import type {
@@ -26,6 +27,7 @@ import type {
   CalendarUploadBackendSummary,
   CalendarUploadFile,
   CalendarUploadPreviewGroup,
+  CalendarOverrideRow,
   ManualCalendarEntryDraft,
   ManualEntryPaymentMethod,
 } from '../../types/calendar';
@@ -286,6 +288,11 @@ export default function CalendarAddEntrySheet({
     setIsConfirmLoading(true);
 
     try {
+      const overrideRows = buildOverrideRows(uploadGroups, backendSummary?.items ?? []);
+      if (overrideRows.length > 0) {
+        await saveCalendarOverrides(overrideRows);
+      }
+
       await Promise.resolve(onCompleteExcelEntries(nextEntries));
     } catch (error) {
       console.warn('Failed to confirm uploaded calendar entries', error);
@@ -858,6 +865,43 @@ function mergeUploadGroupsWithBackendItems(
       };
     }),
   }));
+}
+
+function buildOverrideRows(
+  groups: CalendarUploadPreviewGroup[],
+  backendItems: CalendarUploadBackendItem[],
+): CalendarOverrideRow[] {
+  const backendItemByKey = new Map<string, CalendarUploadBackendItem>();
+
+  backendItems.forEach((item) => {
+    if (!item.transactionDate) {
+      return;
+    }
+
+    backendItemByKey.set(`${item.transactionDate}::${item.merchantName}::${item.amount}`, item);
+  });
+
+  return groups.flatMap((group) =>
+    group.items.flatMap((item) => {
+      const lookupKey = `${group.dateKey}::${item.merchantName}::${item.amount}`;
+      const matchedBackendItem = backendItemByKey.get(lookupKey);
+
+      if (!matchedBackendItem || matchedBackendItem.status !== 'needs-category') {
+        return [];
+      }
+
+      return [
+        {
+          merchant_name: item.merchantName,
+          category: String(item.categoryLabel),
+          reason:
+            matchedBackendItem.classificationReason ||
+            matchedBackendItem.transactionDetail ||
+            '프론트에서 재분류한 항목입니다.',
+        },
+      ];
+    }),
+  );
 }
 
 function formatDateLabel(dateKey: string) {

@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Modal,
   Pressable,
@@ -11,7 +12,8 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, wp } from '../../constants/theme';
-import { TERM_DOCUMENTS, TermDocumentKey } from '../../constants/terms';
+import { TermDocumentKey } from '../../constants/terms';
+import { useTermDocuments } from '../../hooks/useTermDocuments';
 import { styles } from './AgreedTermsModal.styles';
 
 interface AgreedTermsModalProps {
@@ -21,12 +23,13 @@ interface AgreedTermsModalProps {
 
 export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalProps) {
   const navigation = useNavigation<any>();
+  const { documents, isLoading } = useTermDocuments(visible);
 
   const handleViewDocument = (key: TermDocumentKey) => {
-    const document = TERM_DOCUMENTS[key];
+    const document = documents[key];
 
     if (!document.url) {
-      Alert.alert('준비 중', '이 약관의 PDF 링크는 아직 연결되지 않았습니다.');
+      Alert.alert('불러오기 실패', '약관 문서를 아직 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
       return;
     }
 
@@ -51,19 +54,26 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
+            {isLoading ? (
+              <View style={styles.noticeBox}>
+                <ActivityIndicator size="small" color={COLORS.primary} />
+                <Text style={styles.noticeText}>약관 정보를 불러오는 중입니다.</Text>
+              </View>
+            ) : null}
+
             <TermItem
-              title={TERM_DOCUMENTS.service.title}
-              date={TERM_DOCUMENTS.service.effectiveDate}
+              title={documents.service.title}
+              date={documents.service.effectiveDate}
               onPress={() => handleViewDocument('service')}
             />
             <TermItem
-              title={TERM_DOCUMENTS.privacy.title}
-              date={TERM_DOCUMENTS.privacy.effectiveDate}
+              title={documents.privacy.title}
+              date={documents.privacy.effectiveDate}
               onPress={() => handleViewDocument('privacy')}
             />
             <TermItem
-              title={TERM_DOCUMENTS.telecom.title}
-              date={TERM_DOCUMENTS.telecom.effectiveDate}
+              title={documents.telecom.title}
+              date={documents.telecom.effectiveDate}
               onPress={() => handleViewDocument('telecom')}
             />
 
@@ -97,7 +107,7 @@ function TermItem({
     <TouchableOpacity style={styles.termItem} activeOpacity={0.7} onPress={onPress}>
       <View style={styles.termInfo}>
         <Text style={styles.termTitle}>{title}</Text>
-        <Text style={styles.termDate}>{date}</Text>
+        <Text style={styles.termDate}>{date || '시행일 정보 없음'}</Text>
       </View>
       <View style={styles.viewBadge}>
         <Text style={styles.viewText}>보기</Text>
@@ -106,4 +116,3 @@ function TermItem({
     </TouchableOpacity>
   );
 }
-

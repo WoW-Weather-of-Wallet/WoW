@@ -55,12 +55,54 @@ export interface CalendarHeaderParams {
   month: number;
 }
 
+export type CalendarBackendDayType = 'PAST' | 'TODAY' | 'NEAR_FUTURE' | 'FAR_FUTURE';
+
 export interface CalendarHeaderResponse {
   yearMonth: string;
   weatherName: string;
   iconCode: string | null;
   description: string;
   savedAmount: number;
+}
+
+export interface CalendarMonthlyParams {
+  year: number;
+  month: number;
+}
+
+export interface CalendarMonthlyResponse {
+  date: string;
+  dayType: CalendarBackendDayType;
+  dailyTotal: number | null;
+  iconCode: string | null;
+  isForecast: number | null;
+}
+
+export interface CalendarDailyParams {
+  date: string;
+}
+
+export interface CalendarDailyTransactionItem {
+  merchantName: string;
+  category: string;
+  categoryIcon: string | null;
+  amount: number;
+}
+
+export interface CalendarDailyResponse {
+  date: string;
+  weather: {
+    iconCode: string | null;
+    weatherName: string;
+    description: string;
+    isForecast: number | null;
+  };
+  summary: {
+    totalExpense: number | null;
+    transactionCount: number | null;
+  };
+  transactions: CalendarDailyTransactionItem[];
+  memo: string | null;
 }
 
 export interface CalendarUploadRecordSummary {
@@ -117,6 +159,34 @@ export interface CalendarConfirmRequest {
 export interface CalendarConfirmResponse {
   savedCount: number;
   date: string;
+}
+
+export interface CalendarCustomItem {
+  merchantName: string;
+  amount: number;
+  categoryId: number;
+  transactionDate: string;
+}
+
+export interface CalendarCustomRequest {
+  items: CalendarCustomItem[];
+}
+
+export interface CalendarCustomResponse {
+  savedCount: number;
+  items: Array<{
+    transactionId: number;
+    merchantName: string;
+    amount: number;
+    transactionDate: string;
+    categoryName: string;
+  }>;
+}
+
+export interface CalendarOverrideRow {
+  merchant_name: string;
+  category: string;
+  reason?: string;
 }
 
 export type CalendarHeaderFetchState = 'idle' | 'loading' | 'live' | 'fallback';
