@@ -47,6 +47,7 @@ import { useLocalSecurityStore } from '../store/localSecurityStore';
 const Stack = createNativeStackNavigator();
 const navigationRef = createNavigationContainerRef<any>();
 const BACKGROUND_LOCK_THRESHOLD_MS = 10 * 60 * 1000;
+// const BACKGROUND_LOCK_THRESHOLD_MS = 0; // 테스트용: 백그라운드 복귀 즉시 간편로그인
 
 /**
  * RootNavigator
