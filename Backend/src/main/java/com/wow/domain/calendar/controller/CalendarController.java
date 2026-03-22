@@ -144,4 +144,20 @@ public class CalendarController {
                 .status(201)
                 .body(ApiResponse.success(201, "거래내역 직접 입력 성공", response));
     }
+
+    // ⑤ 고정지출 목록 조회
+    @GetMapping("/fixed-expenses")
+    public ResponseEntity<ApiResponse<FixedExpenseResponse>> getFixedExpenses(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam int year,
+            @RequestParam int month) {
+
+        Long userId = userDetails.getId();
+
+        FixedExpenseResponse response =
+                calendarService.getFixedExpenses(userId, year, month);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "고정지출 목록 조회 성공", response));
+    }
 }

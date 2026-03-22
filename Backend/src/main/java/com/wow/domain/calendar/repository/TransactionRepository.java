@@ -44,4 +44,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     void deleteByUser_IdAndTransactionAtBetween(
             Long userId, LocalDateTime start, LocalDateTime end);
+
+    // 고정지출 납부완료 확인용
+    boolean existsByUser_IdAndMerchantNameAndTransactionAtBetween(
+            Long userId, String merchantName,
+            LocalDateTime start, LocalDateTime end);
 }

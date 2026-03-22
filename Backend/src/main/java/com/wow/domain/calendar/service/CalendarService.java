@@ -3,16 +3,19 @@ package com.wow.domain.calendar.service;
 import com.wow.domain.calendar.dto.*;
 import com.wow.domain.calendar.entity.Calendar;
 import com.wow.domain.calendar.entity.DayType;
+import com.wow.domain.calendar.entity.FixedExpense;
 import com.wow.domain.calendar.entity.SpendingWeather;
 import com.wow.domain.calendar.entity.Transaction;
 import com.wow.domain.calendar.repository.CalendarRepository;
 import com.wow.domain.expensecategory.repository.ExpenseCategoryRepository;
+import com.wow.domain.calendar.repository.FixedExpenseRepository;
 import com.wow.domain.calendar.repository.TransactionRepository;
 import com.wow.domain.expensecategory.entity.ExpenseCategory;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
-import com.wow.global.common.BusinessException;
-import com.wow.global.common.ErrorCode;
+import com.wow.global.exception.BadRequestException;
+import com.wow.global.exception.DuplicateException;
+import com.wow.global.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
@@ -48,6 +51,7 @@ public class CalendarService {
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
     private final ExpenseCategoryRepository expenseCategoryRepository;
+    private final FixedExpenseRepository fixedExpenseRepository;
 
     @Value("${flask.url}")
     private String flaskUrl;
@@ -124,7 +128,8 @@ public class CalendarService {
                     DayType dayType = resolveDayType(calendar.getDate(), today);
                     String iconCode = dayType == DayType.FAR_FUTURE
                             ? null
-                            : (calendar.getSpendingWeather() != null ? calendar.getSpendingWeather().getIconCode() : null);
+                            : (calendar.getSpendingWeather() != null
+                            ? calendar.getSpendingWeather().getIconCode() : null);
 
                     return new CalendarMonthlyResponse(
                             calendar.getDate(),
@@ -258,11 +263,11 @@ public class CalendarService {
         List<TransactionConfirmRequest.TransactionItem> items = request.getItems();
 
         if (items == null || items.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_STAGE_ID);
+            throw new BadRequestException("거래내역 항목이 비어있습니다.");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
         LocalDate representativeDate = items.get(0).getTransactionDate();
         LocalDateTime dayStart = representativeDate.atStartOfDay();
@@ -276,7 +281,7 @@ public class CalendarService {
                 .map(item -> {
                     ExpenseCategory category = expenseCategoryRepository
                             .findById(item.getCategoryId())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_STAGE_ID));
+                            .orElseThrow(() -> new BadRequestException("존재하지 않는 카테고리입니다."));
 
                     return Transaction.builder()
                             .user(user)
@@ -301,17 +306,17 @@ public class CalendarService {
         List<TransactionCustomRequest.TransactionCustomItem> items = request.getItems();
 
         if (items == null || items.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_STAGE_ID);
+            throw new BadRequestException("거래내역 항목이 비어있습니다.");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
         List<Transaction> entities = items.stream()
                 .map(item -> {
                     ExpenseCategory category = expenseCategoryRepository
                             .findById(item.getCategoryId())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_STAGE_ID));
+                            .orElseThrow(() -> new BadRequestException("존재하지 않는 카테고리입니다."));
 
                     return Transaction.builder()
                             .user(user)
@@ -331,6 +336,27 @@ public class CalendarService {
                 .toList();
 
         return new TransactionCustomResponse(entities.size(), responseItems);
+    }
+
+    // ── ⑤ 고정지출 목록 조회 ──
+    public FixedExpenseResponse getFixedExpenses(Long userId, int year, int month) {
+
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+        List<FixedExpense> fixedExpenses =
+                fixedExpenseRepository.findByUser_IdAndIsEnableTrue(userId);
+
+        List<FixedExpenseResponse.FixedExpenseItem> items = fixedExpenses.stream()
+                .map(fe -> FixedExpenseResponse.FixedExpenseItem.of(
+                        fe, year, month, transactionRepository))
+                .toList();
+
+        int totalAmount = items.stream()
+                .mapToInt(FixedExpenseResponse.FixedExpenseItem::getAmount)
+                .sum();
+
+        return new FixedExpenseResponse(totalAmount, items);
     }
 
     // ── xls/xlsx → csv 변환 ──
