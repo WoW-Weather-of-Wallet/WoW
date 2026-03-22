@@ -163,14 +163,17 @@ export const styles = StyleSheet.create({
   tableRow: {
     flexDirection: 'row',
     paddingVertical: hp(12),
-    paddingHorizontal: wp(8),
     borderBottomWidth: 1,
     borderBottomColor: COLORS.gray100,
   },
-  tableCellCat: { flex: 2, alignItems: 'flex-start' },
-  tableCellPrice: { flex: 2.5, alignItems: 'flex-end' },
-  tableCellPct: { flex: 1.5, alignItems: 'flex-end' },
-  tableCellDiff: { flex: 1.5, alignItems: 'flex-end' },
+  tableCellCat: { flex: 2.2, alignItems: 'flex-start', paddingLeft: wp(12) },
+  tableCellPrice: { flex: 2.2, alignItems: 'flex-end', paddingRight: wp(12) },
+  tableCellPct: { flex: 1.4, alignItems: 'flex-end', paddingRight: wp(12) },
+  tableCellDiff: { flex: 1.5, alignItems: 'flex-end', paddingRight: wp(12) },
+  vLine: {
+    borderRightWidth: 1,
+    borderRightColor: COLORS.gray100,
+  },
   tableHeaderText: {
     fontSize: fp(12),
     fontFamily: FONTS.bold,
