@@ -20,6 +20,7 @@ import {
   logout as logoutRequest,
   type NativeUserProfileResponse,
 } from '../../services/auth';
+import { clearPersistedAuthSession } from '../../services/sessionStorage';
 import { extractApiErrorMessage } from '../../utils/error';
 
 import { styles } from './MyPageScreen.styles';
@@ -134,6 +135,7 @@ export default function MyPageScreen() {
       return;
     }
 
+    await clearPersistedAuthSession();
     logout();
     navigation.reset({
       index: 0,
