@@ -67,6 +67,7 @@ export default function CalendarScreen() {
     handleToggleManageItem,
     handleDeleteManageItem,
     handleEditManageItem,
+    handleOpenFixedExpensePicker,
     handleSaveManualEntries,
     handleSaveExcelEntries,
     handleSaveMemo,
@@ -218,7 +219,7 @@ export default function CalendarScreen() {
         totalAmount={fixedExpensesTotal}
         items={manageItems}
         onClose={() => setIsManageModalVisible(false)}
-        onPressAdd={() => setIsPickerVisible(true)}
+        onPressAdd={handleOpenFixedExpensePicker}
         onPressEdit={handleEditManageItem}
         onToggleItem={handleToggleManageItem}
         onDeleteItem={handleDeleteManageItem}

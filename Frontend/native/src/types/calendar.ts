@@ -189,4 +189,47 @@ export interface CalendarOverrideRow {
   reason?: string;
 }
 
+export interface FixedExpenseSummaryItemResponse {
+  name: string;
+  amount: number;
+  dueDay: number;
+  actualDueDay: number;
+  paymentStatus: string;
+  categoryName: string | null;
+  isAuto: boolean;
+}
+
+export interface FixedExpenseSummaryResponse {
+  totalAmount: number;
+  items: FixedExpenseSummaryItemResponse[];
+}
+
+export interface FixedExpenseManageItemResponse {
+  id: number;
+  icon: string | null;
+  name: string;
+  amount: number;
+  dueDay: number;
+  isAuto: boolean | null;
+  isEnable: boolean | null;
+  paymentStatus: string;
+  categoryName: string | null;
+}
+
+export interface FixedExpenseManageResponse {
+  totalAmount: number;
+  items: FixedExpenseManageItemResponse[];
+}
+
+export interface FixedExpenseParams {
+  year: number;
+  month: number;
+}
+
+export interface FixedExpenseUpdateRequest {
+  icon?: string | null;
+  amount?: number | null;
+  dueDay?: number | null;
+}
+
 export type CalendarHeaderFetchState = 'idle' | 'loading' | 'live' | 'fallback';
