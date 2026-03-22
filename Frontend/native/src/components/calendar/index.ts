@@ -1,5 +1,6 @@
 export { default as CalendarAddEntrySheet } from './CalendarAddEntrySheet';
 export { default as CalendarDayDetailSheet } from './CalendarDayDetailSheet';
+export { default as CalendarGuideModal } from './CalendarGuideModal';
 export { default as CalendarHeroCard } from './CalendarHeroCard';
 export { default as CalendarMonthCard } from './CalendarMonthCard';
 export { default as CalendarTabSwitcher } from './CalendarTabSwitcher';

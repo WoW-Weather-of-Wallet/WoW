@@ -1,14 +1,16 @@
 import React from 'react';
 import { ScrollView, StatusBar, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useRoute, useNavigation } from '@react-navigation/native';
 import { mockSelectableTransactions } from '../../mock/calendar';
 import { COLORS, hp } from '../../constants/theme';
 import { styles } from './CalendarScreen.styles';
 import { useCalendarMockState } from '../../hooks/useCalendarMockState';
+import { setHideCalendarGuide, shouldHideCalendarGuide } from '../../services/guidePreference';
 import {
   CalendarAddEntrySheet,
   CalendarDayDetailSheet,
+  CalendarGuideModal,
   FixedExpenseDetailSheet,
   CalendarHeroCard,
   CalendarMonthCard,
@@ -21,6 +23,8 @@ import {
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
+  const hasCheckedGuideRef = React.useRef(false);
+  const [isGuideVisible, setIsGuideVisible] = React.useState(false);
   const {
     overview,
     monthLabel,
@@ -80,6 +84,45 @@ export default function CalendarScreen() {
       navigation.setParams({ action: undefined });
     }
   }, [route.params?.action]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      let isCancelled = false;
+
+      if (hasCheckedGuideRef.current) {
+        return () => {
+          isCancelled = true;
+        };
+      }
+
+      hasCheckedGuideRef.current = true;
+
+      shouldHideCalendarGuide()
+        .then((hideGuide) => {
+          if (!isCancelled && !hideGuide) {
+            setIsGuideVisible(true);
+          }
+        })
+        .catch((error) => {
+          console.warn('Failed to load calendar guide preference', error);
+          if (!isCancelled) {
+            setIsGuideVisible(true);
+          }
+        });
+
+      return () => {
+        isCancelled = true;
+      };
+    }, []),
+  );
+
+  const handleCloseGuide = React.useCallback(async (hideForever: boolean) => {
+    setIsGuideVisible(false);
+
+    if (hideForever) {
+      await setHideCalendarGuide(true);
+    }
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -203,6 +246,11 @@ export default function CalendarScreen() {
           setEditingManageId(null);
         }}
         onSubmit={handleRegisterFixedExpense}
+      />
+
+      <CalendarGuideModal
+        visible={isGuideVisible}
+        onClose={handleCloseGuide}
       />
     </View>
   );
