@@ -232,10 +232,23 @@ export const COLORS = {
 // 타이포그래피
 // =============================================
 export const FONTS = {
-  regular: 'Inter_400Regular',
-  medium: 'Inter_500Medium',
-  semiBold: 'Inter_600SemiBold',
-  bold: 'Inter_700Bold',
+  regular: 'Pretendard-Regular',
+  medium: 'Pretendard-Medium',
+  semiBold: 'Pretendard-SemiBold',
+  bold: 'Pretendard-Bold',
+  extraBold: 'Pretendard-ExtraBold',
+  black: 'Pretendard-Black',
+
+  // 폰트 단일화를 위해 mono, serif도 Pretendard로 매핑 (User Request V5)
+  mono: 'Pretendard-Regular',
+  monoMedium: 'Pretendard-Medium',
+  monoSemiBold: 'Pretendard-SemiBold',
+  monoBold: 'Pretendard-Bold',
+
+  serif: 'Pretendard-Regular',
+  serifMedium: 'Pretendard-Medium',
+  serifSemiBold: 'Pretendard-SemiBold',
+  serifBold: 'Pretendard-Bold',
 } as const;
 
 // =============================================

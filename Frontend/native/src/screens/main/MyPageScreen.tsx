@@ -169,7 +169,9 @@ export default function MyPageScreen() {
             </View>
             <View style={styles.profileTextBlock}>
               <View style={styles.nameRow}>
-                <Text style={styles.profileName}>{displayName}님 안녕하세요!</Text>
+                <Text style={styles.profileName}>
+                  <Text style={styles.profileNameHighlight}>{displayName}</Text>님 안녕하세요!
+                </Text>
                 <Ionicons name="chevron-forward" size={wp(20)} color={COLORS.textTertiary} />
               </View>
               <View style={styles.profileBadge}>

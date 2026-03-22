@@ -21,66 +21,83 @@ export default function MainTabNavigator() {
   const insets = useSafeAreaInsets();
 
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarHideOnKeyboard: true,
-        // 기존 카드형 탭바 느낌은 유지하되, 길이와 그림자를 줄여서
-        // 화면 위로 붕 떠 보이는 인상을 약하게 만듭니다.
-        tabBarStyle: [
-          styles.tabBar,
-          {
-            height: hp(58) + insets.bottom,
-            paddingBottom: insets.bottom + hp(4),
+    <>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarHideOnKeyboard: true,
+          // 기존 카드형 탭바 느낌은 유지하되, 길이와 그림자를 줄여서
+          // 화면 위로 붕 떠 보이는 인상을 약하게 만듭니다.
+          tabBarStyle: [
+            styles.tabBar,
+            {
+              height: hp(58) + insets.bottom,
+              paddingBottom: insets.bottom + hp(4),
+            },
+          ],
+          tabBarItemStyle: styles.tabBarItem,
+          tabBarLabelStyle: styles.tabBarLabel,
+          tabBarIconStyle: styles.tabBarIcon,
+          tabBarActiveTintColor: COLORS.primary,
+          tabBarInactiveTintColor: COLORS.textTertiary,
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName: keyof typeof Ionicons.glyphMap = 'home-outline';
+
+            if (route.name === 'MainHome') {
+              iconName = focused ? 'home' : 'home-outline';
+            } else if (route.name === 'Calendar') {
+              iconName = focused ? 'calendar' : 'calendar-outline';
+            } else if (route.name === 'AiFeedback') {
+              iconName = focused ? 'sparkles' : 'sparkles-outline';
+            } else if (route.name === 'MyPage') {
+              iconName = focused ? 'person' : 'person-outline';
+            }
+
+            return (
+              <View style={focused ? styles.activeIconWrapper : styles.iconWrapper}>
+                <Ionicons name={iconName} size={size} color={color} />
+              </View>
+            );
           },
-        ],
-        tabBarItemStyle: styles.tabBarItem,
-        tabBarLabelStyle: styles.tabBarLabel,
-        tabBarIconStyle: styles.tabBarIcon,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textTertiary,
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap = 'home-outline';
+        })}
+      >
+        <Tab.Screen
+          name="MainHome"
+          component={MainHomeScreen}
+          options={{ tabBarLabel: '메인' }}
+        />
+        <Tab.Screen
+          name="Calendar"
+          component={CalendarScreen}
+          options={{ tabBarLabel: '캘린더' }}
+        />
+        <Tab.Screen
+          name="AiFeedback"
+          component={AiFeedbackStackNavigator}
+          options={{ tabBarLabel: 'AI 피드백' }}
+        />
+        <Tab.Screen
+          name="MyPage"
+          component={MyPageStackNavigator}
+          options={{ tabBarLabel: '마이페이지' }}
+        />
+      </Tab.Navigator>
 
-          if (route.name === 'MainHome') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Calendar') {
-            iconName = focused ? 'calendar' : 'calendar-outline';
-          } else if (route.name === 'AiFeedback') {
-            iconName = focused ? 'sparkles' : 'sparkles-outline';
-          } else if (route.name === 'MyPage') {
-            iconName = focused ? 'person' : 'person-outline';
-          }
-
-          return (
-            <View style={focused ? styles.activeIconWrapper : styles.iconWrapper}>
-              <Ionicons name={iconName} size={size} color={color} />
-            </View>
-          );
-        },
-      })}
-    >
-      <Tab.Screen
-        name="MainHome"
-        component={MainHomeScreen}
-        options={{ tabBarLabel: '메인' }}
+      {/* 
+        [UI Fix] 플로팅 탭바(position: absolute)를 사용할 때 
+        탭바 하단의 미세한 간격 및 곡률 사이로 화면 컨텐츠가 비치는 현상을 방지하기 위한 배경 필러입니다.
+      */}
+      <View 
+        style={{ 
+          position: 'absolute', 
+          bottom: 0, 
+          left: 0, 
+          right: 0, 
+          height: insets.bottom, 
+          backgroundColor: COLORS.background 
+        }} 
       />
-      <Tab.Screen
-        name="Calendar"
-        component={CalendarScreen}
-        options={{ tabBarLabel: '캘린더' }}
-      />
-      <Tab.Screen
-        name="AiFeedback"
-        component={AiFeedbackStackNavigator}
-        options={{ tabBarLabel: 'AI 피드백' }}
-      />
-      <Tab.Screen
-        name="MyPage"
-        component={MyPageStackNavigator}
-        options={{ tabBarLabel: '마이페이지' }}
-      />
-    </Tab.Navigator>
+    </>
   );
 }
 

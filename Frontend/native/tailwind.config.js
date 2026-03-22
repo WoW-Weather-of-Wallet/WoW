@@ -40,10 +40,14 @@ module.exports = {
         },
       },
       fontFamily: {
-        inter: ["Inter_400Regular"],
-        "inter-medium": ["Inter_500Medium"],
-        "inter-semibold": ["Inter_600SemiBold"],
-        "inter-bold": ["Inter_700Bold"],
+        sans: ["Pretendard-Regular"],
+        "sans-medium": ["Pretendard-Medium"],
+        "sans-semibold": ["Pretendard-SemiBold"],
+        "sans-bold": ["Pretendard-Bold"],
+        "sans-extrabold": ["Pretendard-ExtraBold"],
+        "sans-black": ["Pretendard-Black"],
+        mono: ["Pretendard-Regular"],
+        serif: ["Pretendard-Regular"],
       },
       borderRadius: {
         xl: "16px",

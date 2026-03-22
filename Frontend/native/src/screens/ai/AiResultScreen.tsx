@@ -15,7 +15,7 @@ import Animated, {
 import { styles } from './AiResultScreen.styles';
 import GradientButton from '../../components/common/GradientButton';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp, hp } from '../../constants/theme';
+import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
@@ -24,7 +24,11 @@ const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
  */
 const CLUSTER_DATA = {
   name: "사무·서적형",
-  desc: "사무/교육용품과 서적/도서 비중이 매우 높고 분식 소비가 함께 나타나는 학습 집중형 유형",
+  desc: (
+    <>
+      <Text style={{ fontWeight: '800', color: COLORS.primaryDark }}>사무/교육용품</Text>과 <Text style={{ fontWeight: '800', color: COLORS.primaryDark }}>서적/도서</Text> 비중이 매우 높고 분식 소비가 함께 나타나는 <Text style={{ fontWeight: '800', color: COLORS.primaryDark }}>학습 집중형</Text> 유형
+    </>
+  ),
 };
 
 const OVERSPENDING_DATA = [
@@ -88,22 +92,31 @@ const AnimatedNumber = ({
     } as any;
   });
 
+  // Extract fontSize and lineHeight from the style to properly size the container
+  const flatStyle = style ? (Array.isArray(style) ? Object.assign({}, ...style) : style) : {};
+  const fontSize = flatStyle.fontSize || fp(14);
+  const lineHeight = flatStyle.lineHeight || fontSize * 1.4;
+
   return (
-    <AnimatedTextInput
-      underlineColorAndroid="transparent"
-      editable={false}
-      defaultValue={'0'} 
-      style={[
-        style, 
-        { 
-          padding: 0, 
-          margin: 0, 
-          includeFontPadding: false,
-          textAlignVertical: 'center',
-        }
-      ]}
-      animatedProps={animatedProps}
-    />
+    <View style={{ height: lineHeight, justifyContent: 'center' }}>
+      <AnimatedTextInput
+        underlineColorAndroid="transparent"
+        editable={false}
+        defaultValue={'0'} 
+        style={[
+          style, 
+          { 
+            padding: 0, 
+            margin: 0, 
+            includeFontPadding: false,
+            textAlignVertical: 'center',
+            height: lineHeight,
+            lineHeight: lineHeight,
+          }
+        ]}
+        animatedProps={animatedProps}
+      />
+    </View>
   );
 };
 
@@ -315,18 +328,20 @@ export default function AiResultScreen({ navigation }: any) {
 
       <View style={[styles.feedbackSection, { marginBottom: 0 }]}>
         <Text style={styles.feedbackTitle}>3. 이번 달 절감 목표</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap' }}>
-          <Text style={styles.feedbackText}>비슷한 유형 기준 대비 절감 가능액은 </Text>
-          <Text style={styles.feedbackHighlight}>약 </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+          <Text style={styles.feedbackText}>
+            비슷한 유형 기준 대비 절감 가능액은{' '}
+          </Text>
+          <Text style={styles.feedbackHighlightStrong}>약 </Text>
           <AnimatedNumber 
             value={29258} 
             type="price"
             delay={1000}
-            style={styles.feedbackHighlight}
+            style={styles.feedbackHighlightStrong}
           />
-          <Text style={styles.feedbackHighlight}> 입니다.</Text>
+          <Text style={styles.feedbackHighlightStrong}> 입니다.</Text>
         </View>
-        <Text style={styles.feedbackText}>
+        <Text style={[styles.feedbackText, { marginTop: hp(8) }]}>
           커피를 <Text style={styles.feedbackHighlight}>하루 1회/주 3회</Text>로 고정하는 규칙 하나만 제대로 세워도{'\n'}
           전체 소비 리듬이 가장 먼저 안정될 것입니다!
         </Text>
@@ -347,9 +362,11 @@ export default function AiResultScreen({ navigation }: any) {
           entering={FadeInDown.duration(800)}
           style={styles.header}
         >
-          <Text style={styles.userName}>{userName} 님의</Text>
+          <Text style={styles.userName}>
+            <Text style={styles.userNameHighlight}>{userName}</Text> 님의
+          </Text>
           <Text style={styles.title}>
-            <Text style={styles.highlight}>AI 분석 결과</Text>입니다!
+            <Text style={styles.highlightExtraBold}>AI 분석 결과</Text>입니다!
           </Text>
         </Animated.View>
 
