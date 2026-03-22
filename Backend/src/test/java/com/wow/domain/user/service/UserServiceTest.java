@@ -1,6 +1,7 @@
 package com.wow.domain.user.service;
 
 import com.wow.domain.auth.service.SmsService;
+import com.wow.domain.fcm.service.FcmService;
 import com.wow.domain.user.dto.UpdatePhoneRequest;
 import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.entity.Role;
@@ -41,6 +42,9 @@ class UserServiceTest {
 
     @InjectMocks
     private UserService userService;
+
+    @Mock
+    private FcmService fcmService;
 
     @Test
     void updatePhoneRejectsCurrentPhoneNumberEvenWhenFormatDiffers() {
