@@ -14,13 +14,13 @@ export const styles = StyleSheet.create({
     paddingHorizontal: wp(24),
     paddingTop: hp(24),
     paddingBottom: hp(40),
-    maxHeight: '80%',
+    maxHeight: '88%',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: hp(24),
+    marginBottom: hp(16),
   },
   title: {
     fontSize: fp(22),
@@ -29,6 +29,33 @@ export const styles = StyleSheet.create({
   },
   closeButton: {
     padding: wp(4),
+  },
+  description: {
+    fontSize: fp(14),
+    fontFamily: FONTS.medium,
+    color: COLORS.textTertiary,
+    lineHeight: fp(22),
+    marginBottom: hp(18),
+  },
+  toolbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.noticeBoxBackground,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(14),
+    marginBottom: hp(12),
+  },
+  toolbarText: {
+    fontSize: fp(14),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
+  },
+  toolbarLink: {
+    fontSize: fp(14),
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
   },
   scrollContent: {
     gap: hp(16),
@@ -40,6 +67,13 @@ export const styles = StyleSheet.create({
     paddingVertical: hp(16),
     borderBottomWidth: 1,
     borderBottomColor: COLORS.separatorBorder,
+    gap: wp(12),
+  },
+  termLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: wp(12),
   },
   termInfo: {
     flex: 1,
@@ -50,10 +84,26 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
   },
+  termMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(8),
+  },
   termDate: {
     fontSize: fp(13),
     fontFamily: FONTS.medium,
     color: COLORS.textTertiary,
+  },
+  requiredBadge: {
+    backgroundColor: COLORS.primary + '15',
+    paddingHorizontal: wp(8),
+    paddingVertical: hp(3),
+    borderRadius: RADIUS.sm,
+  },
+  requiredBadgeText: {
+    fontSize: fp(11),
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
   },
   viewBadge: {
     flexDirection: 'row',
@@ -81,16 +131,39 @@ export const styles = StyleSheet.create({
     color: COLORS.textTertiary,
     lineHeight: fp(20),
   },
+  actionRow: {
+    flexDirection: 'row',
+    gap: wp(12),
+    marginTop: hp(24),
+  },
+  secondaryButton: {
+    flex: 1,
+    borderRadius: RADIUS.full,
+    paddingVertical: hp(18),
+    alignItems: 'center',
+    backgroundColor: COLORS.gray100,
+  },
+  secondaryButtonText: {
+    fontSize: fp(18),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
   confirmButton: {
+    flex: 1.4,
     backgroundColor: COLORS.primary,
     borderRadius: RADIUS.full,
     paddingVertical: hp(18),
     alignItems: 'center',
-    marginTop: hp(32),
+  },
+  disabledButton: {
+    backgroundColor: COLORS.gray200,
   },
   confirmButtonText: {
-    fontSize: fp(20),
+    fontSize: fp(18),
     fontFamily: FONTS.bold,
     color: COLORS.white,
+  },
+  disabledButtonText: {
+    color: COLORS.textSecondary,
   },
 });

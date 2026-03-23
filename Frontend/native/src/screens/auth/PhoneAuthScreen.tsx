@@ -273,6 +273,11 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
           {'\uBCF8\uC778 \uD655\uC778\uC744 \uC704\uD574'}{'\n'}
           {'\uC778\uC99D\uC774 \uD544\uC694\uD574\uC694.'}
         </Text>
+        <Text style={{ color: COLORS.textTertiary, marginTop: hp(12), lineHeight: hp(22) }}>
+          {
+            '\uC778\uC99D\uBC88\uD638 \uC694\uCCAD \uC804\uC5D0 \uD544\uC218 \uC57D\uAD00 \uC804\uCCB4 \uB3D9\uC758\uAC00 \uD544\uC694\uD574\uC694.'
+          }
+        </Text>
 
         <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
           <View style={styles.underlineContainer}>

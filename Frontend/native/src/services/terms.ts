@@ -1,4 +1,9 @@
-import { TERM_DOCUMENTS, TERM_DOCUMENT_KEYS, type TermDocument, type TermDocumentKey } from '../constants/terms';
+import {
+  TERM_DOCUMENTS,
+  TERM_DOCUMENT_KEYS,
+  type TermDocument,
+  type TermDocumentKey,
+} from '../constants/terms';
 import { nativeApi } from './auth';
 
 interface BackendTermResponse {
@@ -7,6 +12,19 @@ interface BackendTermResponse {
   version: string;
   required: boolean;
   fileUrl: string | null;
+}
+
+export interface TermAgreementItemRequest {
+  termId: number;
+  agreed: boolean;
+}
+
+export interface TermsAgreeRequest {
+  agreements: TermAgreementItemRequest[];
+}
+
+export interface TermsAgreeResponse {
+  savedCount: number;
 }
 
 let cachedTerms: Record<TermDocumentKey, TermDocument> | null = null;
@@ -23,6 +41,14 @@ export async function getTerms(forceRefresh = false) {
   return mappedTerms;
 }
 
+export async function agreeTerms(payload: TermsAgreeRequest) {
+  const response = await nativeApi.post<TermsAgreeResponse>(
+    '/api/v1/user/terms/agree',
+    payload,
+  );
+  return response.data;
+}
+
 function mapBackendTerms(terms: BackendTermResponse[]) {
   const nextTerms: Record<TermDocumentKey, TermDocument> = {
     ...TERM_DOCUMENTS,
@@ -37,9 +63,11 @@ function mapBackendTerms(terms: BackendTermResponse[]) {
 
     nextTerms[key] = {
       key,
+      termId: term.termId,
       title: term.title || TERM_DOCUMENTS[key].title,
       effectiveDate: formatEffectiveDate(term.version),
       url: term.fileUrl,
+      required: term.required,
     };
   });
 
@@ -49,8 +77,8 @@ function mapBackendTerms(terms: BackendTermResponse[]) {
 function resolveTermKey(title: string): TermDocumentKey | null {
   const normalizedTitle = normalizeTitle(title);
 
-  // The backend now manages the live terms table, so the app should map titles
-  // by stable Korean keywords instead of relying on previously hardcoded mojibake.
+  // Match the live terms table with stable keywords so the UI does not depend on
+  // hardcoded document ordering or previously broken mojibake strings.
   if (normalizedTitle.includes('\uAC1C\uC778\uC815\uBCF4')) {
     return 'privacy';
   }
