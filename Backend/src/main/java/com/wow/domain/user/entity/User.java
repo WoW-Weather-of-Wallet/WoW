@@ -105,6 +105,10 @@ public class User {
         this.phoneNumber = phoneNumber;
     }
 
+    public void updateAlarmEnabled(boolean alarmEnabled) {
+        this.alarmEnabled = alarmEnabled;
+    }
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

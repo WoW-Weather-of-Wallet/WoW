@@ -2,7 +2,9 @@ package com.wow.domain.user.service;
 
 import com.wow.domain.auth.service.SmsService;
 import com.wow.domain.fcm.service.FcmService;
+import com.wow.domain.user.dto.NotificationSettingsResponse;
 import com.wow.domain.user.dto.UpdatePhoneRequest;
+import com.wow.domain.user.dto.UpdateNotificationSettingsRequest;
 import com.wow.domain.user.dto.UpdateProfileRequest;
 import com.wow.domain.user.dto.UserProfileResponse;
 import com.wow.domain.user.entity.User;
@@ -34,6 +36,15 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
 
         return UserProfileResponse.from(user);
+    }
+
+    @Transactional(readOnly = true)
+    public NotificationSettingsResponse getNotificationSettings(String userId) {
+        User user = userRepository.findByUserId(userId)
+                .or(() -> userRepository.findBySsafyOauthId(userId))
+                .orElseThrow(() -> new NotFoundException("議댁옱?섏? ?딅뒗 ?ъ슜?먯엯?덈떎."));
+
+        return NotificationSettingsResponse.from(user);
     }
 
     @Transactional
@@ -92,5 +103,15 @@ public class UserService {
         // [fix] 수정 전: smsService.checkVerified() + try/finally { smsService.deleteVerified() } | 이유: 원자적 checkAndConsume으로 레이스 컨디션 방지
         smsService.checkAndConsumeVerified(phoneNumber);
         user.updatePhoneNumber(phoneNumber);
+    }
+
+    @Transactional
+    public NotificationSettingsResponse updateNotificationSettings(String userId, UpdateNotificationSettingsRequest request) {
+        User user = userRepository.findByUserId(userId)
+                .or(() -> userRepository.findBySsafyOauthId(userId))
+                .orElseThrow(() -> new NotFoundException("議댁옱?섏? ?딅뒗 ?ъ슜?먯엯?덈떎."));
+
+        user.updateAlarmEnabled(request.getAlarmEnabled());
+        return NotificationSettingsResponse.from(user);
     }
 }
