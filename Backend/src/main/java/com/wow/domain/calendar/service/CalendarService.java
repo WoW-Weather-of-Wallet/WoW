@@ -11,6 +11,7 @@ import com.wow.domain.expensecategory.repository.ExpenseCategoryRepository;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.global.exception.BadRequestException;
+import com.wow.global.exception.ForbiddenException;
 import com.wow.global.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
@@ -26,9 +27,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -476,5 +474,19 @@ public class CalendarService {
                 totalAmount,
                 items
         );
+    }
+
+    // 직접거래내역삭제
+    @Transactional
+    public void deleteTransaction(Long userId, Long transactionId) {
+
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new NotFoundException("거래내역을 찾을 수 없습니다."));
+
+        if (!transaction.getUser().getId().equals(userId)) {
+            throw new ForbiddenException("삭제 권한이 없습니다.");
+        }
+
+        transactionRepository.delete(transaction);
     }
 }
