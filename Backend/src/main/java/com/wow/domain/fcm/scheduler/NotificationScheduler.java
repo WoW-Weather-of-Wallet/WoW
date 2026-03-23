@@ -31,7 +31,7 @@ public class NotificationScheduler {
 
         for (User user : users) {
             String userId = user.getUserId() != null ? user.getUserId() : user.getSsafyOauthId();
-            fcmService.sendToUser(userId, "10시가 되었어요 💸", "하루를 마무리하며 지출 내역을 업로드해보세요.");
+            fcmService.sendToUser(userId, "10시가 되었어요 💸", "하루를 마무리하며 지출 내역을 업로드해보세요.", "add_record");
         }
 
         log.info("지출 내역 알림 전송 완료");
@@ -54,7 +54,8 @@ public class NotificationScheduler {
             String userId = user.getUserId() != null ? user.getUserId() : user.getSsafyOauthId();
             fcmService.sendToUser(userId,
                     "고정지출 결제 예정 알림 💳",
-                    "내일 " + fe.getName() + " " + Math.abs(fe.getAmount()) + "원이 결제될 예정이에요.");
+                    "내일 " + fe.getName() + " " + Math.abs(fe.getAmount()) + "원이 결제될 예정이에요.",
+                    "calendar_main");
         }
 
         log.info("고정지출 전날 알림 전송 완료");
@@ -77,7 +78,8 @@ public class NotificationScheduler {
             String userId = user.getUserId() != null ? user.getUserId() : user.getSsafyOauthId();
             fcmService.sendToUser(userId,
                     "고정지출 결제일 알림 💳",
-                    "오늘 " + fe.getName() + " " + Math.abs(fe.getAmount()) + "원이 결제될 예정이에요.");
+                    "오늘 " + fe.getName() + " " + Math.abs(fe.getAmount()) + "원이 결제될 예정이에요.",
+                    "calendar_main");
         }
 
         log.info("고정지출 당일 알림 전송 완료");
