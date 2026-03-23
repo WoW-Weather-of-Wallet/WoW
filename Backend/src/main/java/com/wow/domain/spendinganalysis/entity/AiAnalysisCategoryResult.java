@@ -1,6 +1,15 @@
 package com.wow.domain.spendinganalysis.entity;
 
-import jakarta.persistence.*;
+import com.wow.domain.expensecategory.entity.ExpenseCategory;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -29,8 +38,8 @@ public class AiAnalysisCategoryResult {
     private AiAnalysis aiAnalysis;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "spending_type_id", nullable = false)
-    private SpendingType spendingType;
+    @JoinColumn(name = "category_id", nullable = false)
+    private ExpenseCategory category;
 
     @Column(name = "percentage", nullable = false, precision = 5, scale = 2)
     private BigDecimal percentage;
