@@ -30,14 +30,36 @@ export const useNotificationObserver = () => {
 
   const handleNotificationResponse = (response: Notifications.NotificationResponse) => {
     const data = response.notification.request.content.data;
-    
-    // 알림 페이로드에 'action': 'add_record'가 포함된 경우 캘린더 화면으로 이동
-    if (data?.action === 'add_record' || (data as any)?.body?.action === 'add_record') {
-      // 캘린더 메인 탭으로 이동하고, 'add_record' 액션 파라미터를 함께 넘깁니다.
-      navigation.navigate('MainTabs', {
-        screen: 'Calendar',
-        params: { action: 'add_record' }
-      });
+    const action = data?.action || (data as any)?.body?.action;
+
+    if (!action) return;
+
+    switch (action) {
+      case 'add_record':
+        // 캘린더 메인 탭으로 이동하고, 'add_record' 액션 파라미터를 함께 넘깁니다.
+        navigation.navigate('MainTabs', {
+          screen: 'Calendar',
+          params: { action: 'add_record' }
+        });
+        break;
+
+      case 'calendar_main':
+        // 단순 캘린더 이동
+        navigation.navigate('MainTabs', {
+          screen: 'Calendar'
+        });
+        break;
+
+      case 'ai_feedback':
+        // AI 피드백 탭으로 이동
+        navigation.navigate('MainTabs', {
+          screen: 'AiFeedback'
+        });
+        break;
+
+      default:
+        console.log('[FCM] 정의되지 않은 액션:', action);
+        break;
     }
   };
 };

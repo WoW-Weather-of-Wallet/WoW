@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -88,6 +89,14 @@ export default function MyPageScreen() {
   const [pinInput, setPinInput] = useState('');
   const [pinDraft, setPinDraft] = useState('');
   const [pinError, setPinError] = useState('');
+  const [fcmToken, setFcmToken] = useState<string | null>(null);
+
+  // [Test] FCM 토큰 획득
+  useEffect(() => {
+    Notifications.getDevicePushTokenAsync()
+      .then(result => setFcmToken(result.data))
+      .catch(err => console.log('[FCM-Test] 토큰 획득 실패:', err));
+  }, []);
   const [isPinSubmitting, setIsPinSubmitting] = useState(false);
 
   // 약관 및 회원 탈퇴 관련 상태
@@ -452,6 +461,36 @@ export default function MyPageScreen() {
             <Ionicons name="exit-outline" size={wp(20)} color={COLORS.error} />
           </TouchableOpacity>
         </View>
+
+        {/* ── [Test] FCM 토큰 확인 섹션 (회원 탈퇴 아래) ── */}
+        {fcmToken && (
+          <View style={{ padding: wp(20), paddingBottom: hp(10), borderTopWidth: 1, borderTopColor: COLORS.gray100 }}>
+            <Text style={{ fontSize: wp(12), color: COLORS.gray400, marginBottom: hp(8) }}>
+              [테스트용] FCM 기기 토큰
+            </Text>
+            <TouchableOpacity 
+              onPress={() => Alert.alert('FCM 토큰', fcmToken)}
+              style={{ 
+                padding: wp(12), 
+                backgroundColor: COLORS.gray50, 
+                borderRadius: 8, 
+                borderStyle: 'dashed', 
+                borderWidth: 1, 
+                borderColor: COLORS.gray200, 
+                flexDirection: 'row', 
+                alignItems: 'center', 
+                justifyContent: 'space-between' 
+              }}
+            >
+              <Text numberOfLines={1} style={{ fontSize: wp(10), color: COLORS.gray500, flex: 1 }}>
+                {fcmToken}
+              </Text>
+              <Text style={{ fontSize: wp(10), color: COLORS.primary, fontWeight: 'bold', marginLeft: wp(8) }}>
+                복사/확인
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
 
       {/* ── 프로필 정보 모달 ── */}
