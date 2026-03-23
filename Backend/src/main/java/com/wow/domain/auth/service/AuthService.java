@@ -134,7 +134,7 @@ public class AuthService {
         }
 
         validatePassword(request.getPw(), request.getUserId());
-        Term currentRequiredTerm = termService.getCurrentRequiredTerm();
+        List<Term> currentRequiredTerms = termService.getCurrentRequiredTerms();
 
         // [fix] 수정 전: smsService.checkVerified() + try/finally { smsService.deleteVerified() } | 이유: check와 delete가 분리된 Redis 연산으로 레이스 컨디션 → 원자적 checkAndConsume으로 대체
         smsService.checkAndConsumeVerified(phoneNumber);
@@ -153,12 +153,13 @@ public class AuthService {
 
         userRepository.save(user);
 
-        userTermRepository.save(UserTerm.builder()
-                .user(user)
-                .term(currentRequiredTerm)
-                .agreed(request.isTermsAgreed())
-                .agreedAt(LocalDateTime.now())
-                .build());
+        /*
+         * The signup payload still exposes a single boolean, but the screen collects
+         * agreement for every required term separately. We therefore interpret
+         * termsAgreed=true as "all current required terms were accepted" and persist
+         * one user_terms row per active required term.
+         */
+        saveRequiredTermAgreements(user, currentRequiredTerms);
 
         return UserCreateResponse.from(user);
     }
@@ -359,6 +360,19 @@ public class AuthService {
         if (result == null || result == RATE_LIMIT_BLOCKED || result == RATE_LIMIT_EXCEEDED) {
             throw new RateLimitException(blockMessage);
         }
+    }
+
+    private void saveRequiredTermAgreements(User user, List<Term> requiredTerms) {
+        LocalDateTime agreedAt = LocalDateTime.now();
+        List<UserTerm> userTerms = requiredTerms.stream()
+                .map(term -> UserTerm.builder()
+                        .user(user)
+                        .term(term)
+                        .agreed(true)
+                        .agreedAt(agreedAt)
+                        .build())
+                .toList();
+        userTermRepository.saveAll(userTerms);
     }
 
     private void validatePassword(String pw, String userId) {

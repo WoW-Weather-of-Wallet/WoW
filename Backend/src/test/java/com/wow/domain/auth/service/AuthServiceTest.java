@@ -239,7 +239,7 @@ class AuthServiceTest {
         when(userRepository.existsByUserIdOrSsafyOauthId("wowuser", "wowuser")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termService.getCurrentRequiredTerm()).thenReturn(createCurrentTerm());
+        when(termService.getCurrentRequiredTerms()).thenReturn(createCurrentTerms());
         when(bCryptPasswordEncoder.encode("Valid1!A")).thenReturn("encoded-password");
         doThrow(new RuntimeException("db failure")).when(userRepository).save(any(User.class));
 
@@ -252,22 +252,23 @@ class AuthServiceTest {
     }
 
     @Test
-    void signupSavesUserTermWithCurrentRequiredTerm() {
+    void signupSavesUserTermsWithCurrentRequiredTerms() {
         UserCreateRequest request = createSignupRequest();
-        Term currentTerm = createCurrentTerm();
+        List<Term> currentTerms = createCurrentTerms();
 
         when(userRepository.existsByUserIdOrSsafyOauthId("wowuser", "wowuser")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termService.getCurrentRequiredTerm()).thenReturn(currentTerm);
+        when(termService.getCurrentRequiredTerms()).thenReturn(currentTerms);
         when(bCryptPasswordEncoder.encode("Valid1!A")).thenReturn("encoded-password");
 
         authService.signup(request);
 
-        verify(userTermRepository).save(argThat((UserTerm userTerm) ->
-                userTerm.getTerm() == currentTerm
-                        && userTerm.isAgreed()
-                        && userTerm.getUser() != null
+        verify(userTermRepository).saveAll(argThat((List<UserTerm> userTerms) ->
+                userTerms.size() == currentTerms.size()
+                        && userTerms.stream().allMatch(UserTerm::isAgreed)
+                        && userTerms.stream().map(UserTerm::getTerm).toList().containsAll(currentTerms)
+                        && userTerms.stream().allMatch(userTerm -> userTerm.getUser() != null)
         ));
     }
 
@@ -278,7 +279,7 @@ class AuthServiceTest {
         when(userRepository.existsByUserIdOrSsafyOauthId("wowuser", "wowuser")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termService.getCurrentRequiredTerm())
+        when(termService.getCurrentRequiredTerms())
                 .thenThrow(new IllegalStateException("현재 유효한 필수 약관이 존재하지 않습니다."));
 
         assertThatThrownBy(() -> authService.signup(request))
@@ -296,7 +297,7 @@ class AuthServiceTest {
         when(userRepository.existsByUserIdOrSsafyOauthId("wowuser", "wowuser")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termService.getCurrentRequiredTerm()).thenReturn(createCurrentTerm());
+        when(termService.getCurrentRequiredTerms()).thenReturn(createCurrentTerms());
         // [fix] 수정 전: checkVerified에 doThrow | 이유: checkAndConsumeVerified로 메서드명 변경됨
         doThrow(new BadRequestException("sms verification required"))
                 .when(smsService).checkAndConsumeVerified("01012345678");
@@ -307,7 +308,7 @@ class AuthServiceTest {
                 .hasMessageContaining("sms verification");
 
         verify(userRepository, never()).save(any(User.class));
-        verify(userTermRepository, never()).save(any(UserTerm.class));
+        verify(userTermRepository, never()).saveAll(anyList());
     }
 
     @Test
@@ -408,15 +409,25 @@ class AuthServiceTest {
         return request;
     }
 
-    private Term createCurrentTerm() {
-        return Term.builder()
-                .id(1L)
-                .title("service terms")
-                .version("v1")
-                .effectiveAt(LocalDate.of(2025, 1, 1))
-                .required(true)
-                .s3Url("s3://bucket/terms.pdf")
-                .build();
+    private List<Term> createCurrentTerms() {
+        return List.of(
+                Term.builder()
+                        .id(1L)
+                        .title("service terms")
+                        .version("v1")
+                        .effectiveAt(LocalDate.of(2025, 1, 1))
+                        .required(true)
+                        .s3Url("s3://bucket/service.pdf")
+                        .build(),
+                Term.builder()
+                        .id(2L)
+                        .title("privacy terms")
+                        .version("v1")
+                        .effectiveAt(LocalDate.of(2025, 1, 1))
+                        .required(true)
+                        .s3Url("s3://bucket/privacy.pdf")
+                        .build()
+        );
     }
 
     private void stubPublicRateLimit() {
