@@ -7,7 +7,10 @@ build-front:
   tags:
     - build
   rules:
-    - if: '$CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+    - if: '$CI_COMMIT_BRANCH == "front"'
+    - if: '$CI_COMMIT_BRANCH =~ /^front-/'
       changes:
         - Frontend/react/**/*
         - Frontend/native/**/*
@@ -22,7 +25,10 @@ build-back:
   tags:
     - build
   rules:
-    - if: '$CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+    - if: '$CI_COMMIT_BRANCH == "back"'
+    - if: '$CI_COMMIT_BRANCH =~ /^back-/'
       changes:
         - Backend/**/*
   script:
@@ -58,7 +64,9 @@ deploy:
       SOLAPI_API_KEY=${SOLAPI_API_KEY}
       SOLAPI_API_SECRET=${SOLAPI_API_SECRET}
       SOLAPI_SENDER=${SOLAPI_SENDER}
+      AWS_S3_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
+      AWS_S3_SECRET_KEY=${AWS_S3_SECRET_KEY}
+      AWS_S3_BUCKET=${AWS_S3_BUCKET}
       ENV
     - docker-compose -f docker-compose.prod.yml down
     - docker-compose -f docker-compose.prod.yml up -d
-
