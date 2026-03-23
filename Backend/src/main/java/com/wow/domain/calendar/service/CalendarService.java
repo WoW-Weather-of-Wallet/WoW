@@ -267,13 +267,29 @@ public class CalendarService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
-        LocalDate representativeDate = items.get(0).getTransactionDate();
-        LocalDateTime dayStart = representativeDate.atStartOfDay();
-        LocalDateTime dayEnd = representativeDate.atTime(23, 59, 59);
+        //1일치만 삭제하고 다시 넣는 형식인것이다
+//        LocalDate representativeDate = items.get(0).getTransactionDate();
+//        LocalDateTime dayStart = representativeDate.atStartOfDay();
+//        LocalDateTime dayEnd = representativeDate.atTime(23, 59, 59);
+//
+//        // 같은 날짜 기존 데이터 삭제 (덮어쓰기)
+//        transactionRepository.deleteByUser_IdAndTransactionAtBetween(
+//                userId, dayStart, dayEnd);
 
-        // 같은 날짜 기존 데이터 삭제 (덮어쓰기)
-        transactionRepository.deleteByUser_IdAndTransactionAtBetween(
-                userId, dayStart, dayEnd);
+        LocalDate representativeDate = items.get(0).getTransactionDate();
+
+        // 요청에 포함된 모든 날짜 삭제 (덮어쓰기)
+        Set<LocalDate> dates = items.stream()
+                .map(TransactionConfirmRequest.TransactionItem::getTransactionDate)
+                .collect(Collectors.toSet());
+
+        for (LocalDate date : dates) {
+            transactionRepository.deleteByUser_IdAndTransactionAtBetween(
+                    userId,
+                    date.atStartOfDay(),
+                    date.atTime(23, 59, 59)
+            );
+        }
 
         List<Transaction> entities = items.stream()
                 .map(item -> {
