@@ -189,4 +189,20 @@ public class CalendarController {
         return ResponseEntity.ok(
                 ApiResponse.success(200, "거래내역 삭제 성공", null));
     }
+
+    // 현금 거래내역 직접 입력
+    @PostMapping("/transactions/custom/cash")
+    public ResponseEntity<ApiResponse<TransactionCustomResponse>> createCashTransaction(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody TransactionCustomRequest request) {
+
+        Long userId = userDetails.getId();
+
+        TransactionCustomResponse response =
+                calendarService.createCashTransaction(userId, request);
+
+        return ResponseEntity
+                .status(201)
+                .body(ApiResponse.success(201, "현금 거래내역 입력 성공", response));
+    }
 }
