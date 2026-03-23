@@ -41,6 +41,12 @@ public class AiAnalysisCategoryResult {
     @JoinColumn(name = "category_id", nullable = false)
     private ExpenseCategory category;
 
-    @Column(name = "percentage", nullable = false, precision = 5, scale = 2)
-    private BigDecimal percentage;
+    @Column(name = "my_ratio", nullable = false, precision = 5, scale = 2)
+    private BigDecimal myRatio;
+
+    @Column(name = "base_ratio", nullable = false, precision = 5, scale = 2)
+    private BigDecimal baseRatio;
+
+    @Column(name = "price", nullable = false)
+    private Integer price;
 }
