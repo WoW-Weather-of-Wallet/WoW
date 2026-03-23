@@ -49,4 +49,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     boolean existsByUser_IdAndMerchantNameAndTransactionAtBetween(
             Long userId, String merchantName,
             LocalDateTime start, LocalDateTime end);
+
+    // 월별 거래내역 조회 (날짜 내림차순)
+    List<Transaction> findByUser_IdAndTransactionAtBetweenOrderByTransactionAtDesc(
+            Long userId, LocalDateTime start, LocalDateTime end);
+
 }
