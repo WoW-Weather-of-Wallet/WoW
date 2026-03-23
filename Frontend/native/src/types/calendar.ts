@@ -83,10 +83,12 @@ export interface CalendarDailyParams {
 }
 
 export interface CalendarDailyTransactionItem {
+  transactionId: number;
   merchantName: string;
   category: string;
   categoryIcon: string | null;
   amount: number;
+  isFixedExpense: boolean;
 }
 
 export interface CalendarDailyResponse {
@@ -230,6 +232,18 @@ export interface FixedExpenseUpdateRequest {
   icon?: string | null;
   amount?: number | null;
   dueDay?: number | null;
+}
+
+export interface FixedExpenseAddRequest {
+  transactionId: number;
+  dueDay: number;
+  isAuto?: boolean | null;
+}
+
+export interface FixedExpenseAddResponse {
+  id: number;
+  name: string;
+  isFixed: boolean;
 }
 
 export type CalendarHeaderFetchState = 'idle' | 'loading' | 'live' | 'fallback';

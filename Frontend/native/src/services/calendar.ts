@@ -21,6 +21,8 @@ import type {
   CalendarUploadBackendSummary,
   CalendarUploadFile,
   CalendarUploadRequest,
+  FixedExpenseAddRequest,
+  FixedExpenseAddResponse,
 } from '../types/calendar';
 
 interface RawCalendarUploadRecordSummary {
@@ -275,6 +277,15 @@ export async function getFixedExpenseManage(params: FixedExpenseParams) {
     {
       params,
     },
+  );
+
+  return response.data.data;
+}
+
+export async function addFixedExpense(payload: FixedExpenseAddRequest) {
+  const response = await nativeApi.post<CalendarApiResponse<FixedExpenseAddResponse>>(
+    '/api/v1/fixed-expenses',
+    payload,
   );
 
   return response.data.data;

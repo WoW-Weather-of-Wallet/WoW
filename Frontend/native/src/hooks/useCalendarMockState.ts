@@ -44,9 +44,11 @@ import {
   type CalendarEntryCategoryKey,
 } from '../constants/calendar/addEntry';
 import {
+  addFixedExpense,
   confirmCalendarTransactions,
   createCustomCalendarTransactions,
   deleteFixedExpense,
+  getCalendarApiErrorMessage,
   getCalendarFixedExpenses,
   getCalendarDaily,
   getCalendarHeader,
@@ -57,6 +59,17 @@ import {
 import { useAuthStore } from '../store/authStore';
 
 type CalendarTab = 'calendar' | 'history';
+
+interface SelectableTransactionCandidate {
+  id: string;
+  backendTransactionId?: number;
+  dateLabel: string;
+  title: string;
+  category: string;
+  amount: number;
+  icon: string;
+  iconTone: string;
+}
 
 const BASE_OVERVIEW = {
   title: '이번 달',
@@ -94,7 +107,7 @@ export function useCalendarMockState() {
   const [isPickerVisible, setIsPickerVisible] = useState(false);
   const [isDetailSheetVisible, setIsDetailSheetVisible] = useState(false);
   const [isAddEntryVisible, setIsAddEntryVisible] = useState(false);
-  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>('pick-3');
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [editingManageId, setEditingManageId] = useState<string | null>(null);
   const [headerFetchState, setHeaderFetchState] = useState<CalendarHeaderFetchState>('idle');
   const [headerErrorMessage, setHeaderErrorMessage] = useState<string | null>(null);
@@ -324,28 +337,6 @@ export function useCalendarMockState() {
     () => manageItems.find((item) => item.id === editingManageId) ?? null,
     [editingManageId, manageItems],
   );
-  const selectedTransaction = useMemo(() => {
-    const selectedMockTransaction =
-      mockSelectableTransactions.find((item) => item.id === selectedTransactionId) ?? null;
-
-    if (selectedMockTransaction) {
-      return selectedMockTransaction;
-    }
-
-    if (!editingManageItem) {
-      return null;
-    }
-
-    return {
-      id: editingManageItem.id,
-      dateLabel: editingManageItem.subtitle,
-      title: editingManageItem.title,
-      category: editingManageItem.category,
-      amount: editingManageItem.amount,
-      icon: editingManageItem.icon,
-      iconTone: editingManageItem.iconTone,
-    };
-  }, [editingManageItem, selectedTransactionId]);
   const fixedExpenseDetailsByCategory = useMemo(
     () =>
       manageItems.reduce<Record<string, ManageFixedExpenseItem[]>>((acc, item) => {
@@ -359,6 +350,49 @@ export function useCalendarMockState() {
     () => transactionGroups.filter((group) => group.id.startsWith(historyMonthKey)),
     [historyMonthKey, transactionGroups],
   );
+  const selectableTransactions = useMemo<SelectableTransactionCandidate[]>(() => {
+    if (!accessToken) {
+      return mockSelectableTransactions;
+    }
+
+    return filteredTransactionGroups.flatMap((group) =>
+      group.items
+        .filter((item) => !item.isFixedExpense && item.backendTransactionId != null)
+        .map((item) => ({
+          id: item.id,
+          backendTransactionId: item.backendTransactionId,
+          dateLabel: group.dateLabel,
+          title: item.title,
+          category: item.category,
+          amount: item.amount,
+          icon: item.icon,
+          iconTone: item.iconTone,
+        })),
+    );
+  }, [accessToken, filteredTransactionGroups]);
+  const selectedTransaction = useMemo(() => {
+    const selectableTransaction =
+      selectableTransactions.find((item) => item.id === selectedTransactionId) ?? null;
+
+    if (selectableTransaction) {
+      return selectableTransaction;
+    }
+
+    if (!editingManageItem) {
+      return null;
+    }
+
+    return {
+      id: editingManageItem.id,
+      backendTransactionId: undefined,
+      dateLabel: editingManageItem.subtitle,
+      title: editingManageItem.title,
+      category: editingManageItem.category,
+      amount: editingManageItem.amount,
+      icon: editingManageItem.icon,
+      iconTone: editingManageItem.iconTone,
+    };
+  }, [editingManageItem, selectableTransactions, selectedTransactionId]);
   const fixedExpensesTotal = useMemo(
     () => fixedExpenseItems.reduce((sum, item) => sum + item.amount, 0),
     [fixedExpenseItems],
@@ -421,7 +455,57 @@ export function useCalendarMockState() {
     }
 
     if (!selectedTransaction) {
-      Alert.alert('추가 연동 대기', '고정지출 추가는 거래내역 ID 연동이 준비된 뒤 연결할 예정입니다.');
+      Alert.alert('선택 필요', '고정지출로 등록할 거래를 먼저 선택해주세요.');
+      return;
+    }
+
+    if (accessToken) {
+      if (!selectedTransaction.backendTransactionId) {
+        Alert.alert('등록 불가', '거래내역 ID를 확인할 수 없어 고정지출로 등록할 수 없습니다.');
+        return;
+      }
+
+      try {
+        await addFixedExpense({
+          transactionId: selectedTransaction.backendTransactionId,
+          dueDay: payload.paymentDay,
+          isAuto: false,
+        });
+
+        const [summaryResponse, manageResponse] = await Promise.all([
+          getCalendarFixedExpenses({
+            year: displayedMonth.getFullYear(),
+            month: displayedMonth.getMonth() + 1,
+          }),
+          getFixedExpenseManage({
+            year: displayedMonth.getFullYear(),
+            month: displayedMonth.getMonth() + 1,
+          }),
+        ]);
+
+        setFixedExpenseItems(mapFixedExpenseSummaryItems(summaryResponse));
+        setManageItems(mapFixedExpenseManageItems(manageResponse));
+        setTransactionGroups((current) =>
+          current.map((group) => ({
+            ...group,
+            items: group.items.map((item) =>
+              item.id === selectedTransaction.id ? { ...item, isFixedExpense: true } : item,
+            ),
+          })),
+        );
+        setIsDetailSheetVisible(false);
+        setEditingManageId(null);
+        setIsManageModalVisible(true);
+      } catch (error) {
+        console.warn('Failed to add fixed expense', error);
+        Alert.alert(
+          '등록 실패',
+          getCalendarApiErrorMessage(
+            error,
+            '고정지출 등록 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
+          ),
+        );
+      }
       return;
     }
 
@@ -598,11 +682,16 @@ export function useCalendarMockState() {
   }
 
   function handleOpenFixedExpensePicker() {
-    if (accessToken) {
-      Alert.alert('추가 연동 대기', '고정지출 추가는 거래내역 ID를 내려주는 API가 준비되면 연결할 예정입니다.');
+    if (selectableTransactions.length === 0) {
+      Alert.alert('선택할 거래 없음', '고정지출로 등록할 거래가 아직 없습니다.');
       return;
     }
 
+    setSelectedTransactionId((current) =>
+      selectableTransactions.some((item) => item.id === current)
+        ? current
+        : (selectableTransactions[0]?.id ?? null),
+    );
     setIsPickerVisible(true);
   }
 
@@ -690,6 +779,7 @@ export function useCalendarMockState() {
     selectedTransactionId,
     selectedDetail,
     selectedTransaction,
+    selectableTransactions,
     editingManageItem,
     fixedExpensesTotal,
     headerFetchState,
@@ -865,12 +955,14 @@ function mapDailyTransactionItem(
   const categoryMeta = CATEGORY_META[transaction.category] ?? CATEGORY_META[DEFAULT_CALENDAR_CATEGORY];
 
   return {
-    id: `${dateKey}-transaction-${index}`,
+    id: `${dateKey}-transaction-${transaction.transactionId ?? index}`,
+    backendTransactionId: transaction.transactionId,
     title: transaction.merchantName,
     category: transaction.category,
     amount: transaction.amount,
     icon: categoryMeta.icon,
     iconTone: categoryMeta.iconTone,
+    isFixedExpense: transaction.isFixedExpense,
   };
 }
 

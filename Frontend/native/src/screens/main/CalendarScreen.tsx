@@ -2,7 +2,6 @@ import React from 'react';
 import { ScrollView, StatusBar, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRoute, useNavigation } from '@react-navigation/native';
-import { mockSelectableTransactions } from '../../mock/calendar';
 import { COLORS, hp } from '../../constants/theme';
 import { styles } from './CalendarScreen.styles';
 import { useCalendarMockState } from '../../hooks/useCalendarMockState';
@@ -44,6 +43,7 @@ export default function CalendarScreen() {
     selectedTransactionId,
     selectedDetail,
     selectedTransaction,
+    selectableTransactions,
     editingManageItem,
     fixedExpensesTotal,
     headerFetchState,
@@ -227,7 +227,7 @@ export default function CalendarScreen() {
 
       <FixedExpensePickerSheet
         visible={isPickerVisible}
-        items={mockSelectableTransactions}
+        items={selectableTransactions}
         selectedId={selectedTransactionId}
         onSelect={setSelectedTransactionId}
         onConfirm={() => {
