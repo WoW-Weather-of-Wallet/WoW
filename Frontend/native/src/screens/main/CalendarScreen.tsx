@@ -6,6 +6,7 @@ import { COLORS, hp } from '../../constants/theme';
 import { styles } from './CalendarScreen.styles';
 import { useCalendarMockState } from '../../hooks/useCalendarMockState';
 import { setHideCalendarGuide, shouldHideCalendarGuide } from '../../services/guidePreference';
+import DataSourceNotice from '../../components/common/DataSourceNotice';
 import {
   CalendarAddEntrySheet,
   CalendarDayDetailSheet,
@@ -131,6 +132,15 @@ export default function CalendarScreen() {
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.backgroundSecondary} />
 
       <View style={[styles.topDock, { paddingTop: insets.top + hp(12) }]}>
+        <DataSourceNotice
+          type={headerFetchState === 'live' ? 'mixed' : 'mock'}
+          description={
+            headerFetchState === 'live'
+              ? '헤더 일부는 실데이터이고, 메모와 일부 월 데이터 및 고정지출 흐름에는 mock 또는 fallback 데이터가 포함됩니다.'
+              : '현재 캘린더 화면은 mock 또는 fallback 데이터가 포함되어 있습니다.'
+          }
+          style={styles.notice}
+        />
         {/*
           원래 화면 기준:
           - 보라색 히어로 카드가 화면 첫 인상을 만들고 있었습니다.

@@ -14,6 +14,7 @@ import { styles } from './AiResultScreen.styles';
 import GradientButton from '../../components/common/GradientButton';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, wp, hp } from '../../constants/theme';
+import DataSourceNotice from '../../components/common/DataSourceNotice';
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
@@ -339,6 +340,11 @@ export default function AiResultScreen({ navigation }: any) {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        <DataSourceNotice
+          type="mock"
+          description="현재 AI 결과 리포트는 시뮬레이션용 mock 데이터로 표시되고 있습니다."
+          style={{ marginBottom: hp(16) }}
+        />
         <Animated.View 
           entering={FadeInDown.duration(800)}
           style={styles.header}

@@ -15,6 +15,8 @@ import { COLORS, wp, hp } from '../../constants/theme';
 import { styles } from './AiLoadingScreen.styles';
 import { useAiStore } from '../../store/aiStore';
 import { useIsFocused } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import DataSourceNotice from '../../components/common/DataSourceNotice';
 
 /**
  * [UX-Plan] 로딩 단계별 구성을 정의합니다.
@@ -113,6 +115,7 @@ const CompletionCheck = () => {
 };
 
 export default function AiLoadingScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState(0);
   const progress = useSharedValue(0);
   const isFocused = useIsFocused(); // 현재 화면에 머물고 있는지 확인
@@ -160,6 +163,17 @@ export default function AiLoadingScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
+      <DataSourceNotice
+        type="mock"
+        description="현재 AI 분석 로딩은 실제 서버 응답이 아니라 시뮬레이션 흐름으로 동작합니다."
+        style={{
+          position: 'absolute',
+          top: insets.top + hp(16),
+          left: wp(24),
+          right: wp(24),
+          zIndex: 2,
+        }}
+      />
       <Animated.View 
         key={currentStep} 
         entering={FadeIn.duration(800)}
