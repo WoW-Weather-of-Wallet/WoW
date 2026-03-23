@@ -28,6 +28,10 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
   },
+  heroTitleHighlight: {
+    fontFamily: FONTS.extraBold,
+    color: COLORS.primaryDark,
+  },
   aiBadge: {
     flexDirection: 'row',
     alignItems: 'center',

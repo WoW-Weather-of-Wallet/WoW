@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
    */
   progressBarContainer: {
     position: 'absolute',
-    bottom: hp(100),
+    bottom: hp(30),
     width: wp(200),
     height: 4,
     backgroundColor: COLORS.gray100,

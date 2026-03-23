@@ -39,11 +39,11 @@ export const styles = StyleSheet.create({
   },
   directContent: {
     gap: hp(14),
-    paddingBottom: hp(6),
+    paddingBottom: hp(32),
   },
   excelContent: {
     gap: hp(16),
-    paddingBottom: hp(12),
+    paddingBottom: hp(32),
   },
   fieldLabelRow: {
     flexDirection: 'row',

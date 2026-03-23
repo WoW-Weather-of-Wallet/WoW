@@ -16,28 +16,34 @@ import { styles } from './WithdrawConfirmationModal.styles';
 interface WithdrawConfirmationModalProps {
   visible: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (password: string) => void;
 }
 
-/**
- * 회원 탈퇴 시 '탈퇴하기' 문구를 직접 입력받아 실수로 탈퇴하는 것을 방지하는 2차 확인 모달입니다.
- */
 export default function WithdrawConfirmationModal({
   visible,
   onClose,
   onConfirm,
 }: WithdrawConfirmationModalProps) {
-  const [inputText, setInputText] = useState('');
-  const isConfirmEnabled = inputText === '탈퇴하기';
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+
+  const isConfirmEnabled = 
+    password.length >= 8 && 
+    password === confirmPassword;
 
   const handleClose = () => {
-    setInputText('');
+    setPassword('');
+    setConfirmPassword('');
+    setIsPasswordVisible(false);
+    setIsConfirmPasswordVisible(false);
     onClose();
   };
 
   const handleConfirm = () => {
     if (isConfirmEnabled) {
-      onConfirm();
+      onConfirm(password);
       handleClose();
     }
   };
@@ -61,19 +67,59 @@ export default function WithdrawConfirmationModal({
             </View>
 
             <View style={styles.inputSection}>
-              <Text style={styles.inputLabel}>
-                확인을 위해 아래에 <Text style={styles.boldText}>'탈퇴하기'</Text>를 입력해주세요.
-              </Text>
-              <TextInput
-                style={[styles.input, isConfirmEnabled && styles.inputActive]}
-                placeholder="탈퇴하기"
-                placeholderTextColor={COLORS.textTertiary}
-                value={inputText}
-                onChangeText={setInputText}
-                autoFocus
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
+              <Text style={styles.inputLabel}>현재 비밀번호</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={[styles.input, { flex: 1, textAlign: 'left' }, password.length >= 8 && styles.inputActive]}
+                  placeholder="현재 비밀번호 입력"
+                  placeholderTextColor={COLORS.textTertiary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!isPasswordVisible}
+                />
+                <TouchableOpacity 
+                  style={styles.eyeIcon} 
+                  onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                >
+                  <Ionicons 
+                    name={isPasswordVisible ? "eye-outline" : "eye-off-outline"} 
+                    size={wp(20)} 
+                    color={COLORS.textSecondary} 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.inputSection}>
+              <Text style={styles.inputLabel}>비밀번호 확인</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={[
+                    styles.input, 
+                    { flex: 1, textAlign: 'left' }, 
+                    confirmPassword.length >= 8 && password === confirmPassword && styles.inputActive,
+                    confirmPassword.length > 0 && password !== confirmPassword && styles.inputError
+                  ]}
+                  placeholder="비밀번호 한 번 더 입력"
+                  placeholderTextColor={COLORS.textTertiary}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!isConfirmPasswordVisible}
+                />
+                <TouchableOpacity 
+                  style={styles.eyeIcon} 
+                  onPress={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}
+                >
+                  <Ionicons 
+                    name={isConfirmPasswordVisible ? "eye-outline" : "eye-off-outline"} 
+                    size={wp(20)} 
+                    color={COLORS.textSecondary} 
+                  />
+                </TouchableOpacity>
+              </View>
+              {confirmPassword.length > 0 && password !== confirmPassword && (
+                <Text style={styles.errorText}>비밀번호가 일치하지 않습니다.</Text>
+              )}
             </View>
 
             <View style={styles.buttonRow}>

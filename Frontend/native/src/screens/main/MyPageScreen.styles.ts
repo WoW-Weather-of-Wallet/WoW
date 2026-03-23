@@ -3,9 +3,10 @@ import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
 /**
  * 마이페이지(MyPageScreen)의 스타일 정의입니다.
- * 사용자 프로필, 보유 계좌, 카드 정보 및 바로가기 메뉴의 레이아웃을 포함합니다.
+ * 사용자 프로필, 설정 섹션, 모달 및 보존된 레거시 UI의 레이아웃을 포함합니다.
  */
 export const styles = StyleSheet.create({
+  /* ── 레이아웃 ── */
   container: {
     flex: 1,
     backgroundColor: COLORS.backgroundSecondary,
@@ -14,11 +15,16 @@ export const styles = StyleSheet.create({
     paddingHorizontal: wp(20),
     gap: hp(18),
   },
+
+  /* ── 프로필 헤더 ── */
   profileCard: {
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.xxl,
     padding: wp(20),
     gap: hp(18),
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    marginTop: hp(10),
   },
   profileHeaderRow: {
     flexDirection: 'row',
@@ -44,26 +50,47 @@ export const styles = StyleSheet.create({
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  profileName: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    gap: wp(8),
     marginBottom: hp(4),
   },
+  profileName: {
+    fontSize: fp(22),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  profileNameHighlight: {
+    fontFamily: FONTS.extraBold,
+    color: COLORS.primaryDark,
+  },
+  profileDescription: {
+    fontSize: fp(13),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
   profileBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: COLORS.primary50,
-    borderRadius: RADIUS.full,
-    paddingHorizontal: wp(10),
-    paddingVertical: hp(6),
+    backgroundColor: COLORS.primary + '15', // very light primary
+    borderRadius: RADIUS.md,
+    paddingHorizontal: wp(8),
+    paddingVertical: hp(4),
   },
   profileBadgeText: {
-    fontSize: fp(12),
-    fontFamily: FONTS.semiBold,
+    fontSize: fp(11),
+    fontFamily: FONTS.bold,
     color: COLORS.primary,
   },
+  profileLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(8),
+    marginTop: hp(10),
+  },
+  profileLoadingText: {
+    fontSize: fp(12),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+
+  /* ── [LEGACY] 스타일 보존 ── */
   profileSummaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -93,16 +120,6 @@ export const styles = StyleSheet.create({
     backgroundColor: COLORS.border,
     marginHorizontal: wp(16),
   },
-  profileLoadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: wp(8),
-  },
-  profileLoadingText: {
-    fontSize: fp(12),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
   statsRow: {
     flexDirection: 'row',
     gap: wp(10),
@@ -128,24 +145,24 @@ export const styles = StyleSheet.create({
   },
   sectionCard: {
     backgroundColor: COLORS.background,
-    borderRadius: RADIUS.xxl,
-    padding: wp(18),
-    gap: hp(14),
+    borderRadius: RADIUS.lg,
+    padding: wp(16),
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: hp(12),
   },
   sectionTitle: {
-    fontSize: fp(18),
+    fontSize: fp(16),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
   },
   sectionAction: {
     fontSize: fp(12),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.primary,
+    fontFamily: FONTS.medium,
+    color: COLORS.textTertiary,
   },
   emptyStateCard: {
     alignItems: 'center',
@@ -156,55 +173,174 @@ export const styles = StyleSheet.create({
     gap: hp(8),
   },
   emptyStateTitle: {
-    fontSize: fp(15),
+    fontSize: fp(14),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
     textAlign: 'center',
   },
-  emptyStateDescription: {
+
+  /* ── 설정 및 모달 ── */
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(12),
+    paddingBottom: hp(12),
+  },
+  toggleDescription: {
+    flex: 1,
     fontSize: fp(12),
     lineHeight: fp(18),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: COLORS.modalOverlay,
+    justifyContent: 'center',
+    paddingHorizontal: wp(20),
+  },
+  modalCard: {
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.xl,
+    padding: wp(20),
+    gap: hp(12),
+  },
+  modalTitle: {
+    fontSize: fp(18),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: hp(6),
+  },
+  
+  /* ── 입력 및 필드 ── */
+  input: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: wp(14),
+    paddingVertical: hp(12),
+    fontSize: fp(15),
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
+  },
+  readOnlyInput: {
+    backgroundColor: COLORS.backgroundSecondary,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: wp(14),
+    paddingVertical: hp(12),
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  readOnlyLabel: {
+    fontSize: fp(14),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textTertiary,
+  },
+  readOnlyValue: {
+    fontSize: fp(15),
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
+  },
+  readOnlyHint: {
+    fontSize: fp(12),
+    fontFamily: FONTS.medium,
+    color: COLORS.textTertiary,
+    marginTop: hp(4),
+    paddingHorizontal: wp(4),
+  },
+
+  /* ── 하이퍼링크 guidance ── */
+  hyperlinkContainer: {
+    marginTop: hp(12),
+    padding: wp(12),
+    backgroundColor: COLORS.primary + '10',
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '30',
+  },
+  hyperlinkText: {
+    fontSize: fp(13),
+    lineHeight: fp(20),
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
     textAlign: 'center',
   },
-  shortcutRow: {
+  hyperlinkAction: {
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+    textDecorationLine: 'underline',
+  },
+
+  /* ── 모달 버튼 ── */
+  modalButtonRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: hp(6),
+    justifyContent: 'flex-end',
+    gap: wp(10),
+    marginTop: hp(8),
   },
-  shortcutLeft: {
+  primaryButton: {
     flex: 1,
-    flexDirection: 'row',
+    paddingVertical: hp(14),
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
-    paddingRight: wp(12),
   },
-  shortcutIconCircle: {
-    width: wp(44),
-    height: wp(44),
-    borderRadius: wp(22),
-    backgroundColor: COLORS.primary50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: wp(12),
-  },
-  shortcutTextBlock: {
-    flex: 1,
-  },
-  shortcutTitle: {
+  primaryButtonText: {
     fontSize: fp(15),
     fontFamily: FONTS.semiBold,
-    color: COLORS.textPrimary,
-    marginBottom: hp(4),
+    color: COLORS.textInverse,
   },
-  shortcutDescription: {
-    fontSize: fp(12),
-    lineHeight: fp(18),
+
+  /* ── PIN 모달 전용 ── */
+  pinModalCard: {
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.xl,
+    padding: wp(20),
+    gap: hp(14),
+  },
+  pinModalDescription: {
+    fontSize: fp(13),
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
+    textAlign: 'center',
   },
-  actionButtonSpacing: {
-    marginBottom: hp(10),
+  pinIndicatorRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: wp(10),
+    marginVertical: hp(10),
+  },
+  pinIndicatorDot: {
+    width: wp(12),
+    height: wp(12),
+    borderRadius: wp(6),
+    backgroundColor: COLORS.gray100,
+  },
+  pinIndicatorDotFilled: {
+    backgroundColor: COLORS.primary,
+  },
+
+  /* ── 패스워드 입력 필드 ── */
+  passwordInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  inputEyeIcon: {
+    position: 'absolute',
+    right: wp(12),
+    padding: wp(4),
+  },
+
+  /* ── 유틸리티 ── */
+  errorMessage: {
+    fontSize: fp(13),
+    fontFamily: FONTS.medium,
+    color: COLORS.error,
+    textAlign: 'center',
   },
 });

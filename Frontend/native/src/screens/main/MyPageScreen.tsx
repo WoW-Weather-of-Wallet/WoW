@@ -1,292 +1,613 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
   ActivityIndicator,
   Alert,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import GradientButton from '../../components/common/GradientButton';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { COLORS, hp, wp } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
+import { useLocalSecurityStore } from '../../store/localSecurityStore';
 import { fcmService } from '../../services/fcmService';
+import SecureKeypad from '../../components/common/SecureKeypad';
+import SettingSection from '../../components/mypage/SettingSection';
+import SettingItem from '../../components/mypage/SettingItem';
+import AgreedTermsModal from '../../components/mypage/AgreedTermsModal';
+import WithdrawConfirmationModal from '../../components/mypage/WithdrawConfirmationModal';
 import {
+  changePassword,
+  deleteAccount,
   getProfile,
+  login as loginRequest,
   logout as logoutRequest,
   type NativeUserProfileResponse,
 } from '../../services/auth';
 import { clearPersistedAuthSession } from '../../services/sessionStorage';
+import {
+  authenticateWithBiometrics,
+  verifyPinCode,
+} from '../../services/localSecurity';
 import { extractApiErrorMessage } from '../../utils/error';
+import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
+import { validatePassword } from '../../utils/validation';
 
 import { styles } from './MyPageScreen.styles';
 
-const LIVE_SHORTCUTS = [
-  {
-    id: 'profile-settings',
-    title: '내 정보 설정',
-    description: '이름, 휴대폰 번호, 비밀번호를 바로 관리합니다.',
-    icon: 'person-circle-outline' as const,
-    action: 'settings',
-  },
-  {
-    id: 'push-settings',
-    title: '알림 설정 확인',
-    description: '현재 계정 알림 사용 여부를 설정 화면에서 확인합니다.',
-    icon: 'notifications-outline' as const,
-    action: 'settings',
-  },
-] as const;
+type EditMode = 'profile' | 'phone' | 'password' | null;
+type PinModalStep = 'create' | 'confirm' | 'verify-current' | 'new' | 'confirm-new';
+type PinModalMode = 'setup' | 'change' | 'disable';
 
 /**
- * MyPageScreen
- * 마이페이지는 설정 메뉴보다 사용자의 실자산(카드/계좌)을 먼저 보여주는 방향으로 재구성합니다.
- * 추후 상세 화면이 생기면 각 카드/계좌 항목을 눌렀을 때 이동시키는 방식으로 확장할 수 있습니다.
+ * MyPageScreen (Settings Overhaul)
+ * 마이페이지를 설정 중심으로 개편하되, 기존의 '사용자 분류 뱃지'를 프리미엄하게 통합합니다.
+ * 보유 카드 및 연결 계좌 관련 코드는 주석 처리하여 보존합니다.
  */
 export default function MyPageScreen() {
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const navigation = useNavigation<any>();
   const logout = useAuthStore((state) => state.logout);
   const sessionUser = useAuthStore((state) => state.user);
+  const securityPreferences = useLocalSecurityStore((state) => state.preferences);
+  const refreshSecurityPreferences = useLocalSecurityStore((state) => state.refreshPreferences);
+  const persistBiometricEnabled = useLocalSecurityStore((state) => state.setBiometricEnabled);
+  const persistPinCode = useLocalSecurityStore((state) => state.setPinCode);
+  const removePinCode = useLocalSecurityStore((state) => state.clearPinCode);
+
   const [profile, setProfile] = useState<NativeUserProfileResponse | null>(null);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editMode, setEditMode] = useState<EditMode>(null);
+  const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false);
+
+  // 비밀번호 변경 관련 상태
+  const [currentPw, setCurrentPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [isCurrentPwVisible, setIsCurrentPwVisible] = useState(false);
+  const [isNewPwVisible, setIsNewPwVisible] = useState(false);
+  const [isConfirmPwVisible, setIsConfirmPwVisible] = useState(false);
+
+  // 간편비밀번호(PIN) 관련 상태
+  const [isPinModalVisible, setIsPinModalVisible] = useState(false);
+  const [pinModalMode, setPinModalMode] = useState<PinModalMode>('setup');
+  const [pinModalStep, setPinModalStep] = useState<PinModalStep>('create');
+  const [pinInput, setPinInput] = useState('');
+  const [pinDraft, setPinDraft] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [isPinSubmitting, setIsPinSubmitting] = useState(false);
+
+  // 약관 및 회원 탈퇴 관련 상태
+  const [isTermsModalVisible, setIsTermsModalVisible] = useState(false);
+  const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
+
+  const appVersion = useMemo(() => Constants.expoConfig?.version ?? '1.0.0', []);
 
   const loadProfile = useCallback(async () => {
-    setIsLoadingProfile(true);
-
+    setIsLoading(true);
     try {
       const response = await getProfile();
       setProfile(response);
     } catch (error) {
-      const message = extractApiErrorMessage(
-        error,
-        '내 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
-      );
-
-      setProfile(null);
-      Alert.alert('프로필 조회 실패', message);
+      const message = extractApiErrorMessage(error, '프로필 정보를 불러오지 못했어요.');
+      Alert.alert('조회 실패', message);
     } finally {
-      setIsLoadingProfile(false);
+      setIsLoading(false);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       void loadProfile();
-    }, [loadProfile]),
+      void refreshSecurityPreferences();
+    }, [loadProfile, refreshSecurityPreferences]),
   );
 
-  useEffect(() => {
-    void loadProfile();
-  }, [loadProfile]);
+  const closeEditor = () => {
+    setEditMode(null);
+    setCurrentPw('');
+    setNewPw('');
+    setConfirmPw('');
+    setIsCurrentPwVisible(false);
+    setIsNewPwVisible(false);
+    setIsConfirmPwVisible(false);
+  };
+
+  const openProfileEditor = () => setEditMode('profile');
+  const openPhoneGuidance = () => setEditMode('phone');
+  const openPasswordEditor = () => setEditMode('password');
+
+  /* ── 간편비밀번호(PIN) 로직 ── */
+  const closePinModal = () => {
+    setIsPinModalVisible(false);
+    setPinModalMode('setup');
+    setPinModalStep('create');
+    setPinInput('');
+    setPinDraft('');
+    setPinError('');
+  };
+
+  const openPinEditor = () => {
+    setPinError('');
+    setPinInput('');
+    setPinDraft('');
+    setPinModalMode(securityPreferences.pinEnabled ? 'change' : 'setup');
+    setPinModalStep(securityPreferences.pinEnabled ? 'verify-current' : 'create');
+    setIsPinModalVisible(true);
+  };
+
+  const handleAppendPinDigit = async (digit: string) => {
+    if (isPinSubmitting) return;
+    const nextValue = `${pinInput}${digit}`.slice(0, 6);
+    setPinInput(nextValue);
+
+    if (nextValue.length === 6) {
+      setIsPinSubmitting(true);
+      try {
+        if (pinModalStep === 'create' || pinModalStep === 'new') {
+          setPinDraft(nextValue);
+          setPinInput('');
+          setPinModalStep(pinModalStep === 'create' ? 'confirm' : 'confirm-new');
+        } else if (pinModalStep === 'verify-current') {
+          const isValid = await verifyPinCode(nextValue, securityPreferences);
+          if (!isValid) {
+            setPinInput('');
+            setPinError('현재 간편비밀번호가 올바르지 않아요.');
+          } else {
+            setPinInput('');
+            if (pinModalMode === 'disable') {
+              await removePinCode();
+              Alert.alert('해제 완료', '간편비밀번호 사용이 해제되었습니다.');
+              closePinModal();
+            } else {
+              setPinModalStep('new');
+            }
+          }
+        } else if (nextValue === pinDraft) {
+          await persistPinCode(nextValue);
+          Alert.alert('설정 완료', '간편비밀번호가 안전하게 설정되었습니다.');
+          closePinModal();
+        } else {
+          setPinInput('');
+          setPinError('비밀번호가 일치하지 않아요. 다시 입력해주세요.');
+          setPinModalStep(pinModalStep === 'confirm' ? 'create' : 'new');
+        }
+      } finally {
+        setIsPinSubmitting(false);
+      }
+    }
+  };
+
+  /* ── 보안 설정 액션 ── */
+  const handleToggleBiometric = async (enabled: boolean) => {
+    if (isUpdatingSecurity) return;
+    setIsUpdatingSecurity(true);
+    try {
+      if (enabled) {
+        const result = await authenticateWithBiometrics('생체 인증 사용을 위해 본인 확인이 필요합니다.');
+        if (!result.success) {
+          Alert.alert('설정 실패', result.errorMessage || '인증에 실패했습니다.');
+          return;
+        }
+      }
+      await persistBiometricEnabled(enabled);
+    } finally {
+      setIsUpdatingSecurity(false);
+    }
+  };
+
+  const handleClearPinCode = () => {
+    setPinModalMode('disable');
+    setPinModalStep('verify-current');
+    setIsPinModalVisible(true);
+  };
+
+  /* ── 비밀번호 변경 처리 ── */
+  const handlePasswordSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const validation = validatePassword(newPw, profile?.userId || undefined);
+      if (!validation.isValid) throw new Error(validation.message);
+      if (currentPw === newPw) throw new Error('현재 비밀번호와 동일합니다.');
+      if (newPw !== confirmPw) throw new Error('새 비밀번호가 일치하지 않습니다.');
+
+      await changePassword({ currentPw, newPw });
+      Alert.alert('변경 완료', '비밀번호가 성공적으로 변경되었습니다.');
+      closeEditor();
+    } catch (error: any) {
+      const presentation = buildAuthErrorPresentation(error, { 
+        flow: 'password-reset', 
+        fallbackMessage: '비밀번호 변경 중 문제가 발생했습니다.' 
+      });
+      Alert.alert(presentation.title, presentation.alertMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  /* ── 로그아웃 처리 ── */
+  const handleLogout = () => {
+    Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '로그아웃',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            try { await fcmService.unregisterFcmToken(); } catch (e) {}
+            await logoutRequest();
+            await clearPersistedAuthSession();
+            logout();
+            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+          } catch (error) {
+            Alert.alert('오류', '로그아웃 처리 중 문제가 발생했습니다.');
+          }
+        },
+      },
+    ]);
+  };
+
+  /* ── 회원 탈퇴 처리 ── */
+  const onConfirmWithdraw = async (password: string) => {
+    if (isSubmitting) return;
+
+    // 1. 서버 실질 인증 (Re-authentication)
+    const userId = profile?.userId || sessionUser?.userId;
+    if (!userId) {
+      Alert.alert('오류', '사용자 정보를 확인할 수 없습니다. 다시 로그인해 주세요.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Login API를 호출하여 입력된 비밀번호가 정확한지 확인합니다.
+      // (성공 시 토큰이 반환되지만, 여기서는 인증 성공 여부만 활용합니다.)
+      await loginRequest({ userId, pw: password });
+
+      // 2. 인증 성공 시에만 실제 탈퇴 진행
+      await deleteAccount();
+      
+      await clearPersistedAuthSession();
+      logout();
+      Alert.alert('탈퇴 완료', '회원 탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.');
+      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+    } catch (error: any) {
+      // 인증 실패(401) 또는 기타 에러 처리
+      const status = error?.response?.status;
+      if (status === 401 || status === 400) {
+        Alert.alert('비밀번호 불일치', '현재 비밀번호가 올바르지 않습니다. 다시 확인해 주세요.');
+      } else {
+        const message = extractApiErrorMessage(error, '회원 탈퇴를 처리하지 못했어요. 잠시 후 다시 시도해주세요.');
+        Alert.alert('탈퇴 실패', message);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const displayName = profile?.name ?? sessionUser?.name ?? '사용자';
-  const displayInitial = displayName.slice(0, 1);
   const displayBadge = profile?.loginType === 'SSAFY' ? 'SSAFY 회원' : '일반 회원';
-  const displayOnboardingStatus = profile?.phoneNumber ? '완료' : '진행 중';
-  const displayLinkedAccounts = '준비중';
-  const profileInfoCards = [
-    {
-      id: 'login-type',
-      label: '가입 유형',
-      value: displayBadge,
-    },
-    {
-      id: 'phone',
-      label: '휴대폰',
-      value: profile?.phoneNumber ? '연결됨' : '미등록',
-    },
-    {
-      id: 'alarm',
-      label: '알림',
-      value: profile?.alarmEnabled ? '사용 중' : '꺼짐',
-    },
-  ] as const;
-
-  const handleLogout = async () => {
-    if (isLoggingOut) {
-      return;
-    }
-
-    setIsLoggingOut(true);
-
-    try {
-      // [P1 Fix] 로그아웃 시 서버에 등록된 FCM 토큰을 먼저 제거합니다.
-      try {
-        await fcmService.unregisterFcmToken();
-      } catch (fcmError) {
-        console.warn('[MyPage] FCM 토큰 해제 실패:', fcmError);
-      }
-
-      await logoutRequest();
-    } catch (error) {
-      const message = extractApiErrorMessage(
-        error,
-        '로그아웃 처리 중 문제가 있었어요. 다시 시도해주세요.',
-      );
-
-      Alert.alert('로그아웃 실패', message);
-      setIsLoggingOut(false);
-      return;
-    }
-
-    await clearPersistedAuthSession();
-    logout();
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Login' }],
-    });
-  };
+  const displayInitial = displayName.slice(0, 1);
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.backgroundSecondary} />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      
       <ScrollView
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.contentContainer,
           {
             paddingTop: insets.top + hp(12),
-            paddingBottom: insets.bottom + hp(130),
+            paddingBottom: tabBarHeight + hp(40),
           },
         ]}
-        showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity
-          style={styles.profileCard}
-          activeOpacity={0.9}
-          onPress={() => navigation.navigate('Settings')}
-        >
+        {/* ── 사용자 프로필 헤더 (뱃지 통합) ── */}
+        <View style={styles.profileCard}>
           <View style={styles.profileHeaderRow}>
             <View style={styles.avatarCircle}>
               <Text style={styles.avatarText}>{displayInitial}</Text>
             </View>
             <View style={styles.profileTextBlock}>
               <View style={styles.nameRow}>
-                <Text style={styles.profileName}>{displayName}님 안녕하세요!</Text>
-                <Ionicons name="chevron-forward" size={wp(20)} color={COLORS.textTertiary} />
+                <Text style={styles.profileName}>
+                  <Text style={styles.profileNameHighlight}>{displayName}</Text>님
+                </Text>
+                <View style={styles.profileBadge}>
+                  <Text style={styles.profileBadgeText}>{displayBadge}</Text>
+                </View>
               </View>
-              <View style={styles.profileBadge}>
-                <Text style={styles.profileBadgeText}>{displayBadge}</Text>
-              </View>
+              <Text style={styles.profileDescription}>오늘도 스마트한 금융 생활 되세요!</Text>
             </View>
           </View>
 
+          {isLoading && (
+            <View style={styles.profileLoadingRow}>
+              <ActivityIndicator color={COLORS.primary} />
+              <Text style={styles.profileLoadingText}>정보를 불러오고 있어요...</Text>
+            </View>
+          )}
+        </View>
+
+        {/* [LEGACY: Legacy Sections - Preserved for Reference]
           <View style={styles.profileSummaryRow}>
             <View style={styles.profileSummaryItem}>
               <Text style={styles.profileSummaryLabel}>연결 계좌</Text>
-              <Text style={styles.profileSummaryValue}>{displayLinkedAccounts}</Text>
+              <Text style={styles.profileSummaryValue}>{profile?.phoneNumber ? '완료' : '준비중'}</Text>
             </View>
             <View style={styles.profileDivider} />
             <View style={styles.profileSummaryItem}>
               <Text style={styles.profileSummaryLabel}>온보딩</Text>
-              <Text style={styles.profileSummaryValue}>{displayOnboardingStatus}</Text>
+              <Text style={styles.profileSummaryValue}>{profile?.phoneNumber ? '완료' : '진행 중'}</Text>
             </View>
           </View>
 
-          {isLoadingProfile ? (
-            <View style={styles.profileLoadingRow}>
-              <ActivityIndicator color={COLORS.primary} />
-              <Text style={styles.profileLoadingText}>프로필을 불러오는 중입니다.</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}><Text style={styles.statValue}>-</Text><Text style={styles.statLabel}>연결 계좌</Text></View>
+            <View style={styles.statCard}><Text style={styles.statValue}>-</Text><Text style={styles.statLabel}>카드</Text></View>
+            <View style={styles.statCard}><Text style={styles.statValue}>-</Text><Text style={styles.statLabel}>분석 상태</Text></View>
+          </View>
+
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>보유 카드</Text>
+              <Text style={styles.sectionAction}>실연동 대기</Text>
             </View>
-          ) : null}
-        </TouchableOpacity>
-
-        <View style={styles.statsRow}>
-          {/*
-            이전 코드:
-            - 연결 계좌 수, 카드 수, 리포트 상태를 mock 데이터로 보여주고 있었습니다.
-
-            변경 이유:
-            - 사용자관리 영역은 이제 실데이터만 사용해야 하므로,
-              프로필 API에서 바로 확인 가능한 값만 요약 카드로 노출합니다.
-          */}
-          {profileInfoCards.map((stat) => (
-            <View key={stat.id} style={styles.statCard}>
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
+            <View style={styles.emptyStateCard}>
+              <Ionicons name="card-outline" size={wp(24)} color={COLORS.primary} />
+              <Text style={styles.emptyStateTitle}>연결된 카드 데이터가 아직 없습니다.</Text>
             </View>
-          ))}
-        </View>
-
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>보유 카드</Text>
-            <Text style={styles.sectionAction}>실연동 대기</Text>
-          </View>
-          <View style={styles.emptyStateCard}>
-            <Ionicons name="card-outline" size={wp(24)} color={COLORS.primary} />
-            <Text style={styles.emptyStateTitle}>연결된 카드 데이터가 아직 없습니다.</Text>
-            <Text style={styles.emptyStateDescription}>
-              사용자관리에서는 더 이상 mock 카드를 보여주지 않고, 실연동 API가 준비되면 여기에 표시합니다.
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>연결 계좌</Text>
-            <Text style={styles.sectionAction}>실연동 대기</Text>
-          </View>
-          <View style={styles.emptyStateCard}>
-            <Ionicons name="wallet-outline" size={wp(24)} color={COLORS.primary} />
-            <Text style={styles.emptyStateTitle}>연결된 계좌 데이터가 아직 없습니다.</Text>
-            <Text style={styles.emptyStateDescription}>
-              계좌 연동 API가 열리기 전까지는 가짜 잔액을 노출하지 않고 빈 상태로 유지합니다.
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>설정 및 바로가기</Text>
-            <Text style={styles.sectionAction}>관리</Text>
           </View>
 
-          {LIVE_SHORTCUTS.map((shortcut) => (
-            <TouchableOpacity
-              key={shortcut.id}
-              style={styles.shortcutRow}
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate('Settings')}
-            >
-              <View style={styles.shortcutLeft}>
-                <View style={styles.shortcutIconCircle}>
-                  <Ionicons
-                    name={shortcut.icon as keyof typeof Ionicons.glyphMap}
-                    size={wp(20)}
-                    color={COLORS.primary}
-                  />
-                </View>
-                <View style={styles.shortcutTextBlock}>
-                  <Text style={styles.shortcutTitle}>{shortcut.title}</Text>
-                  <Text style={styles.shortcutDescription}>{shortcut.description}</Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={wp(18)} color={COLORS.textTertiary} />
-            </TouchableOpacity>
-          ))}
-        </View>
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>연결 계좌</Text>
+              <Text style={styles.sectionAction}>실연동 대기</Text>
+            </View>
+            <View style={styles.emptyStateCard}>
+              <Ionicons name="wallet-outline" size={wp(24)} color={COLORS.primary} />
+              <Text style={styles.emptyStateTitle}>연결된 계좌 데이터가 아직 없습니다.</Text>
+            </View>
+          </View>
+        */}
 
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>계정 액션</Text>
-          <View style={styles.actionButtonSpacing}>
-            <GradientButton
-              title="프로필 수정"
-              onPress={() => navigation.navigate('Settings')}
+        {/* ── 계정 정보 섹션 ── */}
+        <SettingSection title="계정 정보">
+          <SettingItem label="아이디" value={profile?.userId || '-'} type="text" />
+          <SettingItem label="프로필 정보" value={displayName} onPress={openProfileEditor} />
+          <SettingItem label="비밀번호 변경" onPress={openPasswordEditor} />
+          <SettingItem 
+            label="휴대폰 번호" 
+            value={profile?.phoneNumber ? `${profile.phoneNumber.slice(0,3)}-****-${profile.phoneNumber.slice(7)}` : '-'} 
+            onPress={openPhoneGuidance} 
+          />
+        </SettingSection>
+
+        {/* ── 알림 및 보안 설정 ── */}
+        <SettingSection title="알림 및 보안">
+          <SettingItem 
+            label="알림 상태" 
+            value={profile?.alarmEnabled ? '사용 중' : '꺼짐'} 
+            type="text" 
+          />
+          <View style={styles.toggleRow}>
+            <Text style={styles.toggleDescription}>모든 금융 알림을 수신합니다.</Text>
+            <Switch
+              value={profile?.alarmEnabled || false}
+              disabled
+              trackColor={{ false: COLORS.gray100, true: COLORS.primary }}
+              thumbColor={COLORS.white}
             />
           </View>
-          <GradientButton
-            title={isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-            variant="outline"
-            onPress={() => void handleLogout()}
+          <View style={{ height: hp(12) }} />
+          <SettingItem
+            label={securityPreferences.pinEnabled ? '간편비밀번호 변경' : '간편비밀번호 설정'}
+            value={securityPreferences.pinEnabled ? '설정됨' : '미설정'}
+            onPress={openPinEditor}
           />
+          {securityPreferences.pinEnabled && (
+            <>
+              <SettingItem
+                label="생체인증 사용"
+                type="toggle"
+                isToggled={securityPreferences.biometricEnabled}
+                onToggle={handleToggleBiometric}
+              />
+              <SettingItem label="간편비밀번호 해제" isDanger onPress={handleClearPinCode} />
+            </>
+          )}
+        </SettingSection>
+
+        {/* ── 이용 안내 및 액션 ── */}
+        <SettingSection title="이용 안내">
+          <SettingItem label="동의한 약관 확인" onPress={() => setIsTermsModalVisible(true)} />
+          <SettingItem label="현재 버전" value={appVersion} type="text" />
+        </SettingSection>
+
+        <View style={{ marginTop: hp(8), gap: hp(10) }}>
+          <TouchableOpacity style={styles.readOnlyInput} onPress={handleLogout}>
+            <Text style={[styles.readOnlyLabel, { color: COLORS.textPrimary }]}>로그아웃</Text>
+            <Ionicons name="log-out-outline" size={wp(20)} color={COLORS.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.readOnlyInput, { borderColor: COLORS.error + '30' }]} 
+            onPress={() => setIsWithdrawModalVisible(true)}
+          >
+            <Text style={[styles.readOnlyLabel, { color: COLORS.error }]}>회원 탈퇴</Text>
+            <Ionicons name="exit-outline" size={wp(20)} color={COLORS.error} />
+          </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* ── 프로필 정보 모달 ── */}
+      <Modal visible={editMode === 'profile'} transparent animationType="fade">
+        <Pressable style={styles.modalBackdrop} onPress={closeEditor}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>프로필 정보</Text>
+            <View style={styles.readOnlyInput}>
+              <Text style={styles.readOnlyLabel}>이름</Text>
+              <Text style={styles.readOnlyValue}>{profile?.name || '-'}</Text>
+            </View>
+            <View style={styles.readOnlyInput}>
+              <Text style={styles.readOnlyLabel}>성별</Text>
+              <Text style={styles.readOnlyValue}>{profile?.gender === 'M' ? '남성' : '여성'}</Text>
+            </View>
+            <View style={styles.readOnlyInput}>
+              <Text style={styles.readOnlyLabel}>생년월일</Text>
+              <Text style={styles.readOnlyValue}>{profile?.birthDate || '-'}</Text>
+            </View>
+            <Text style={styles.readOnlyHint}>* 가입 시 본인인증을 통해 확인된 정보입니다.</Text>
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity style={styles.primaryButton} onPress={closeEditor}>
+                <Text style={styles.primaryButtonText}>닫기</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* ── 휴대폰 번호 모달 ── */}
+      <Modal visible={editMode === 'phone'} transparent animationType="fade">
+        <Pressable style={styles.modalBackdrop} onPress={closeEditor}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>휴대폰 번호</Text>
+            <View style={styles.readOnlyInput}>
+              <Text style={styles.readOnlyLabel}>현재 번호</Text>
+              <Text style={styles.readOnlyValue}>{profile?.phoneNumber || '-'}</Text>
+            </View>
+            
+            <View style={styles.hyperlinkContainer}>
+              <Text style={styles.hyperlinkText}>
+                전화번호 변경을 희망하실 경우, 새로운 번호로 
+                <Text 
+                  style={styles.hyperlinkAction}
+                  onPress={() => {
+                    closeEditor();
+                    navigation.navigate('PhoneAuth', { signupMode: 'normal' });
+                  }}
+                > 회원가입을 다시 시도
+                </Text>해주시기 바랍니다.
+              </Text>
+              <Text style={[styles.readOnlyHint, { textAlign: 'center', marginTop: hp(8) }]}>
+                (기존 번호로 가입된 명의 정보는 삭제 후 진행을 권장합니다)
+              </Text>
+            </View>
+
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity style={styles.primaryButton} onPress={closeEditor}>
+                <Text style={styles.primaryButtonText}>닫기</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* ── 비밀번호 변경 모달 ── */}
+      <Modal visible={editMode === 'password'} transparent animationType="fade">
+        <Pressable style={styles.modalBackdrop} onPress={closeEditor}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>비밀번호 변경</Text>
+            <View style={styles.passwordInputContainer}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="현재 비밀번호"
+                secureTextEntry={!isCurrentPwVisible}
+                value={currentPw}
+                onChangeText={setCurrentPw}
+              />
+              <TouchableOpacity style={styles.inputEyeIcon} onPress={() => setIsCurrentPwVisible(!isCurrentPwVisible)}>
+                <Ionicons name={isCurrentPwVisible ? 'eye-outline' : 'eye-off-outline'} size={wp(20)} color={COLORS.textTertiary} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.passwordInputContainer}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="새 비밀번호 (8자 이상)"
+                secureTextEntry={!isNewPwVisible}
+                value={newPw}
+                onChangeText={setNewPw}
+              />
+              <TouchableOpacity style={styles.inputEyeIcon} onPress={() => setIsNewPwVisible(!isNewPwVisible)}>
+                <Ionicons name={isNewPwVisible ? 'eye-outline' : 'eye-off-outline'} size={wp(20)} color={COLORS.textTertiary} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.passwordInputContainer}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="비밀번호 확인"
+                secureTextEntry={!isConfirmPwVisible}
+                value={confirmPw}
+                onChangeText={setConfirmPw}
+              />
+              <TouchableOpacity style={styles.inputEyeIcon} onPress={() => setIsConfirmPwVisible(!isConfirmPwVisible)}>
+                <Ionicons name={isConfirmPwVisible ? 'eye-outline' : 'eye-off-outline'} size={wp(20)} color={COLORS.textTertiary} />
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.modalButtonRow, { gap: wp(8) }]}>
+              <TouchableOpacity style={[styles.primaryButton, { backgroundColor: COLORS.gray100 }]} onPress={closeEditor}>
+                <Text style={[styles.primaryButtonText, { color: COLORS.textPrimary }]}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.primaryButton} onPress={handlePasswordSubmit}>
+                <Text style={styles.primaryButtonText}>{isSubmitting ? '변경 중...' : '변경하기'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* ── 간편비밀번호(PIN) 모달 ── */}
+      <Modal visible={isPinModalVisible} transparent animationType="slide">
+        <View style={styles.modalBackdrop}>
+          <View style={styles.pinModalCard}>
+            <Text style={styles.modalTitle}>
+              {pinModalStep === 'create' ? '간편비밀번호 설정' : 
+               pinModalStep === 'confirm' ? '비밀번호 확인' :
+               pinModalStep === 'verify-current' ? '현재 비밀번호 확인' : '새 비밀번호'}
+            </Text>
+            <Text style={styles.pinModalDescription}>
+              {pinModalStep.includes('confirm') ? '한 번 더 입력해주세요.' : '6자리 숫자를 입력해주세요.'}
+            </Text>
+            <View style={styles.pinIndicatorRow}>
+              {[...Array(6)].map((_, i) => (
+                <View key={i} style={[styles.pinIndicatorDot, i < pinInput.length && styles.pinIndicatorDotFilled]} />
+              ))}
+            </View>
+            {pinError ? <Text style={styles.errorMessage}>{pinError}</Text> : null}
+            <SecureKeypad
+              onPressNumber={handleAppendPinDigit}
+              onPressDelete={() => setPinInput(prev => prev.slice(0, -1))}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── 약관 확인 모달 ── */}
+      <AgreedTermsModal 
+        visible={isTermsModalVisible}
+        onClose={() => setIsTermsModalVisible(false)}
+      />
+
+      {/* ── 회원 탈퇴 확인 모달 (보안 강화) ── */}
+      <WithdrawConfirmationModal
+        visible={isWithdrawModalVisible}
+        onClose={() => setIsWithdrawModalVisible(false)}
+        onConfirm={onConfirmWithdraw}
+      />
     </View>
   );
 }

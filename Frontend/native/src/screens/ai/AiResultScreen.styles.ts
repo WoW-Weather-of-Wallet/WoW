@@ -27,7 +27,20 @@ export const styles = StyleSheet.create({
     marginTop: hp(4),
   },
   highlight: {
-    color: COLORS.primary,
+    color: COLORS.primaryDark,
+    fontFamily: FONTS.bold,
+  },
+  highlightExtraBold: {
+    color: COLORS.primaryDark,
+    fontFamily: FONTS.extraBold,
+  },
+  highlightBlack: {
+    color: COLORS.primaryDark,
+    fontFamily: FONTS.black,
+  },
+  userNameHighlight: {
+    fontFamily: FONTS.extraBold,
+    color: COLORS.primaryDark,
   },
   
   /**
@@ -35,14 +48,11 @@ export const styles = StyleSheet.create({
    */
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: RADIUS.xl,
+    borderRadius: RADIUS.xxl,
     padding: wp(20),
     marginBottom: hp(24),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
   },
   cardTitle: {
     fontSize: fp(18),
@@ -153,14 +163,17 @@ export const styles = StyleSheet.create({
   tableRow: {
     flexDirection: 'row',
     paddingVertical: hp(12),
-    paddingHorizontal: wp(8),
     borderBottomWidth: 1,
     borderBottomColor: COLORS.gray100,
   },
-  tableCellCat: { flex: 2, alignItems: 'flex-start' },
-  tableCellPrice: { flex: 2.5, alignItems: 'flex-end' },
-  tableCellPct: { flex: 1.5, alignItems: 'flex-end' },
-  tableCellDiff: { flex: 1.5, alignItems: 'flex-end' },
+  tableCellCat: { flex: 2.2, alignItems: 'flex-start', paddingLeft: wp(12) },
+  tableCellPrice: { flex: 2.2, alignItems: 'flex-end', paddingRight: wp(12) },
+  tableCellPct: { flex: 1.4, alignItems: 'flex-end', paddingRight: wp(12) },
+  tableCellDiff: { flex: 1.5, alignItems: 'flex-end', paddingRight: wp(12) },
+  vLine: {
+    borderRightWidth: 1,
+    borderRightColor: COLORS.gray100,
+  },
   tableHeaderText: {
     fontSize: fp(12),
     fontFamily: FONTS.bold,
@@ -217,8 +230,12 @@ export const styles = StyleSheet.create({
     lineHeight: fp(22),
   },
   feedbackHighlight: {
-    color: COLORS.primary,
-    fontFamily: FONTS.bold,
+    color: COLORS.primaryDark,
+    fontFamily: FONTS.extraBold,
+  },
+  feedbackHighlightStrong: {
+    color: COLORS.primaryDark,
+    fontFamily: FONTS.black,
   },
 
   /**

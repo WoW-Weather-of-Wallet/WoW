@@ -2,6 +2,7 @@ import React from 'react';
 import { ScrollView, StatusBar, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import {
   mockHomeInsights,
   mockHomeSummary,
@@ -35,6 +36,7 @@ import type { CalendarBackendDayType, CalendarHeaderResponse, CalendarMonthlyRes
 export default function MainHomeScreen() {
   const insets = useSafeAreaInsets();
   const accessToken = useAuthStore((state) => state.accessToken);
+  const tabBarHeight = useBottomTabBarHeight();
   const reportModal = useModalState();
   const spendingTypeModal = useModalState();
   const [liveHeader, setLiveHeader] = React.useState<CalendarHeaderResponse | null>(null);
@@ -106,7 +108,7 @@ export default function MainHomeScreen() {
           styles.contentContainer,
           {
             paddingTop: insets.top + hp(12),
-            paddingBottom: insets.bottom + hp(130),
+            paddingBottom: tabBarHeight + hp(30),
           },
         ]}
         showsVerticalScrollIndicator={false}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useAiStore } from '../../store/aiStore';
 import Animated, { 
   FadeInDown, 
   useSharedValue, 
@@ -13,7 +15,7 @@ import Animated, {
 import { styles } from './AiResultScreen.styles';
 import GradientButton from '../../components/common/GradientButton';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp, hp } from '../../constants/theme';
+import { COLORS, FONTS, wp, hp, fp } from '../../constants/theme';
 import DataSourceNotice from '../../components/common/DataSourceNotice';
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
@@ -23,7 +25,11 @@ const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
  */
 const CLUSTER_DATA = {
   name: "사무·서적형",
-  desc: "사무/교육용품과 서적/도서 비중이 매우 높고 분식 소비가 함께 나타나는 학습 집중형 유형",
+  desc: (
+    <>
+      <Text style={{ fontWeight: '800', color: COLORS.primaryDark }}>사무/교육용품</Text>과 <Text style={{ fontWeight: '800', color: COLORS.primaryDark }}>서적/도서</Text> 비중이 매우 높고 분식 소비가 함께 나타나는 <Text style={{ fontWeight: '800', color: COLORS.primaryDark }}>학습 집중형</Text> 유형
+    </>
+  ),
 };
 
 const OVERSPENDING_DATA = [
@@ -34,14 +40,14 @@ const OVERSPENDING_DATA = [
 ];
 
 const CATEGORY_DATA = [
-  { name: '커피/음료', price: 233500, myRate: 23.3, avgRate: 8.9, diff: '+14.4%p', isOver: true },
-  { name: '육류/회식', price: 193200, myRate: 19.3, avgRate: 7.7, diff: '+11.6%p', isOver: true },
-  { name: '분식', price: 167600, myRate: 16.8, avgRate: 18.2, diff: '-1.5%p', isOver: false },
-  { name: '서적/도서', price: 121500, myRate: 12.1, avgRate: 11.2, diff: '+0.9%p', isOver: true },
-  { name: '사무/교육용품', price: 115700, myRate: 11.6, avgRate: 21.8, diff: '-10.3%p', isOver: false },
-  { name: '음/식료품소매', price: 55700, myRate: 5.6, avgRate: 0.0, diff: '+5.6%p', isOver: true },
-  { name: '제과/제빵/떡/케익', price: 52200, myRate: 5.2, avgRate: 0.0, diff: '+5.2%p', isOver: true },
-  { name: '외식', price: 26200, myRate: 2.6, avgRate: 0.0, diff: '+2.6%p', isOver: true },
+  { name: '커피/음료', price: 233500, myRate: 23.3, avgRate: 8.9, diff: '+14.4%', isOver: true },
+  { name: '육류/회식', price: 193200, myRate: 19.3, avgRate: 7.7, diff: '+11.6%', isOver: true },
+  { name: '분식', price: 167600, myRate: 16.8, avgRate: 18.2, diff: '-1.5%', isOver: false },
+  { name: '서적/도서', price: 121500, myRate: 12.1, avgRate: 11.2, diff: '+0.9%', isOver: true },
+  { name: '사무/교육용품', price: 115700, myRate: 11.6, avgRate: 21.8, diff: '-10.3%', isOver: false },
+  { name: '음/식료품소매', price: 55700, myRate: 5.6, avgRate: 0.0, diff: '+5.6%', isOver: true },
+  { name: '제과/제빵/떡/케익', price: 52200, myRate: 5.2, avgRate: 0.0, diff: '+5.2%', isOver: true },
+  { name: '외식', price: 26200, myRate: 2.6, avgRate: 0.0, diff: '+2.6%', isOver: true },
 ];
 
 /**
@@ -87,22 +93,31 @@ const AnimatedNumber = ({
     } as any;
   });
 
+  // Extract fontSize and lineHeight from the style to properly size the container
+  const flatStyle = style ? (Array.isArray(style) ? Object.assign({}, ...style) : style) : {};
+  const fontSize = flatStyle.fontSize || fp(14);
+  const lineHeight = flatStyle.lineHeight || fontSize * 1.4;
+
   return (
-    <AnimatedTextInput
-      underlineColorAndroid="transparent"
-      editable={false}
-      defaultValue={'0'} 
-      style={[
-        style, 
-        { 
-          padding: 0, 
-          margin: 0, 
-          includeFontPadding: false,
-          textAlignVertical: 'center',
-        }
-      ]}
-      animatedProps={animatedProps}
-    />
+    <View style={{ height: lineHeight, justifyContent: 'center' }}>
+      <AnimatedTextInput
+        underlineColorAndroid="transparent"
+        editable={false}
+        defaultValue={'0'} 
+        style={[
+          style, 
+          { 
+            padding: 0, 
+            margin: 0, 
+            includeFontPadding: false,
+            textAlignVertical: 'center',
+            height: lineHeight,
+            lineHeight: lineHeight,
+          }
+        ]}
+        animatedProps={animatedProps}
+      />
+    </View>
   );
 };
 
@@ -133,6 +148,8 @@ const AnimatedBar = ({ targetWidth, color, delay = 0 }: { targetWidth: number, c
 
 export default function AiResultScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
+  const { reset } = useAiStore();
   const userName = '사용자'; 
   const [isTableExpanded, setIsTableExpanded] = useState(false);
 
@@ -197,7 +214,6 @@ export default function AiResultScreen({ navigation }: any) {
                 type="percentage"
                 style={styles.barLegendText}
               />
-              <Text style={styles.barLegendText}>%</Text>
             </View>
             <View style={{ flexDirection: 'row' }}>
               <Text style={styles.barLegendText}>기준 비율: </Text>
@@ -207,13 +223,21 @@ export default function AiResultScreen({ navigation }: any) {
                 type="percentage"
                 style={styles.barLegendText}
               />
-              <Text style={styles.barLegendText}>%</Text>
             </View>
           </View>
         </View>
       ))}
     </Animated.View>
   );
+
+  /**
+   * 카테고리 이름 지정 폭스 대비 축약 도우미 함수 (글자 잘림 및 레이아웃 쏠림 현상 방지)
+   */
+  const formatCategoryName = (name: string) => {
+    if (name.includes('제과/제빵')) return '제과/제빵';
+    if (name.includes('소매')) return name.replace('소매', ''); // 예: 음/식료품소매 -> 음/식료품
+    return name;
+  };
 
   /**
    * [UI-Component] 카테고리별 소비 현황 비교 표 (확장 기능 포함)
@@ -226,10 +250,10 @@ export default function AiResultScreen({ navigation }: any) {
       <Text style={styles.cardTitle}>카테고리별 소비 현황 vs 클러스터 기준</Text>
       <View style={styles.tableContainer}>
         <View style={styles.tableHeader}>
-          <View style={styles.tableCellCat}><Text style={styles.tableHeaderText}>카테고리</Text></View>
-          <View style={styles.tableCellPrice}><Text style={styles.tableHeaderText}>지출금액</Text></View>
-          <View style={styles.tableCellPct}><Text style={styles.tableHeaderText}>내 비율</Text></View>
-          <View style={styles.tableCellDiff}><Text style={styles.tableHeaderText}>차이</Text></View>
+          <View style={[styles.tableCellCat, styles.vLine]}><Text style={styles.tableHeaderText}>카테고리</Text></View>
+          <View style={[styles.tableCellPrice, styles.vLine]}><Text style={[styles.tableHeaderText, { textAlign: 'right' }]}>지출금액</Text></View>
+          <View style={[styles.tableCellPct, styles.vLine]}><Text style={[styles.tableHeaderText, { textAlign: 'right' }]}>내 비율</Text></View>
+          <View style={styles.tableCellDiff}><Text style={[styles.tableHeaderText, { textAlign: 'right' }]}>차이</Text></View>
         </View>
         
         {visibleTableData.map((item, index) => (
@@ -237,27 +261,27 @@ export default function AiResultScreen({ navigation }: any) {
             key={index} 
             style={[styles.tableRow, (index === visibleTableData.length - 1 && !isTableExpanded) && { borderBottomWidth: 0 }]}
           >
-            <View style={styles.tableCellCat}>
-              <Text style={styles.tableDataText} numberOfLines={1}>{item.name}</Text>
+            <View style={[styles.tableCellCat, styles.vLine]}>
+              <Text style={styles.tableDataText} numberOfLines={1}>{formatCategoryName(item.name)}</Text>
             </View>
-            <View style={styles.tableCellPrice}>
+            <View style={[styles.tableCellPrice, styles.vLine]}>
               <AnimatedNumber 
                 value={item.price as number} 
                 delay={800 + index * 50}
                 type="price"
-                style={styles.tableDataText}
+                style={[styles.tableDataText, { textAlign: 'right' }]}
               />
             </View>
-            <View style={styles.tableCellPct}>
+            <View style={[styles.tableCellPct, styles.vLine]}>
               <AnimatedNumber 
                 value={item.myRate as number} 
                 delay={800 + index * 50}
                 type="percentage"
-                style={styles.tableDataText}
+                style={[styles.tableDataText, { textAlign: 'right' }]}
               />
             </View>
             <View style={styles.tableCellDiff}>
-              <Text style={[styles.tableDataText, item.isOver ? styles.textDanger : styles.textSafe]}>
+              <Text style={[styles.tableDataText, item.isOver ? styles.textDanger : styles.textSafe, { textAlign: 'right' }]}>
                 {item.diff}
               </Text>
             </View>
@@ -312,18 +336,20 @@ export default function AiResultScreen({ navigation }: any) {
 
       <View style={[styles.feedbackSection, { marginBottom: 0 }]}>
         <Text style={styles.feedbackTitle}>3. 이번 달 절감 목표</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap' }}>
-          <Text style={styles.feedbackText}>비슷한 유형 기준 대비 절감 가능액은 </Text>
-          <Text style={styles.feedbackHighlight}>약 </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+          <Text style={styles.feedbackText}>
+            비슷한 유형 기준 대비 절감 가능액은{' '}
+          </Text>
+          <Text style={styles.feedbackHighlightStrong}>약 </Text>
           <AnimatedNumber 
             value={29258} 
             type="price"
             delay={1000}
-            style={styles.feedbackHighlight}
+            style={styles.feedbackHighlightStrong}
           />
-          <Text style={styles.feedbackHighlight}> 입니다.</Text>
+          <Text style={styles.feedbackHighlightStrong}> 입니다.</Text>
         </View>
-        <Text style={styles.feedbackText}>
+        <Text style={[styles.feedbackText, { marginTop: hp(8) }]}>
           커피를 <Text style={styles.feedbackHighlight}>하루 1회/주 3회</Text>로 고정하는 규칙 하나만 제대로 세워도{'\n'}
           전체 소비 리듬이 가장 먼저 안정될 것입니다!
         </Text>
@@ -333,10 +359,10 @@ export default function AiResultScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={[
-          styles.scrollContent, 
-          { paddingTop: insets.top + 20 }
+          styles.scrollContent,
+          { paddingTop: insets.top + 20, paddingBottom: tabBarHeight + hp(40) }
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -345,13 +371,15 @@ export default function AiResultScreen({ navigation }: any) {
           description="현재 AI 결과 리포트는 시뮬레이션용 mock 데이터로 표시되고 있습니다."
           style={{ marginBottom: hp(16) }}
         />
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.duration(800)}
           style={styles.header}
         >
-          <Text style={styles.userName}>{userName} 님의</Text>
+          <Text style={styles.userName}>
+            <Text style={styles.userNameHighlight}>{userName}</Text> 님의
+          </Text>
           <Text style={styles.title}>
-            <Text style={styles.highlight}>AI 분석 결과</Text>입니다!
+            <Text style={styles.highlightExtraBold}>AI 분석 결과</Text>입니다!
           </Text>
         </Animated.View>
 
@@ -361,9 +389,6 @@ export default function AiResultScreen({ navigation }: any) {
           style={styles.card}
         >
           <View style={styles.clusterBadgeContainer}>
-            <View style={styles.clusterBadge}>
-              <Text style={styles.clusterBadgeText}>클러스터 1</Text>
-            </View>
             <Text style={styles.clusterTitle}>{CLUSTER_DATA.name}</Text>
           </View>
           <Text style={styles.clusterDesc}>{CLUSTER_DATA.desc}</Text>
@@ -380,7 +405,8 @@ export default function AiResultScreen({ navigation }: any) {
           <GradientButton 
             title="확인 완료" 
             onPress={() => {
-              navigation.navigate('MainTabs');
+              reset();
+              navigation.navigate('AiFeedbackHome');
             }}
           />
         </Animated.View>

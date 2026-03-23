@@ -3,9 +3,11 @@ import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
 export const styles = StyleSheet.create({
   infoCard: {
-    backgroundColor: COLORS.backgroundSecondary,
-    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.xxl,
     padding: wp(16),
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
   },
   infoLabel: {
     fontSize: fp(13),
