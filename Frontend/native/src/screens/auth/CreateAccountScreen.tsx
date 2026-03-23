@@ -29,6 +29,7 @@ type CreateAccountRouteParams = {
   phone?: string;
   ssnFront?: string;
   ssnBack?: string;
+  // This flag represents agreement to every required term selected earlier.
   termsAgreed?: boolean;
   ssafyOauthId?: string;
 };
@@ -201,7 +202,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
       phoneNumber: currentPhone.replace(/[^0-9]/g, ''),
       birthDate: buildBirthDate(routeParams.ssnFront, routeParams.ssnBack),
       alarmEnabled: true,
-      termsAgreed: routeParams.termsAgreed === true,
+        termsAgreed: routeParams.termsAgreed === true,
     };
 
     try {

@@ -84,6 +84,8 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
   const [phone, setPhone] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [termsVisible, setTermsVisible] = useState(false);
+  // The signup APIs still accept one boolean, so we collapse the sheet result
+  // into "all required terms were agreed" before moving to the next screen.
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -190,6 +192,8 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         ssnBack,
         telecom,
         phone: normalizedPhoneNumber,
+        // Downstream screens keep using the existing boolean contract, which now
+        // means agreement to the full required terms set.
         termsAgreed: agreedTerms,
       });
     } catch (error: any) {

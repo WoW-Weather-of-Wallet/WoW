@@ -47,19 +47,33 @@ function mapBackendTerms(terms: BackendTermResponse[]) {
 }
 
 function resolveTermKey(title: string): TermDocumentKey | null {
-  if (title.includes('개인정보')) {
+  const normalizedTitle = normalizeTitle(title);
+
+  // The backend now manages the live terms table, so the app should map titles
+  // by stable Korean keywords instead of relying on previously hardcoded mojibake.
+  if (normalizedTitle.includes('\uAC1C\uC778\uC815\uBCF4')) {
     return 'privacy';
   }
 
-  if (title.includes('통신사') || title.includes('본인확인')) {
+  if (
+    normalizedTitle.includes('\uD1B5\uC2E0\uC0AC') ||
+    normalizedTitle.includes('\uBCF8\uC778\uD655\uC778')
+  ) {
     return 'telecom';
   }
 
-  if (title.includes('서비스')) {
+  if (
+    normalizedTitle.includes('\uC11C\uBE44\uC2A4') &&
+    normalizedTitle.includes('\uC774\uC6A9\uC57D\uAD00')
+  ) {
     return 'service';
   }
 
   return null;
+}
+
+function normalizeTitle(title: string) {
+  return title.replace(/\s+/g, '').trim();
 }
 
 function formatEffectiveDate(version: string) {
@@ -69,7 +83,9 @@ function formatEffectiveDate(version: string) {
     return '';
   }
 
-  return normalizedVersion.includes('시행') ? normalizedVersion : `${normalizedVersion} 시행`;
+  return normalizedVersion.includes('\uC2DC\uD589')
+    ? normalizedVersion
+    : `${normalizedVersion} \uC2DC\uD589`;
 }
 
 export function getTermList(terms: Record<TermDocumentKey, TermDocument>) {
