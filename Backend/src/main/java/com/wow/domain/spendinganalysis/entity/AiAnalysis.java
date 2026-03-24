@@ -43,7 +43,8 @@ public class AiAnalysis {
     private Integer month;
 
     @Column(name = "analysis_type", length = 10)
-    private String analysisType;
+    @Enumerated(EnumType.STRING)
+    private AiAnalysisType analysisType;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;

@@ -11,7 +11,7 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class SpendingQuarterlyResponse {
+public class SpendingHalfYearlyResponse {
 
     private static final String EMPTY_SUMMARY = "아직 분기 소비 분석 결과가 없어요.";
 
@@ -19,7 +19,7 @@ public class SpendingQuarterlyResponse {
     private List<CategoryResult> categoryResults;
     private String description;
 
-    public static SpendingQuarterlyResponse of(
+    public static SpendingHalfYearlyResponse of(
             AiAnalysis aiAnalysis,
             List<AiAnalysisCategoryResult> categoryResults,
             String summary
@@ -36,15 +36,15 @@ public class SpendingQuarterlyResponse {
                 .map(CategoryResult::from)
                 .toList();
 
-        return new SpendingQuarterlyResponse(
+        return new SpendingHalfYearlyResponse(
                 spendingTypeInfo,
                 results,
                 aiAnalysis.getDescription()
         );
     }
 
-    public static SpendingQuarterlyResponse empty() {
-        return new SpendingQuarterlyResponse(
+    public static SpendingHalfYearlyResponse empty() {
+        return new SpendingHalfYearlyResponse(
                 new SpendingTypeInfo("분석 전", "", EMPTY_SUMMARY),
                 List.of(),
                 EMPTY_SUMMARY

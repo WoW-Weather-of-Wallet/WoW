@@ -27,6 +27,6 @@ public class SpendingType {
     @Column(name = "name", nullable = false, length = 15)
     private String name;
 
-    @Column(name = "icon_code", nullable = false, length = 20)
+    @Column(name = "icon_code", length = 20)
     private String iconCode;
 }
