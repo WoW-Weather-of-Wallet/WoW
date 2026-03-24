@@ -27,7 +27,7 @@ import { COLORS, fp, hp, wp } from '../../constants/theme';
 
 interface ExcelUploadGuideModalProps {
   visible: boolean;
-  onClose: (hideForever: boolean) => void;
+  onClose: () => void;
 }
 
 // ─── 슬라이드 데이터 ───────────────────────────────────────────────────────────
@@ -57,6 +57,7 @@ const GUIDE_SLIDES = [
 ] as const;
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const MODAL_WIDTH = SCREEN_WIDTH - wp(48); // [UX-Fix] 소비날씨 모달과 동일한 너비 확보 (좌우 p-6 여백 고려)
 
 export default function ExcelUploadGuideModal({
   visible,
@@ -67,8 +68,6 @@ export default function ExcelUploadGuideModal({
 
   // 현재 표시 중인 슬라이드 인덱스
   const [currentIndex, setCurrentIndex] = useState(0);
-  // '다시 보지 않기' 체크 상태
-  const [hideForever, setHideForever] = useState(false);
 
   // 모달이 열릴 때마다 첫 슬라이드로 초기화합니다.
   useEffect(() => {
@@ -76,7 +75,6 @@ export default function ExcelUploadGuideModal({
       return;
     }
     setCurrentIndex(0);
-    setHideForever(false);
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ x: 0, animated: false });
     });
@@ -87,20 +85,16 @@ export default function ExcelUploadGuideModal({
   // 가로 스크롤이 멈췄을 때 현재 인덱스를 계산합니다.
   function handleMomentumEnd(event: NativeSyntheticEvent<NativeScrollEvent>) {
     const nextIndex = Math.round(
-      event.nativeEvent.contentOffset.x / SCREEN_WIDTH,
+      event.nativeEvent.contentOffset.x / MODAL_WIDTH, // SCREEN_WIDTH 대신 MODAL_WIDTH 기준
     );
     setCurrentIndex(nextIndex);
   }
 
-  // '다음' 또는 '시작하기' 버튼 처리
-  function handleNext() {
-    if (isLastSlide) {
-      // 마지막 슬라이드에서는 모달을 닫고 hideForever 값을 부모에 전달합니다.
-      onClose(hideForever);
-      return;
-    }
+  // '다음' 버튼이 제거되었으므로 handleNext는 불필요하지만 로직상 유지하거나 제거 가능
+  // 여기서는 스와이프 위주의 조작계로 변경되므로 scrollTo 로직을 업데이트합니다.
+  function handleManualScroll(index: number) {
     scrollRef.current?.scrollTo({
-      x: SCREEN_WIDTH * (currentIndex + 1),
+      x: MODAL_WIDTH * index,
       animated: true,
     });
   }
@@ -109,175 +103,144 @@ export default function ExcelUploadGuideModal({
     <Modal
       visible={visible}
       animationType="fade"
-      transparent={false}
-      onRequestClose={() => onClose(hideForever)}
+      transparent={true}
+      onRequestClose={() => onClose()}
     >
-      <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-        {/* ── 헤더 ── */}
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: wp(24),
+        }}
+      >
         <View
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingTop: insets.top + hp(10),
-            paddingHorizontal: wp(20),
-            paddingBottom: hp(12),
+            width: '100%',
+            backgroundColor: COLORS.white,
+            borderRadius: wp(28),
+            padding: wp(24),
+            shadowColor: '#000',
+            shadowOpacity: 0.1,
+            shadowRadius: 10,
+            elevation: 5,
           }}
         >
-          <Text
+          {/* ── 헤더 (X 닫기 버튼 포함) ── */}
+          <View
             style={{
-              fontSize: fp(15),
-              fontWeight: '600',
-              color: COLORS.textPrimary,
-            }}
-          >
-            파일 업로드 가이드
-          </Text>
-          <TouchableOpacity
-            activeOpacity={0.86}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            onPress={() => onClose(hideForever)}
-          >
-            <Ionicons name="close" size={wp(20)} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* ── 슬라이드 페이저 ── */}
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          pagingEnabled
-          bounces={false}
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={handleMomentumEnd}
-          style={{ flex: 1 }}
-        >
-          {GUIDE_SLIDES.map((slide) => (
-            <View
-              key={slide.key}
-              style={{ width: SCREEN_WIDTH, paddingHorizontal: wp(20), paddingTop: hp(24) }}
-            >
-              {/* 미니 목업 미리보기 영역 */}
-              <View style={{ alignItems: 'center', marginBottom: hp(28) }}>
-                <LinearGradient
-                  colors={slide.gradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{
-                    width: wp(240),
-                    height: hp(200),
-                    borderRadius: wp(18),
-                    padding: wp(16),
-                    justifyContent: 'center',
-                    // 살짝 들뜬 느낌을 위한 그림자
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 6 },
-                    shadowOpacity: 0.18,
-                    shadowRadius: 12,
-                    elevation: 8,
-                  }}
-                >
-                  {slide.key === 'prepare' ? (
-                    <PreparePreview />
-                  ) : slide.key === 'analyze' ? (
-                    <AnalyzePreview />
-                  ) : (
-                    <ReviewPreview />
-                  )}
-                </LinearGradient>
-              </View>
-
-              {/* 슬라이드 텍스트 */}
-              <Text
-                style={{
-                  fontSize: fp(20),
-                  fontWeight: '700',
-                  color: COLORS.textPrimary,
-                  marginBottom: hp(12),
-                  lineHeight: fp(28),
-                }}
-              >
-                {slide.title}
-              </Text>
-              <Text
-                style={{
-                  fontSize: fp(14),
-                  color: COLORS.textSecondary,
-                  lineHeight: fp(21),
-                }}
-              >
-                {slide.description}
-              </Text>
-            </View>
-          ))}
-        </ScrollView>
-
-        {/* ── 푸터 (인디케이터, 다시 보지 않기, CTA) ── */}
-        <View
-          style={{
-            paddingHorizontal: wp(20),
-            paddingBottom: insets.bottom + hp(16),
-            paddingTop: hp(12),
-            gap: hp(12),
-          }}
-        >
-          {/* 페이지 인디케이터 도트 */}
-          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: wp(6) }}>
-            {GUIDE_SLIDES.map((slide, index) => (
-              <View
-                key={slide.key}
-                style={{
-                  width: index === currentIndex ? wp(20) : wp(6),
-                  height: hp(6),
-                  borderRadius: 99,
-                  backgroundColor:
-                    index === currentIndex ? COLORS.primary : COLORS.border,
-                }}
-              />
-            ))}
-          </View>
-
-          {/* '다시 보지 않기' 토글 */}
-          <TouchableOpacity
-            activeOpacity={0.86}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: wp(6) }}
-            onPress={() => setHideForever((current) => !current)}
-          >
-            <Ionicons
-              name={hideForever ? 'checkmark-circle' : 'ellipse-outline'}
-              size={wp(18)}
-              color={hideForever ? COLORS.primary : COLORS.textTertiary}
-            />
-            <Text style={{ fontSize: fp(13), color: COLORS.textSecondary }}>
-              다시 보지 않기
-            </Text>
-          </TouchableOpacity>
-
-          {/* 
-              CTA 버튼 (다음 / 업로드 시작하기) 
-              - 마지막 슬라이드 전까지는 보조 색상(textPrimary, 어두운 색)을 사용하고,
-              - 마지막 슬라이드에서는 강조 색상(primary)을 사용하여 완료를 유도합니다.
-          */}
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={handleNext}
-            style={{
-              backgroundColor: isLastSlide ? COLORS.primary : COLORS.textPrimary,
-              borderRadius: wp(12),
-              paddingVertical: hp(14),
+              flexDirection: 'row',
               alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: hp(16),
             }}
           >
             <Text
               style={{
-                fontSize: fp(15),
-                fontWeight: '600',
-                color: COLORS.white,
+                fontSize: fp(18),
+                fontWeight: '700',
+                color: COLORS.textPrimary,
               }}
             >
-              {isLastSlide ? '업로드 시작하기' : '다음'}
+              파일 업로드 가이드
             </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.86}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              onPress={() => onClose()}
+            >
+              <Ionicons name="close" size={wp(22)} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+          </View>
+
+          {/* ── 슬라이드 페이저 (압축 구역) ── */}
+          <View style={{ height: hp(260) }}>
+            <ScrollView
+              ref={scrollRef}
+              horizontal
+              pagingEnabled
+              bounces={false}
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={handleMomentumEnd}
+              scrollEventThrottle={16}
+            >
+              {GUIDE_SLIDES.map((slide) => (
+                <View
+                  key={slide.key}
+                  style={{ width: MODAL_WIDTH - wp(48), alignItems: 'center' }}
+                >
+                  {/* 미니 목업 미리보기 영역 (압축) */}
+                  <View style={{ marginBottom: hp(20) }}>
+                    <LinearGradient
+                      colors={slide.gradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={{
+                        width: wp(200),
+                        height: hp(140),
+                        borderRadius: wp(16),
+                        padding: wp(12),
+                        justifyContent: 'center',
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.15,
+                        shadowRadius: 8,
+                        elevation: 4,
+                      }}
+                    >
+                      {slide.key === 'prepare' ? (
+                        <PreparePreview />
+                      ) : slide.key === 'analyze' ? (
+                        <AnalyzePreview />
+                      ) : (
+                        <ReviewPreview />
+                      )}
+                    </LinearGradient>
+                  </View>
+
+                  {/* 슬라이드 텍스트: 설명글은 제거하고 제목만 남김 */}
+                  <Text
+                    style={{
+                      fontSize: fp(18),
+                      fontWeight: '700',
+                      color: COLORS.textPrimary,
+                      lineHeight: fp(24),
+                      textAlign: 'center',
+                    }}
+                  >
+                    {slide.title}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* ── 푸터 (인디케이터, 다시 보지 않기 - 다음 버튼 제거됨) ── */}
+          <View
+            style={{
+              marginTop: hp(12),
+              gap: hp(16),
+              alignItems: 'center',
+            }}
+          >
+            {/* 페이지 인디케이터 도트 */}
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: wp(6) }}>
+              {GUIDE_SLIDES.map((slide, index) => (
+                <View
+                  key={slide.key}
+                  style={{
+                    width: index === currentIndex ? wp(20) : wp(6),
+                    height: hp(6),
+                    borderRadius: 99,
+                    backgroundColor: index === currentIndex ? COLORS.primary : COLORS.border,
+                  }}
+                />
+              ))}
+            </View>
+
+            {/* 다시 보지 않기 섹션 제거 */}
+          </View>
         </View>
       </View>
     </Modal>

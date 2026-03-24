@@ -18,7 +18,7 @@ import { styles } from './CalendarGuideModal.styles';
 
 interface CalendarGuideModalProps {
   visible: boolean;
-  onClose: (hideForever: boolean) => void;
+  onClose: () => void;
 }
 
 const GUIDE_SLIDES = [
@@ -46,6 +46,7 @@ const GUIDE_SLIDES = [
 ] as const;
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const MODAL_WIDTH = SCREEN_WIDTH - wp(48); // [UX-Fix] 소비날씨/엑셀 가이드와 동일한 너비 확보
 
 export default function CalendarGuideModal({
   visible,
@@ -54,7 +55,6 @@ export default function CalendarGuideModal({
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [hideForever, setHideForever] = useState(false);
 
   useEffect(() => {
     if (!visible) {
@@ -62,7 +62,6 @@ export default function CalendarGuideModal({
     }
 
     setCurrentIndex(0);
-    setHideForever(false);
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ x: 0, animated: false });
     });
@@ -71,105 +70,84 @@ export default function CalendarGuideModal({
   const isLastSlide = currentIndex === GUIDE_SLIDES.length - 1;
 
   function handleMomentumEnd(event: NativeSyntheticEvent<NativeScrollEvent>) {
-    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+    const nextIndex = Math.round(
+      event.nativeEvent.contentOffset.x / (MODAL_WIDTH - wp(48)),
+    );
     setCurrentIndex(nextIndex);
   }
 
-  function handleNext() {
-    if (isLastSlide) {
-      onClose(hideForever);
-      return;
-    }
-
-    scrollRef.current?.scrollTo({
-      x: SCREEN_WIDTH * (currentIndex + 1),
-      animated: true,
-    });
-  }
-
   return (
-    <Modal visible={visible} animationType="fade" transparent={false} onRequestClose={() => onClose(hideForever)}>
-      <View style={styles.container}>
-        <View style={[styles.header, { paddingTop: insets.top + hp(10) }]}>
-          <Text style={styles.headerTitle}>캘린더 가이드</Text>
-          <TouchableOpacity
-            activeOpacity={0.86}
-            style={styles.closeButton}
-            onPress={() => onClose(hideForever)}
-          >
-            <Ionicons name="close" size={wp(18)} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          pagingEnabled
-          bounces={false}
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={handleMomentumEnd}
-          style={styles.pager}
-        >
-          {GUIDE_SLIDES.map((slide) => (
-            <View key={slide.key} style={[styles.slide, { width: SCREEN_WIDTH }]}>
-              <View style={styles.previewWrap}>
-                <LinearGradient
-                  colors={slide.gradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.phoneFrame}
-                >
-                  {slide.key === 'overview' ? (
-                    <OverviewPreview />
-                  ) : slide.key === 'memo' ? (
-                    <MemoPreview />
-                  ) : (
-                    <UploadPreview />
-                  )}
-                </LinearGradient>
-              </View>
-
-              <Text style={styles.slideTitle}>{slide.title}</Text>
-              <Text style={styles.slideDescription}>{slide.description}</Text>
-            </View>
-          ))}
-        </ScrollView>
-
-        <View style={[styles.footer, { paddingBottom: insets.bottom + hp(16) }]}>
-          <View style={styles.indicatorRow}>
-            {GUIDE_SLIDES.map((slide, index) => (
-              <View
-                key={slide.key}
-                style={[
-                  styles.indicatorDot,
-                  index === currentIndex && styles.indicatorDotActive,
-                ]}
-              />
-            ))}
-          </View>
-
-          <View style={styles.preferenceRow}>
+    <Modal
+      visible={visible}
+      animationType="fade"
+      transparent={true}
+      onRequestClose={() => onClose()}
+    >
+      <View style={styles.backdrop}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>캘린더 가이드</Text>
             <TouchableOpacity
               activeOpacity={0.86}
-              style={styles.preferenceTouchable}
-              onPress={() => setHideForever((current) => !current)}
+              style={styles.closeButton}
+              onPress={() => onClose()}
             >
-              <Ionicons
-                name={hideForever ? 'checkmark-circle' : 'ellipse-outline'}
-                size={wp(18)}
-                color={hideForever ? COLORS.primary : COLORS.textTertiary}
-              />
-              <Text style={styles.preferenceText}>다시 보지 않기</Text>
+              <Ionicons name="close" size={wp(22)} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            activeOpacity={0.9}
-            style={[styles.ctaButton, isLastSlide && styles.ctaButtonFinal]}
-            onPress={handleNext}
+          <ScrollView
+            ref={scrollRef}
+            horizontal
+            pagingEnabled
+            bounces={false}
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={handleMomentumEnd}
+            style={styles.pager}
+            scrollEventThrottle={16}
           >
-            <Text style={styles.ctaButtonText}>{isLastSlide ? '시작하기' : '다음'}</Text>
-          </TouchableOpacity>
+            {GUIDE_SLIDES.map((slide) => (
+              <View
+                key={slide.key}
+                style={[styles.slide, { width: MODAL_WIDTH - wp(48) }]}
+              >
+                <View style={styles.previewWrap}>
+                  <LinearGradient
+                    colors={slide.gradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.phoneFrame}
+                  >
+                    {slide.key === 'overview' ? (
+                      <OverviewPreview />
+                    ) : slide.key === 'memo' ? (
+                      <MemoPreview />
+                    ) : (
+                      <UploadPreview />
+                    )}
+                  </LinearGradient>
+                </View>
+
+                <Text style={styles.slideTitle}>{slide.title}</Text>
+              </View>
+            ))}
+          </ScrollView>
+
+          <View style={styles.footer}>
+            <View style={styles.indicatorRow}>
+              {GUIDE_SLIDES.map((slide, index) => (
+                <View
+                  key={slide.key}
+                  style={[
+                    styles.indicatorDot,
+                    index === currentIndex && styles.indicatorDotActive,
+                  ]}
+                />
+              ))}
+            </View>
+
+            {/* 다시 보지 않기 섹션 제거 (수동 호출 방식으로 변경) */}
+          </View>
         </View>
       </View>
     </Modal>
@@ -186,7 +164,7 @@ function OverviewPreview() {
           <Text style={[styles.previewChipText, styles.previewChipTextActive]}>캘린더형</Text>
         </View>
         <View style={styles.previewGhostButton}>
-          <Ionicons name="swap-horizontal-outline" size={wp(14)} color={COLORS.textSecondary} />
+          <Ionicons name="swap-horizontal-outline" size={wp(12)} color={COLORS.textSecondary} />
         </View>
       </View>
 
@@ -195,7 +173,7 @@ function OverviewPreview() {
           <View key={day} style={styles.previewCalendarCell}>
             {index === 2 ? (
               <View style={styles.previewMemoBadge}>
-                <MemoIcon size={11} />
+                <MemoIcon size={9} />
               </View>
             ) : null}
             <Text style={styles.previewCalendarNumber}>{day}</Text>
@@ -208,7 +186,7 @@ function OverviewPreview() {
         <View style={styles.previewChip}>
           <Text style={styles.previewChipText}>전체내역형</Text>
         </View>
-        <Ionicons name="chevron-forward" size={wp(14)} color={COLORS.textSecondary} />
+        <Ionicons name="chevron-forward" size={wp(12)} color={COLORS.textSecondary} />
       </View>
     </View>
   );
@@ -220,7 +198,7 @@ function MemoPreview() {
       <View style={styles.detailWeatherCard}>
         <View style={styles.previewTopRow}>
           <Text style={styles.previewChipText}>6월 12일 (목)</Text>
-          <MemoIcon size={14} />
+          <MemoIcon size={12} />
         </View>
         <Text style={styles.memoFieldBody}>맑은 날 외식 지출이 조금 높아요.</Text>
       </View>
@@ -264,7 +242,7 @@ function UploadPreview() {
       </View>
 
       <View style={styles.uploadCard}>
-        <Ionicons name="cloud-upload-outline" size={wp(24)} color={COLORS.primary} />
+        <Ionicons name="cloud-upload-outline" size={wp(20)} color={COLORS.primary} />
         <Text style={styles.uploadCardTitle}>파일 한 번에 업로드</Text>
         <Text style={styles.uploadCardHint}>CSV는 카드 소비 기준으로 처리됩니다.</Text>
       </View>

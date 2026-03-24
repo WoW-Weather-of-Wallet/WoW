@@ -16,6 +16,7 @@ interface CalendarHeroCardProps {
   onPressPrevMonth: () => void;
   onPressNextMonth: () => void;
   onPressAdd?: () => void;
+  onPressInfo?: () => void;
 }
 
 export default function CalendarHeroCard({
@@ -27,6 +28,7 @@ export default function CalendarHeroCard({
   onPressPrevMonth,
   onPressNextMonth,
   onPressAdd,
+  onPressInfo,
 }: CalendarHeroCardProps) {
   // 이전 시도:
   // - 월 이동을 별도 상단 바로 분리했지만, 기존 화면 흐름과 시각 톤이 너무 달라졌습니다.
@@ -42,7 +44,12 @@ export default function CalendarHeroCard({
       style={styles.heroCard}
     >
       <View style={styles.headerRow}>
-        <Text style={styles.screenTitle}>캘린더</Text>
+        <View style={styles.titleWrap}>
+          <Text style={styles.screenTitle}>캘린더</Text>
+          <TouchableOpacity activeOpacity={0.7} style={styles.infoButton} onPress={onPressInfo}>
+            <Ionicons name="information-circle-outline" size={wp(18)} color={COLORS.white} />
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity activeOpacity={0.9} style={styles.addButton} onPress={onPressAdd}>
           <Text style={styles.addButtonText}>+ 내역 추가</Text>
         </TouchableOpacity>
