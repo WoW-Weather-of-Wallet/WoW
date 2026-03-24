@@ -113,14 +113,14 @@ export default function MainHomeScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <DataSourceNotice
+        {false && <DataSourceNotice
           type={liveHeader ? 'mixed' : 'mock'}
           description={
             liveHeader
               ? '소비 날씨와 주간 미리보기는 캘린더 API를 사용하고, 예산·인사이트·일정 카드는 현재 mock 데이터입니다.'
               : '현재 홈 화면은 mock 데이터가 포함되어 있습니다. 로그인 또는 API 응답 상태에 따라 일부 값은 실데이터로 바뀝니다.'
           }
-        />
+        />}
         <HomeTodayWeatherCard
           weatherName={liveHeader?.weatherName}
           description={liveHeader?.description}

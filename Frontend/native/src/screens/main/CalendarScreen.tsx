@@ -135,7 +135,7 @@ export default function CalendarScreen() {
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.backgroundSecondary} />
 
       <View style={[styles.topDock, { paddingTop: insets.top + hp(12) }]}>
-        <DataSourceNotice
+        {false && <DataSourceNotice
           type={headerFetchState === 'live' ? 'mixed' : 'mock'}
           description={
             headerFetchState === 'live'
@@ -143,7 +143,7 @@ export default function CalendarScreen() {
               : '현재 캘린더 화면은 mock 또는 fallback 데이터가 포함되어 있습니다.'
           }
           style={styles.notice}
-        />
+        />}
         {/*
           원래 화면 기준:
           - 보라색 히어로 카드가 화면 첫 인상을 만들고 있었습니다.

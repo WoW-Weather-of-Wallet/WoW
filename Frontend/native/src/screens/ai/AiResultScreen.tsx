@@ -366,11 +366,11 @@ export default function AiResultScreen({ navigation }: any) {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <DataSourceNotice
+        {false && <DataSourceNotice
           type="mock"
           description="현재 AI 결과 리포트는 시뮬레이션용 mock 데이터로 표시되고 있습니다."
           style={{ marginBottom: hp(16) }}
-        />
+        />}
         <Animated.View
           entering={FadeInDown.duration(800)}
           style={styles.header}

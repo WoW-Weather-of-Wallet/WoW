@@ -170,7 +170,7 @@ export default function AiLoadingScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <DataSourceNotice
+      {false && <DataSourceNotice
         type="mock"
         description="현재 AI 분석 로딩은 실제 서버 응답이 아니라 시뮬레이션 흐름으로 동작합니다."
         style={{
@@ -180,7 +180,7 @@ export default function AiLoadingScreen({ navigation }: any) {
           right: wp(24),
           zIndex: 2,
         }}
-      />
+      />}
       <Animated.View 
         key={currentStep} 
         entering={FadeIn.duration(800)}

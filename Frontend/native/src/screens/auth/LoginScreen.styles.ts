@@ -42,28 +42,6 @@ export const styles = StyleSheet.create({
   },
 
   /* ── 개발용 진입 카드 ── */
-  devEntryCard: {
-    marginBottom: hp(18),
-    padding: wp(16),
-    borderRadius: RADIUS.xl,
-    backgroundColor: COLORS.primary50,
-    borderWidth: 1,
-    borderColor: COLORS.primarySoft,
-  },
-  devEntryTitle: {
-    fontSize: fp(16),
-    fontFamily: FONTS.bold,
-    color: COLORS.primaryDark,
-    marginBottom: hp(6),
-  },
-  devEntryDescription: {
-    fontSize: fp(13),
-    lineHeight: fp(19),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-    marginBottom: hp(12),
-  },
-
   /* ── 로그인 폼 ── */
   formContainer: {
     marginBottom: hp(8),
