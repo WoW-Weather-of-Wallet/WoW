@@ -102,6 +102,18 @@ public class UserService {
     public void deleteUser(String identifier) {
         User user = findUserByIdentifier(identifier);
 
+        String phoneNumber = PhoneNumberUtils.normalize(user.getPhoneNumber());
+        if (phoneNumber.isBlank()) {
+            throw new BadRequestException("등록된 휴대폰 번호가 없어 회원 탈퇴를 진행할 수 없습니다.");
+        }
+
+        /*
+         * 회원 탈퇴는 SMS 본인 인증 완료 상태를 전제로 처리합니다.
+         * 삭제 도중 예외가 발생하면 사용자가 SMS 인증부터 다시 하지 않도록,
+         * verified 상태는 트랜잭션 커밋 이후에만 소비합니다.
+         */
+        smsService.checkVerified(phoneNumber);
+
         String redisKey = user.getUserId() != null ? user.getUserId() : user.getSsafyOauthId();
         redisTemplate.delete(RedisKeys.REFRESH_TOKEN_PREFIX + redisKey);
         redisTemplate.delete(RedisKeys.LOGIN_ATTEMPT_PREFIX + redisKey);
@@ -109,6 +121,7 @@ public class UserService {
         fcmService.deleteTokensByUserId(redisKey);
 
         userRepository.delete(user);
+        smsService.consumeVerifiedAfterCommit(phoneNumber);
     }
 
     @Transactional
