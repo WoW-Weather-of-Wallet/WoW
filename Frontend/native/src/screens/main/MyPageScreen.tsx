@@ -18,6 +18,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import { COLORS, hp, wp } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
@@ -469,7 +470,11 @@ export default function MyPageScreen() {
               [테스트용] FCM 기기 토큰
             </Text>
             <TouchableOpacity 
-              onPress={() => Alert.alert('FCM 토큰', fcmToken)}
+              activeOpacity={0.7}
+              onPress={async () => {
+                await Clipboard.setStringAsync(fcmToken);
+                Alert.alert('복사 완료', 'FCM 토큰이 클립보드에 복사되었습니다. 테스트 시 붙여넣기를 사용하세요.');
+              }}
               style={{ 
                 padding: wp(12), 
                 backgroundColor: COLORS.gray50, 
@@ -485,9 +490,12 @@ export default function MyPageScreen() {
               <Text numberOfLines={1} style={{ fontSize: wp(10), color: COLORS.gray500, flex: 1 }}>
                 {fcmToken}
               </Text>
-              <Text style={{ fontSize: wp(10), color: COLORS.primary, fontWeight: 'bold', marginLeft: wp(8) }}>
-                복사/확인
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: wp(4), marginLeft: wp(8) }}>
+                <Ionicons name="copy-outline" size={wp(14)} color={COLORS.primary} />
+                <Text style={{ fontSize: wp(10), color: COLORS.primary, fontWeight: 'bold' }}>
+                  복사하기
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
         )}
