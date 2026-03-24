@@ -207,7 +207,7 @@ export async function getCalendarMonthly(params: CalendarMonthlyParams) {
 
 export async function getCalendarDaily(params: CalendarDailyParams) {
   const response = await nativeApi.get<CalendarApiResponse<CalendarDailyResponse>>(
-    '/api/v1/calendar/daily',
+    '/api/v1/calendar/daily/transactions',
     {
       params,
     },
