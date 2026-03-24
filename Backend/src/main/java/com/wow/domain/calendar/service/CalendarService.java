@@ -314,13 +314,13 @@ public class CalendarService {
                 .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
         // 날짜별로 같은 날짜 CARD 타입 삭제
-        Set<LocalDate> dates = items.stream()
-                .map(TransactionCustomRequest.TransactionCustomItem::getTransactionDate)
-                .collect(Collectors.toSet());
-
-        for (LocalDate date : dates) {
-            deleteTransactionsByDateAndType(userId, date, "CARD");
-        }
+//        Set<LocalDate> dates = items.stream()
+//                .map(TransactionCustomRequest.TransactionCustomItem::getTransactionDate)
+//                .collect(Collectors.toSet());
+//
+//        for (LocalDate date : dates) {
+//            deleteTransactionsByDateAndType(userId, date, "CARD");
+//        }
 
         List<Transaction> entities = items.stream()
                 .map(item -> {
@@ -472,7 +472,8 @@ public class CalendarService {
                                             t.getCategory() != null
                                                     ? t.getCategory().getCategoryName() : null,
                                             t.getAmount().intValue(),
-                                            fixedNames.contains(t.getMerchantName())
+                                            fixedNames.contains(t.getMerchantName()),
+                                            t.getPaymentType()  // ← 이것만 추가
                                     ))
                                     .toList();
 
@@ -540,13 +541,13 @@ public class CalendarService {
                 .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
         // 같은 날짜 CASH 타입만 삭제
-        Set<LocalDate> dates = items.stream()
-                .map(TransactionCustomRequest.TransactionCustomItem::getTransactionDate)
-                .collect(Collectors.toSet());
-
-        for (LocalDate date : dates) {
-            deleteTransactionsByDateAndType(userId, date, "CASH");
-        }
+//        Set<LocalDate> dates = items.stream()
+//                .map(TransactionCustomRequest.TransactionCustomItem::getTransactionDate)
+//                .collect(Collectors.toSet());
+//
+//        for (LocalDate date : dates) {
+//            deleteTransactionsByDateAndType(userId, date, "CASH");
+//        }
 
         List<Transaction> entities = items.stream()
                 .map(item -> {
