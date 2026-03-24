@@ -19,6 +19,7 @@ type WeatherVisual = {
   type: string;
   hint: React.ReactNode;
   icon: typeof SunnyIcon;
+  color: string; // [UX-Fix] 모달 가이드와 통일된 색상 정보 추가
 };
 
 const FALLBACK_WEATHERS: WeatherVisual[] = [
@@ -31,6 +32,7 @@ const FALLBACK_WEATHERS: WeatherVisual[] = [
       </Text>
     ),
     icon: SunnyIcon,
+    color: '#F59E0B',
   },
   {
     type: '구름',
@@ -41,6 +43,7 @@ const FALLBACK_WEATHERS: WeatherVisual[] = [
       </Text>
     ),
     icon: CloudyIcon,
+    color: '#FFFFFF', // [User-Request] 회색에서 흰색으로 변경
   },
   {
     type: '흐림',
@@ -51,6 +54,7 @@ const FALLBACK_WEATHERS: WeatherVisual[] = [
       </Text>
     ),
     icon: OvercastIcon,
+    color: '#64748B',
   },
   {
     type: '비',
@@ -61,6 +65,7 @@ const FALLBACK_WEATHERS: WeatherVisual[] = [
       </Text>
     ),
     icon: RainIcon,
+    color: '#1AABFF', // 메인 카드 배경색(primary)과 구분되도록 약간 밝은 블루 적용
   },
   {
     type: '폭우',
@@ -71,14 +76,16 @@ const FALLBACK_WEATHERS: WeatherVisual[] = [
       </Text>
     ),
     icon: HeavyRainIcon,
+    color: '#1E3A8A',
   },
 ];
 
+// 안내 모달용 가이드 데이터
 const WEATHER_GUIDE = [
   { type: '맑음', detail: '최근 평균 대비 10% 이하', icon: SunnyIcon, color: '#F59E0B' },
-  { type: '구름', detail: '최근 평균 대비 10~20%', icon: CloudyIcon, color: '#94A3B8' },
+  { type: '구름', detail: '최근 평균 대비 10~20%', icon: CloudyIcon, color: '#FFFFFF' }, // 회색에서 흰색으로 변경
   { type: '흐림', detail: '최근 평균 대비 20~30%', icon: OvercastIcon, color: '#64748B' },
-  { type: '비', detail: '최근 평균 대비 30~50%', icon: RainIcon, color: '#3B82F6' },
+  { type: '비', detail: '최근 평균 대비 30~50%', icon: RainIcon, color: '#1AABFF' },
   { type: '폭우', detail: '최근 평균 대비 50% 초과', icon: HeavyRainIcon, color: '#1E3A8A' },
 ] as const;
 
@@ -106,6 +113,7 @@ export default function HomeTodayWeatherCard({
         type: '불러오는 중',
         hint: '오늘의 소비 날씨를 준비하고 있어요.',
         icon: CloudyIcon,
+        color: '#FFFFFF',
       } satisfies WeatherVisual;
     }
 
@@ -127,7 +135,8 @@ export default function HomeTodayWeatherCard({
       <View className="bg-primary-light/10 p-5">
         <View className="flex-row items-center">
           <View className="h-16 w-16 items-center justify-center rounded-2xl bg-white/20">
-            <WeatherIcon size={wp(36)} color="#FFFFFF" />
+            {/* [UX-Fix] 모달과 동일한 유색 아이콘을 출력하여 시각적 통일성 부여 */}
+            <WeatherIcon size={wp(36)} color={weatherData.color} />
           </View>
 
           <View className="ml-4 flex-1">
@@ -178,9 +187,10 @@ export default function HomeTodayWeatherCard({
                 const GuideIcon = item.icon;
 
                 return (
-                  <View key={item.type} className="mb-3 flex-row items-center">
-                    <View className="w-10 items-center justify-center">
-                      <GuideIcon size={24} color={item.color} />
+                  <View key={item.type} className="mb-4 flex-row items-center">
+                    {/* [UX-Fix] 흰색 배경에서도 구름(흰색)이 잘 보이도록 소프트한 배경 서클 추가 */}
+                    <View className="h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+                      <GuideIcon size={22} color={item.color} />
                     </View>
                     <View className="ml-3 flex-1">
                       <Text className="text-base font-bold text-gray-800">{item.type}</Text>
@@ -225,6 +235,7 @@ function resolveWeatherVisual(
       type: normalizedName || '폭우',
       hint,
       icon: HeavyRainIcon,
+      color: '#1E3A8A',
     };
   }
 
@@ -233,6 +244,7 @@ function resolveWeatherVisual(
       type: normalizedName || '비',
       hint,
       icon: RainIcon,
+      color: '#1AABFF',
     };
   }
 
@@ -245,6 +257,7 @@ function resolveWeatherVisual(
       type: normalizedName || '흐림',
       hint,
       icon: OvercastIcon,
+      color: '#64748B',
     };
   }
 
@@ -253,6 +266,7 @@ function resolveWeatherVisual(
       type: normalizedName || '구름',
       hint,
       icon: CloudyIcon,
+      color: '#FFFFFF',
     };
   }
 
@@ -265,6 +279,7 @@ function resolveWeatherVisual(
       type: normalizedName || '맑음',
       hint,
       icon: SunnyIcon,
+      color: '#F59E0B',
     };
   }
 
@@ -272,5 +287,6 @@ function resolveWeatherVisual(
     type: normalizedName || '소비날씨',
     hint,
     icon: CloudyIcon,
+    color: '#FFFFFF',
   };
 }
