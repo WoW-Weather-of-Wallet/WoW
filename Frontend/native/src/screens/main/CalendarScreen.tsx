@@ -73,7 +73,6 @@ export default function CalendarScreen() {
     handleOpenFixedExpensePicker,
     handleSaveManualEntries,
     handleSaveExcelEntries,
-    handleDeleteHistoryTransaction,
     handleSaveMemo,
   } = useCalendarMockState();
 
@@ -174,7 +173,6 @@ export default function CalendarScreen() {
             groups={transactionGroups}
             emptyTitle={emptyHistoryTitle}
             emptyDescription={emptyHistoryDescription}
-            onDeleteTransaction={handleDeleteHistoryTransaction}
           />
         )}
       </ScrollView>
