@@ -13,6 +13,10 @@ export const styles = StyleSheet.create({
     height: wp(40),
     marginVertical: wp(24),
   },
+  compactContainer: {
+    height: wp(28),
+    marginVertical: 0,
+  },
   beadWrapper: {
     width: BEAD_SIZE * 2,
     height: BEAD_SIZE * 2,

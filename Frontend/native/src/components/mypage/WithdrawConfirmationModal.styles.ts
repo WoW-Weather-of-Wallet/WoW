@@ -126,4 +126,24 @@ export const styles = StyleSheet.create({
     marginTop: hp(4),
     marginLeft: wp(4),
   },
+  /* ── SMS 인증번호 발송 버튼 ── */
+  sendCodeButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: hp(14),
+    borderRadius: RADIUS.full,
+    alignItems: 'center',
+  },
+  sendCodeButtonText: {
+    fontSize: fp(15),
+    fontFamily: FONTS.bold,
+    color: COLORS.white,
+  },
+  /* ── 인증 완료 안내 텍스트 ── */
+  verifiedText: {
+    fontSize: fp(13),
+    fontFamily: FONTS.medium,
+    color: COLORS.success,
+    textAlign: 'center',
+    marginTop: hp(4),
+  },
 });

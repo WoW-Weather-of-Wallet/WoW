@@ -51,7 +51,7 @@ export default function CalendarHeroCard({
           </TouchableOpacity>
         </View>
         <TouchableOpacity activeOpacity={0.9} style={styles.addButton} onPress={onPressAdd}>
-          <Text style={styles.addButtonText}>+ 직접 입력</Text>
+          <Text style={styles.addButtonText}>+ 내역 추가</Text>
         </TouchableOpacity>
       </View>
 

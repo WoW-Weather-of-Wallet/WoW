@@ -28,12 +28,9 @@ import SecureKeypad from '../../components/common/SecureKeypad';
 import SettingSection from '../../components/mypage/SettingSection';
 import SettingItem from '../../components/mypage/SettingItem';
 import AgreedTermsModal from '../../components/mypage/AgreedTermsModal';
-import WithdrawConfirmationModal from '../../components/mypage/WithdrawConfirmationModal';
 import {
   changePassword,
-  deleteAccount,
   getProfile,
-  login as loginRequest,
   logout as logoutRequest,
   type NativeUserProfileResponse,
 } from '../../services/auth';
@@ -100,9 +97,8 @@ export default function MyPageScreen() {
   }, []);
   const [isPinSubmitting, setIsPinSubmitting] = useState(false);
 
-  // 약관 및 회원 탈퇴 관련 상태
+  // 약관 모달 상태
   const [isTermsModalVisible, setIsTermsModalVisible] = useState(false);
-  const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
 
   const appVersion = useMemo(() => Constants.expoConfig?.version ?? '1.0.0', []);
 
@@ -271,42 +267,23 @@ export default function MyPageScreen() {
     ]);
   };
 
-  /* ── 회원 탈퇴 처리 ── */
-  const onConfirmWithdraw = async (password: string) => {
-    if (isSubmitting) return;
-
-    // 1. 서버 실질 인증 (Re-authentication)
-    const userId = profile?.userId || sessionUser?.userId;
-    if (!userId) {
-      Alert.alert('오류', '사용자 정보를 확인할 수 없습니다. 다시 로그인해 주세요.');
+  /**
+   * 회원 탈퇴 화면으로 이동합니다.
+   * - 일반 회원·SSAFY 회원 모두 SMS 본인 인증으로 통일합니다.
+   * - WithdrawScreen 에서 SMS 인증 → 탈퇴 처리까지 모두 담당합니다.
+   */
+  const handleDeleteAccount = () => {
+    if (!profile?.phoneNumber) {
+      Alert.alert('회원 탈퇴 안내', '등록된 휴대폰 번호를 확인한 뒤 다시 시도해주세요.');
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      // Login API를 호출하여 입력된 비밀번호가 정확한지 확인합니다.
-      // (성공 시 토큰이 반환되지만, 여기서는 인증 성공 여부만 활용합니다.)
-      await loginRequest({ userId, pw: password });
-
-      // 2. 인증 성공 시에만 실제 탈퇴 진행
-      await deleteAccount();
-      
-      await clearPersistedAuthSession();
-      logout();
-      Alert.alert('탈퇴 완료', '회원 탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.');
-      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
-    } catch (error: any) {
-      // 인증 실패(401) 또는 기타 에러 처리
-      const status = error?.response?.status;
-      if (status === 401 || status === 400) {
-        Alert.alert('비밀번호 불일치', '현재 비밀번호가 올바르지 않습니다. 다시 확인해 주세요.');
-      } else {
-        const message = extractApiErrorMessage(error, '회원 탈퇴를 처리하지 못했어요. 잠시 후 다시 시도해주세요.');
-        Alert.alert('탈퇴 실패', message);
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+    navigation.navigate('Withdraw', {
+      phoneNumber: profile?.phoneNumber ?? '',
+      name: profile?.name ?? '',
+      birthDate: profile?.birthDate ?? '',
+      gender: profile?.gender ?? '',
+    });
   };
 
   const displayName = profile?.name ?? sessionUser?.name ?? '사용자';
@@ -454,9 +431,9 @@ export default function MyPageScreen() {
             <Text style={[styles.readOnlyLabel, { color: COLORS.textPrimary }]}>로그아웃</Text>
             <Ionicons name="log-out-outline" size={wp(20)} color={COLORS.textSecondary} />
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.readOnlyInput, { borderColor: COLORS.error + '30' }]} 
-            onPress={() => setIsWithdrawModalVisible(true)}
+          <TouchableOpacity
+            style={[styles.readOnlyInput, { borderColor: COLORS.error + '30' }]}
+            onPress={handleDeleteAccount}
           >
             <Text style={[styles.readOnlyLabel, { color: COLORS.error }]}>회원 탈퇴</Text>
             <Ionicons name="exit-outline" size={wp(20)} color={COLORS.error} />
@@ -649,12 +626,7 @@ export default function MyPageScreen() {
         onClose={() => setIsTermsModalVisible(false)}
       />
 
-      {/* ── 회원 탈퇴 확인 모달 (보안 강화) ── */}
-      <WithdrawConfirmationModal
-        visible={isWithdrawModalVisible}
-        onClose={() => setIsWithdrawModalVisible(false)}
-        onConfirm={onConfirmWithdraw}
-      />
+      {/* 회원 탈퇴는 WithdrawScreen(별도 화면)에서 SMS 인증 후 처리됩니다 */}
     </View>
   );
 }
