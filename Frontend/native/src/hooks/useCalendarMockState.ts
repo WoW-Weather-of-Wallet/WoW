@@ -423,6 +423,69 @@ export function useCalendarMockState() {
     return `${displayedMonth.getFullYear()}-${String(displayedMonth.getMonth() + 1).padStart(2, '0')}-${String(defaultDay).padStart(2, '0')}`;
   }, [displayedMonth, displayedMonthOffset, selectedDateKey, today]);
 
+  async function reloadDisplayedMonthCalendarData() {
+    if (!accessToken) {
+      return;
+    }
+
+    const year = displayedMonth.getFullYear();
+    const month = displayedMonth.getMonth() + 1;
+    const monthlyResponse = await getCalendarMonthly({ year, month });
+    const monthDateKeys = buildMonthDateKeys(displayedMonth);
+    const dailyResponses = await Promise.all(
+      monthDateKeys.map(async (dateKey) => {
+        try {
+          return await getCalendarDaily({ date: dateKey });
+        } catch (error) {
+          console.warn('Failed to load calendar daily detail', dateKey, error);
+          return null;
+        }
+      }),
+    );
+
+    const monthDetails: Record<string, CalendarDayDetail> = {};
+
+    dailyResponses.forEach((dailyResponse) => {
+      if (!dailyResponse) {
+        return;
+      }
+
+      const mappedDetail = mapDailyResponseToDetail(dailyResponse);
+      monthDetails[mappedDetail.dateKey] = mappedDetail;
+    });
+
+    const nextCalendarDaySource = mergeMonthlyAndDailyCalendarDays(
+      monthlyResponse,
+      dailyResponses,
+    );
+
+    setCalendarDaySource((current) =>
+      replaceMonthCalendarDaySource(current, displayedMonth, nextCalendarDaySource),
+    );
+    setCalendarDayDetails((current) =>
+      replaceMonthCalendarDayDetails(current, displayedMonth, monthDetails),
+    );
+  }
+
+  async function reloadDisplayedMonthTransactionsData() {
+    if (!accessToken) {
+      return;
+    }
+
+    const transactionsResponse = await getCalendarTransactions({
+      year: displayedMonth.getFullYear(),
+      month: displayedMonth.getMonth() + 1,
+    });
+
+    setTransactionGroups((current) =>
+      replaceMonthTransactionGroups(
+        current,
+        displayedMonth,
+        mapCalendarTransactionsResponse(transactionsResponse),
+      ),
+    );
+  }
+
   function handleMoveMonth(direction: 'prev' | 'next') {
     setDisplayedMonthOffset((current) => current + (direction === 'next' ? 1 : -1));
   }
@@ -775,6 +838,13 @@ export function useCalendarMockState() {
         // 날짜 단위로 나눠 순차 저장합니다.
         await confirmCalendarTransactions(request);
       }
+
+      await Promise.all([
+        reloadDisplayedMonthCalendarData(),
+        reloadDisplayedMonthTransactionsData(),
+      ]);
+      setIsAddEntryVisible(false);
+      return;
     }
 
     const patch = buildManualEntryPatch(entries);
