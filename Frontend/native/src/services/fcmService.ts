@@ -1,5 +1,8 @@
-import * as Notifications from 'expo-notifications'; import { Platform } from 'react-native';
-import Constants from 'expo-constants'; import { nativeApi } from './auth';
+import * as Notifications from 'expo-notifications'; 
+import { Platform, Alert } from 'react-native';
+import Constants from 'expo-constants'; 
+import { nativeApi } from './auth';
+import { navigationRef } from '../navigation/RootNavigator';
 import { useAuthStore } from '../store/authStore';
 
 // Android Expo Go 환경 여부 확인 (SDK 53/54 이후 알림 기능 미지원 대응)
@@ -9,17 +12,15 @@ const IS_ANDROID_EXPO_GO = Platform.OS === 'android' && Constants.executionEnvir
 // 알림이 도착했을 때의 동작 설정
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
-    // AI 분석 결과 알림 등 특정 액션인 경우, 앱 사용 중에는 시스템 팝업을 띄우지 않고
-    // 인앱 토스트만 보여주기 위해 shouldShowAlert를 false로 설정할 수 있습니다.
-    const action = notification.request.content.data?.action;
-    const isAiFeedback = action === 'ai_feedback';
-
+    // [UX 개선] 앱이 포그라운드(실행 중)일 때는 시스템 알림 팝업을 띄우지 않습니다.
+    // 대신 UI(토스트, 배너 등)를 통해 알림 내용을 처리하도록 유도합니다.
+    // (사용자가 의도적으로 앱을 사용 중일 때 알림이 화면을 가리는 현상을 방지)
     return {
-      shouldShowAlert: !isAiFeedback, // AI 알림은 포그라운드에서 시스템 팝업 노출 안 함 (토스트로 대체)
-      shouldPlaySound: true,
+      shouldShowAlert: false, // 시스템 알림 팝업 억제
+      shouldPlaySound: true,  // 소리는 재생 (진동 포함)
       shouldSetBadge: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
+      shouldShowBanner: false,
+      shouldShowList: false,
     };
   },
 });
@@ -128,20 +129,61 @@ export const fcmService = {
   },
 
   /**
-   * [P2] 알림 수신 리스너 등록
-   * 앱 실행 중 알림이 도착했을 때의 추가 로직을 처리합니다.
+   * [P2] 알림 관련 전방(Foreground) 리스너 초기화
+   * 앱 실행 중 알림 수신 및 토큰 갱신 이벤트를 감시합니다.
    */
   initForegroundListeners() {
+    // 1. 알림 수신 리스너 (앱 실행 중 알림 도착 시)
     Notifications.addNotificationReceivedListener(notification => {
-      const data = notification.request.content.data;
+      const { title, body, data } = notification.request.content;
       const action = data?.action;
 
-      // AI 분석 완료 알림인 경우, 즉시 aiStore를 성공 상태로 변경하여 토스트 노출
+      console.log('[FCM] Foreground notification received:', action);
+
+      // A. AI 분석 완료 알림인 경우
+      // 프리미엄 애니메이션 배너(AiNotification)를 띄우기 위해 저장소 상태만 변경합니다.
       if (action === 'ai_feedback') {
-        // useAiStore를 동적으로 가져와서 상태 변경
         const { setSuccess } = require('../store/aiStore').useAiStore.getState();
         setSuccess({ completedAt: new Date().toISOString(), fromPush: true });
+        return;
       }
+      
+      // B. 그 외 주요 알림 (지출 추가, 캘린더 이동 등)
+      // 앱 사용을 방해하지 않으면서도 수신 사실을 알리기 위해 선택형 Alert를 띄웁니다.
+      if (action === 'add_record' || action === 'calendar_main') {
+        Alert.alert(
+          title || '알림 도착',
+          `${body}\n\n지금 해당 화면으로 이동하시겠습니까?`,
+          [
+            { text: '나중에', style: 'cancel' },
+            { 
+              text: '이동하기', 
+              onPress: () => {
+                // RootNavigator에서 관리하는 navigationRef를 통해 페이지 이동 처리
+                if (navigationRef.isReady()) {
+                  if (action === 'add_record') {
+                    navigationRef.navigate('MainTabs', {
+                      screen: 'Calendar',
+                      params: { action: 'add_record' }
+                    });
+                  } else {
+                    navigationRef.navigate('MainTabs', { screen: 'Calendar' });
+                  }
+                }
+              } 
+            }
+          ],
+          { cancelable: true }
+        );
+      }
+    });
+
+    // 2. 토큰 갱신 리스너 (구글이 기기 토큰을 강제로 변경했을 때)
+    // 서비스 런타임에 토큰이 바뀌어도 서버가 즉시 알 수 있도록 업데이트합니다.
+    Notifications.addPushTokenListener(tokenData => {
+      const newToken = tokenData.data;
+      console.log('[FCM] Token refreshed automatically:', newToken);
+      this.sendTokenToServer(newToken, 'POST');
     });
   },
 
