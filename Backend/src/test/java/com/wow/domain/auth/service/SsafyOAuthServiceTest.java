@@ -89,7 +89,11 @@ class SsafyOAuthServiceTest {
         verify(userTermRepository).saveAll(argThat((List<UserTerm> userTerms) ->
                 userTerms.size() == currentTerms.size()
                         && userTerms.stream().allMatch(UserTerm::isAgreed)
-                        && userTerms.stream().map(UserTerm::getTerm).toList().containsAll(currentTerms)
+                        // Compare by term id so the test does not depend on entity reference equality.
+                        && userTerms.stream()
+                        .map(userTerm -> userTerm.getTerm().getId())
+                        .toList()
+                        .containsAll(currentTerms.stream().map(Term::getId).toList())
                         && userTerms.stream().allMatch(userTerm -> userTerm.getUser() != null)
         ));
         verify(valueOperations).set("refresh:ssafy@example.com", "refresh-token", Duration.ofSeconds(1209600L));
