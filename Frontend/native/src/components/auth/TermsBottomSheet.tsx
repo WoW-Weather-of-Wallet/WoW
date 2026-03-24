@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   ActivityIndicator,
@@ -12,7 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, hp, wp } from '../../constants/theme';
-import { TermDocumentKey } from '../../constants/terms';
+import { TERM_DOCUMENT_KEYS, type TermDocumentKey } from '../../constants/terms';
 import { useTermDocuments } from '../../hooks/useTermDocuments';
 import { styles } from './TermsBottomSheet.styles';
 
@@ -23,6 +23,14 @@ interface TermsBottomSheetProps {
   flow?: 'FindId' | 'FindPw' | string;
 }
 
+type AgreementsState = Record<TermDocumentKey, boolean>;
+
+const INITIAL_AGREEMENTS: AgreementsState = {
+  service: false,
+  privacy: false,
+  telecom: false,
+};
+
 export default function TermsBottomSheet({
   visible,
   onClose,
@@ -32,33 +40,34 @@ export default function TermsBottomSheet({
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { documents, isLoading } = useTermDocuments(visible);
-  const [allAgreed, setAllAgreed] = useState(false);
-  const [agreements, setAgreements] = useState({
-    service: false,
-    privacy: false,
-    telecom: false,
-  });
+  const [agreements, setAgreements] = useState<AgreementsState>(INITIAL_AGREEMENTS);
 
   const isRecovery = flow === 'FindId' || flow === 'FindPw';
-  const isAllRequiredAgreed = isRecovery
-    ? agreements.privacy && agreements.telecom
-    : agreements.service && agreements.privacy && agreements.telecom;
 
   useEffect(() => {
-    setAllAgreed(isAllRequiredAgreed);
-  }, [agreements, isAllRequiredAgreed]);
+    if (!visible) {
+      return;
+    }
+
+    setAgreements(INITIAL_AGREEMENTS);
+  }, [visible]);
+
+  const visibleKeys = useMemo(
+    () => (isRecovery ? (['privacy', 'telecom'] as TermDocumentKey[]) : TERM_DOCUMENT_KEYS),
+    [isRecovery],
+  );
+
+  const areAllVisibleTermsAgreed = visibleKeys.every((key) => agreements[key]);
 
   const toggleAll = () => {
-    const newValue = !allAgreed;
-    setAllAgreed(newValue);
-    setAgreements({
-      service: isRecovery ? false : newValue,
-      privacy: newValue,
-      telecom: newValue,
-    });
+    const nextValue = !areAllVisibleTermsAgreed;
+    setAgreements((prev) => ({
+      ...prev,
+      ...Object.fromEntries(visibleKeys.map((key) => [key, nextValue])),
+    }));
   };
 
-  const toggleAgreement = (key: keyof typeof agreements) => {
+  const toggleAgreement = (key: TermDocumentKey) => {
     setAgreements((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -66,7 +75,10 @@ export default function TermsBottomSheet({
     const document = documents[key];
 
     if (!document.url) {
-      Alert.alert('불러오기 실패', '약관 문서를 아직 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+      Alert.alert(
+        '\uBB38\uC11C \uBD88\uB7EC\uC624\uAE30 \uC2E4\uD328',
+        '\uC57D\uAD00 \uBB38\uC11C\uB97C \uC544\uC9C1 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.',
+      );
       return;
     }
 
@@ -84,19 +96,33 @@ export default function TermsBottomSheet({
           onPress={(event) => event.stopPropagation()}
         >
           <View style={styles.header}>
-            <Text style={styles.title}>약관 동의</Text>
+            <Text style={styles.title}>
+              {isRecovery
+                ? '\uBCF8\uC778\uD655\uC778 \uC57D\uAD00 \uB3D9\uC758'
+                : '\uD544\uC218 \uC57D\uAD00 \uB3D9\uC758'}
+            </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Ionicons name="close" size={wp(28)} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
 
+          <Text style={[styles.rowText, { color: COLORS.textTertiary, marginBottom: hp(20) }]}>
+            {isRecovery
+              ? '\uBCF8\uC778\uD655\uC778\uACFC \uACC4\uC815 \uCC3E\uAE30 \uC9C4\uD589\uC744 \uC704\uD574 \uD544\uC694\uD55C \uC57D\uAD00\uC5D0 \uB3D9\uC758\uD574 \uC8FC\uC138\uC694.'
+              : '\uC778\uC99D\uBC88\uD638 \uC694\uCCAD \uC804\uC5D0 \uD544\uC218 \uC57D\uAD00 \uC804\uCCB4 \uB3D9\uC758\uAC00 \uD544\uC694\uD574\uC694.'}
+          </Text>
+
           <TouchableOpacity style={styles.allAgreeContainer} onPress={toggleAll} activeOpacity={0.7}>
             <Ionicons
               name="checkmark-circle"
               size={wp(28)}
-              color={allAgreed ? COLORS.primary : COLORS.border}
+              color={areAllVisibleTermsAgreed ? COLORS.primary : COLORS.border}
             />
-            <Text style={styles.allAgreeText}>전체 동의하기</Text>
+            <Text style={styles.allAgreeText}>
+              {isRecovery
+                ? '\uD45C\uC2DC\uB41C \uC57D\uAD00 \uC804\uCCB4 \uB3D9\uC758'
+                : '\uD544\uC218 \uC57D\uAD00 \uC804\uCCB4 \uB3D9\uC758'}
+            </Text>
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -106,39 +132,29 @@ export default function TermsBottomSheet({
               <View style={styles.row}>
                 <View style={styles.rowLeft}>
                   <ActivityIndicator size="small" color={COLORS.primary} />
-                  <Text style={styles.rowText}>약관 정보를 불러오는 중입니다.</Text>
+                  <Text style={styles.rowText}>
+                    \uC57D\uAD00 \uC815\uBCF4\uB97C \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.
+                  </Text>
                 </View>
               </View>
             ) : null}
 
-            {!isRecovery ? (
+            {visibleKeys.map((key) => (
               <AgreementRow
-                title={documents.service.title}
-                checked={agreements.service}
-                onToggle={() => toggleAgreement('service')}
-                onViewPress={() => handleViewDocument('service')}
+                key={key}
+                title={documents[key].title}
+                checked={agreements[key]}
+                required={documents[key].required}
+                onToggle={() => toggleAgreement(key)}
+                onViewPress={() => handleViewDocument(key)}
               />
-            ) : null}
-
-            <AgreementRow
-              title={documents.privacy.title}
-              checked={agreements.privacy}
-              onToggle={() => toggleAgreement('privacy')}
-              onViewPress={() => handleViewDocument('privacy')}
-            />
-
-            <AgreementRow
-              title={documents.telecom.title}
-              checked={agreements.telecom}
-              onToggle={() => toggleAgreement('telecom')}
-              onViewPress={() => handleViewDocument('telecom')}
-            />
+            ))}
           </View>
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={[styles.confirmButton, isAllRequiredAgreed && styles.activeButton]}
-              disabled={!isAllRequiredAgreed}
+              style={[styles.confirmButton, areAllVisibleTermsAgreed && styles.activeButton]}
+              disabled={!areAllVisibleTermsAgreed}
               onPress={() => {
                 onClose();
                 setTimeout(() => onConfirm(true), 300);
@@ -148,10 +164,12 @@ export default function TermsBottomSheet({
               <Text
                 style={[
                   styles.confirmButtonText,
-                  isAllRequiredAgreed && styles.activeButtonText,
+                  areAllVisibleTermsAgreed && styles.activeButtonText,
                 ]}
               >
-                동의하고 계속하기
+                {isRecovery
+                  ? '\uB3D9\uC758\uD558\uACE0 \uC778\uC99D \uACC4\uC18D\uD558\uAE30'
+                  : '\uD544\uC218 \uC57D\uAD00\uC5D0 \uB3D9\uC758\uD558\uACE0 \uACC4\uC18D\uD558\uAE30'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -164,11 +182,13 @@ export default function TermsBottomSheet({
 function AgreementRow({
   title,
   checked,
+  required,
   onToggle,
   onViewPress,
 }: {
   title: string;
   checked: boolean;
+  required: boolean;
   onToggle: () => void;
   onViewPress: () => void;
 }) {
@@ -176,16 +196,23 @@ function AgreementRow({
     <View style={styles.row}>
       <TouchableOpacity style={styles.rowLeft} onPress={onToggle} activeOpacity={0.7}>
         <Ionicons
-          name="checkmark"
+          name="checkmark-circle"
           size={wp(24)}
           color={checked ? COLORS.primary : COLORS.border}
           style={styles.checkIcon}
         />
-        <Text style={styles.rowText}>{title}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.rowText}>{title}</Text>
+          {required ? (
+            <Text style={[styles.viewText, { textDecorationLine: 'none', marginTop: hp(4) }]}>
+              \uD544\uC218
+            </Text>
+          ) : null}
+        </View>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.viewButton} onPress={onViewPress}>
-        <Text style={styles.viewText}>보기</Text>
+        <Text style={styles.viewText}>\uBCF4\uAE30</Text>
       </TouchableOpacity>
     </View>
   );

@@ -29,6 +29,7 @@ type CreateAccountRouteParams = {
   phone?: string;
   ssnFront?: string;
   ssnBack?: string;
+  // This flag represents agreement to every required term selected earlier.
   termsAgreed?: boolean;
   ssafyOauthId?: string;
 };
@@ -201,7 +202,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
       phoneNumber: currentPhone.replace(/[^0-9]/g, ''),
       birthDate: buildBirthDate(routeParams.ssnFront, routeParams.ssnBack),
       alarmEnabled: true,
-      termsAgreed: routeParams.termsAgreed === true,
+        termsAgreed: routeParams.termsAgreed === true,
     };
 
     try {
@@ -298,7 +299,12 @@ export default function CreateAccountScreen({ route, navigation }: any) {
             : step === 2
               ? '비밀번호를\n입력해주세요.'
               : '비밀번호를\n한 번 더 입력해주세요.'}
-        </Text>
+          </Text>
+          <Text style={{ color: COLORS.textTertiary, marginTop: hp(12), lineHeight: hp(22) }}>
+            {
+              '\uC774\uC804 \uB2E8\uACC4\uC5D0\uC11C \uD544\uC218 \uC57D\uAD00 \uC804\uCCB4 \uB3D9\uC758\uC640 \uD734\uB300\uD3F0 \uC778\uC99D\uC744 \uB9C8\uCE5C \uC0C1\uD0DC\uC608\uC694.'
+            }
+          </Text>
 
         {!isSsafySignup && (
           <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>

@@ -74,6 +74,14 @@ export interface NativeUserProfileResponse {
   loginType?: 'NORMAL' | 'SSAFY' | string | null;
 }
 
+export interface NotificationSettingsResponse {
+  alarmEnabled: boolean;
+}
+
+export interface UpdateNotificationSettingsRequest {
+  alarmEnabled: boolean;
+}
+
 export interface NativeUpdateProfileRequest {
   name?: string;
   gender?: string;
@@ -404,6 +412,13 @@ export const getProfile = async () => {
   return response.data;
 };
 
+export const getNotificationSettings = async () => {
+  const response = await nativeApi.get<NotificationSettingsResponse>(
+    '/api/v1/user/profile/notifications',
+  );
+  return response.data;
+};
+
 export const logout = async () => {
   const response = await nativeApi.post('/api/v1/auth/logout');
   return response.data;
@@ -411,6 +426,14 @@ export const logout = async () => {
 
 export const updateProfile = async (payload: NativeUpdateProfileRequest) => {
   const response = await nativeApi.patch<NativeUserProfileResponse>('/api/v1/user/profile', payload);
+  return response.data;
+};
+
+export const updateNotificationSettings = async (payload: UpdateNotificationSettingsRequest) => {
+  const response = await nativeApi.patch<NotificationSettingsResponse>(
+    '/api/v1/user/profile/notifications',
+    payload,
+  );
   return response.data;
 };
 

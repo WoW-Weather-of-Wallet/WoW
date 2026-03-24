@@ -84,6 +84,8 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
   const [phone, setPhone] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [termsVisible, setTermsVisible] = useState(false);
+  // The signup APIs still accept one boolean, so we collapse the sheet result
+  // into "all required terms were agreed" before moving to the next screen.
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -190,6 +192,8 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         ssnBack,
         telecom,
         phone: normalizedPhoneNumber,
+        // Downstream screens keep using the existing boolean contract, which now
+        // means agreement to the full required terms set.
         termsAgreed: agreedTerms,
       });
     } catch (error: any) {
@@ -268,6 +272,11 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         <Text style={styles.title}>
           {'\uBCF8\uC778 \uD655\uC778\uC744 \uC704\uD574'}{'\n'}
           {'\uC778\uC99D\uC774 \uD544\uC694\uD574\uC694.'}
+        </Text>
+        <Text style={{ color: COLORS.textTertiary, marginTop: hp(12), lineHeight: hp(22) }}>
+          {
+            '\uC778\uC99D\uBC88\uD638 \uC694\uCCAD \uC804\uC5D0 \uD544\uC218 \uC57D\uAD00 \uC804\uCCB4 \uB3D9\uC758\uAC00 \uD544\uC694\uD574\uC694.'
+          }
         </Text>
 
         <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>

@@ -1,4 +1,9 @@
-import { TERM_DOCUMENTS, TERM_DOCUMENT_KEYS, type TermDocument, type TermDocumentKey } from '../constants/terms';
+import {
+  TERM_DOCUMENTS,
+  TERM_DOCUMENT_KEYS,
+  type TermDocument,
+  type TermDocumentKey,
+} from '../constants/terms';
 import { nativeApi } from './auth';
 
 interface BackendTermResponse {
@@ -7,6 +12,19 @@ interface BackendTermResponse {
   version: string;
   required: boolean;
   fileUrl: string | null;
+}
+
+export interface TermAgreementItemRequest {
+  termId: number;
+  agreed: boolean;
+}
+
+export interface TermsAgreeRequest {
+  agreements: TermAgreementItemRequest[];
+}
+
+export interface TermsAgreeResponse {
+  savedCount: number;
 }
 
 let cachedTerms: Record<TermDocumentKey, TermDocument> | null = null;
@@ -23,6 +41,14 @@ export async function getTerms(forceRefresh = false) {
   return mappedTerms;
 }
 
+export async function agreeTerms(payload: TermsAgreeRequest) {
+  const response = await nativeApi.post<TermsAgreeResponse>(
+    '/api/v1/user/terms/agree',
+    payload,
+  );
+  return response.data;
+}
+
 function mapBackendTerms(terms: BackendTermResponse[]) {
   const nextTerms: Record<TermDocumentKey, TermDocument> = {
     ...TERM_DOCUMENTS,
@@ -37,9 +63,11 @@ function mapBackendTerms(terms: BackendTermResponse[]) {
 
     nextTerms[key] = {
       key,
+      termId: term.termId,
       title: term.title || TERM_DOCUMENTS[key].title,
       effectiveDate: formatEffectiveDate(term.version),
       url: term.fileUrl,
+      required: term.required,
     };
   });
 
@@ -47,19 +75,33 @@ function mapBackendTerms(terms: BackendTermResponse[]) {
 }
 
 function resolveTermKey(title: string): TermDocumentKey | null {
-  if (title.includes('개인정보')) {
+  const normalizedTitle = normalizeTitle(title);
+
+  // Match the live terms table with stable keywords so the UI does not depend on
+  // hardcoded document ordering or previously broken mojibake strings.
+  if (normalizedTitle.includes('\uAC1C\uC778\uC815\uBCF4')) {
     return 'privacy';
   }
 
-  if (title.includes('통신사') || title.includes('본인확인')) {
+  if (
+    normalizedTitle.includes('\uD1B5\uC2E0\uC0AC') ||
+    normalizedTitle.includes('\uBCF8\uC778\uD655\uC778')
+  ) {
     return 'telecom';
   }
 
-  if (title.includes('서비스')) {
+  if (
+    normalizedTitle.includes('\uC11C\uBE44\uC2A4') &&
+    normalizedTitle.includes('\uC774\uC6A9\uC57D\uAD00')
+  ) {
     return 'service';
   }
 
   return null;
+}
+
+function normalizeTitle(title: string) {
+  return title.replace(/\s+/g, '').trim();
 }
 
 function formatEffectiveDate(version: string) {
@@ -69,7 +111,9 @@ function formatEffectiveDate(version: string) {
     return '';
   }
 
-  return normalizedVersion.includes('시행') ? normalizedVersion : `${normalizedVersion} 시행`;
+  return normalizedVersion.includes('\uC2DC\uD589')
+    ? normalizedVersion
+    : `${normalizedVersion} \uC2DC\uD589`;
 }
 
 export function getTermList(terms: Record<TermDocumentKey, TermDocument>) {

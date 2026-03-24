@@ -12,6 +12,9 @@ export const styles = StyleSheet.create({
     paddingBottom: hp(4),
     backgroundColor: COLORS.backgroundSecondary,
   },
+  notice: {
+    marginBottom: hp(12),
+  },
   scrollView: {
     flex: 1,
   },

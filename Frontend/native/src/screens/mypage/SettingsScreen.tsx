@@ -32,9 +32,11 @@ import WithdrawConfirmationModal from '../../components/mypage/WithdrawConfirmat
 import {
   changePassword,
   deleteAccount,
+  getNotificationSettings,
   getProfile,
   logout as logoutRequest,
   sendSmsCode,
+  updateNotificationSettings,
   updatePhone,
   updateProfile,
   verifySmsCode,
@@ -85,8 +87,10 @@ export default function SettingsScreen() {
   const [profile, setProfile] = useState<NativeUserProfileResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isNotificationSubmitting, setIsNotificationSubmitting] = useState(false);
   const [editMode, setEditMode] = useState<EditMode>(null);
   const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false);
+  const [notificationEnabled, setNotificationEnabled] = useState(false);
 
   const [name, setName] = useState('');
   const [gender, setGender] = useState('');
@@ -114,7 +118,7 @@ export default function SettingsScreen() {
   const [isConfirmPwVisible, setIsConfirmPwVisible] = useState(false);
 
   const appVersion = useMemo(() => Constants.expoConfig?.version ?? 'unknown', []);
-  const isPushEnabled = profile?.alarmEnabled ?? false;
+  const isPushEnabled = notificationEnabled;
 
   const loadProfile = useCallback(async () => {
     setIsLoading(true);
@@ -122,6 +126,7 @@ export default function SettingsScreen() {
     try {
       const response = await getProfile();
       setProfile(response);
+      setNotificationEnabled(response.alarmEnabled);
     } catch (error) {
       const message = extractApiErrorMessage(
         error,
@@ -370,6 +375,40 @@ export default function SettingsScreen() {
     setPinModalMode('disable');
     setPinModalStep('verify-current');
     setIsPinModalVisible(true);
+  };
+
+  const handleToggleNotifications = async (enabled: boolean) => {
+    if (isNotificationSubmitting) {
+      return;
+    }
+
+    setIsNotificationSubmitting(true);
+
+    try {
+      if (enabled) {
+        await fcmService.registerFcmToken();
+      }
+
+      const updated = await updateNotificationSettings({ alarmEnabled: enabled });
+      setNotificationEnabled(updated.alarmEnabled);
+      setProfile((prev) => (prev ? { ...prev, alarmEnabled: updated.alarmEnabled } : prev));
+    } catch (error) {
+      const message = extractApiErrorMessage(
+        error,
+        '알림 설정을 변경하지 못했어요. 다시 시도해 주세요.',
+      );
+      Alert.alert('알림 설정 변경 실패', message);
+
+      try {
+        const latest = await getNotificationSettings();
+        setNotificationEnabled(latest.alarmEnabled);
+        setProfile((prev) => (prev ? { ...prev, alarmEnabled: latest.alarmEnabled } : prev));
+      } catch (reloadError) {
+        console.warn('[Settings] failed to reload notification settings', reloadError);
+      }
+    } finally {
+      setIsNotificationSubmitting(false);
+    }
   };
 
   const handleSendPhoneCode = async () => {
@@ -634,11 +673,14 @@ export default function SettingsScreen() {
           <SettingItem label="알림 상태" value={pushToggleDescription} type="text" />
           <View style={styles.toggleRow}>
             <Text style={styles.toggleDescription}>
-              알림 설정 변경 API는 아직 준비되지 않아 현재 상태만 표시합니다.
+              앱 푸시 알림 수신 여부를 바로 변경할 수 있습니다.
             </Text>
             <Switch
               value={isPushEnabled}
-              disabled
+              disabled={isLoading || isNotificationSubmitting}
+              onValueChange={(enabled) => {
+                void handleToggleNotifications(enabled);
+              }}
               thumbColor={COLORS.textInverse}
               trackColor={{ false: COLORS.border, true: COLORS.primary }}
             />

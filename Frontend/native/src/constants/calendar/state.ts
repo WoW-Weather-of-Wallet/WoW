@@ -7,6 +7,7 @@ import type { CalendarDayDetail, CalendarDayItem } from '../../mock/calendar';
 
 export interface ManageFixedExpenseItem {
   id: string;
+  fixedExpenseId?: number;
   title: string;
   subtitle: string;
   amount: number;
@@ -14,6 +15,7 @@ export interface ManageFixedExpenseItem {
   iconTone: string;
   isEnabled: boolean;
   category: string;
+  paymentStatus?: string;
   sourceTransactionId?: string;
   paymentDay?: number;
 }

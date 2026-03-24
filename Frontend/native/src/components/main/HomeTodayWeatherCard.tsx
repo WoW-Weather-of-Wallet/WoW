@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Text, View, TouchableOpacity, Modal, Pressable } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { wp } from '../../constants/theme';
 import SunnyIcon from '../../../assets/imgs/weather/SunnyIcon';
@@ -8,43 +8,124 @@ import OvercastIcon from '../../../assets/imgs/weather/OvercastIcon';
 import RainIcon from '../../../assets/imgs/weather/RainIcon';
 import HeavyRainIcon from '../../../assets/imgs/weather/HeavyRainIcon';
 
-/**
- * 오늘의 소비날씨를 보여주는 카드 컴포넌트입니다.
- * NativeWind를 사용하여 스타일링하며, 스토어 등에서 받아오는 데이터 대신 5개의 날씨를 랜덤으로 보여줍니다.
- */
-export default function HomeTodayWeatherCard() {
+interface HomeTodayWeatherCardProps {
+  weatherName?: string | null;
+  description?: string | null;
+  iconCode?: string | null;
+  isLoading?: boolean;
+}
+
+type WeatherVisual = {
+  type: string;
+  hint: React.ReactNode;
+  icon: typeof SunnyIcon;
+};
+
+const FALLBACK_WEATHERS: WeatherVisual[] = [
+  {
+    type: '맑음',
+    hint: (
+      <Text>
+        지출 관리의 정석! <Text className="font-sans-extrabold text-white">맑은 날씨</Text>가
+        계속될 거예요.
+      </Text>
+    ),
+    icon: SunnyIcon,
+  },
+  {
+    type: '구름',
+    hint: (
+      <Text>
+        구름 낀 날씨네요. <Text className="font-sans-extrabold text-white">조금만 더 신경 쓰면</Text>{' '}
+        맑아질 거예요.
+      </Text>
+    ),
+    icon: CloudyIcon,
+  },
+  {
+    type: '흐림',
+    hint: (
+      <Text>
+        흐린 날씨예요. <Text className="font-sans-extrabold text-white">불필요한 지출</Text>이
+        없는지 확인해 보세요.
+      </Text>
+    ),
+    icon: OvercastIcon,
+  },
+  {
+    type: '비',
+    hint: (
+      <Text>
+        비가 내리고 있어요! <Text className="font-sans-extrabold text-white">꼭 필요한 지출만</Text>{' '}
+        하는 것이 좋겠어요.
+      </Text>
+    ),
+    icon: RainIcon,
+  },
+  {
+    type: '폭우',
+    hint: (
+      <Text>
+        폭우 경보! <Text className="font-sans-extrabold text-white">우산(비상금)</Text>이 젖기 전에
+        지출을 멈춰주세요!
+      </Text>
+    ),
+    icon: HeavyRainIcon,
+  },
+];
+
+const WEATHER_GUIDE = [
+  { type: '맑음', detail: '최근 평균 대비 10% 이하', icon: SunnyIcon, color: '#F59E0B' },
+  { type: '구름', detail: '최근 평균 대비 10~20%', icon: CloudyIcon, color: '#94A3B8' },
+  { type: '흐림', detail: '최근 평균 대비 20~30%', icon: OvercastIcon, color: '#64748B' },
+  { type: '비', detail: '최근 평균 대비 30~50%', icon: RainIcon, color: '#3B82F6' },
+  { type: '폭우', detail: '최근 평균 대비 50% 초과', icon: HeavyRainIcon, color: '#1E3A8A' },
+] as const;
+
+export default function HomeTodayWeatherCard({
+  weatherName,
+  description,
+  iconCode,
+  isLoading = false,
+}: HomeTodayWeatherCardProps) {
   const [modalVisible, setModalVisible] = useState(false);
-  const [weatherData, setWeatherData] = useState<any>(null);
+  const [fallbackWeather, setFallbackWeather] = useState<WeatherVisual | null>(null);
 
   useEffect(() => {
-    // 5가지 소비 날씨 조건 정의 (임시 랜덤 표출)
-    const weathers = [
-      { type: '맑음', hint: <Text>지출 관리의 정석! <Text className="font-sans-extrabold text-white">맑은 날씨</Text>가 계속될 거예요.</Text>, icon: SunnyIcon },
-      { type: '구름', hint: <Text>구름 낀 날씨네요. <Text className="font-sans-extrabold text-white">조금만 더 신경 쓰면</Text> 맑아질 거예요.</Text>, icon: CloudyIcon },
-      { type: '흐림', hint: <Text>흐린 날씨예요. <Text className="font-sans-extrabold text-white">불필요한 지출</Text>이 없는지 확인해 보세요.</Text>, icon: OvercastIcon },
-      { type: '비', hint: <Text>비가 내리고 있어요! <Text className="font-sans-extrabold text-white">꼭 필요한 지출만</Text> 하는 것이 좋겠어요.</Text>, icon: RainIcon },
-      { type: '폭우', hint: <Text>폭우 경보! <Text className="font-sans-extrabold text-white">우산(비상금)</Text>이 젖기 전에 지출을 멈춰주세요!</Text>, icon: HeavyRainIcon },
-    ];
-    const randomIndex = Math.floor(Math.random() * weathers.length);
-    setWeatherData(weathers[randomIndex]);
-  }, []);
+    if (weatherName || description || iconCode || isLoading) {
+      return;
+    }
 
-  // 오늘 날짜 및 요일 구하기
+    const randomIndex = Math.floor(Math.random() * FALLBACK_WEATHERS.length);
+    setFallbackWeather(FALLBACK_WEATHERS[randomIndex]);
+  }, [description, iconCode, isLoading, weatherName]);
+
+  const weatherData = useMemo(() => {
+    if (isLoading) {
+      return {
+        type: '불러오는 중',
+        hint: '오늘의 소비 날씨를 준비하고 있어요.',
+        icon: CloudyIcon,
+      } satisfies WeatherVisual;
+    }
+
+    return resolveWeatherVisual(iconCode, weatherName, description) ?? fallbackWeather;
+  }, [description, fallbackWeather, iconCode, isLoading, weatherName]);
+
+  if (!weatherData) {
+    return null;
+  }
+
   const today = new Date();
   const dateString = `${today.getMonth() + 1}월 ${today.getDate()}일`;
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
   const dayString = `${dayNames[today.getDay()]}요일`;
-
-  if (!weatherData) return null;
-
   const WeatherIcon = weatherData.icon;
 
   return (
     <View className="mb-4 overflow-hidden rounded-3xl bg-primary shadow-sm">
-      {/* 카드 내부 배경 (그라데이션 느낌을 위한 불투명도 조절) */}
       <View className="bg-primary-light/10 p-5">
         <View className="flex-row items-center">
-          {/* 소비 날씨 이미지 커스텀 아이콘 (왼쪽 배치) */}
           <View className="h-16 w-16 items-center justify-center rounded-2xl bg-white/20">
             <WeatherIcon size={wp(36)} color="#FFFFFF" />
           </View>
@@ -52,21 +133,20 @@ export default function HomeTodayWeatherCard() {
           <View className="ml-4 flex-1">
             <View className="flex-row items-center justify-between">
               <Text className="text-sm font-medium text-white/80">오늘의 소비날씨</Text>
-              <Text className="text-sm font-semibold text-white/70">{dateString} {dayString}</Text>
+              <Text className="text-sm font-semibold text-white/70">
+                {dateString} {dayString}
+              </Text>
             </View>
             <View className="mt-1 flex-row items-baseline">
-              <Text className="text-3xl font-bold text-white">
-                {weatherData.type}
-              </Text>
+              <Text className="text-3xl font-bold text-white">{weatherData.type}</Text>
             </View>
           </View>
         </View>
 
-        {/* 하단 힌트 영역 */}
         <View className="mt-4 flex-row items-center rounded-xl bg-white/10 p-3">
-          <TouchableOpacity 
-            onPress={() => setModalVisible(true)} 
-            className="p-1 items-center justify-center"
+          <TouchableOpacity
+            onPress={() => setModalVisible(true)}
+            className="items-center justify-center p-1"
             activeOpacity={0.7}
           >
             <Ionicons name="information-circle-outline" size={wp(18)} color="white" />
@@ -77,71 +157,120 @@ export default function HomeTodayWeatherCard() {
         </View>
       </View>
 
-      {/* 정보 제공용 모달 추가 */}
       <Modal
         animationType="fade"
-        transparent={true}
+        transparent
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <Pressable 
+        <Pressable
           className="flex-1 items-center justify-center bg-black/50 p-6"
           onPress={() => setModalVisible(false)}
         >
           <Pressable className="w-full rounded-3xl bg-white p-6 shadow-lg">
-            <Text className="text-xl font-bold text-gray-800 mb-2">소비날씨란?</Text>
-            <Text className="text-sm text-gray-500 mb-6 font-medium leading-relaxed">
-              최근 3개월 지출 평균과 이번 달의 실시간 지출을 비교하여 하루의 날씨로 표현합니다!
+            <Text className="mb-2 text-xl font-bold text-gray-800">소비날씨란?</Text>
+            <Text className="mb-6 text-sm font-medium leading-relaxed text-gray-500">
+              최근 3개월 지출 평균과 이번 달의 실시간 지출을 비교해 하루의 날씨로 표현합니다!
             </Text>
-            
+
             <View className="space-y-4">
-              <View className="flex-row items-center mb-3">
-                <View className="w-10 items-center justify-center"><SunnyIcon size={24} color="#F59E0B" /></View>
-                <View className="ml-3 flex-1">
-                  <Text className="font-bold text-gray-800 text-base">맑음</Text>
-                  <Text className="text-xs text-gray-400">최근 평균 대비 <Text className="text-gray-600 font-semibold">10% 이하</Text></Text>
-                </View>
-              </View>
-              <View className="flex-row items-center mb-3">
-                <View className="w-10 items-center justify-center"><CloudyIcon size={24} color="#94A3B8" /></View>
-                <View className="ml-3 flex-1">
-                  <Text className="font-bold text-gray-800 text-base">구름</Text>
-                  <Text className="text-xs text-gray-400">최근 평균 대비 <Text className="text-gray-600 font-semibold">10~20%</Text></Text>
-                </View>
-              </View>
-              <View className="flex-row items-center mb-3">
-                <View className="w-10 items-center justify-center"><OvercastIcon size={24} color="#64748B" /></View>
-                <View className="ml-3 flex-1">
-                  <Text className="font-bold text-gray-800 text-base">흐림</Text>
-                  <Text className="text-xs text-gray-400">최근 평균 대비 <Text className="text-gray-600 font-semibold">20~30%</Text></Text>
-                </View>
-              </View>
-              <View className="flex-row items-center mb-3">
-                <View className="w-10 items-center justify-center"><RainIcon size={24} color="#3B82F6" /></View>
-                <View className="ml-3 flex-1">
-                  <Text className="font-bold text-gray-800 text-base">비</Text>
-                  <Text className="text-xs text-gray-400">최근 평균 대비 <Text className="text-gray-600 font-semibold">30~50%</Text></Text>
-                </View>
-              </View>
-              <View className="flex-row items-center mb-3">
-                <View className="w-10 items-center justify-center"><HeavyRainIcon size={24} color="#1E3A8A" /></View>
-                <View className="ml-3 flex-1">
-                  <Text className="font-bold text-gray-800 text-base">폭우</Text>
-                  <Text className="text-xs text-gray-400">최근 평균 대비 <Text className="text-gray-600 font-semibold">50% 초과</Text></Text>
-                </View>
-              </View>
+              {WEATHER_GUIDE.map((item) => {
+                const GuideIcon = item.icon;
+
+                return (
+                  <View key={item.type} className="mb-3 flex-row items-center">
+                    <View className="w-10 items-center justify-center">
+                      <GuideIcon size={24} color={item.color} />
+                    </View>
+                    <View className="ml-3 flex-1">
+                      <Text className="text-base font-bold text-gray-800">{item.type}</Text>
+                      <Text className="text-xs text-gray-400">
+                        <Text className="font-semibold text-gray-600">{item.detail}</Text>
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
             </View>
 
-            <TouchableOpacity 
-              className="mt-6 rounded-xl bg-primary py-4 items-center"
+            <TouchableOpacity
+              className="mt-6 items-center rounded-xl bg-primary py-4"
               onPress={() => setModalVisible(false)}
               activeOpacity={0.8}
             >
-              <Text className="font-bold text-white text-base">확인</Text>
+              <Text className="text-base font-bold text-white">확인</Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>
       </Modal>
     </View>
   );
+}
+
+function resolveWeatherVisual(
+  iconCode?: string | null,
+  weatherName?: string | null,
+  description?: string | null,
+): WeatherVisual | null {
+  if (!iconCode && !weatherName && !description) {
+    return null;
+  }
+
+  const normalizedCode = iconCode?.toLowerCase() ?? '';
+  const normalizedName = weatherName?.trim() ?? '';
+  const hint = description?.trim() || '오늘의 소비 흐름을 한눈에 확인해보세요.';
+
+  if (normalizedCode.includes('heavy') || normalizedName.includes('폭우')) {
+    return {
+      type: normalizedName || '폭우',
+      hint,
+      icon: HeavyRainIcon,
+    };
+  }
+
+  if (normalizedCode.includes('rain') || normalizedName.includes('비')) {
+    return {
+      type: normalizedName || '비',
+      hint,
+      icon: RainIcon,
+    };
+  }
+
+  if (
+    normalizedCode.includes('overcast') ||
+    normalizedCode.includes('gray') ||
+    normalizedName.includes('흐림')
+  ) {
+    return {
+      type: normalizedName || '흐림',
+      hint,
+      icon: OvercastIcon,
+    };
+  }
+
+  if (normalizedCode.includes('cloud') || normalizedName.includes('구름')) {
+    return {
+      type: normalizedName || '구름',
+      hint,
+      icon: CloudyIcon,
+    };
+  }
+
+  if (
+    normalizedCode.includes('sun') ||
+    normalizedCode.includes('clear') ||
+    normalizedName.includes('맑')
+  ) {
+    return {
+      type: normalizedName || '맑음',
+      hint,
+      icon: SunnyIcon,
+    };
+  }
+
+  return {
+    type: normalizedName || '소비날씨',
+    hint,
+    icon: CloudyIcon,
+  };
 }
