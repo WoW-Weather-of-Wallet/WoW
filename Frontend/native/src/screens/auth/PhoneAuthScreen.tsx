@@ -31,19 +31,19 @@ const TELECOMS = [
   'SKT',
   'KT',
   'LG U+',
-  'SKT \uC54C\uB730\uD3F0',
-  'KT \uC54C\uB730\uD3F0',
-  'LG U+ \uC54C\uB730\uD3F0',
+  'SKT 알뜰폰',
+  'KT 알뜰폰',
+  'LG U+ 알뜰폰',
 ];
 
 const TELECOM_PLACEHOLDER =
-  '\uD1B5\uC2E0\uC0AC\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694';
+  '통신사를 선택해 주세요';
 const INVALID_IDENTITY_MESSAGE =
-  '\uC8FC\uBBFC\uB4F1\uB85D\uBC88\uD638\uB97C \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.';
+  '주민등록번호를 다시 확인해 주세요.';
 const SSAFY_TOKEN_EXPIRED_MESSAGE =
-  'SSAFY \uC778\uC99D \uC815\uBCF4\uAC00 \uB9CC\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574 \uC8FC\uC138\uC694.';
+  'SSAFY 인증 정보가 만료되었습니다. 다시 로그인해 주세요.';
 const SEND_CODE_FALLBACK =
-  '\uC778\uC99D\uBC88\uD638 \uC804\uC1A1\uC5D0 \uC2E4\uD328\uD588\uC5B4\uC694. \uC785\uB825\uD55C \uC815\uBCF4\uB97C \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.';
+  '인증번호 전송에 실패했어요. 입력한 정보를 다시 확인해 주세요.';
 
 const buildBirthDate = (front: string, back: string) => {
   if (front.length !== 6 || back.length !== 1) {
@@ -204,7 +204,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
       setSubmitError(presentation.inlineMessage);
       Alert.alert(
         isSsafySignup
-          ? 'SSAFY \uD68C\uC6D0\uAC00\uC785 \uC548\uB0B4'
+          ? 'SSAFY 회원가입 안내'
           : presentation.title,
         presentation.alertMessage,
       );
@@ -218,15 +218,15 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
       case 1:
         return {
           isActive: name.trim().length >= 2,
-          text: '\uB2E4\uC74C',
+          text: '다음',
           onPress: handleNameSubmit,
         };
       case 2:
         return {
           isActive: ssnFront.length === 6 && ssnBack.length === 1,
-          text: '\uB2E4\uC74C',
+          text: '다음',
           onPress: () => {
-            setStep((prev) => Math.max(prev, 3));
+            setStep((prev) => Math.max(prev, 2));
             ssnBackRef.current?.blur();
             setTimeout(() => setModalVisible(true), 300);
           },
@@ -238,8 +238,8 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
             phone.length >= 10 &&
             !isSendingCode,
           text: isSendingCode
-            ? '\uC778\uC99D\uBC88\uD638 \uC804\uC1A1 \uC911...'
-            : '\uB2E4\uC74C',
+            ? '인증번호 전송 중...'
+            : '다음',
           onPress: () => {
             scrollViewRef.current?.scrollTo({ y: 0, animated: true });
             setTermsVisible(true);
@@ -270,12 +270,12 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         <StepIndicator currentStep={1} totalSteps={5} />
 
         <Text style={styles.title}>
-          {'\uBCF8\uC778 \uD655\uC778\uC744 \uC704\uD574'}{'\n'}
-          {'\uC778\uC99D\uC774 \uD544\uC694\uD574\uC694.'}
+          {'본인 확인을 위해'}{'\n'}
+          {'인증이 필요해요.'}
         </Text>
         <Text style={{ color: COLORS.textTertiary, marginTop: hp(12), lineHeight: hp(22) }}>
           {
-            '\uC778\uC99D\uBC88\uD638 \uC694\uCCAD \uC804\uC5D0 \uD544\uC218 \uC57D\uAD00 \uC804\uCCB4 \uB3D9\uC758\uAC00 \uD544\uC694\uD574\uC694.'
+            '인증번호 요청 전에 필수 약관 전체 동의가 필요해요.'
           }
         </Text>
 
@@ -291,7 +291,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
                 setName(value);
                 setSubmitError('');
               }}
-              placeholder="\uC774\uB984"
+              placeholder="이름"
               placeholderTextColor={COLORS.textTertiary}
               onSubmitEditing={handleNameSubmit}
               returnKeyType="next"
@@ -301,7 +301,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
           </View>
           {isSsafySignup && (
             <Text style={{ color: COLORS.textTertiary, marginTop: hp(12) }}>
-              {'SSAFY \uACC4\uC815\uC758 \uC774\uB984\uC740 \uC218\uC815\uD560 \uC218 \uC5C6\uC5B4\uC694.'}
+              {'SSAFY 계정의 이름은 수정할 수 없어요.'}
             </Text>
           )}
         </Animated.View>
@@ -384,7 +384,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
                   setSubmitError('');
                 }}
                 placeholder={
-                  '\uD734\uB300\uD3F0 \uBC88\uD638 (- \uC5C6\uC774 \uC785\uB825)'
+                  '휴대폰 번호 (- 없이 입력)'
                 }
                 placeholderTextColor={COLORS.textTertiary}
                 keyboardType="number-pad"
@@ -431,7 +431,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {'\uD1B5\uC2E0\uC0AC\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694'}
+                {'통신사를 선택해 주세요'}
               </Text>
             </View>
             {TELECOMS.map((item) => (

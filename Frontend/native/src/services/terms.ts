@@ -79,20 +79,20 @@ function resolveTermKey(title: string): TermDocumentKey | null {
 
   // Match the live terms table with stable keywords so the UI does not depend on
   // hardcoded document ordering or previously broken mojibake strings.
-  if (normalizedTitle.includes('\uAC1C\uC778\uC815\uBCF4')) {
+  if (normalizedTitle.includes('개인정보')) {
     return 'privacy';
   }
 
   if (
-    normalizedTitle.includes('\uD1B5\uC2E0\uC0AC') ||
-    normalizedTitle.includes('\uBCF8\uC778\uD655\uC778')
+    normalizedTitle.includes('통신사') ||
+    normalizedTitle.includes('본인확인')
   ) {
     return 'telecom';
   }
 
   if (
-    normalizedTitle.includes('\uC11C\uBE44\uC2A4') &&
-    normalizedTitle.includes('\uC774\uC6A9\uC57D\uAD00')
+    normalizedTitle.includes('서비스') &&
+    normalizedTitle.includes('이용약관')
   ) {
     return 'service';
   }
@@ -111,9 +111,9 @@ function formatEffectiveDate(version: string) {
     return '';
   }
 
-  return normalizedVersion.includes('\uC2DC\uD589')
+  return normalizedVersion.includes('시행')
     ? normalizedVersion
-    : `${normalizedVersion} \uC2DC\uD589`;
+    : `${normalizedVersion} 시행`;
 }
 
 export function getTermList(terms: Record<TermDocumentKey, TermDocument>) {

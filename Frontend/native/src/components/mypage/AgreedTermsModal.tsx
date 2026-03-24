@@ -57,8 +57,8 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
 
     if (!document?.url) {
       Alert.alert(
-        '\uBB38\uC11C \uBD88\uB7EC\uC624\uAE30 \uC2E4\uD328',
-        '\uC57D\uAD00 \uBB38\uC11C\uB97C \uC544\uC9C1 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.',
+        '문서 불러오기 실패',
+        '약관 문서를 아직 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
       );
       return;
     }
@@ -103,21 +103,21 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
 
       if (response.savedCount > 0) {
         Alert.alert(
-          '\uC7AC\uB3D9\uC758 \uC644\uB8CC',
-          `\uC120\uD0DD\uD55C \uC57D\uAD00 ${response.savedCount}\uAC74 \uB3D9\uC758 \uAE30\uB85D\uC744 \uC800\uC7A5\uD588\uC5B4\uC694.`,
+          '재동의 완료',
+          `선택한 약관 ${response.savedCount}건 동의 기록을 저장했어요.`,
         );
       } else {
         Alert.alert(
-          '\uCD5C\uC2E0 \uB3D9\uC758 \uC0C1\uD0DC',
-          '\uC120\uD0DD\uD55C \uC57D\uAD00\uC740 \uC774\uBBF8 \uB3D9\uC758 \uAE30\uB85D\uC774 \uC788\uC5B4 \uCD94\uAC00 \uC800\uC7A5\uD560 \uD56D\uBAA9\uC774 \uC5C6\uC5C8\uC5B4\uC694.',
+          '최신 동의 상태',
+          '선택한 약관은 이미 동의 기록이 있어 추가 저장할 항목이 없었어요.',
         );
       }
 
       onClose();
     } catch (error) {
       Alert.alert(
-        '\uC57D\uAD00 \uB3D9\uC758 \uC2E4\uD328',
-        extractApiErrorMessage(error, '\uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.'),
+        '약관 동의 실패',
+        extractApiErrorMessage(error, '잠시 후 다시 시도해 주세요.'),
       );
     } finally {
       setIsSubmitting(false);
@@ -129,21 +129,21 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.content} onPress={(event) => event.stopPropagation()}>
           <View style={styles.header}>
-            <Text style={styles.title}>\uC57D\uAD00 \uD655\uC778 \uBC0F \uC7AC\uB3D9\uC758</Text>
+            <Text style={styles.title}>약관 확인 및 재동의</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Ionicons name="close" size={wp(28)} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
 
           <Text style={styles.description}>
-            \uD604\uC7AC \uC57D\uAD00 \uBB38\uC11C\uB97C \uD655\uC778\uD558\uACE0 \uD544\uC694\uD55C \uACBD\uC6B0 \uC120\uD0DD\uD55C \uC57D\uAD00\uC5D0 \uB300\uD574
-            \uB2E4\uC2DC \uB3D9\uC758 \uAE30\uB85D\uC744 \uB0A8\uAE38 \uC218 \uC788\uC5B4\uC694.
+            현재 약관 문서를 확인하고 필요한 경우 선택한 약관에 대해
+            다시 동의 기록을 남길 수 있어요.
           </Text>
 
           <TouchableOpacity style={styles.toolbar} activeOpacity={0.8} onPress={toggleAll}>
-            <Text style={styles.toolbarText}>\uD45C\uC2DC\uB41C \uC57D\uAD00 \uC804\uCCB4 \uC120\uD0DD</Text>
+            <Text style={styles.toolbarText}>표시된 약관 전체 선택</Text>
             <Text style={styles.toolbarLink}>
-              {areAllSelected ? '\uC804\uCCB4 \uD574\uC81C' : '\uC804\uCCB4 \uC120\uD0DD'}
+              {areAllSelected ? '전체 해제' : '전체 선택'}
             </Text>
           </TouchableOpacity>
 
@@ -155,7 +155,7 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
               <View style={styles.noticeBox}>
                 <ActivityIndicator size="small" color={COLORS.primary} />
                 <Text style={styles.noticeText}>
-                  \uC57D\uAD00 \uC815\uBCF4\uB97C \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.
+                  약관 정보를 불러오는 중입니다.
                 </Text>
               </View>
             ) : null}
@@ -174,16 +174,16 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
 
             <View style={styles.noticeBox}>
               <Text style={styles.noticeText}>
-                \uC7AC\uB3D9\uC758\uB294 \uBC84\uC804 \uAC31\uC2E0\uC774 \uC788\uAC70\uB098 \uB2E4\uC2DC \uB3D9\uC758 \uAE30\uB85D\uC744 \uB0A8\uAE30\uACE0 \uC2F6\uC744 \uB54C
-                \uC4F0\uB294 \uAE30\uB2A5\uC774\uC5D0\uC694. \uC774\uBBF8 \uAC19\uC740 \uC57D\uAD00\uC5D0 \uB300\uD55C \uB3D9\uC758 \uAE30\uB85D\uC774 \uC788\uC73C\uBA74
-                \uCD94\uAC00 \uC800\uC7A5\uD558\uC9C0 \uC54A\uC544\uC694.
+                재동의는 버전 갱신이 있거나 다시 동의 기록을 남기고 싶을 때
+                쓰는 기능이에요. 이미 같은 약관에 대한 동의 기록이 있으면
+                추가 저장하지 않아요.
               </Text>
             </View>
           </ScrollView>
 
           <View style={styles.actionRow}>
             <TouchableOpacity style={styles.secondaryButton} onPress={onClose}>
-              <Text style={styles.secondaryButtonText}>\uB2EB\uAE30</Text>
+              <Text style={styles.secondaryButtonText}>닫기</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -203,7 +203,7 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
                     selectedTerms.length === 0 && styles.disabledButtonText,
                   ]}
                 >
-                  \uC120\uD0DD \uC57D\uAD00 \uC7AC\uB3D9\uC758
+                  선택 약관 재동의
                 </Text>
               )}
             </TouchableOpacity>
@@ -240,10 +240,10 @@ function TermItem({
         <View style={styles.termInfo}>
           <Text style={styles.termTitle}>{title}</Text>
           <View style={styles.termMetaRow}>
-            <Text style={styles.termDate}>{date || '\uC2DC\uD589 \uC815\uBCF4 \uC5C6\uC74C'}</Text>
+            <Text style={styles.termDate}>{date || '시행 정보 없음'}</Text>
             {required ? (
               <View style={styles.requiredBadge}>
-                <Text style={styles.requiredBadgeText}>\uD544\uC218</Text>
+                <Text style={styles.requiredBadgeText}>필수</Text>
               </View>
             ) : null}
           </View>
@@ -251,7 +251,7 @@ function TermItem({
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.viewBadge} activeOpacity={0.7} onPress={onPress}>
-        <Text style={styles.viewText}>\uBCF4\uAE30</Text>
+        <Text style={styles.viewText}>보기</Text>
         <Ionicons name="chevron-forward" size={wp(14)} color={COLORS.textTertiary} />
       </TouchableOpacity>
     </View>

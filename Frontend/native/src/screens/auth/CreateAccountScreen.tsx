@@ -302,7 +302,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
           </Text>
           <Text style={{ color: COLORS.textTertiary, marginTop: hp(12), lineHeight: hp(22) }}>
             {
-              '\uC774\uC804 \uB2E8\uACC4\uC5D0\uC11C \uD544\uC218 \uC57D\uAD00 \uC804\uCCB4 \uB3D9\uC758\uC640 \uD734\uB300\uD3F0 \uC778\uC99D\uC744 \uB9C8\uCE5C \uC0C1\uD0DC\uC608\uC694.'
+              '이전 단계에서 필수 약관 전체 동의와 휴대폰 인증을 마친 상태예요.'
             }
           </Text>
 

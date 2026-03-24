@@ -15,7 +15,7 @@ export const TERM_DOCUMENTS: Record<TermDocumentKey, TermDocument> = {
   service: {
     key: 'service',
     termId: null,
-    title: '(\uD544\uC218) WoW \uC11C\uBE44\uC2A4 \uC774\uC6A9\uC57D\uAD00',
+    title: '(필수) WoW 서비스 이용약관',
     effectiveDate: '',
     url: null,
     required: true,
@@ -23,7 +23,7 @@ export const TERM_DOCUMENTS: Record<TermDocumentKey, TermDocument> = {
   privacy: {
     key: 'privacy',
     termId: null,
-    title: '(\uD544\uC218) WoW \uAC1C\uC778\uC815\uBCF4 \uCC98\uB9AC \uBC29\uCE68',
+    title: '(필수) WoW 개인정보 처리 방침',
     effectiveDate: '',
     url: null,
     required: true,
@@ -31,7 +31,7 @@ export const TERM_DOCUMENTS: Record<TermDocumentKey, TermDocument> = {
   telecom: {
     key: 'telecom',
     termId: null,
-    title: '(\uD544\uC218) \uD1B5\uC2E0\uC0AC \uBCF8\uC778\uD655\uC778\uC11C\uBE44\uC2A4 \uC774\uC6A9\uC57D\uAD00',
+    title: '(필수) 통신사 본인확인서비스 이용약관',
     effectiveDate: '',
     url: null,
     required: true,
