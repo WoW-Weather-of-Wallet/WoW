@@ -158,9 +158,9 @@ class SmsServiceTest {
 
     @Test
     void checkVerifiedThrowsWhenPhoneNumberIsNotVerified() {
-        when(redisTemplate.opsForValue().getAndDelete("sms:verified:01012345678")).thenReturn(null);
+        when(valueOperations.get("sms:verified:01012345678")).thenReturn(null);
 
-        assertThatThrownBy(() -> smsService.checkAndConsumeVerified("010-1234-5678"))
+        assertThatThrownBy(() -> smsService.checkVerified("010-1234-5678"))
                 .isInstanceOf(BadRequestException.class);
     }
 

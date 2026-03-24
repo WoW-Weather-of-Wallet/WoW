@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -91,12 +93,38 @@ public class SmsService {
         );
     }
 
-    public void checkAndConsumeVerified(String phoneNumber) {
+    public void checkVerified(String phoneNumber) {
         String normalized = PhoneNumberUtils.normalize(phoneNumber);
-        String verified = redisTemplate.opsForValue().getAndDelete(RedisKeys.SMS_VERIFIED_PREFIX + normalized);
+        String verified = redisTemplate.opsForValue().get(RedisKeys.SMS_VERIFIED_PREFIX + normalized);
         if (!"true".equals(verified)) {
             throw new BadRequestException("SMS 인증이 필요합니다.");
         }
+    }
+
+    public void consumeVerified(String phoneNumber) {
+        String normalized = PhoneNumberUtils.normalize(phoneNumber);
+        redisTemplate.delete(RedisKeys.SMS_VERIFIED_PREFIX + normalized);
+    }
+
+    public void consumeVerifiedAfterCommit(String phoneNumber) {
+        String normalized = PhoneNumberUtils.normalize(phoneNumber);
+        if (TransactionSynchronizationManager.isSynchronizationActive()
+                && TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    redisTemplate.delete(RedisKeys.SMS_VERIFIED_PREFIX + normalized);
+                }
+            });
+            return;
+        }
+
+        redisTemplate.delete(RedisKeys.SMS_VERIFIED_PREFIX + normalized);
+    }
+
+    public void checkAndConsumeVerified(String phoneNumber) {
+        checkVerified(phoneNumber);
+        consumeVerified(phoneNumber);
     }
 
     private void validateSendRateLimit(String phoneNumber) {
