@@ -17,6 +17,8 @@ import type {
   FixedExpenseManageResponse,
   FixedExpenseParams,
   FixedExpenseSummaryResponse,
+  FixedExpenseEnableRequest,
+  FixedExpenseEnableResponse,
   FixedExpenseUpdateRequest,
   CalendarUploadBackendSummary,
   CalendarUploadFile,
@@ -250,6 +252,15 @@ export async function createCustomCalendarTransactions(payload: CalendarCustomRe
   return response.data.data;
 }
 
+export async function createCashCalendarTransactions(payload: CalendarCustomRequest) {
+  const response = await nativeApi.post<CalendarApiResponse<CalendarCustomResponse>>(
+    '/api/v1/calendar/transactions/custom/cash',
+    payload,
+  );
+
+  return response.data.data;
+}
+
 export async function saveCalendarOverrides(rows: CalendarOverrideRow[]) {
   if (rows.length === 0) {
     return;
@@ -294,6 +305,18 @@ export async function addFixedExpense(payload: FixedExpenseAddRequest) {
 export async function updateFixedExpense(id: number, payload: FixedExpenseUpdateRequest) {
   const response = await nativeApi.patch(`/api/v1/fixed-expenses/${id}`, payload);
   return response.data;
+}
+
+export async function updateFixedExpenseEnable(
+  id: number,
+  payload: FixedExpenseEnableRequest,
+) {
+  const response = await nativeApi.patch<CalendarApiResponse<FixedExpenseEnableResponse>>(
+    `/api/v1/fixed-expenses/${id}/enable`,
+    payload,
+  );
+
+  return response.data.data;
 }
 
 export async function deleteFixedExpense(id: number) {

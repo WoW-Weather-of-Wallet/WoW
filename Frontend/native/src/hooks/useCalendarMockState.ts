@@ -46,6 +46,7 @@ import {
 import {
   addFixedExpense,
   confirmCalendarTransactions,
+  createCashCalendarTransactions,
   createCustomCalendarTransactions,
   deleteFixedExpense,
   getCalendarApiErrorMessage,
@@ -55,6 +56,7 @@ import {
   getCalendarMonthly,
   getFixedExpenseManage,
   updateFixedExpense,
+  updateFixedExpenseEnable,
 } from '../services/calendar';
 import { useAuthStore } from '../store/authStore';
 
@@ -586,11 +588,30 @@ export function useCalendarMockState() {
     setIsManageModalVisible(true);
   }
 
-  function handleToggleManageItem(id: string, nextValue: boolean) {
+  async function handleToggleManageItem(id: string, nextValue: boolean) {
     const target = manageItems.find((item) => item.id === id);
 
-    if (target?.fixedExpenseId) {
-      Alert.alert('연동 대기', '고정지출 활성화/비활성화 API는 아직 프론트에 연결되지 않았습니다.');
+    if (target?.fixedExpenseId && accessToken) {
+      try {
+        const response = await updateFixedExpenseEnable(target.fixedExpenseId, {
+          isEnable: nextValue,
+        });
+
+        setManageItems((current) =>
+          current.map((item) =>
+            item.id === id ? { ...item, isEnabled: response.isEnable } : item,
+          ),
+        );
+      } catch (error) {
+        console.warn('Failed to update fixed expense enable state', error);
+        Alert.alert(
+          '변경 실패',
+          getCalendarApiErrorMessage(
+            error,
+            '고정지출 활성화 상태를 변경하지 못했습니다. 잠시 후 다시 시도해주세요.',
+          ),
+        );
+      }
       return;
     }
 
@@ -701,7 +722,20 @@ export function useCalendarMockState() {
     }
 
     if (accessToken) {
-      await createCustomCalendarTransactions(buildCustomRequest(entries));
+      const cardEntries = entries.filter((entry) => entry.paymentMethod !== 'cash');
+      const cashEntries = entries.filter((entry) => entry.paymentMethod === 'cash');
+
+      const saveTasks: Promise<unknown>[] = [];
+
+      if (cardEntries.length > 0) {
+        saveTasks.push(createCustomCalendarTransactions(buildCustomRequest(cardEntries)));
+      }
+
+      if (cashEntries.length > 0) {
+        saveTasks.push(createCashCalendarTransactions(buildCustomRequest(cashEntries)));
+      }
+
+      await Promise.all(saveTasks);
     }
 
     const patch = buildManualEntryPatch(entries);

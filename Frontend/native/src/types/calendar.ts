@@ -234,6 +234,15 @@ export interface FixedExpenseUpdateRequest {
   dueDay?: number | null;
 }
 
+export interface FixedExpenseEnableRequest {
+  isEnable: boolean;
+}
+
+export interface FixedExpenseEnableResponse {
+  id: number;
+  isEnable: boolean;
+}
+
 export interface FixedExpenseAddRequest {
   transactionId: number;
   dueDay: number;
