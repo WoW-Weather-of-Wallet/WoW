@@ -19,15 +19,75 @@ type WeatherVisual = {
   type: string;
   hint: React.ReactNode;
   icon: typeof SunnyIcon;
+  color: string; // [UX-Fix] 모달 가이드와 통일된 색상 정보 추가
 };
 
+const FALLBACK_WEATHERS: WeatherVisual[] = [
+  {
+    type: '맑음',
+    hint: (
+      <Text>
+        지출 관리의 정석! <Text className="font-sans-extrabold text-white">맑은 날씨</Text>가
+        계속될 거예요.
+      </Text>
+    ),
+    icon: SunnyIcon,
+    color: '#F59E0B',
+  },
+  {
+    type: '구름',
+    hint: (
+      <Text>
+        구름 낀 날씨네요. <Text className="font-sans-extrabold text-white">조금만 더 신경 쓰면</Text>{' '}
+        맑아질 거예요.
+      </Text>
+    ),
+    icon: CloudyIcon,
+    color: '#FFFFFF', // [User-Request] 회색에서 흰색으로 변경
+  },
+  {
+    type: '흐림',
+    hint: (
+      <Text>
+        흐린 날씨예요. <Text className="font-sans-extrabold text-white">불필요한 지출</Text>이
+        없는지 확인해 보세요.
+      </Text>
+    ),
+    icon: OvercastIcon,
+    color: '#64748B',
+  },
+  {
+    type: '비',
+    hint: (
+      <Text>
+        비가 내리고 있어요! <Text className="font-sans-extrabold text-white">꼭 필요한 지출만</Text>{' '}
+        하는 것이 좋겠어요.
+      </Text>
+    ),
+    icon: RainIcon,
+    color: '#1AABFF', // 메인 카드 배경색(primary)과 구분되도록 약간 밝은 블루 적용
+  },
+  {
+    type: '폭우',
+    hint: (
+      <Text>
+        폭우 경보! <Text className="font-sans-extrabold text-white">우산(비상금)</Text>이 젖기 전에
+        지출을 멈춰주세요!
+      </Text>
+    ),
+    icon: HeavyRainIcon,
+    color: '#1E3A8A',
+  },
+];
+
+// 안내 모달용 가이드 데이터
 const WEATHER_GUIDE = [
-  { type: '맑음', detail: '소비 흐름이 안정적인 편입니다.', icon: SunnyIcon, color: '#F59E0B' },
-  { type: '흐림', detail: '평소보다 소비가 늘어날 수 있습니다.', icon: CloudyIcon, color: '#94A3B8' },
-  { type: '구름 많음', detail: '지출 계획을 한 번 더 확인해 주세요.', icon: OvercastIcon, color: '#64748B' },
-  { type: '비', detail: '예상치 못한 소비가 생길 수 있습니다.', icon: RainIcon, color: '#3B82F6' },
-  { type: '폭우', detail: '지출 점검이 더 필요한 상태입니다.', icon: HeavyRainIcon, color: '#1E3A8A' },
-] as const;
+  { type: '맑음', detail: '최근 평균 대비 10% 이하', icon: SunnyIcon, color: '#F59E0B' },
+  { type: '구름', detail: '최근 평균 대비 10~20%', icon: CloudyIcon, color: '#FFFFFF' }, // 회색에서 흰색으로 변경
+  { type: '흐림', detail: '최근 평균 대비 20~30%', icon: OvercastIcon, color: '#64748B' },
+  { type: '비', detail: '최근 평균 대비 30~50%', icon: RainIcon, color: '#1AABFF' },
+  { type: '폭우', detail: '최근 평균 대비 50% 초과', icon: HeavyRainIcon, color: '#1E3A8A' },
+];
 
 export default function HomeTodayWeatherCard({
   weatherName,
@@ -43,6 +103,7 @@ export default function HomeTodayWeatherCard({
         type: '불러오는 중',
         hint: '오늘 소비 날씨를 확인하고 있습니다.',
         icon: CloudyIcon,
+        color: '#FFFFFF',
       } satisfies WeatherVisual;
     }
 
@@ -51,6 +112,7 @@ export default function HomeTodayWeatherCard({
         type: '-',
         hint: '-',
         icon: CloudyIcon,
+        color: '#FFFFFF', // [UX-Fix] 필수 속성인 color 추가 (CloudyIcon 기본색)
       }
     );
   }, [description, iconCode, isLoading, weatherName]);
@@ -66,7 +128,8 @@ export default function HomeTodayWeatherCard({
       <View className="bg-primary-light/10 p-5">
         <View className="flex-row items-center">
           <View className="h-16 w-16 items-center justify-center rounded-2xl bg-white/20">
-            <WeatherIcon size={wp(36)} color="#FFFFFF" />
+            {/* [UX-Fix] 모달과 동일한 유색 아이콘을 출력하여 시각적 통일성 부여 */}
+            <WeatherIcon size={wp(36)} color={weatherData.color} />
           </View>
 
           <View className="ml-4 flex-1">
@@ -117,12 +180,13 @@ export default function HomeTodayWeatherCard({
                 const GuideIcon = item.icon;
 
                 return (
-                  <View key={item.type} className="mb-3 flex-row items-center">
-                    <View className="w-10 items-center justify-center">
-                      <GuideIcon size={24} color={item.color} />
+                  <View key={item.type} className="mb-6 flex-row items-center">
+                    {/* [UX-Fix] 이미지 크기를 키워 시각적 전달력 강화 (h-10 -> h-14) */}
+                    <View className="h-14 w-14 items-center justify-center rounded-2xl bg-gray-100">
+                      <GuideIcon size={wp(28)} color={item.color} />
                     </View>
-                    <View className="ml-3 flex-1">
-                      <Text className="text-base font-bold text-gray-800">{item.type}</Text>
+                    <View className="ml-4 flex-1">
+                      <Text className="text-lg font-bold text-gray-800">{item.type}</Text>
                       <Text className="text-xs text-gray-400">
                         <Text className="font-semibold text-gray-600">{item.detail}</Text>
                       </Text>
@@ -160,11 +224,21 @@ function resolveWeatherVisual(
   const hint = description?.trim() || '-';
 
   if (normalizedCode.includes('heavy') || normalizedName.includes('폭우')) {
-    return { type: normalizedName || '폭우', hint, icon: HeavyRainIcon };
+    return {
+      type: normalizedName || '폭우',
+      hint,
+      icon: HeavyRainIcon,
+      color: '#1E3A8A',
+    };
   }
 
   if (normalizedCode.includes('rain') || normalizedName.includes('비')) {
-    return { type: normalizedName || '비', hint, icon: RainIcon };
+    return {
+      type: normalizedName || '비',
+      hint,
+      icon: RainIcon,
+      color: '#1AABFF',
+    };
   }
 
   if (
@@ -172,11 +246,21 @@ function resolveWeatherVisual(
     normalizedCode.includes('gray') ||
     normalizedName.includes('구름')
   ) {
-    return { type: normalizedName || '구름 많음', hint, icon: OvercastIcon };
+    return {
+      type: normalizedName || '흐림',
+      hint,
+      icon: OvercastIcon,
+      color: '#64748B',
+    };
   }
 
-  if (normalizedCode.includes('cloud') || normalizedName.includes('흐림')) {
-    return { type: normalizedName || '흐림', hint, icon: CloudyIcon };
+  if (normalizedCode.includes('cloud') || normalizedName.includes('구름')) {
+    return {
+      type: normalizedName || '구름',
+      hint,
+      icon: CloudyIcon,
+      color: '#FFFFFF',
+    };
   }
 
   if (
@@ -184,8 +268,18 @@ function resolveWeatherVisual(
     normalizedCode.includes('clear') ||
     normalizedName.includes('맑음')
   ) {
-    return { type: normalizedName || '맑음', hint, icon: SunnyIcon };
+    return {
+      type: normalizedName || '맑음',
+      hint,
+      icon: SunnyIcon,
+      color: '#F59E0B',
+    };
   }
 
-  return { type: normalizedName || '-', hint, icon: CloudyIcon };
+  return {
+    type: normalizedName || '소비날씨',
+    hint,
+    icon: CloudyIcon,
+    color: '#FFFFFF',
+  };
 }

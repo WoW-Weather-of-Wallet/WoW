@@ -22,11 +22,7 @@ import {
   saveCalendarOverrides,
   uploadCalendarTransactions,
 } from '../../services/calendar';
-// 엑셀 가이드 영구 숨김 설정 읽기/쓰기
-import {
-  shouldHideExcelUploadGuide,
-  setHideExcelUploadGuide,
-} from '../../services/guidePreference';
+// 엑셀 가이드 서비스 호출 제거 (수동 호출 방식으로 변경)
 import ExcelUploadGuideModal from './ExcelUploadGuideModal';
 import type {
   CalendarUploadBackendItem,
@@ -114,25 +110,14 @@ export default function CalendarAddEntrySheet({
   const [isExcelGuideVisible, setIsExcelGuideVisible] = useState(false);
 
   /**
-   * 'excel' 탭으로 전환될 때마다 가이드 노출 여부를 확인합니다.
-   * shouldHideExcelUploadGuide()가 false(=아직 영구 숨김 설정 없음)이면 가이드를 띄웁니다.
+   * 가이드 수동 호출을 처리합니다.
    */
-  const handleExcelModeEnter = useCallback(async () => {
-    const hide = await shouldHideExcelUploadGuide();
-    if (!hide) {
-      setIsExcelGuideVisible(true);
-    }
+  const handleOpenExcelGuide = useCallback(() => {
+    setIsExcelGuideVisible(true);
   }, []);
 
-  /**
-   * 가이드 모달 닫기 처리.
-   * hideForever=true이면 다음부터는 자동으로 열리지 않도록 설정을 저장합니다.
-   */
-  const handleExcelGuideClose = useCallback(async (hideForever: boolean) => {
+  const handleExcelGuideClose = useCallback(() => {
     setIsExcelGuideVisible(false);
-    if (hideForever) {
-      await setHideExcelUploadGuide(true);
-    }
   }, []);
 
   useEffect(() => {
@@ -363,10 +348,6 @@ export default function CalendarAddEntrySheet({
                   style={[styles.modeButton, isActive && styles.modeButtonActive]}
                   onPress={() => {
                     setActiveMode(mode.key);
-                    // '파일 업로드' 탭으로 전환할 때 가이드 노출 여부를 체크합니다.
-                    if (mode.key === 'excel') {
-                      handleExcelModeEnter();
-                    }
                   }}
                 >
                   <Ionicons
@@ -567,7 +548,12 @@ export default function CalendarAddEntrySheet({
                   <Ionicons name="document-text-outline" size={wp(24)} color={COLORS.excelIconGold} />
                 </View>
                 <View style={styles.excelTextWrap}>
-                  <Text style={styles.excelTitle}>엑셀 파일 업로드</Text>
+                  <View style={styles.excelHeaderRow}>
+                    <Text style={styles.excelTitle}>엑셀 파일 업로드</Text>
+                    <TouchableOpacity activeOpacity={0.7} onPress={handleOpenExcelGuide} style={styles.excelInfoButton}>
+                      <Ionicons name="information-circle-outline" size={wp(16)} color={COLORS.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
                   <Text style={styles.excelDescription}>
                     은행 또는 카드 내역 CSV, 엑셀 파일을 올리면 미리보기와 백엔드 분류 결과를 함께 확인할 수 있어요.
                   </Text>

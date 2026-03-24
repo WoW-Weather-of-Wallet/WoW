@@ -17,14 +17,28 @@ export const styles = StyleSheet.create({
   },
   textBlock: { flex: 1 },
   eyebrow: {
-    fontSize: fp(13),
+    fontSize: fp(14),
     fontFamily: FONTS.medium,
-    color: COLORS.primary,
-    marginBottom: hp(8),
+    color: COLORS.textSecondary,
+    marginBottom: hp(2),
+  },
+  eyebrowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(4),
+    paddingTop: hp(4), // 글씨를 아래로 아주 살짝 내림
   },
   title: {
     fontSize: fp(24),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(6),
+  },
+  infoButton: {
+    padding: wp(4),
   },
 });

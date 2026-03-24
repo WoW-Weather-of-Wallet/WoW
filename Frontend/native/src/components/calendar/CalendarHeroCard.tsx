@@ -16,6 +16,7 @@ interface CalendarHeroCardProps {
   onPressPrevMonth: () => void;
   onPressNextMonth: () => void;
   onPressAdd?: () => void;
+  onPressInfo?: () => void;
 }
 
 export default function CalendarHeroCard({
@@ -27,6 +28,7 @@ export default function CalendarHeroCard({
   onPressPrevMonth,
   onPressNextMonth,
   onPressAdd,
+  onPressInfo,
 }: CalendarHeroCardProps) {
   const weatherTitle = headerFetchState === 'live' ? overview.weatherTitle : '-';
   const weatherHint = headerFetchState === 'live' ? overview.weatherHint : '-';
@@ -42,7 +44,12 @@ export default function CalendarHeroCard({
       style={styles.heroCard}
     >
       <View style={styles.headerRow}>
-        <Text style={styles.screenTitle}>캘린더</Text>
+        <View style={styles.titleWrap}>
+          <Text style={styles.screenTitle}>캘린더</Text>
+          <TouchableOpacity activeOpacity={0.7} style={styles.infoButton} onPress={onPressInfo}>
+            <Ionicons name="information-circle-outline" size={wp(18)} color={COLORS.white} />
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity activeOpacity={0.9} style={styles.addButton} onPress={onPressAdd}>
           <Text style={styles.addButtonText}>+ 직접 입력</Text>
         </TouchableOpacity>

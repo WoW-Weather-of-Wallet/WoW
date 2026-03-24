@@ -251,7 +251,15 @@ export const styles = StyleSheet.create({
     fontSize: fp(20),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
+  },
+  excelHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(6),
     marginBottom: hp(6),
+  },
+  excelInfoButton: {
+    padding: wp(4),
   },
   excelDescription: {
     fontSize: fp(14),

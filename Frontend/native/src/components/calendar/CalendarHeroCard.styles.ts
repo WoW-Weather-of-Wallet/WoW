@@ -13,7 +13,15 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: hp(14),
+    marginBottom: hp(24),
+  },
+  titleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(6),
+  },
+  infoButton: {
+    padding: wp(4),
   },
   screenTitle: {
     fontSize: fp(22),

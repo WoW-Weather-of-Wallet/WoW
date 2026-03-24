@@ -91,43 +91,10 @@ export default function CalendarScreen() {
     }
   }, [route.params?.action]);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      let isCancelled = false;
+  // 가이드 자동 노출 로직 제거 (수동 호출 방식으로 변경)
 
-      if (hasCheckedGuideRef.current) {
-        return () => {
-          isCancelled = true;
-        };
-      }
-
-      hasCheckedGuideRef.current = true;
-
-      shouldHideCalendarGuide()
-        .then((hideGuide) => {
-          if (!isCancelled && !hideGuide) {
-            setIsGuideVisible(true);
-          }
-        })
-        .catch((error) => {
-          console.warn('Failed to load calendar guide preference', error);
-          if (!isCancelled) {
-            setIsGuideVisible(true);
-          }
-        });
-
-      return () => {
-        isCancelled = true;
-      };
-    }, []),
-  );
-
-  const handleCloseGuide = React.useCallback(async (hideForever: boolean) => {
+  const handleCloseGuide = React.useCallback(() => {
     setIsGuideVisible(false);
-
-    if (hideForever) {
-      await setHideCalendarGuide(true);
-    }
   }, []);
 
   return (
@@ -161,6 +128,7 @@ export default function CalendarScreen() {
           onPressPrevMonth={() => handleMoveMonth('prev')}
           onPressNextMonth={() => handleMoveMonth('next')}
           onPressAdd={() => setIsAddEntryVisible(true)}
+          onPressInfo={() => setIsGuideVisible(true)}
         />
 
         {/*
