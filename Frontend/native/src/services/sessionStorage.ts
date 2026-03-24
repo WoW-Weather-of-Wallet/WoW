@@ -4,13 +4,13 @@ export interface PersistedAuthUser {
   userId?: string | null;
   name?: string;
   role?: string;
-  loginType?: 'NORMAL' | 'SSAFY' | string | null;
 }
 
 export interface PersistedAuthSession {
   refreshToken: string;
   user: PersistedAuthUser;
   autoLoginEnabled: boolean;
+  loginType?: 'NORMAL' | 'SSAFY' | string | null;
 }
 
 const AUTH_SESSION_KEY = 'wow.auth.session.v1';

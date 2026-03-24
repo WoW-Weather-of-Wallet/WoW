@@ -71,6 +71,7 @@ function NavigationWrapper() {
     isAuthenticated,
     sessionSource,
     user: sessionUser,
+    loginType,
     logout,
     updateAccessToken,
   } = useAuthStore();
@@ -262,7 +263,7 @@ function NavigationWrapper() {
   );
 
   const handleLockLogout = useCallback(async () => {
-    const shouldLogoutSsafy = sessionUser?.loginType === 'SSAFY';
+    const shouldLogoutSsafy = loginType === 'SSAFY';
 
     try {
       await fcmService.unregisterFcmToken();
@@ -294,7 +295,7 @@ function NavigationWrapper() {
         });
       }, 0);
     }
-  }, [logout, sessionUser?.loginType, unlockApp]);
+  }, [loginType, logout, unlockApp]);
 
   return (
     <>
@@ -422,7 +423,7 @@ function NavigationWrapper() {
         onSubmitPin={handleSubmitPin}
         onPressBiometric={handleBiometricPress}
         onPressDifferentAccount={() => {
-          if (sessionUser?.loginType === 'SSAFY') {
+          if (loginType === 'SSAFY') {
             Alert.alert(
               '다른 계정으로 로그인',
               '현재 계정에서 로그아웃한 뒤 SSAFY 브라우저 세션도 함께 종료합니다.',
@@ -446,7 +447,7 @@ function NavigationWrapper() {
           void handleToggleBiometric(enabled);
         }}
         logoutNotice={
-          sessionUser?.loginType === 'SSAFY'
+          loginType === 'SSAFY'
             ? '다른 계정으로 로그인하면 SSAFY 브라우저 로그아웃이 함께 진행됩니다.'
             : undefined
         }

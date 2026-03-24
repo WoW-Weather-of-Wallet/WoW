@@ -95,6 +95,7 @@ export default function SplashScreen() {
             user: persistedSession.user,
             autoLogin: true,
             source: 'restored',
+            loginType: persistedSession.loginType ?? null,
           });
           nextRoute = 'MainTabs';
         }
@@ -157,4 +158,3 @@ export default function SplashScreen() {
     </Animated.View>
   );
 }
-

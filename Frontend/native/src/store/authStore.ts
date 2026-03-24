@@ -5,7 +5,6 @@ interface AuthUser {
   userId?: string | null;
   name?: string;
   role?: string;
-  loginType?: 'NORMAL' | 'SSAFY' | string | null;
 }
 
 interface LoginSessionPayload {
@@ -13,6 +12,7 @@ interface LoginSessionPayload {
   user: AuthUser;
   autoLogin?: boolean;
   source?: 'manual' | 'restored' | 'ssafy';
+  loginType?: 'NORMAL' | 'SSAFY' | string | null;
 }
 
 interface AuthState {
@@ -21,6 +21,7 @@ interface AuthState {
   user: AuthUser | null;
   autoLoginEnabled: boolean;
   sessionSource: 'manual' | 'restored' | 'ssafy' | null;
+  loginType: 'NORMAL' | 'SSAFY' | string | null;
   login: (payload: LoginSessionPayload) => void;
   updateAccessToken: (accessToken: string | null) => void;
   updateUser: (payload: Partial<AuthUser>) => void;
@@ -33,8 +34,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   autoLoginEnabled: false,
   sessionSource: null,
+  loginType: null,
 
-  login: ({ accessToken, user, autoLogin = false, source = 'manual' }) => {
+  login: ({ accessToken, user, autoLogin = false, source = 'manual', loginType = null }) => {
     setNativeAuthToken(accessToken);
 
     set({
@@ -43,6 +45,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       user,
       autoLoginEnabled: autoLogin,
       sessionSource: source,
+      loginType,
     });
   },
 
@@ -75,6 +78,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       user: null,
       autoLoginEnabled: false,
       sessionSource: null,
+      loginType: null,
     });
   },
 }));

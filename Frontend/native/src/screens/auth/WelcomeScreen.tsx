@@ -70,22 +70,18 @@ export default function WelcomeScreen({ route, navigation }: any) {
         if (registerResponse.refreshToken) {
           await savePersistedAuthSession({
             refreshToken: registerResponse.refreshToken,
-            user: {
-              ...registerResponse.user,
-              loginType: 'SSAFY',
-            },
+            user: registerResponse.user,
             autoLoginEnabled: true,
+            loginType: 'SSAFY',
           });
         }
 
         loginToStore({
           accessToken: registerResponse.accessToken,
-          user: {
-            ...registerResponse.user,
-            loginType: 'SSAFY',
-          },
+          user: registerResponse.user,
           autoLogin: true,
           source: 'ssafy',
+          loginType: 'SSAFY',
         });
 
         navigation.reset({
@@ -123,21 +119,17 @@ export default function WelcomeScreen({ route, navigation }: any) {
       if (loginResponse.refreshToken) {
         await savePersistedAuthSession({
           refreshToken: loginResponse.refreshToken,
-          user: {
-            ...loginResponse.user,
-            loginType: 'NORMAL',
-          },
+          user: loginResponse.user,
           autoLoginEnabled: true,
+          loginType: 'NORMAL',
         });
       }
 
       loginToStore({
         accessToken: loginResponse.accessToken,
-        user: {
-          ...loginResponse.user,
-          loginType: 'NORMAL',
-        },
+        user: loginResponse.user,
         autoLogin: true,
+        loginType: 'NORMAL',
       });
 
       navigation.reset({

@@ -78,6 +78,7 @@ export default function SettingsScreen() {
   const navigation = useNavigation<any>();
   const logout = useAuthStore((state) => state.logout);
   const sessionUser = useAuthStore((state) => state.user);
+  const sessionLoginType = useAuthStore((state) => state.loginType);
   const updateUser = useAuthStore((state) => state.updateUser);
   const securityPreferences = useLocalSecurityStore((state) => state.preferences);
   const refreshSecurityPreferences = useLocalSecurityStore((state) => state.refreshPreferences);
@@ -560,7 +561,7 @@ export default function SettingsScreen() {
 
   const handleLogout = () => {
     const shouldLogoutSsafy =
-      (profile?.loginType ?? sessionUser?.loginType) === 'SSAFY';
+      (profile?.loginType ?? sessionLoginType) === 'SSAFY';
 
     Alert.alert(
       '로그아웃',

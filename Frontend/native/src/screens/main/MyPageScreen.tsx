@@ -62,6 +62,7 @@ export default function MyPageScreen() {
   const navigation = useNavigation<any>();
   const logout = useAuthStore((state) => state.logout);
   const sessionUser = useAuthStore((state) => state.user);
+  const sessionLoginType = useAuthStore((state) => state.loginType);
   const securityPreferences = useLocalSecurityStore((state) => state.preferences);
   const refreshSecurityPreferences = useLocalSecurityStore((state) => state.refreshPreferences);
   const persistBiometricEnabled = useLocalSecurityStore((state) => state.setBiometricEnabled);
@@ -250,7 +251,7 @@ export default function MyPageScreen() {
   /* ── 로그아웃 처리 ── */
   const handleLogout = () => {
     const shouldLogoutSsafy =
-      (profile?.loginType ?? sessionUser?.loginType) === 'SSAFY';
+      (profile?.loginType ?? sessionLoginType) === 'SSAFY';
 
     Alert.alert(
       '로그아웃',
