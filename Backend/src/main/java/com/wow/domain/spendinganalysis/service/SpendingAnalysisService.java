@@ -47,7 +47,7 @@ public class SpendingAnalysisService {
         String categoryName = highestRatioResult.getCategory().getCategoryName();
         String percentage = toPercentageText(highestRatioResult.getMyRatio());
 
-        return String.format("%s가 전체의 %s%%로 가장 높은 비중을 차지해요.", categoryName, percentage);
+        return String.format("%s(이)가 전체의 %s%%로 가장 높은 비중을 차지해요.", categoryName, percentage);
     }
 
     private String toPercentageText(BigDecimal value) {
