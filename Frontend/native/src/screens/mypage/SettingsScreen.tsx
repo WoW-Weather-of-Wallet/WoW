@@ -574,6 +574,8 @@ export default function SettingsScreen() {
           text: '로그아웃',
           style: 'destructive',
           onPress: async () => {
+            let logoutError: unknown = null;
+
             try {
               // [P1 Fix] 로그아웃 시 서버에 등록된 FCM 토큰을 먼저 제거합니다.
               // 실패하더라도 로그아웃 처리는 계속 진행합니다.
@@ -585,12 +587,7 @@ export default function SettingsScreen() {
 
               await logoutRequest();
             } catch (error) {
-              const message = extractApiErrorMessage(
-                error,
-                '로그아웃 처리 중 문제가 있었어요. 다시 시도해주세요.',
-              );
-              Alert.alert('로그아웃 실패', message);
-              return;
+              logoutError = error;
             }
 
             await clearPersistedAuthSession();
@@ -606,6 +603,14 @@ export default function SettingsScreen() {
                   console.warn('[Settings] SSAFY browser logout failed:', error);
                 });
               }, 0);
+            }
+
+            if (logoutError) {
+              const message = extractApiErrorMessage(
+                logoutError,
+                '서버 로그아웃 요청은 실패했지만, 현재 기기에서는 로그아웃 처리되었습니다.',
+              );
+              Alert.alert('로그아웃 안내', message);
             }
           },
         },

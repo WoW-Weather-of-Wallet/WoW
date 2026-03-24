@@ -264,22 +264,29 @@ export default function MyPageScreen() {
           text: '로그아웃',
           style: 'destructive',
           onPress: async () => {
+            let logoutError: unknown = null;
+
             try {
               try { await fcmService.unregisterFcmToken(); } catch (e) {}
               await logoutRequest();
-              await clearPersistedAuthSession();
-              logout();
-              navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
-
-              if (shouldLogoutSsafy) {
-                setTimeout(() => {
-                  Linking.openURL(getSsafyLogoutUrl()).catch((error) => {
-                    console.warn('[MyPage] SSAFY browser logout failed:', error);
-                  });
-                }, 0);
-              }
             } catch (error) {
-              Alert.alert('오류', '로그아웃 처리 중 문제가 발생했습니다.');
+              logoutError = error;
+            }
+
+            await clearPersistedAuthSession();
+            logout();
+            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+
+            if (shouldLogoutSsafy) {
+              setTimeout(() => {
+                Linking.openURL(getSsafyLogoutUrl()).catch((error) => {
+                  console.warn('[MyPage] SSAFY browser logout failed:', error);
+                });
+              }, 0);
+            }
+
+            if (logoutError) {
+              Alert.alert('로그아웃 안내', '서버 로그아웃 요청은 실패했지만, 현재 기기에서는 로그아웃 처리되었습니다.');
             }
           },
         },
