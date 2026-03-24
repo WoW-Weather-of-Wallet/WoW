@@ -309,7 +309,7 @@ export async function getFixedExpenseManage(params: FixedExpenseParams) {
 
 export async function addFixedExpense(payload: FixedExpenseAddRequest) {
   const response = await nativeApi.post<CalendarApiResponse<FixedExpenseAddResponse>>(
-    '/api/v1/fixed-expenses',
+    '/api/v1/fixed-expenses/from-transaction',
     payload,
   );
 
