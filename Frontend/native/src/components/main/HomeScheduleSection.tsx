@@ -12,10 +12,23 @@ interface HomeScheduleSectionProps {
 export default function HomeScheduleSection({
   items,
 }: HomeScheduleSectionProps) {
+  const displayItems =
+    items.length > 0
+      ? items
+      : [
+          {
+            id: 'empty-schedule',
+            title: '-',
+            dueLabel: '-',
+            amount: '-',
+            status: 'upcoming' as const,
+          },
+        ];
+
   return (
     <SurfaceCard>
-      <SectionHeader title="다가오는 결제 일정" actionLabel="3건" />
-      {items.map((item) => (
+      <SectionHeader title="일정" actionLabel="-" />
+      {displayItems.map((item) => (
         <View key={item.id} style={styles.scheduleCard}>
           <View style={styles.flex1}>
             <Text style={styles.scheduleTitle}>{item.title}</Text>
@@ -24,7 +37,7 @@ export default function HomeScheduleSection({
           <View style={styles.scheduleRight}>
             <Text style={styles.scheduleAmount}>{item.amount}</Text>
             <Text style={styles.scheduleStatus}>
-              {item.status === 'paid' ? '완료' : '예정'}
+              {items.length === 0 ? '-' : item.status === 'paid' ? '완료' : '예정'}
             </Text>
           </View>
         </View>
@@ -32,4 +45,3 @@ export default function HomeScheduleSection({
     </SurfaceCard>
   );
 }
-

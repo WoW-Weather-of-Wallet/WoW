@@ -1,12 +1,6 @@
 ﻿import { Alert } from 'react-native';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  mockCalendarDayDetails,
-  mockCalendarDays,
-  mockCalendarTransactions,
-  mockFixedExpenses,
-  mockManageFixedExpenses,
-  mockSelectableTransactions,
   type CalendarDayDetail,
   type CalendarDayItem,
   type CalendarTransactionGroup,
@@ -19,6 +13,7 @@ import type {
   CalendarHeaderFetchState,
   CalendarHeaderResponse,
   CalendarMonthlyResponse,
+  CalendarTransactionsResponse,
   FixedExpenseManageResponse,
   FixedExpenseSummaryResponse,
   ManualCalendarEntryDraft,
@@ -46,15 +41,19 @@ import {
 import {
   addFixedExpense,
   confirmCalendarTransactions,
+  createCashCalendarTransactions,
   createCustomCalendarTransactions,
+  deleteCustomCalendarTransaction,
   deleteFixedExpense,
   getCalendarApiErrorMessage,
   getCalendarFixedExpenses,
   getCalendarDaily,
   getCalendarHeader,
   getCalendarMonthly,
+  getCalendarTransactions,
   getFixedExpenseManage,
   updateFixedExpense,
+  updateFixedExpenseEnable,
 } from '../services/calendar';
 import { useAuthStore } from '../store/authStore';
 
@@ -82,8 +81,9 @@ const BASE_OVERVIEW = {
 const CATEGORY_ID_BY_KEY = buildCategoryIdMap();
 
 export function useCalendarMockState() {
-  // We anchor the screen to the real current date so the backend header can
-  // be shown immediately on first open. Detailed body data still falls back to mock data.
+  // 첫 진입 시 실제 오늘 날짜를 기준으로 잡아야
+  // 캘린더 헤더 실데이터를 바로 보여줄 수 있습니다.
+  // 본문 상세 데이터는 아직 mock과 혼합해서 사용합니다.
   const today = useMemo(() => new Date(), []);
   const accessToken = useAuthStore((state) => state.accessToken);
 
@@ -91,18 +91,13 @@ export function useCalendarMockState() {
   const [activeTab, setActiveTab] = useState<CalendarTab>('calendar');
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [memoValue, setMemoValue] = useState('');
-  const [calendarDaySource, setCalendarDaySource] = useState<CalendarDayItem[]>(mockCalendarDays);
+  const [calendarDaySource, setCalendarDaySource] = useState<CalendarDayItem[]>([]);
   const [calendarDayDetails, setCalendarDayDetails] =
-    useState<Record<string, CalendarDayDetail>>(mockCalendarDayDetails);
-  const [fixedExpenseItems, setFixedExpenseItems] = useState<FixedExpenseItem[]>(mockFixedExpenses);
-  const [manageItems, setManageItems] = useState<ManageFixedExpenseItem[]>(
-    mockManageFixedExpenses.map((item) => ({
-      ...item,
-      category: extractCategoryFromSubtitle(item.subtitle),
-    })),
-  );
+    useState<Record<string, CalendarDayDetail>>({});
+  const [fixedExpenseItems, setFixedExpenseItems] = useState<FixedExpenseItem[]>([]);
+  const [manageItems, setManageItems] = useState<ManageFixedExpenseItem[]>([]);
   const [transactionGroups, setTransactionGroups] =
-    useState<CalendarTransactionGroup[]>(mockCalendarTransactions);
+    useState<CalendarTransactionGroup[]>([]);
   const [isManageModalVisible, setIsManageModalVisible] = useState(false);
   const [isPickerVisible, setIsPickerVisible] = useState(false);
   const [isDetailSheetVisible, setIsDetailSheetVisible] = useState(false);
@@ -147,11 +142,11 @@ export function useCalendarMockState() {
     return {
       ...BASE_OVERVIEW,
       monthLabel,
-      weatherTitle: liveHeader?.weatherName ?? BASE_OVERVIEW.weatherTitle,
+      weatherTitle: liveHeader?.weatherName ?? '-',
       weatherSubtitle: monthLabel,
-      weatherHint: liveHeader?.description ?? BASE_OVERVIEW.weatherHint,
+      weatherHint: liveHeader?.description ?? '-',
       savingsAmount: savedAmount,
-      goalLabel: liveHeader ? buildSavingsLabel(savedAmount) : BASE_OVERVIEW.goalLabel,
+      goalLabel: liveHeader ? buildSavingsLabel(savedAmount) : '-',
     };
   }, [liveHeader, monthLabel]);
 
@@ -161,8 +156,8 @@ export function useCalendarMockState() {
     const displayedMonthKey = displayedMonth.getFullYear() * 12 + displayedMonth.getMonth();
     const monthDiff = currentMonthKey - displayedMonthKey;
 
-    // The backend currently calculates savings only for the current or previous month.
-    // Older mock months stay visible so the calendar screen still has usable content.
+    // 백엔드 절약 금액 계산은 현재 월/전월만 지원하므로,
+    // 그보다 이전 달은 기존 mock 월 데이터를 유지해서 화면 사용성을 보장합니다.
     if (!accessToken || (monthDiff !== 0 && monthDiff !== 1)) {
       setLiveHeader(null);
       setHeaderFetchState('fallback');
@@ -236,7 +231,6 @@ export function useCalendarMockState() {
         }
 
         const monthDetails: Record<string, CalendarDayDetail> = {};
-        const monthGroups: CalendarTransactionGroup[] = [];
 
         dailyResponses.forEach((dailyResponse) => {
           if (!dailyResponse) {
@@ -245,11 +239,6 @@ export function useCalendarMockState() {
 
           const mappedDetail = mapDailyResponseToDetail(dailyResponse);
           monthDetails[mappedDetail.dateKey] = mappedDetail;
-
-          const mappedGroup = mapDailyResponseToTransactionGroup(dailyResponse);
-          if (mappedGroup) {
-            monthGroups.push(mappedGroup);
-          }
         });
 
         const nextCalendarDaySource = mergeMonthlyAndDailyCalendarDays(
@@ -263,9 +252,6 @@ export function useCalendarMockState() {
         setCalendarDayDetails((current) =>
           replaceMonthCalendarDayDetails(current, displayedMonth, monthDetails),
         );
-        setTransactionGroups((current) =>
-          replaceMonthTransactionGroups(current, displayedMonth, monthGroups),
-        );
       })
       .catch((error) => {
         console.warn('Failed to load calendar month from backend', error);
@@ -278,13 +264,38 @@ export function useCalendarMockState() {
 
   useEffect(() => {
     if (!accessToken) {
-      setFixedExpenseItems(mockFixedExpenses);
-      setManageItems(
-        mockManageFixedExpenses.map((item) => ({
-          ...item,
-          category: extractCategoryFromSubtitle(item.subtitle),
-        })),
-      );
+      setTransactionGroups([]);
+      return;
+    }
+
+    let isCancelled = false;
+
+    getCalendarTransactions({
+      year: displayedMonth.getFullYear(),
+      month: displayedMonth.getMonth() + 1,
+    })
+      .then((response) => {
+        if (isCancelled) {
+          return;
+        }
+
+        // 거래내역 히스토리는 전용 조회 API를 기준으로 맞춰야
+        // 서버 transactionId를 안정적으로 유지하면서 삭제 흐름을 연결할 수 있습니다.
+        setTransactionGroups(mapCalendarTransactionsResponse(response));
+      })
+      .catch((error) => {
+        console.warn('Failed to load calendar transactions from backend', error);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [accessToken, displayedMonth]);
+
+  useEffect(() => {
+    if (!accessToken) {
+      setFixedExpenseItems([]);
+      setManageItems([]);
       return;
     }
 
@@ -352,7 +363,7 @@ export function useCalendarMockState() {
   );
   const selectableTransactions = useMemo<SelectableTransactionCandidate[]>(() => {
     if (!accessToken) {
-      return mockSelectableTransactions;
+      return [];
     }
 
     return filteredTransactionGroups.flatMap((group) =>
@@ -586,11 +597,30 @@ export function useCalendarMockState() {
     setIsManageModalVisible(true);
   }
 
-  function handleToggleManageItem(id: string, nextValue: boolean) {
+  async function handleToggleManageItem(id: string, nextValue: boolean) {
     const target = manageItems.find((item) => item.id === id);
 
-    if (target?.fixedExpenseId) {
-      Alert.alert('연동 대기', '고정지출 활성화/비활성화 API는 아직 프론트에 연결되지 않았습니다.');
+    if (target?.fixedExpenseId && accessToken) {
+      try {
+        const response = await updateFixedExpenseEnable(target.fixedExpenseId, {
+          isEnable: nextValue,
+        });
+
+        setManageItems((current) =>
+          current.map((item) =>
+            item.id === id ? { ...item, isEnabled: response.isEnable } : item,
+          ),
+        );
+      } catch (error) {
+        console.warn('Failed to update fixed expense enable state', error);
+        Alert.alert(
+          '변경 실패',
+          getCalendarApiErrorMessage(
+            error,
+            '고정지출 활성화 상태를 변경하지 못했습니다. 잠시 후 다시 시도해주세요.',
+          ),
+        );
+      }
       return;
     }
 
@@ -701,7 +731,28 @@ export function useCalendarMockState() {
     }
 
     if (accessToken) {
-      await createCustomCalendarTransactions(buildCustomRequest(entries));
+      const cardEntries = entries.filter((entry) => entry.paymentMethod !== 'cash');
+      const cashEntries = entries.filter((entry) => entry.paymentMethod === 'cash');
+
+      const saveTasks: Promise<unknown>[] = [];
+
+      if (cardEntries.length > 0) {
+        saveTasks.push(createCustomCalendarTransactions(buildCustomRequest(cardEntries)));
+      }
+
+      if (cashEntries.length > 0) {
+        saveTasks.push(createCashCalendarTransactions(buildCustomRequest(cashEntries)));
+      }
+
+      await Promise.all(saveTasks);
+
+      // 직접 입력 저장 직후 히스토리를 다시 조회해야
+      // 서버가 발급한 transactionId를 받아 삭제/고정지출 연동에 재사용할 수 있습니다.
+      const transactionsResponse = await getCalendarTransactions({
+        year: displayedMonth.getFullYear(),
+        month: displayedMonth.getMonth() + 1,
+      });
+      setTransactionGroups(mapCalendarTransactionsResponse(transactionsResponse));
     }
 
     const patch = buildManualEntryPatch(entries);
@@ -720,8 +771,8 @@ export function useCalendarMockState() {
       const requests = buildConfirmRequests(entries);
 
       for (const request of requests) {
-        // The backend confirm API deletes and re-inserts one date at a time.
-        // We therefore split requests by date and save them sequentially.
+        // confirm API는 날짜별로 기존 데이터를 지우고 다시 저장하므로
+        // 날짜 단위로 나눠 순차 저장합니다.
         await confirmCalendarTransactions(request);
       }
     }
@@ -731,6 +782,61 @@ export function useCalendarMockState() {
     setCalendarDaySource((current) => mergeCalendarDaySource(current, patch));
     setCalendarDayDetails((current) => mergeCalendarDayDetails(current, patch));
     setIsAddEntryVisible(false);
+  }
+
+  function handleDeleteHistoryTransaction(transactionId: number, dateKey: string, title: string) {
+    if (!accessToken) {
+      return;
+    }
+
+    const targetGroup = transactionGroups.find((group) => group.id === dateKey);
+    const targetItem = targetGroup?.items.find(
+      (item) => item.backendTransactionId === transactionId,
+    );
+
+    if (!targetItem) {
+      Alert.alert('삭제 불가', '삭제할 거래 정보를 다시 불러온 뒤 시도해주세요.');
+      return;
+    }
+
+    Alert.alert(
+      '거래 삭제',
+      `${title} 거래를 삭제할까요?\n삭제 후에는 되돌릴 수 없습니다.`,
+      [
+        {
+          text: '취소',
+          style: 'cancel',
+        },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteCustomCalendarTransaction(transactionId);
+
+              setTransactionGroups((current) =>
+                removeTransactionFromGroups(current, transactionId),
+              );
+              setCalendarDayDetails((current) =>
+                removeTransactionFromDayDetails(current, dateKey, transactionId),
+              );
+              setCalendarDaySource((current) =>
+                removeTransactionFromDaySource(current, dateKey, targetItem.amount),
+              );
+            } catch (error) {
+              console.warn('Failed to delete calendar transaction', error);
+              Alert.alert(
+                '삭제 실패',
+                getCalendarApiErrorMessage(
+                  error,
+                  '거래 삭제 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                ),
+              );
+            }
+          },
+        },
+      ],
+    );
   }
 
   function handleSaveMemo() {
@@ -806,6 +912,7 @@ export function useCalendarMockState() {
     handleOpenFixedExpensePicker,
     handleSaveManualEntries,
     handleSaveExcelEntries,
+    handleDeleteHistoryTransaction,
     handleSaveMemo,
   };
 }
@@ -945,6 +1052,102 @@ function mapDailyResponseToTransactionGroup(response: CalendarDailyResponse): Ca
       mapDailyTransactionItem(response.date, transaction, index),
     ),
   };
+}
+
+function mapCalendarTransactionsResponse(
+  response: CalendarTransactionsResponse,
+): CalendarTransactionGroup[] {
+  return response.items
+    .map((dailyItem) => ({
+      id: dailyItem.date,
+      dateLabel: formatMonthDayTitle(dailyItem.date),
+      dailySpent: dailyItem.transactions.reduce((sum, transaction) => sum + transaction.amount, 0),
+      items: dailyItem.transactions.map((transaction, index) => {
+        const fallbackCategory = transaction.category ?? DEFAULT_CALENDAR_CATEGORY;
+        const categoryMeta =
+          CATEGORY_META[fallbackCategory] ?? CATEGORY_META[DEFAULT_CALENDAR_CATEGORY];
+
+        return {
+          id: `${dailyItem.date}-history-${transaction.transactionId ?? index}`,
+          backendTransactionId: transaction.transactionId,
+          title: transaction.merchantName,
+          category: fallbackCategory,
+          amount: transaction.amount,
+          icon: transaction.icon ?? categoryMeta.icon,
+          iconTone: categoryMeta.iconTone,
+          isFixedExpense: transaction.isFixed,
+        };
+      }),
+    }))
+    .sort((left, right) => (left.id < right.id ? 1 : -1));
+}
+
+function removeTransactionFromGroups(
+  groups: CalendarTransactionGroup[],
+  transactionId: number,
+) {
+  return groups
+    .map((group) => {
+      const nextItems = group.items.filter(
+        (item) => item.backendTransactionId !== transactionId,
+      );
+
+      if (nextItems.length === group.items.length) {
+        return group;
+      }
+
+      return {
+        ...group,
+        dailySpent: nextItems.reduce((sum, item) => sum + item.amount, 0),
+        items: nextItems,
+      };
+    })
+    .filter((group) => group.items.length > 0);
+}
+
+function removeTransactionFromDayDetails(
+  details: Record<string, CalendarDayDetail>,
+  dateKey: string,
+  transactionId: number,
+) {
+  const targetDetail = details[dateKey];
+  if (!targetDetail) {
+    return details;
+  }
+
+  const nextItems = targetDetail.items.filter(
+    (item) => item.backendTransactionId !== transactionId,
+  );
+
+  return {
+    ...details,
+    [dateKey]: {
+      ...targetDetail,
+      spentAmount:
+        nextItems.length > 0 ? nextItems.reduce((sum, item) => sum + item.amount, 0) : null,
+      transactionCount: nextItems.length > 0 ? nextItems.length : null,
+      items: nextItems,
+    },
+  };
+}
+
+function removeTransactionFromDaySource(
+  days: CalendarDayItem[],
+  dateKey: string,
+  removedAmount: number,
+) {
+  return days.map((day) => {
+    if (day.dateKey !== dateKey) {
+      return day;
+    }
+
+    const nextAmount = Math.max((day.amount ?? 0) - removedAmount, 0);
+
+    return {
+      ...day,
+      amount: nextAmount > 0 ? nextAmount : undefined,
+    };
+  });
 }
 
 function mapDailyTransactionItem(

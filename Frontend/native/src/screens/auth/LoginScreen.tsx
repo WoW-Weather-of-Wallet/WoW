@@ -116,7 +116,6 @@ const buildLoginErrorPresentation = (
 export default function LoginScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const loginToStore = useAuthStore((state) => state.login);
-  const loginWithDevBypass = useAuthStore((state) => state.loginWithDevBypass);
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [autoLogin, setAutoLogin] = useState(false);
@@ -342,27 +341,6 @@ export default function LoginScreen({ navigation }: any) {
           <Animated.View style={[styles.headerContainer, headerAnimatedStyle]}>
             <Text style={styles.headerTitle}>{'\uB85C\uADF8\uC778'}</Text>
             <View style={styles.headerLine} />
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(160).duration(500).springify()}>
-            <View style={styles.devEntryCard}>
-              <Text style={styles.devEntryTitle}>{'\uAC1C\uBC1C\uC6A9 \uBE60\uB978 \uC9C4\uC785'}</Text>
-              <Text style={styles.devEntryDescription}>
-                {
-                  '\uD14C\uC2A4\uD2B8 \uC911\uC5D0\uB9CC \uC0AC\uC6A9\uD558\uC138\uC694. \uC784\uC2DC UI \uD655\uC778\uC774\uB098 \uB85C\uCEEC \uD750\uB984 \uC810\uAC80\uC5D0 \uD65C\uC6A9\uD560 \uC218 \uC788\uC5B4\uC694.'
-                }
-              </Text>
-              <GradientButton
-                title={'TEST: \uAC1C\uBC1C \uACC4\uC815 \uBC14\uB85C \uC785\uC7A5'}
-                onPress={() => {
-                  loginWithDevBypass({
-                    userId: 'dev-main-user',
-                    name: '\uAC1C\uBC1C\uC6A9',
-                  });
-                  navigation.replace('MainTabs');
-                }}
-              />
-            </View>
           </Animated.View>
 
           <Animated.View

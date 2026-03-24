@@ -9,6 +9,8 @@ import type {
   CalendarCustomResponse,
   CalendarDailyParams,
   CalendarDailyResponse,
+  CalendarTransactionsParams,
+  CalendarTransactionsResponse,
   CalendarHeaderParams,
   CalendarHeaderResponse,
   CalendarMonthlyParams,
@@ -17,6 +19,8 @@ import type {
   FixedExpenseManageResponse,
   FixedExpenseParams,
   FixedExpenseSummaryResponse,
+  FixedExpenseEnableRequest,
+  FixedExpenseEnableResponse,
   FixedExpenseUpdateRequest,
   CalendarUploadBackendSummary,
   CalendarUploadFile,
@@ -140,9 +144,9 @@ function resolveBackendCategoryId(category: string) {
 function normalizeCalendarUploadSummary(
   rawSummary: RawCalendarUploadBackendSummary,
 ): CalendarUploadBackendSummary {
-  // The Flask response currently comes back in snake_case, while the screen
-  // code is written against camelCase fields. We normalize once here so the
-  // rest of the app can stay consistent.
+  // Flask 응답은 현재 snake_case로 내려오고,
+  // 화면 코드는 camelCase를 기준으로 작성되어 있습니다.
+  // 이 지점에서 한 번만 정규화해서 나머지 화면 코드를 단순하게 유지합니다.
   return {
     message: rawSummary.message ?? '',
     records: (rawSummary.records ?? []).map((record) => ({
@@ -203,7 +207,7 @@ export async function getCalendarMonthly(params: CalendarMonthlyParams) {
 
 export async function getCalendarDaily(params: CalendarDailyParams) {
   const response = await nativeApi.get<CalendarApiResponse<CalendarDailyResponse>>(
-    '/api/v1/calendar/daily',
+    '/api/v1/calendar/daily/transactions',
     {
       params,
     },
@@ -215,7 +219,8 @@ export async function getCalendarDaily(params: CalendarDailyParams) {
 export async function uploadCalendarTransactions(payload: CalendarUploadRequest) {
   const formData = new FormData();
 
-  // Backend accepts each file independently, so the UI can upload only bank or only card data.
+  // 백엔드는 각 파일을 독립적으로 받으므로,
+  // 화면에서는 은행 파일만 또는 카드 파일만 올려도 동작할 수 있습니다.
   appendUploadFile(formData, 'bank_file', payload.bankFile);
   appendUploadFile(formData, 'card_file', payload.cardFile);
 
@@ -245,6 +250,26 @@ export async function createCustomCalendarTransactions(payload: CalendarCustomRe
   const response = await nativeApi.post<CalendarApiResponse<CalendarCustomResponse>>(
     '/api/v1/calendar/transactions/custom',
     payload,
+  );
+
+  return response.data.data;
+}
+
+export async function createCashCalendarTransactions(payload: CalendarCustomRequest) {
+  const response = await nativeApi.post<CalendarApiResponse<CalendarCustomResponse>>(
+    '/api/v1/calendar/transactions/custom/cash',
+    payload,
+  );
+
+  return response.data.data;
+}
+
+export async function getCalendarTransactions(params: CalendarTransactionsParams) {
+  const response = await nativeApi.get<CalendarApiResponse<CalendarTransactionsResponse>>(
+    '/api/v1/calendar/transactions',
+    {
+      params,
+    },
   );
 
   return response.data.data;
@@ -284,7 +309,7 @@ export async function getFixedExpenseManage(params: FixedExpenseParams) {
 
 export async function addFixedExpense(payload: FixedExpenseAddRequest) {
   const response = await nativeApi.post<CalendarApiResponse<FixedExpenseAddResponse>>(
-    '/api/v1/fixed-expenses',
+    '/api/v1/fixed-expenses/from-transaction',
     payload,
   );
 
@@ -296,8 +321,28 @@ export async function updateFixedExpense(id: number, payload: FixedExpenseUpdate
   return response.data;
 }
 
+export async function updateFixedExpenseEnable(
+  id: number,
+  payload: FixedExpenseEnableRequest,
+) {
+  const response = await nativeApi.patch<CalendarApiResponse<FixedExpenseEnableResponse>>(
+    `/api/v1/fixed-expenses/${id}/enable`,
+    payload,
+  );
+
+  return response.data.data;
+}
+
 export async function deleteFixedExpense(id: number) {
   const response = await nativeApi.delete(`/api/v1/fixed-expenses/${id}`);
+  return response.data;
+}
+
+export async function deleteCustomCalendarTransaction(transactionId: number) {
+  const response = await nativeApi.delete(
+    `/api/v1/calendar/transactions/custom/${transactionId}`,
+  );
+
   return response.data;
 }
 

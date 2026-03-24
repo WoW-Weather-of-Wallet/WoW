@@ -18,16 +18,26 @@ interface HomeWeeklyPreviewCardProps {
   items: CalendarDayItem[];
 }
 
-/**
- * 홈 상단에 보여주는 짧은 주간 예보 미리보기 카드.
- * 캘린더 화면의 데이터를 재사용해 메인에서도 흐름을 빠르게 파악할 수 있게 한다.
- */
 export default function HomeWeeklyPreviewCard({ items }: HomeWeeklyPreviewCardProps) {
+  const displayItems =
+    items.length > 0
+      ? items
+      : Array.from({ length: 7 }, (_, index) => ({
+          dateKey: `empty-week-${index}`,
+          dayNumber: index + 1,
+          amount: undefined,
+          tone: 'mint' as const,
+          weatherTone: undefined,
+          isCurrentMonth: true,
+          isToday: false,
+          isFuture: false,
+        }));
+
   return (
     <SurfaceCard>
-      <SectionHeader title="1주일 예보 미리보기" actionLabel="상세보기" />
+      <SectionHeader title="주간 미리보기" actionLabel="-" />
       <View style={styles.previewStrip}>
-        {items.map((day, index) => (
+        {displayItems.map((day, index) => (
           <View key={day.dateKey} style={styles.previewDayColumn}>
             <Text
               style={[
@@ -57,4 +67,3 @@ export default function HomeWeeklyPreviewCard({ items }: HomeWeeklyPreviewCardPr
     </SurfaceCard>
   );
 }
-
