@@ -177,7 +177,17 @@ export default function HomeTodayWeatherCard({
           onPress={() => setModalVisible(false)}
         >
           <Pressable className="w-full rounded-3xl bg-white p-6 shadow-lg">
-            <Text className="mb-2 text-xl font-bold text-gray-800">소비날씨란?</Text>
+            {/* [UX-Fix] 헤더에 타이틀과 닫기 버튼 배치하여 타 모달과 UI 통일 */}
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-xl font-bold text-gray-800">소비날씨란?</Text>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setModalVisible(false)}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Ionicons name="close" size={wp(24)} color="#1F2937" />
+              </TouchableOpacity>
+            </View>
             <Text className="mb-6 text-sm font-medium leading-relaxed text-gray-500">
               최근 3개월 지출 평균과 이번 달의 실시간 지출을 비교해 하루의 날씨로 표현합니다!
             </Text>
@@ -187,13 +197,13 @@ export default function HomeTodayWeatherCard({
                 const GuideIcon = item.icon;
 
                 return (
-                  <View key={item.type} className="mb-4 flex-row items-center">
-                    {/* [UX-Fix] 흰색 배경에서도 구름(흰색)이 잘 보이도록 소프트한 배경 서클 추가 */}
-                    <View className="h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-                      <GuideIcon size={22} color={item.color} />
+                  <View key={item.type} className="mb-6 flex-row items-center">
+                    {/* [UX-Fix] 이미지 크기를 키워 시각적 전달력 강화 (h-10 -> h-14) */}
+                    <View className="h-14 w-14 items-center justify-center rounded-2xl bg-gray-100">
+                      <GuideIcon size={wp(28)} color={item.color} />
                     </View>
-                    <View className="ml-3 flex-1">
-                      <Text className="text-base font-bold text-gray-800">{item.type}</Text>
+                    <View className="ml-4 flex-1">
+                      <Text className="text-lg font-bold text-gray-800">{item.type}</Text>
                       <Text className="text-xs text-gray-400">
                         <Text className="font-semibold text-gray-600">{item.detail}</Text>
                       </Text>
@@ -202,14 +212,6 @@ export default function HomeTodayWeatherCard({
                 );
               })}
             </View>
-
-            <TouchableOpacity
-              className="mt-6 items-center rounded-xl bg-primary py-4"
-              onPress={() => setModalVisible(false)}
-              activeOpacity={0.8}
-            >
-              <Text className="text-base font-bold text-white">확인</Text>
-            </TouchableOpacity>
           </Pressable>
         </Pressable>
       </Modal>

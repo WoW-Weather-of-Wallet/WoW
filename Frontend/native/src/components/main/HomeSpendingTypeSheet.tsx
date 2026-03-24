@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Text, View } from 'react-native';
 import BottomSheetModal from '../common/BottomSheetModal';
 import { spendingTypeLegend } from '../../constants/main/homeSheetData';
@@ -6,6 +6,7 @@ import LegendList from './LegendList';
 import ReasonHighlightCard from './ReasonHighlightCard';
 import SheetIconHeader from './SheetIconHeader';
 import SpendingStyleRadarChart from './SpendingStyleRadarChart';
+import SpendingStyleGuideModal from './SpendingStyleGuideModal';
 import { styles } from './HomeSpendingTypeSheet.styles';
 
 interface HomeSpendingTypeSheetProps {
@@ -17,13 +18,17 @@ export default function HomeSpendingTypeSheet({
   visible,
   onClose,
 }: HomeSpendingTypeSheetProps) {
+  const [isGuideVisible, setIsGuideVisible] = useState(false);
+
   return (
-    <BottomSheetModal visible={visible} onClose={onClose} showHandle>
+    <>
+      <BottomSheetModal visible={visible} onClose={onClose} showHandle>
       <View style={styles.sheetHeader}>
         <SheetIconHeader
           iconName="restaurant-outline"
           eyebrow="AI 소비 유형 분석"
           title="미식 탐험가형"
+          onPressInfo={() => setIsGuideVisible(true)}
         />
       </View>
 
@@ -67,6 +72,12 @@ export default function HomeSpendingTypeSheet({
         description="외식과 커피/음료를 월 3만원만 줄여도 연간 36만원을 아낄 수 있어요. 집밥 챌린지나 카페 지출 정리를 함께 추천해요."
         tone="green"
       />
-    </BottomSheetModal>
+      </BottomSheetModal>
+
+      <SpendingStyleGuideModal
+        visible={isGuideVisible}
+        onClose={() => setIsGuideVisible(false)}
+      />
+    </>
   );
 }

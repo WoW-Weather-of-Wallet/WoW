@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, wp } from '../../constants/theme';
 import { styles } from './SheetIconHeader.styles';
@@ -8,6 +8,7 @@ interface SheetIconHeaderProps {
   iconName: React.ComponentProps<typeof Ionicons>['name'];
   eyebrow: string;
   title: string;
+  onPressInfo?: () => void;
 }
 
 /**
@@ -18,6 +19,7 @@ export default function SheetIconHeader({
   iconName,
   eyebrow,
   title,
+  onPressInfo,
 }: SheetIconHeaderProps) {
   return (
     <View style={styles.container}>
@@ -25,7 +27,14 @@ export default function SheetIconHeader({
         <Ionicons name={iconName} size={wp(26)} color={COLORS.primary} />
       </View>
       <View style={styles.textBlock}>
-        <Text style={styles.eyebrow}>{eyebrow}</Text>
+        <View style={styles.eyebrowRow}>
+          <Text style={styles.eyebrow}>{eyebrow}</Text>
+          {onPressInfo && (
+            <TouchableOpacity activeOpacity={0.7} style={styles.infoButton} onPress={onPressInfo}>
+              <Ionicons name="information-circle-outline" size={wp(16)} color={COLORS.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
         <Text style={styles.title}>{title}</Text>
       </View>
     </View>
