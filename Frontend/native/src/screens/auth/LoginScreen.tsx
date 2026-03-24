@@ -42,9 +42,9 @@ import { extractApiErrorMessage } from '../../utils/error';
 WebBrowser.maybeCompleteAuthSession();
 
 const LOGIN_ERROR_FALLBACK =
-  '\uB85C\uADF8\uC778\uC5D0 \uC2E4\uD328\uD588\uC5B4\uC694. \uC544\uC774\uB514\uC640 \uBE44\uBC00\uBC88\uD638\uB97C \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.';
+  '로그인에 실패했어요. 아이디와 비밀번호를 다시 확인해 주세요.';
 const SSAFY_ERROR_FALLBACK =
-  'SSAFY \uB85C\uADF8\uC778 \uCC98\uB9AC\uC5D0 \uC2E4\uD328\uD588\uC5B4\uC694. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.';
+  'SSAFY 로그인 처리에 실패했어요. 잠시 후 다시 시도해 주세요.';
 
 const buildLoginErrorPresentation = (
   error: unknown,
@@ -339,7 +339,7 @@ export default function LoginScreen({ navigation }: any) {
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View style={[styles.headerContainer, headerAnimatedStyle]}>
-            <Text style={styles.headerTitle}>{'\uB85C\uADF8\uC778'}</Text>
+            <Text style={styles.headerTitle}>{'로그인'}</Text>
             <View style={styles.headerLine} />
           </Animated.View>
 
@@ -348,7 +348,7 @@ export default function LoginScreen({ navigation }: any) {
             style={styles.formContainer}
           >
             <CustomTextInput
-              label={'\uC544\uC774\uB514'}
+              label={'아이디'}
               value={userId}
               onChangeText={(value) => {
                 setUserId(value);
@@ -359,7 +359,7 @@ export default function LoginScreen({ navigation }: any) {
             />
 
             <CustomTextInput
-              label={'\uBE44\uBC00\uBC88\uD638'}
+              label={'비밀번호'}
               value={password}
               onChangeText={(value) => {
                 setPassword(value);
@@ -375,7 +375,7 @@ export default function LoginScreen({ navigation }: any) {
             <View style={styles.buttonRow}>
               <View style={styles.buttonHalf}>
                 <GradientButton
-                  title={'\uD68C\uC6D0\uAC00\uC785'}
+                  title={'회원가입'}
                   onPress={handleSignup}
                   variant="outline"
                 />
@@ -385,8 +385,8 @@ export default function LoginScreen({ navigation }: any) {
                 <GradientButton
                   title={
                     isSubmitting
-                      ? '\uB85C\uADF8\uC778 \uC911...'
-                      : '\uB85C\uADF8\uC778'
+                      ? '로그인 중...'
+                      : '로그인'
                   }
                   onPress={handleLogin}
                 />
@@ -407,7 +407,7 @@ export default function LoginScreen({ navigation }: any) {
               activeOpacity={0.6}
             >
               <Text style={styles.findAccountText}>
-                {'\uC544\uC774\uB514 / \uBE44\uBC00\uBC88\uD638 \uCC3E\uAE30'}
+                {'아이디 / 비밀번호 찾기'}
               </Text>
             </TouchableOpacity>
           </Animated.View>
@@ -416,7 +416,7 @@ export default function LoginScreen({ navigation }: any) {
             entering={FadeInDown.delay(450).duration(500).springify()}
             style={styles.autoLoginContainer}
           >
-            <Text style={styles.autoLoginText}>{'\uC790\uB3D9 \uB85C\uADF8\uC778'}</Text>
+            <Text style={styles.autoLoginText}>{'자동 로그인'}</Text>
             <Switch
               value={autoLogin}
               onValueChange={setAutoLogin}
@@ -434,7 +434,7 @@ export default function LoginScreen({ navigation }: any) {
             style={styles.dividerContainer}
           >
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>{'\uB610\uB294'}</Text>
+            <Text style={styles.dividerText}>{'또는'}</Text>
             <View style={styles.dividerLine} />
           </Animated.View>
 
@@ -451,7 +451,7 @@ export default function LoginScreen({ navigation }: any) {
                 style={styles.ssafyGradient}
               >
                 <Text style={styles.ssafyButtonText}>
-                  {'SSAFY \uACC4\uC815\uC73C\uB85C \uB85C\uADF8\uC778'}
+                  {'SSAFY 계정으로 로그인'}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
