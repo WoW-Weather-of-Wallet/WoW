@@ -87,13 +87,7 @@ const WEATHER_GUIDE = [
   { type: '흐림', detail: '최근 평균 대비 20~30%', icon: OvercastIcon, color: '#64748B' },
   { type: '비', detail: '최근 평균 대비 30~50%', icon: RainIcon, color: '#1AABFF' },
   { type: '폭우', detail: '최근 평균 대비 50% 초과', icon: HeavyRainIcon, color: '#1E3A8A' },
-// const WEATHER_GUIDE = [
-//   { type: '맑음', detail: '소비 흐름이 안정적인 편입니다.', icon: SunnyIcon, color: '#F59E0B' },
-//   { type: '흐림', detail: '평소보다 소비가 늘어날 수 있습니다.', icon: CloudyIcon, color: '#94A3B8' },
-//   { type: '구름 많음', detail: '지출 계획을 한 번 더 확인해 주세요.', icon: OvercastIcon, color: '#64748B' },
-//   { type: '비', detail: '예상치 못한 소비가 생길 수 있습니다.', icon: RainIcon, color: '#3B82F6' },
-//   { type: '폭우', detail: '지출 점검이 더 필요한 상태입니다.', icon: HeavyRainIcon, color: '#1E3A8A' },
-// ] as const;
+];
 
 export default function HomeTodayWeatherCard({
   weatherName,
@@ -118,6 +112,7 @@ export default function HomeTodayWeatherCard({
         type: '-',
         hint: '-',
         icon: CloudyIcon,
+        color: '#FFFFFF', // [UX-Fix] 필수 속성인 color 추가 (CloudyIcon 기본색)
       }
     );
   }, [description, iconCode, isLoading, weatherName]);
