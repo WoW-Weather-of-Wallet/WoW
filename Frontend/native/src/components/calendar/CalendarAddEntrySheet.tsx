@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
@@ -22,6 +22,12 @@ import {
   saveCalendarOverrides,
   uploadCalendarTransactions,
 } from '../../services/calendar';
+// 엑셀 가이드 영구 숨김 설정 읽기/쓰기
+import {
+  shouldHideExcelUploadGuide,
+  setHideExcelUploadGuide,
+} from '../../services/guidePreference';
+import ExcelUploadGuideModal from './ExcelUploadGuideModal';
 import type {
   CalendarUploadBackendItem,
   CalendarUploadBackendSummary,
@@ -32,6 +38,7 @@ import type {
   ManualEntryPaymentMethod,
 } from '../../types/calendar';
 import { styles } from './CalendarAddEntrySheet.styles';
+
 
 interface CalendarAddEntrySheetProps {
   visible: boolean;
@@ -102,6 +109,31 @@ export default function CalendarAddEntrySheet({
   const [isBackendSummaryLoading, setIsBackendSummaryLoading] = useState(false);
   const [confirmErrorMessage, setConfirmErrorMessage] = useState<string | null>(null);
   const [isConfirmLoading, setIsConfirmLoading] = useState(false);
+
+  // 엑셀 업로드 가이드 모달 표시 여부
+  const [isExcelGuideVisible, setIsExcelGuideVisible] = useState(false);
+
+  /**
+   * 'excel' 탭으로 전환될 때마다 가이드 노출 여부를 확인합니다.
+   * shouldHideExcelUploadGuide()가 false(=아직 영구 숨김 설정 없음)이면 가이드를 띄웁니다.
+   */
+  const handleExcelModeEnter = useCallback(async () => {
+    const hide = await shouldHideExcelUploadGuide();
+    if (!hide) {
+      setIsExcelGuideVisible(true);
+    }
+  }, []);
+
+  /**
+   * 가이드 모달 닫기 처리.
+   * hideForever=true이면 다음부터는 자동으로 열리지 않도록 설정을 저장합니다.
+   */
+  const handleExcelGuideClose = useCallback(async (hideForever: boolean) => {
+    setIsExcelGuideVisible(false);
+    if (hideForever) {
+      await setHideExcelUploadGuide(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!visible) {
@@ -306,6 +338,12 @@ export default function CalendarAddEntrySheet({
 
   return (
     <>
+      {/* 엑셀 업로드 가이드 모달 - 파일 업로드 탭 최초 진입 시 표시 */}
+      <ExcelUploadGuideModal
+        visible={isExcelGuideVisible}
+        onClose={handleExcelGuideClose}
+      />
+
       <BottomSheetModal
         visible={visible}
         onClose={onClose}
@@ -323,7 +361,13 @@ export default function CalendarAddEntrySheet({
                   key={mode.key}
                   activeOpacity={0.88}
                   style={[styles.modeButton, isActive && styles.modeButtonActive]}
-                  onPress={() => setActiveMode(mode.key)}
+                  onPress={() => {
+                    setActiveMode(mode.key);
+                    // '파일 업로드' 탭으로 전환할 때 가이드 노출 여부를 체크합니다.
+                    if (mode.key === 'excel') {
+                      handleExcelModeEnter();
+                    }
+                  }}
                 >
                   <Ionicons
                     name={mode.icon}
