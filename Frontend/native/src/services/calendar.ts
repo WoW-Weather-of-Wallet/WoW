@@ -9,6 +9,8 @@ import type {
   CalendarCustomResponse,
   CalendarDailyParams,
   CalendarDailyResponse,
+  CalendarTransactionsParams,
+  CalendarTransactionsResponse,
   CalendarHeaderParams,
   CalendarHeaderResponse,
   CalendarMonthlyParams,
@@ -262,6 +264,17 @@ export async function createCashCalendarTransactions(payload: CalendarCustomRequ
   return response.data.data;
 }
 
+export async function getCalendarTransactions(params: CalendarTransactionsParams) {
+  const response = await nativeApi.get<CalendarApiResponse<CalendarTransactionsResponse>>(
+    '/api/v1/calendar/transactions',
+    {
+      params,
+    },
+  );
+
+  return response.data.data;
+}
+
 export async function saveCalendarOverrides(rows: CalendarOverrideRow[]) {
   if (rows.length === 0) {
     return;
@@ -322,6 +335,14 @@ export async function updateFixedExpenseEnable(
 
 export async function deleteFixedExpense(id: number) {
   const response = await nativeApi.delete(`/api/v1/fixed-expenses/${id}`);
+  return response.data;
+}
+
+export async function deleteCustomCalendarTransaction(transactionId: number) {
+  const response = await nativeApi.delete(
+    `/api/v1/calendar/transactions/custom/${transactionId}`,
+  );
+
   return response.data;
 }
 

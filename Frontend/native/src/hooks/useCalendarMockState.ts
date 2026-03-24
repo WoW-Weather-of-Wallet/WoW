@@ -19,6 +19,7 @@ import type {
   CalendarHeaderFetchState,
   CalendarHeaderResponse,
   CalendarMonthlyResponse,
+  CalendarTransactionsResponse,
   FixedExpenseManageResponse,
   FixedExpenseSummaryResponse,
   ManualCalendarEntryDraft,
@@ -48,12 +49,14 @@ import {
   confirmCalendarTransactions,
   createCashCalendarTransactions,
   createCustomCalendarTransactions,
+  deleteCustomCalendarTransaction,
   deleteFixedExpense,
   getCalendarApiErrorMessage,
   getCalendarFixedExpenses,
   getCalendarDaily,
   getCalendarHeader,
   getCalendarMonthly,
+  getCalendarTransactions,
   getFixedExpenseManage,
   updateFixedExpense,
   updateFixedExpenseEnable,
@@ -239,7 +242,6 @@ export function useCalendarMockState() {
         }
 
         const monthDetails: Record<string, CalendarDayDetail> = {};
-        const monthGroups: CalendarTransactionGroup[] = [];
 
         dailyResponses.forEach((dailyResponse) => {
           if (!dailyResponse) {
@@ -248,11 +250,6 @@ export function useCalendarMockState() {
 
           const mappedDetail = mapDailyResponseToDetail(dailyResponse);
           monthDetails[mappedDetail.dateKey] = mappedDetail;
-
-          const mappedGroup = mapDailyResponseToTransactionGroup(dailyResponse);
-          if (mappedGroup) {
-            monthGroups.push(mappedGroup);
-          }
         });
 
         const nextCalendarDaySource = mergeMonthlyAndDailyCalendarDays(
@@ -266,12 +263,39 @@ export function useCalendarMockState() {
         setCalendarDayDetails((current) =>
           replaceMonthCalendarDayDetails(current, displayedMonth, monthDetails),
         );
-        setTransactionGroups((current) =>
-          replaceMonthTransactionGroups(current, displayedMonth, monthGroups),
-        );
       })
       .catch((error) => {
         console.warn('Failed to load calendar month from backend', error);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [accessToken, displayedMonth]);
+
+  useEffect(() => {
+    if (!accessToken) {
+      setTransactionGroups(mockCalendarTransactions);
+      return;
+    }
+
+    let isCancelled = false;
+
+    getCalendarTransactions({
+      year: displayedMonth.getFullYear(),
+      month: displayedMonth.getMonth() + 1,
+    })
+      .then((response) => {
+        if (isCancelled) {
+          return;
+        }
+
+        // 거래내역 히스토리는 전용 조회 API를 기준으로 맞춰야
+        // 서버 transactionId를 안정적으로 유지하면서 삭제 흐름을 연결할 수 있습니다.
+        setTransactionGroups(mapCalendarTransactionsResponse(response));
+      })
+      .catch((error) => {
+        console.warn('Failed to load calendar transactions from backend', error);
       });
 
     return () => {
@@ -737,6 +761,14 @@ export function useCalendarMockState() {
       }
 
       await Promise.all(saveTasks);
+
+      // 직접 입력 저장 직후 히스토리를 다시 조회해야
+      // 서버가 발급한 transactionId를 받아 삭제/고정지출 연동에 재사용할 수 있습니다.
+      const transactionsResponse = await getCalendarTransactions({
+        year: displayedMonth.getFullYear(),
+        month: displayedMonth.getMonth() + 1,
+      });
+      setTransactionGroups(mapCalendarTransactionsResponse(transactionsResponse));
     }
 
     const patch = buildManualEntryPatch(entries);
@@ -766,6 +798,61 @@ export function useCalendarMockState() {
     setCalendarDaySource((current) => mergeCalendarDaySource(current, patch));
     setCalendarDayDetails((current) => mergeCalendarDayDetails(current, patch));
     setIsAddEntryVisible(false);
+  }
+
+  function handleDeleteHistoryTransaction(transactionId: number, dateKey: string, title: string) {
+    if (!accessToken) {
+      return;
+    }
+
+    const targetGroup = transactionGroups.find((group) => group.id === dateKey);
+    const targetItem = targetGroup?.items.find(
+      (item) => item.backendTransactionId === transactionId,
+    );
+
+    if (!targetItem) {
+      Alert.alert('삭제 불가', '삭제할 거래 정보를 다시 불러온 뒤 시도해주세요.');
+      return;
+    }
+
+    Alert.alert(
+      '거래 삭제',
+      `${title} 거래를 삭제할까요?\n삭제 후에는 되돌릴 수 없습니다.`,
+      [
+        {
+          text: '취소',
+          style: 'cancel',
+        },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteCustomCalendarTransaction(transactionId);
+
+              setTransactionGroups((current) =>
+                removeTransactionFromGroups(current, transactionId),
+              );
+              setCalendarDayDetails((current) =>
+                removeTransactionFromDayDetails(current, dateKey, transactionId),
+              );
+              setCalendarDaySource((current) =>
+                removeTransactionFromDaySource(current, dateKey, targetItem.amount),
+              );
+            } catch (error) {
+              console.warn('Failed to delete calendar transaction', error);
+              Alert.alert(
+                '삭제 실패',
+                getCalendarApiErrorMessage(
+                  error,
+                  '거래 삭제 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                ),
+              );
+            }
+          },
+        },
+      ],
+    );
   }
 
   function handleSaveMemo() {
@@ -841,6 +928,7 @@ export function useCalendarMockState() {
     handleOpenFixedExpensePicker,
     handleSaveManualEntries,
     handleSaveExcelEntries,
+    handleDeleteHistoryTransaction,
     handleSaveMemo,
   };
 }
@@ -980,6 +1068,102 @@ function mapDailyResponseToTransactionGroup(response: CalendarDailyResponse): Ca
       mapDailyTransactionItem(response.date, transaction, index),
     ),
   };
+}
+
+function mapCalendarTransactionsResponse(
+  response: CalendarTransactionsResponse,
+): CalendarTransactionGroup[] {
+  return response.items
+    .map((dailyItem) => ({
+      id: dailyItem.date,
+      dateLabel: formatMonthDayTitle(dailyItem.date),
+      dailySpent: dailyItem.transactions.reduce((sum, transaction) => sum + transaction.amount, 0),
+      items: dailyItem.transactions.map((transaction, index) => {
+        const fallbackCategory = transaction.category ?? DEFAULT_CALENDAR_CATEGORY;
+        const categoryMeta =
+          CATEGORY_META[fallbackCategory] ?? CATEGORY_META[DEFAULT_CALENDAR_CATEGORY];
+
+        return {
+          id: `${dailyItem.date}-history-${transaction.transactionId ?? index}`,
+          backendTransactionId: transaction.transactionId,
+          title: transaction.merchantName,
+          category: fallbackCategory,
+          amount: transaction.amount,
+          icon: transaction.icon ?? categoryMeta.icon,
+          iconTone: categoryMeta.iconTone,
+          isFixedExpense: transaction.isFixed,
+        };
+      }),
+    }))
+    .sort((left, right) => (left.id < right.id ? 1 : -1));
+}
+
+function removeTransactionFromGroups(
+  groups: CalendarTransactionGroup[],
+  transactionId: number,
+) {
+  return groups
+    .map((group) => {
+      const nextItems = group.items.filter(
+        (item) => item.backendTransactionId !== transactionId,
+      );
+
+      if (nextItems.length === group.items.length) {
+        return group;
+      }
+
+      return {
+        ...group,
+        dailySpent: nextItems.reduce((sum, item) => sum + item.amount, 0),
+        items: nextItems,
+      };
+    })
+    .filter((group) => group.items.length > 0);
+}
+
+function removeTransactionFromDayDetails(
+  details: Record<string, CalendarDayDetail>,
+  dateKey: string,
+  transactionId: number,
+) {
+  const targetDetail = details[dateKey];
+  if (!targetDetail) {
+    return details;
+  }
+
+  const nextItems = targetDetail.items.filter(
+    (item) => item.backendTransactionId !== transactionId,
+  );
+
+  return {
+    ...details,
+    [dateKey]: {
+      ...targetDetail,
+      spentAmount:
+        nextItems.length > 0 ? nextItems.reduce((sum, item) => sum + item.amount, 0) : null,
+      transactionCount: nextItems.length > 0 ? nextItems.length : null,
+      items: nextItems,
+    },
+  };
+}
+
+function removeTransactionFromDaySource(
+  days: CalendarDayItem[],
+  dateKey: string,
+  removedAmount: number,
+) {
+  return days.map((day) => {
+    if (day.dateKey !== dateKey) {
+      return day;
+    }
+
+    const nextAmount = Math.max((day.amount ?? 0) - removedAmount, 0);
+
+    return {
+      ...day,
+      amount: nextAmount > 0 ? nextAmount : undefined,
+    };
+  });
 }
 
 function mapDailyTransactionItem(

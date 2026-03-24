@@ -115,4 +115,19 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: COLORS.textTertiary,
   },
+  deleteChip: {
+    marginTop: hp(6),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(4),
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.deleteChipBackground,
+    paddingHorizontal: wp(8),
+    paddingVertical: hp(4),
+  },
+  deleteChipText: {
+    fontSize: fp(11),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.spentRed,
+  },
 });

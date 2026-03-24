@@ -185,6 +185,31 @@ export interface CalendarCustomResponse {
   }>;
 }
 
+export interface CalendarTransactionsParams {
+  year: number;
+  month: number;
+}
+
+export interface CalendarTransactionsItemResponse {
+  transactionId: number;
+  icon: string | null;
+  merchantName: string;
+  category: string | null;
+  amount: number;
+  isFixed: boolean;
+}
+
+export interface CalendarTransactionsDailyResponse {
+  date: string;
+  transactions: CalendarTransactionsItemResponse[];
+}
+
+export interface CalendarTransactionsResponse {
+  yearMonth: string;
+  totalAmount: number;
+  items: CalendarTransactionsDailyResponse[];
+}
+
 export interface CalendarOverrideRow {
   merchant_name: string;
   category: string;
