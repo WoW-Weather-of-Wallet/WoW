@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -31,6 +32,7 @@ import AgreedTermsModal from '../../components/mypage/AgreedTermsModal';
 import {
   changePassword,
   getProfile,
+  getSsafyLogoutUrl,
   logout as logoutRequest,
   type NativeUserProfileResponse,
 } from '../../services/auth';
@@ -253,12 +255,22 @@ export default function MyPageScreen() {
         text: '로그아웃',
         style: 'destructive',
         onPress: async () => {
+          const shouldLogoutSsafy = profile?.loginType === 'SSAFY';
+
           try {
             try { await fcmService.unregisterFcmToken(); } catch (e) {}
             await logoutRequest();
             await clearPersistedAuthSession();
             logout();
             navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+
+            if (shouldLogoutSsafy) {
+              setTimeout(() => {
+                Linking.openURL(getSsafyLogoutUrl()).catch((error) => {
+                  console.warn('[MyPage] SSAFY browser logout failed:', error);
+                });
+              }, 0);
+            }
           } catch (error) {
             Alert.alert('오류', '로그아웃 처리 중 문제가 발생했습니다.');
           }

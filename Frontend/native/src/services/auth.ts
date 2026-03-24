@@ -412,6 +412,8 @@ export const logout = async () => {
   return response.data;
 };
 
+export const getSsafyLogoutUrl = () => 'https://edu.ssafy.com/comm/login/SecurityLogoutForm.do';
+
 export const updateProfile = async (payload: NativeUpdateProfileRequest) => {
   const response = await nativeApi.patch<NativeUserProfileResponse>('/api/v1/user/profile', payload);
   return response.data;

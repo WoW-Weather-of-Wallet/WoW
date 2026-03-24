@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -32,6 +33,7 @@ import {
   changePassword,
   getNotificationSettings,
   getProfile,
+  getSsafyLogoutUrl,
   logout as logoutRequest,
   sendSmsCode,
   updateNotificationSettings,
@@ -562,6 +564,8 @@ export default function SettingsScreen() {
         text: '로그아웃',
         style: 'destructive',
         onPress: async () => {
+          const shouldLogoutSsafy = profile?.loginType === 'SSAFY';
+
           try {
             // [P1 Fix] 로그아웃 시 서버에 등록된 FCM 토큰을 먼저 제거합니다.
             // 실패하더라도 로그아웃 처리는 계속 진행합니다.
@@ -587,6 +591,14 @@ export default function SettingsScreen() {
             index: 0,
             routes: [{ name: 'Login' }],
           });
+
+          if (shouldLogoutSsafy) {
+            setTimeout(() => {
+              Linking.openURL(getSsafyLogoutUrl()).catch((error) => {
+                console.warn('[Settings] SSAFY browser logout failed:', error);
+              });
+            }, 0);
+          }
         },
       },
     ]);
