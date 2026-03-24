@@ -555,6 +555,9 @@ export const styles = StyleSheet.create({
   categorySelectWrap: {
     paddingBottom: hp(4),
   },
+  categorySelectScroll: {
+    maxHeight: hp(320),
+  },
   recommendBadge: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
@@ -575,21 +578,25 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: wp(12),
+    paddingBottom: hp(8),
   },
   categorySelectCard: {
-    width: '30%',
-    minHeight: hp(110),
+    width: '31%',
+    minHeight: hp(84),
     borderRadius: RADIUS.xl,
     borderWidth: 1.5,
     borderColor: COLORS.chipBorder,
     backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: hp(10),
+    gap: hp(8),
+    paddingHorizontal: wp(8),
+    paddingVertical: hp(12),
   },
   categorySelectText: {
-    fontSize: fp(14),
+    fontSize: fp(12),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
+    textAlign: 'center',
   },
 });

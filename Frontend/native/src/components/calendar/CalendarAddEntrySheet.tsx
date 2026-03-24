@@ -815,7 +815,13 @@ export default function CalendarAddEntrySheet({
             <Text style={styles.recommendBadgeText}>자동 분류가 애매한 항목은 직접 고를 수 있어요.</Text>
           </View>
 
-          <View style={styles.categorySelectGrid}>
+          <ScrollView
+            style={styles.categorySelectScroll}
+            contentContainerStyle={styles.categorySelectGrid}
+            bounces={false}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}
+          >
             {CALENDAR_ENTRY_CATEGORIES.map((category) => (
               <TouchableOpacity
                 key={category.key}
@@ -827,7 +833,7 @@ export default function CalendarAddEntrySheet({
                 <Text style={styles.categorySelectText}>{category.label}</Text>
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
         </View>
       </BottomSheetModal>
     </>

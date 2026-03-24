@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  DEFAULT_CALENDAR_CATEGORY,
   type CalendarEntryCategoryKey,
 } from '../constants/calendar/addEntry';
 import type {
@@ -22,10 +21,9 @@ export function useCalendarAddEntryForm({
 }: UseCalendarAddEntryFormParams) {
   const [activeMode, setActiveMode] = useState<EntryMode>('direct');
   const [dateKey, setDateKey] = useState(defaultDateKey);
-  const [selectedCategory, setSelectedCategory] =
-    useState<CalendarEntryCategoryKey>(DEFAULT_CALENDAR_CATEGORY);
+  const [selectedCategory, setSelectedCategory] = useState<CalendarEntryCategoryKey | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<ManualEntryPaymentMethod>('card');
+    useState<ManualEntryPaymentMethod | null>(null);
   const [merchantName, setMerchantName] = useState('');
   const [amountInput, setAmountInput] = useState('');
   const [draftEntries, setDraftEntries] = useState<ManualCalendarEntryDraft[]>([]);
@@ -38,8 +36,8 @@ export function useCalendarAddEntryForm({
 
     setActiveMode('direct');
     setDateKey(defaultDateKey);
-    setSelectedCategory(DEFAULT_CALENDAR_CATEGORY);
-    setSelectedPaymentMethod('card');
+    setSelectedCategory(null);
+    setSelectedPaymentMethod(null);
     setMerchantName('');
     setAmountInput('');
     setDraftEntries([]);
@@ -47,11 +45,17 @@ export function useCalendarAddEntryForm({
   }, [defaultDateKey, visible]);
 
   const isAddEnabled = useMemo(() => {
-    return dateKey.trim().length > 0 && merchantName.trim().length > 0 && Number(amountInput) > 0;
-  }, [amountInput, dateKey, merchantName]);
+    return (
+      dateKey.trim().length > 0 &&
+      merchantName.trim().length > 0 &&
+      Number(amountInput) > 0 &&
+      selectedCategory !== null &&
+      selectedPaymentMethod !== null
+    );
+  }, [amountInput, dateKey, merchantName, selectedCategory, selectedPaymentMethod]);
 
   const addDraftEntry = () => {
-    if (!isAddEnabled) {
+    if (!isAddEnabled || selectedCategory === null || selectedPaymentMethod === null) {
       return;
     }
 
