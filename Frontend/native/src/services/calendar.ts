@@ -14,9 +14,15 @@ import type {
   CalendarMonthlyParams,
   CalendarMonthlyResponse,
   CalendarOverrideRow,
+  FixedExpenseManageResponse,
+  FixedExpenseParams,
+  FixedExpenseSummaryResponse,
+  FixedExpenseUpdateRequest,
   CalendarUploadBackendSummary,
   CalendarUploadFile,
   CalendarUploadRequest,
+  FixedExpenseAddRequest,
+  FixedExpenseAddResponse,
 } from '../types/calendar';
 
 interface RawCalendarUploadRecordSummary {
@@ -252,6 +258,47 @@ export async function saveCalendarOverrides(rows: CalendarOverrideRow[]) {
   await nativeApi.post('/api/v1/calendar/transactions/overrides', {
     rows,
   });
+}
+
+export async function getCalendarFixedExpenses(params: FixedExpenseParams) {
+  const response = await nativeApi.get<CalendarApiResponse<FixedExpenseSummaryResponse>>(
+    '/api/v1/calendar/fixed-expenses',
+    {
+      params,
+    },
+  );
+
+  return response.data.data;
+}
+
+export async function getFixedExpenseManage(params: FixedExpenseParams) {
+  const response = await nativeApi.get<CalendarApiResponse<FixedExpenseManageResponse>>(
+    '/api/v1/fixed-expenses',
+    {
+      params,
+    },
+  );
+
+  return response.data.data;
+}
+
+export async function addFixedExpense(payload: FixedExpenseAddRequest) {
+  const response = await nativeApi.post<CalendarApiResponse<FixedExpenseAddResponse>>(
+    '/api/v1/fixed-expenses',
+    payload,
+  );
+
+  return response.data.data;
+}
+
+export async function updateFixedExpense(id: number, payload: FixedExpenseUpdateRequest) {
+  const response = await nativeApi.patch(`/api/v1/fixed-expenses/${id}`, payload);
+  return response.data;
+}
+
+export async function deleteFixedExpense(id: number) {
+  const response = await nativeApi.delete(`/api/v1/fixed-expenses/${id}`);
+  return response.data;
 }
 
 export function getCalendarApiErrorMessage(error: unknown, fallbackMessage: string) {

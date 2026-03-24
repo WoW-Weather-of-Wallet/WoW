@@ -221,6 +221,9 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
           <Text style={styles.title}>인증번호 6자리를 입력해 주세요.</Text>
           <Text style={styles.subtitle}>문자로 받은 인증번호를 입력하면 다음 단계로 이동해요.</Text>
         </Animated.View>
+        <Text style={[styles.subtitle, { marginTop: hp(10) }]}>
+          {'\uD544\uC218 \uC57D\uAD00 \uB3D9\uC758\uC640 \uBCF8\uC778 \uD655\uC778\uC774 \uC644\uB8CC\uB418\uBA74 \uB2E4\uC74C \uB2E8\uACC4\uB85C \uC9C4\uD589\uD574\uC694.'}
+        </Text>
 
         <Animated.View
           entering={FadeInDown.delay(200).duration(500)}

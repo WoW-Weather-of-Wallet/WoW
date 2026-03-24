@@ -28,6 +28,7 @@ type WelcomeRouteParams = {
   birthDate?: string;
   gender?: string;
   phoneNumber?: string;
+  // The backend now treats this as agreement to all active required terms.
   termsAgreed?: boolean;
   alarmEnabled?: boolean;
 };

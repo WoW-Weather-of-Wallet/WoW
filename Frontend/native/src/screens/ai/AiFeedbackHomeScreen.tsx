@@ -16,6 +16,7 @@ import { styles } from './AiFeedbackHomeScreen.styles';
 import GradientButton from '../../components/common/GradientButton';
 import { useAiStore } from '../../store/aiStore';
 import { NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import DataSourceNotice from '../../components/common/DataSourceNotice';
 
 /**
  * [UI-Mini-Component] 실제 대시보드를 축소한 느낌의 분석 프리뷰
@@ -146,6 +147,11 @@ export default function AiFeedbackHomeScreen({ navigation }: any) {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        <DataSourceNotice
+          type="mock"
+          description="현재 AI 기능 소개와 예시 화면은 시뮬레이션용 mock 데이터와 예시 문구를 사용합니다."
+          style={{ marginBottom: hp(16) }}
+        />
         <View style={styles.header}>
           <Text style={styles.title}>
             당신의 소비 습관을 분석하여{'\n'}

@@ -24,6 +24,7 @@ export interface CalendarDayItem {
 
 export interface CalendarTransactionItem {
   id: string;
+  backendTransactionId?: number;
   title: string;
   category: string;
   amount: number;

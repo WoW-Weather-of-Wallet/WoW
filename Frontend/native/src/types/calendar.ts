@@ -83,10 +83,12 @@ export interface CalendarDailyParams {
 }
 
 export interface CalendarDailyTransactionItem {
+  transactionId: number;
   merchantName: string;
   category: string;
   categoryIcon: string | null;
   amount: number;
+  isFixedExpense: boolean;
 }
 
 export interface CalendarDailyResponse {
@@ -187,6 +189,61 @@ export interface CalendarOverrideRow {
   merchant_name: string;
   category: string;
   reason?: string;
+}
+
+export interface FixedExpenseSummaryItemResponse {
+  name: string;
+  amount: number;
+  dueDay: number;
+  actualDueDay: number;
+  paymentStatus: string;
+  categoryName: string | null;
+  isAuto: boolean;
+}
+
+export interface FixedExpenseSummaryResponse {
+  totalAmount: number;
+  items: FixedExpenseSummaryItemResponse[];
+}
+
+export interface FixedExpenseManageItemResponse {
+  id: number;
+  icon: string | null;
+  name: string;
+  amount: number;
+  dueDay: number;
+  isAuto: boolean | null;
+  isEnable: boolean | null;
+  paymentStatus: string;
+  categoryName: string | null;
+}
+
+export interface FixedExpenseManageResponse {
+  totalAmount: number;
+  items: FixedExpenseManageItemResponse[];
+}
+
+export interface FixedExpenseParams {
+  year: number;
+  month: number;
+}
+
+export interface FixedExpenseUpdateRequest {
+  icon?: string | null;
+  amount?: number | null;
+  dueDay?: number | null;
+}
+
+export interface FixedExpenseAddRequest {
+  transactionId: number;
+  dueDay: number;
+  isAuto?: boolean | null;
+}
+
+export interface FixedExpenseAddResponse {
+  id: number;
+  name: string;
+  isFixed: boolean;
 }
 
 export type CalendarHeaderFetchState = 'idle' | 'loading' | 'live' | 'fallback';
