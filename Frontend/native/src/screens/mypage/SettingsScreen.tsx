@@ -28,10 +28,8 @@ import ProfileEditHeader from '../../components/mypage/ProfileEditHeader';
 import SettingSection from '../../components/mypage/SettingSection';
 import SettingItem from '../../components/mypage/SettingItem';
 import AgreedTermsModal from '../../components/mypage/AgreedTermsModal';
-import WithdrawConfirmationModal from '../../components/mypage/WithdrawConfirmationModal';
 import {
   changePassword,
-  deleteAccount,
   getNotificationSettings,
   getProfile,
   logout as logoutRequest,
@@ -103,7 +101,6 @@ export default function SettingsScreen() {
   const [isPhoneCodeSent, setIsPhoneCodeSent] = useState(false);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const [isTermsModalVisible, setIsTermsModalVisible] = useState(false);
-  const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
   const [isPinModalVisible, setIsPinModalVisible] = useState(false);
   const [pinModalMode, setPinModalMode] = useState<PinModalMode>('setup');
   const [pinModalStep, setPinModalStep] = useState<PinModalStep>('create');
@@ -595,29 +592,23 @@ export default function SettingsScreen() {
     ]);
   };
 
+  /**
+   * 회원 탈퇴 화면으로 이동합니다.
+   * - WithdrawScreen 에서 SMS 본인 인증 → 탈퇴 처리까지 모두 담당합니다.
+   * - 등록된 프로필 정보를 함께 전달해 읽기 전용 본인 확인 UI를 완성합니다.
+   */
   const handleDeleteAccount = () => {
-    setIsWithdrawModalVisible(true);
-  };
-
-  const onConfirmWithdraw = async () => {
-    setIsSubmitting(true);
-    try {
-      await deleteAccount();
-      await clearPersistedAuthSession();
-      logout();
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      });
-    } catch (error) {
-      const message = extractApiErrorMessage(
-        error,
-        '회원 탈퇴를 처리하지 못했어요. 다시 시도해주세요.',
-      );
-      Alert.alert('회원 탈퇴 실패', message);
-    } finally {
-      setIsSubmitting(false);
+    if (!profile?.phoneNumber) {
+      Alert.alert('회원 탈퇴 안내', '등록된 휴대폰 번호를 확인한 뒤 다시 시도해주세요.');
+      return;
     }
+
+    navigation.navigate('Withdraw', {
+      phoneNumber: profile?.phoneNumber ?? '',
+      name: profile?.name ?? '',
+      birthDate: profile?.birthDate ?? '',
+      gender: profile?.gender ?? '',
+    });
   };
 
 
@@ -966,11 +957,7 @@ export default function SettingsScreen() {
         onClose={() => setIsTermsModalVisible(false)}
       />
 
-      <WithdrawConfirmationModal
-        visible={isWithdrawModalVisible}
-        onClose={() => setIsWithdrawModalVisible(false)}
-        onConfirm={onConfirmWithdraw}
-      />
+      {/* 회원 탈퇴는 WithdrawScreen(별도 화면)에서 SMS 인증 후 처리됩니다 */}
     </View>
 
   );

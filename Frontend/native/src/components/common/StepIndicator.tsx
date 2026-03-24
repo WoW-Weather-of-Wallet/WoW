@@ -13,6 +13,7 @@ import { styles, BEAD_SIZE, SMALL_BEAD_SIZE, RIPPLE_COUNT } from './StepIndicato
 interface StepIndicatorProps {
   currentStep: number;
   totalSteps?: number; // 기본값 4
+  compact?: boolean;
 }
 
 
@@ -98,11 +99,15 @@ const BreathingBead = ({ active, isCompleted }: { active: boolean; isCompleted: 
   );
 };
 
-export default function StepIndicator({ currentStep, totalSteps = 4 }: StepIndicatorProps) {
+export default function StepIndicator({
+  currentStep,
+  totalSteps = 4,
+  compact = false,
+}: StepIndicatorProps) {
   const steps = Array.from({ length: totalSteps }, (_, i) => i + 1);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, compact && styles.compactContainer]}>
       {steps.map((step, index) => {
         const isActive = step === currentStep;
         const isCompleted = step < currentStep;
@@ -133,5 +138,4 @@ export default function StepIndicator({ currentStep, totalSteps = 4 }: StepIndic
     </View>
   );
 }
-
 
