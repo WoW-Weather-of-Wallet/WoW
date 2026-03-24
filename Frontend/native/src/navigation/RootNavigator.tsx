@@ -91,6 +91,11 @@ function NavigationWrapper() {
   // FCM 알림 클릭 감지 및 페이지 이동 옵저버 활성화
   useNotificationObserver();
 
+  // [FCM] 포그라운드 수신 리스너 초기화
+  useEffect(() => {
+    fcmService.initForegroundListeners();
+  }, []);
+
   useEffect(() => {
     void loadPreferences();
   }, [loadPreferences]);
