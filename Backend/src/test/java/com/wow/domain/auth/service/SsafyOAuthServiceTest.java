@@ -3,6 +3,7 @@ package com.wow.domain.auth.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
@@ -66,9 +67,9 @@ class SsafyOAuthServiceTest {
     private SsafyOAuthService ssafyOAuthService;
 
     @Test
-    void registerSavesUserTermWithCurrentRequiredTerm() {
+    void registerSavesUserTermsWithCurrentRequiredTerms() {
         SsafyRegisterRequest request = createRegisterRequest();
-        Term currentTerm = createCurrentTerm();
+        List<Term> currentTerms = createCurrentTerms();
 
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         // [fix] 수정 전: key="SSAFY_PENDING_PREFIX + ssafy@example.com", value="tester" | 이유: pendingToken 기반으로 변경, Redis 값은 "ssafyOauthId|name" 파이프 구분자 형식
@@ -76,7 +77,7 @@ class SsafyOAuthServiceTest {
         when(userRepository.existsByUserIdOrSsafyOauthId("ssafy@example.com", "ssafy@example.com")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termService.getCurrentRequiredTerm()).thenReturn(currentTerm);
+        when(termService.getCurrentRequiredTerms()).thenReturn(currentTerms);
         when(jwtTokenProvider.createAccessToken("ssafy@example.com", List.of("ROLE_USER"))).thenReturn("access-token");
         when(jwtTokenProvider.createRefreshToken("ssafy@example.com")).thenReturn("refresh-token");
         when(jwtTokenProvider.getAccessTokenValidityInSeconds()).thenReturn(1800L);
@@ -85,10 +86,15 @@ class SsafyOAuthServiceTest {
         UserLoginResponse response = ssafyOAuthService.register(request);
 
         assertThat(response.getAccessToken()).isEqualTo("access-token");
-        verify(userTermRepository).save(argThat((UserTerm userTerm) ->
-                userTerm.getTerm() == currentTerm
-                        && userTerm.isAgreed()
-                        && userTerm.getUser() != null
+        verify(userTermRepository).saveAll(argThat((List<UserTerm> userTerms) ->
+                userTerms.size() == currentTerms.size()
+                        && userTerms.stream().allMatch(UserTerm::isAgreed)
+                        // Compare by term id so the test does not depend on entity reference equality.
+                        && userTerms.stream()
+                        .map(userTerm -> userTerm.getTerm().getId())
+                        .toList()
+                        .containsAll(currentTerms.stream().map(Term::getId).toList())
+                        && userTerms.stream().allMatch(userTerm -> userTerm.getUser() != null)
         ));
         verify(valueOperations).set("refresh:ssafy@example.com", "refresh-token", Duration.ofSeconds(1209600L));
         // [fix] 수정 전: RedisKeys.SSAFY_PENDING_PREFIX + "ssafy@example.com" | 이유: pendingToken 기반으로 변경
@@ -106,7 +112,7 @@ class SsafyOAuthServiceTest {
         when(userRepository.existsByUserIdOrSsafyOauthId("ssafy@example.com", "ssafy@example.com")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termService.getCurrentRequiredTerm()).thenReturn(createCurrentTerm());
+        when(termService.getCurrentRequiredTerms()).thenReturn(createCurrentTerms());
         doThrow(new RuntimeException("db failure")).when(userRepository).save(any(User.class));
 
         assertThatThrownBy(() -> ssafyOAuthService.register(request))
@@ -115,7 +121,7 @@ class SsafyOAuthServiceTest {
 
         // [fix] 수정 전: verify(smsService).checkVerified("01012345678") + verify(smsService).deleteVerified("01012345678") | 이유: checkAndConsumeVerified 원자적 호출로 대체
         verify(smsService).checkAndConsumeVerified("01012345678");
-        verify(userTermRepository, never()).save(any(UserTerm.class));
+        verify(userTermRepository, never()).saveAll(anyList());
         // [fix] 수정 전: RedisKeys.SSAFY_PENDING_PREFIX + "ssafy@example.com" | 이유: pendingToken 기반으로 변경
         verify(redisTemplate, never()).delete(RedisKeys.SSAFY_PENDING_PREFIX + "pending-token-uuid");
     }
@@ -130,7 +136,7 @@ class SsafyOAuthServiceTest {
         when(userRepository.existsByUserIdOrSsafyOauthId("ssafy@example.com", "ssafy@example.com")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termService.getCurrentRequiredTerm())
+        when(termService.getCurrentRequiredTerms())
                 .thenThrow(new IllegalStateException("현재 유효한 필수 약관이 존재하지 않습니다."));
 
         assertThatThrownBy(() -> ssafyOAuthService.register(request))
@@ -151,7 +157,7 @@ class SsafyOAuthServiceTest {
         when(userRepository.existsByUserIdOrSsafyOauthId("ssafy@example.com", "ssafy@example.com")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(userRepository.existsDuplicate("tester", "M", LocalDate.of(1999, 1, 1), "01012345678")).thenReturn(false);
-        when(termService.getCurrentRequiredTerm()).thenReturn(createCurrentTerm());
+        when(termService.getCurrentRequiredTerms()).thenReturn(createCurrentTerms());
         // [fix] 수정 전: doThrow(...).when(smsService).checkVerified("01012345678") | 이유: checkAndConsumeVerified로 메서드명 변경, IllegalArgumentException → BadRequestException
         doThrow(new BadRequestException("휴대폰 인증이 필요합니다."))
                 .when(smsService).checkAndConsumeVerified("01012345678");
@@ -161,7 +167,7 @@ class SsafyOAuthServiceTest {
                 .isInstanceOf(BadRequestException.class);
 
         verify(userRepository, never()).save(any(User.class));
-        verify(userTermRepository, never()).save(any(UserTerm.class));
+        verify(userTermRepository, never()).saveAll(anyList());
     }
 
     @Test
@@ -191,14 +197,24 @@ class SsafyOAuthServiceTest {
         return request;
     }
 
-    private Term createCurrentTerm() {
-        return Term.builder()
-                .id(1L)
-                .title("service terms")
-                .version("v1")
-                .effectiveAt(LocalDate.of(2025, 1, 1))
-                .required(true)
-                .s3Url("s3://bucket/terms.pdf")
-                .build();
+    private List<Term> createCurrentTerms() {
+        return List.of(
+                Term.builder()
+                        .id(1L)
+                        .title("service terms")
+                        .version("v1")
+                        .effectiveAt(LocalDate.of(2025, 1, 1))
+                        .required(true)
+                        .s3Url("s3://bucket/service.pdf")
+                        .build(),
+                Term.builder()
+                        .id(2L)
+                        .title("privacy terms")
+                        .version("v1")
+                        .effectiveAt(LocalDate.of(2025, 1, 1))
+                        .required(true)
+                        .s3Url("s3://bucket/privacy.pdf")
+                        .build()
+        );
     }
 }
