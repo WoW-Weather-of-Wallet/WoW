@@ -160,4 +160,49 @@ public class CalendarController {
         return ResponseEntity.ok(
                 ApiResponse.success(200, "고정지출 목록 조회 성공", response));
     }
+
+    // 전체 거래내역 조회
+    @GetMapping("/transactions")
+    public ResponseEntity<ApiResponse<CalendarTransactionResponse>> getCalendarTransactions(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam int year,
+            @RequestParam int month) {
+
+        Long userId = userDetails.getId();
+
+        CalendarTransactionResponse response =
+                calendarService.getCalendarTransactions(userId, year, month);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "전체 거래내역 조회 성공", response));
+    }
+
+    // 거래내역 삭제
+    @DeleteMapping("/transactions/custom/{transactionId}")
+    public ResponseEntity<ApiResponse<Void>> deleteTransaction(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long transactionId) {
+
+        Long userId = userDetails.getId();
+        calendarService.deleteTransaction(userId, transactionId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "거래내역 삭제 성공", null));
+    }
+
+    // 현금 거래내역 직접 입력
+    @PostMapping("/transactions/custom/cash")
+    public ResponseEntity<ApiResponse<TransactionCustomResponse>> createCashTransaction(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody TransactionCustomRequest request) {
+
+        Long userId = userDetails.getId();
+
+        TransactionCustomResponse response =
+                calendarService.createCashTransaction(userId, request);
+
+        return ResponseEntity
+                .status(201)
+                .body(ApiResponse.success(201, "현금 거래내역 입력 성공", response));
+    }
 }

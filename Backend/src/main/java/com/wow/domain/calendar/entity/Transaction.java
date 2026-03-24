@@ -72,4 +72,7 @@ public class Transaction {
 
     @Column(length = 20)
     private String title;
+
+    @Column(name = "payment_type", length = 10, nullable = false)
+    private String paymentType; // "CARD" / "CASH"
 }
