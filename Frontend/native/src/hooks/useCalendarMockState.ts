@@ -84,8 +84,9 @@ const BASE_OVERVIEW = {
 const CATEGORY_ID_BY_KEY = buildCategoryIdMap();
 
 export function useCalendarMockState() {
-  // We anchor the screen to the real current date so the backend header can
-  // be shown immediately on first open. Detailed body data still falls back to mock data.
+  // 첫 진입 시 실제 오늘 날짜를 기준으로 잡아야
+  // 캘린더 헤더 실데이터를 바로 보여줄 수 있습니다.
+  // 본문 상세 데이터는 아직 mock과 혼합해서 사용합니다.
   const today = useMemo(() => new Date(), []);
   const accessToken = useAuthStore((state) => state.accessToken);
 
@@ -163,8 +164,8 @@ export function useCalendarMockState() {
     const displayedMonthKey = displayedMonth.getFullYear() * 12 + displayedMonth.getMonth();
     const monthDiff = currentMonthKey - displayedMonthKey;
 
-    // The backend currently calculates savings only for the current or previous month.
-    // Older mock months stay visible so the calendar screen still has usable content.
+    // 백엔드 절약 금액 계산은 현재 월/전월만 지원하므로,
+    // 그보다 이전 달은 기존 mock 월 데이터를 유지해서 화면 사용성을 보장합니다.
     if (!accessToken || (monthDiff !== 0 && monthDiff !== 1)) {
       setLiveHeader(null);
       setHeaderFetchState('fallback');
@@ -754,8 +755,8 @@ export function useCalendarMockState() {
       const requests = buildConfirmRequests(entries);
 
       for (const request of requests) {
-        // The backend confirm API deletes and re-inserts one date at a time.
-        // We therefore split requests by date and save them sequentially.
+        // confirm API는 날짜별로 기존 데이터를 지우고 다시 저장하므로
+        // 날짜 단위로 나눠 순차 저장합니다.
         await confirmCalendarTransactions(request);
       }
     }

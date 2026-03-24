@@ -37,8 +37,8 @@ export interface CalendarUploadPreviewGroup {
   items: CalendarUploadPreviewItem[];
 }
 
-// Backend calendar APIs mix plain JSON, text responses, and wrapped responses.
-// We keep those shapes explicit here so screen code can branch without guessing.
+// 캘린더 백엔드 API는 일반 JSON, 문자열 응답, ApiResponse 래퍼 응답이 섞여 있습니다.
+// 화면 코드에서 응답 형태를 추측하지 않도록 타입을 명시적으로 분리합니다.
 export interface CalendarApiResponse<T> {
   httpStatusCode: number;
   responseMessage: string;
