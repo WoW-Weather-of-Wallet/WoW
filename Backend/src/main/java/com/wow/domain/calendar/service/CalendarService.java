@@ -268,12 +268,15 @@ public class CalendarService {
                 .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
         LocalDate representativeDate = items.get(0).getTransactionDate();
-        LocalDateTime dayStart = representativeDate.atStartOfDay();
-        LocalDateTime dayEnd = representativeDate.atTime(23, 59, 59);
 
-        // 같은 날짜 기존 데이터 삭제 (덮어쓰기)
-        transactionRepository.deleteByUser_IdAndTransactionAtBetween(
-                userId, dayStart, dayEnd);
+        // ↓ 여기만 변경 - paymentType CARD만 삭제
+        Set<LocalDate> dates = items.stream()
+                .map(TransactionConfirmRequest.TransactionItem::getTransactionDate)
+                .collect(Collectors.toSet());
+
+        for (LocalDate date : dates) {
+            deleteTransactionsByDateAndType(userId, date, "CARD");
+        }
 
         List<Transaction> entities = items.stream()
                 .map(item -> {
@@ -287,7 +290,7 @@ public class CalendarService {
                             .amount(BigDecimal.valueOf(item.getAmount()))
                             .merchantName(item.getMerchantName())
                             .transactionAt(item.getTransactionDate().atStartOfDay())
-                            .createdAt(LocalDateTime.now())
+                            .paymentType("CARD")  // ← 추가
                             .build();
                 })
                 .toList();
@@ -310,6 +313,15 @@ public class CalendarService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
+        // 날짜별로 같은 날짜 CARD 타입 삭제
+        Set<LocalDate> dates = items.stream()
+                .map(TransactionCustomRequest.TransactionCustomItem::getTransactionDate)
+                .collect(Collectors.toSet());
+
+        for (LocalDate date : dates) {
+            deleteTransactionsByDateAndType(userId, date, "CARD");
+        }
+
         List<Transaction> entities = items.stream()
                 .map(item -> {
                     ExpenseCategory category = expenseCategoryRepository
@@ -322,7 +334,7 @@ public class CalendarService {
                             .amount(BigDecimal.valueOf(item.getAmount()))
                             .merchantName(item.getMerchantName())
                             .transactionAt(item.getTransactionDate().atStartOfDay())
-                            .createdAt(LocalDateTime.now())
+                            .paymentType("CARD")  // ← 추가
                             .build();
                 })
                 .toList();
@@ -490,5 +502,75 @@ public class CalendarService {
         }
 
         transactionRepository.delete(transaction);
+    }
+
+    // 현금 처리로 인해서 삭제로직 변경
+    private void deleteTransactionsByDateAndType(
+            Long userId, LocalDate date, String paymentType) {
+
+        // 고정지출에 연결된 id는 삭제 제외
+        Set<Long> fixedTransactionIds =
+                fixedExpenseRepository.findTransactionIdsByUserId(userId);
+
+        List<Long> toDeleteIds = transactionRepository
+                .findIdsByUserIdAndPaymentTypeAndTransactionAtBetween(
+                        userId,
+                        paymentType,
+                        date.atStartOfDay(),
+                        date.plusDays(1).atStartOfDay())
+                .stream()
+                .filter(id -> !fixedTransactionIds.contains(id))
+                .toList();
+
+        transactionRepository.deleteAllById(toDeleteIds);
+    }
+
+    // 현금로직 추가
+    @Transactional
+    public TransactionCustomResponse createCashTransaction(
+            Long userId, TransactionCustomRequest request) {
+
+        List<TransactionCustomRequest.TransactionCustomItem> items = request.getItems();
+
+        if (items == null || items.isEmpty()) {
+            throw new BadRequestException("거래내역 항목이 비어있습니다.");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 같은 날짜 CASH 타입만 삭제
+        Set<LocalDate> dates = items.stream()
+                .map(TransactionCustomRequest.TransactionCustomItem::getTransactionDate)
+                .collect(Collectors.toSet());
+
+        for (LocalDate date : dates) {
+            deleteTransactionsByDateAndType(userId, date, "CASH");
+        }
+
+        List<Transaction> entities = items.stream()
+                .map(item -> {
+                    ExpenseCategory category = expenseCategoryRepository
+                            .findById(item.getCategoryId())
+                            .orElseThrow(() -> new BadRequestException("존재하지 않는 카테고리입니다."));
+
+                    return Transaction.builder()
+                            .user(user)
+                            .category(category)
+                            .amount(BigDecimal.valueOf(item.getAmount()))
+                            .merchantName(item.getMerchantName())
+                            .transactionAt(item.getTransactionDate().atStartOfDay())
+                            .paymentType("CASH")  // ← CASH
+                            .build();
+                })
+                .toList();
+
+        transactionRepository.saveAll(entities);
+
+        List<TransactionCustomResponse.TransactionCustomItem> responseItems = entities.stream()
+                .map(TransactionCustomResponse.TransactionCustomItem::from)
+                .toList();
+
+        return new TransactionCustomResponse(entities.size(), responseItems);
     }
 }

@@ -25,4 +25,8 @@ public interface FixedExpenseRepository extends JpaRepository<FixedExpense, Long
     // 거래내역 핀 표시용 — 유저의 고정지출 가맹점명 목록 조회
     @Query("SELECT fe.name FROM FixedExpense fe WHERE fe.user.id = :userId")
     Set<String> findNamesByUserId(@Param("userId") Long userId);
+
+    // 고정지출에 연결된 transaction_id Set 조회
+    @Query("SELECT fe.transaction.id FROM FixedExpense fe WHERE fe.user.id = :userId AND fe.transaction IS NOT NULL")
+    Set<Long> findTransactionIdsByUserId(@Param("userId") Long userId);
 }
