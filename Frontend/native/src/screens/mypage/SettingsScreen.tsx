@@ -77,6 +77,7 @@ export default function SettingsScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const navigation = useNavigation<any>();
   const logout = useAuthStore((state) => state.logout);
+  const sessionUser = useAuthStore((state) => state.user);
   const updateUser = useAuthStore((state) => state.updateUser);
   const securityPreferences = useLocalSecurityStore((state) => state.preferences);
   const refreshSecurityPreferences = useLocalSecurityStore((state) => state.refreshPreferences);
@@ -558,50 +559,57 @@ export default function SettingsScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
-      { text: '취소', style: 'cancel' },
-      {
-        text: '로그아웃',
-        style: 'destructive',
-        onPress: async () => {
-          const shouldLogoutSsafy = profile?.loginType === 'SSAFY';
+    const shouldLogoutSsafy =
+      (profile?.loginType ?? sessionUser?.loginType) === 'SSAFY';
 
-          try {
-            // [P1 Fix] 로그아웃 시 서버에 등록된 FCM 토큰을 먼저 제거합니다.
-            // 실패하더라도 로그아웃 처리는 계속 진행합니다.
+    Alert.alert(
+      '로그아웃',
+      shouldLogoutSsafy
+        ? '로그아웃 후 SSAFY 브라우저 세션도 함께 종료됩니다.'
+        : '정말 로그아웃 하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '로그아웃',
+          style: 'destructive',
+          onPress: async () => {
             try {
-              await fcmService.unregisterFcmToken();
-            } catch (fcmError) {
-              console.warn('[Settings] FCM 토큰 해제 실패:', fcmError);
+              // [P1 Fix] 로그아웃 시 서버에 등록된 FCM 토큰을 먼저 제거합니다.
+              // 실패하더라도 로그아웃 처리는 계속 진행합니다.
+              try {
+                await fcmService.unregisterFcmToken();
+              } catch (fcmError) {
+                console.warn('[Settings] FCM 토큰 해제 실패:', fcmError);
+              }
+
+              await logoutRequest();
+            } catch (error) {
+              const message = extractApiErrorMessage(
+                error,
+                '로그아웃 처리 중 문제가 있었어요. 다시 시도해주세요.',
+              );
+              Alert.alert('로그아웃 실패', message);
+              return;
             }
 
-            await logoutRequest();
-          } catch (error) {
-            const message = extractApiErrorMessage(
-              error,
-              '로그아웃 처리 중 문제가 있었어요. 다시 시도해주세요.',
-            );
-            Alert.alert('로그아웃 실패', message);
-            return;
-          }
+            await clearPersistedAuthSession();
+            logout();
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
 
-          await clearPersistedAuthSession();
-          logout();
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'Login' }],
-          });
-
-          if (shouldLogoutSsafy) {
-            setTimeout(() => {
-              Linking.openURL(getSsafyLogoutUrl()).catch((error) => {
-                console.warn('[Settings] SSAFY browser logout failed:', error);
-              });
-            }, 0);
-          }
+            if (shouldLogoutSsafy) {
+              setTimeout(() => {
+                Linking.openURL(getSsafyLogoutUrl()).catch((error) => {
+                  console.warn('[Settings] SSAFY browser logout failed:', error);
+                });
+              }, 0);
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   /**

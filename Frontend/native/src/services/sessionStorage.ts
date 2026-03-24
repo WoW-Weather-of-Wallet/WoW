@@ -4,6 +4,7 @@ export interface PersistedAuthUser {
   userId?: string | null;
   name?: string;
   role?: string;
+  loginType?: 'NORMAL' | 'SSAFY' | string | null;
 }
 
 export interface PersistedAuthSession {

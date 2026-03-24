@@ -143,13 +143,19 @@ export default function LoginScreen({ navigation }: any) {
       if (autoLogin && response.refreshToken) {
         await savePersistedAuthSession({
           refreshToken: response.refreshToken,
-          user: response.user,
+          user: {
+            ...response.user,
+            loginType: 'SSAFY',
+          },
           autoLoginEnabled: true,
         });
       }
       loginToStore({
         accessToken: response.accessToken,
-        user: response.user,
+        user: {
+          ...response.user,
+          loginType: 'SSAFY',
+        },
         autoLogin,
         source: 'ssafy',
       });
@@ -258,14 +264,20 @@ export default function LoginScreen({ navigation }: any) {
       if (autoLogin && response.refreshToken) {
         await savePersistedAuthSession({
           refreshToken: response.refreshToken,
-          user: response.user,
+          user: {
+            ...response.user,
+            loginType: 'NORMAL',
+          },
           autoLoginEnabled: true,
         });
       }
 
       loginToStore({
         accessToken: response.accessToken,
-        user: response.user,
+        user: {
+          ...response.user,
+          loginType: 'NORMAL',
+        },
         autoLogin,
       });
 

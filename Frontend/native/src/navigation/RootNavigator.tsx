@@ -4,7 +4,7 @@
 // =============================================
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, Linking, Platform } from 'react-native';
+import { Alert, AppState, Linking, Platform } from 'react-native';
 import {
   NavigationContainer,
   createNavigationContainerRef,
@@ -262,7 +262,7 @@ function NavigationWrapper() {
   );
 
   const handleLockLogout = useCallback(async () => {
-    const shouldLogoutSsafy = sessionUser?.userId == null;
+    const shouldLogoutSsafy = sessionUser?.loginType === 'SSAFY';
 
     try {
       await fcmService.unregisterFcmToken();
@@ -294,7 +294,7 @@ function NavigationWrapper() {
         });
       }, 0);
     }
-  }, [logout, sessionUser?.userId, unlockApp]);
+  }, [logout, sessionUser?.loginType, unlockApp]);
 
   return (
     <>
@@ -422,11 +422,34 @@ function NavigationWrapper() {
         onSubmitPin={handleSubmitPin}
         onPressBiometric={handleBiometricPress}
         onPressDifferentAccount={() => {
+          if (sessionUser?.loginType === 'SSAFY') {
+            Alert.alert(
+              '다른 계정으로 로그인',
+              '현재 계정에서 로그아웃한 뒤 SSAFY 브라우저 세션도 함께 종료합니다.',
+              [
+                { text: '취소', style: 'cancel' },
+                {
+                  text: '로그아웃',
+                  style: 'destructive',
+                  onPress: () => {
+                    void handleLockLogout();
+                  },
+                },
+              ],
+            );
+            return;
+          }
+
           void handleLockLogout();
         }}
         onToggleBiometric={(enabled) => {
           void handleToggleBiometric(enabled);
         }}
+        logoutNotice={
+          sessionUser?.loginType === 'SSAFY'
+            ? '다른 계정으로 로그인하면 SSAFY 브라우저 로그아웃이 함께 진행됩니다.'
+            : undefined
+        }
       />
     </>
   );

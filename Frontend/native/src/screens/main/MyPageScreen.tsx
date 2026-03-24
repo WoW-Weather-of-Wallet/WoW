@@ -249,34 +249,41 @@ export default function MyPageScreen() {
 
   /* ── 로그아웃 처리 ── */
   const handleLogout = () => {
-    Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
-      { text: '취소', style: 'cancel' },
-      {
-        text: '로그아웃',
-        style: 'destructive',
-        onPress: async () => {
-          const shouldLogoutSsafy = profile?.loginType === 'SSAFY';
+    const shouldLogoutSsafy =
+      (profile?.loginType ?? sessionUser?.loginType) === 'SSAFY';
 
-          try {
-            try { await fcmService.unregisterFcmToken(); } catch (e) {}
-            await logoutRequest();
-            await clearPersistedAuthSession();
-            logout();
-            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+    Alert.alert(
+      '로그아웃',
+      shouldLogoutSsafy
+        ? '로그아웃 후 SSAFY 브라우저 세션도 함께 종료됩니다.'
+        : '정말 로그아웃 하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '로그아웃',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              try { await fcmService.unregisterFcmToken(); } catch (e) {}
+              await logoutRequest();
+              await clearPersistedAuthSession();
+              logout();
+              navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
 
-            if (shouldLogoutSsafy) {
-              setTimeout(() => {
-                Linking.openURL(getSsafyLogoutUrl()).catch((error) => {
-                  console.warn('[MyPage] SSAFY browser logout failed:', error);
-                });
-              }, 0);
+              if (shouldLogoutSsafy) {
+                setTimeout(() => {
+                  Linking.openURL(getSsafyLogoutUrl()).catch((error) => {
+                    console.warn('[MyPage] SSAFY browser logout failed:', error);
+                  });
+                }, 0);
+              }
+            } catch (error) {
+              Alert.alert('오류', '로그아웃 처리 중 문제가 발생했습니다.');
             }
-          } catch (error) {
-            Alert.alert('오류', '로그아웃 처리 중 문제가 발생했습니다.');
-          }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   /**

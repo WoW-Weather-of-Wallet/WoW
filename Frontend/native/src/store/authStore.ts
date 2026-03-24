@@ -5,6 +5,7 @@ interface AuthUser {
   userId?: string | null;
   name?: string;
   role?: string;
+  loginType?: 'NORMAL' | 'SSAFY' | string | null;
 }
 
 interface LoginSessionPayload {
