@@ -10,7 +10,6 @@ export const BASE_URL =
 
 export interface NativeSignupRequest {
   userId?: string;
-  ssafyOauthId?: string;
   pw: string;
   name: string;
   gender: string;
@@ -51,7 +50,7 @@ export interface NativeLoginResponse {
   expiresIn: number;
   refreshToken?: string;
   user: {
-    userId: string;
+    userId?: string | null;
     name?: string;
     role?: string;
   };
@@ -102,16 +101,6 @@ export interface NativeSsafyCodeLoginResult {
   code: string;
 }
 
-export interface NativeSsafyDirectLoginResult {
-  type: 'login';
-  accessToken: string;
-  user?: {
-    userId: string;
-    name?: string;
-    role?: string;
-  };
-}
-
 export interface NativeSsafySignupCallbackResult {
   type: 'signup';
   pendingToken: string;
@@ -120,7 +109,6 @@ export interface NativeSsafySignupCallbackResult {
 
 export type NativeSsafyCallbackResult =
   | NativeSsafyCodeLoginResult
-  | NativeSsafyDirectLoginResult
   | NativeSsafySignupCallbackResult;
 
 export interface SmsSendRequest {
@@ -503,7 +491,6 @@ export const parseSsafyCallbackUrl = (
 ): NativeSsafyCallbackResult | null => {
   try {
     const params = getSearchParamsFromUrl(url);
-    const accessToken = getParamValue(params, ['accessToken', 'token']);
     const code = getParamValue(params, ['code']);
     const pendingToken = getParamValue(params, ['pendingToken']);
     const name = decodeUnicodeEscapes(getParamValue(params, ['name', 'userName', 'nickname'])) || undefined;
@@ -520,21 +507,6 @@ export const parseSsafyCallbackUrl = (
       return {
         type: 'login',
         code,
-      };
-    }
-
-    if (accessToken) {
-      const userId = getParamValue(params, ['userId', 'loginId', 'username']) || 'ssafy-user';
-      const role = getParamValue(params, ['role']) || undefined;
-
-      return {
-        type: 'login',
-        accessToken,
-        user: {
-          userId,
-          name,
-          role,
-        },
       };
     }
 

@@ -33,7 +33,6 @@ import {
   getSsafyLoginUrl,
   login,
   type NativeSsafyCodeLoginResult,
-  type NativeSsafyDirectLoginResult,
   parseSsafyCallbackUrl,
 } from '../../services/auth';
 import { savePersistedAuthSession } from '../../services/sessionStorage';
@@ -139,20 +138,7 @@ export default function LoginScreen({ navigation }: any) {
   }, []);
 
   const completeSsafyLogin = useCallback(
-    async (parsed: NativeSsafyCodeLoginResult | NativeSsafyDirectLoginResult) => {
-      if ('accessToken' in parsed) {
-        loginToStore({
-          accessToken: parsed.accessToken,
-          user:
-            parsed.user ?? {
-              userId: 'ssafy-user',
-            },
-          autoLogin,
-        });
-        navigation.replace('MainTabs');
-        return;
-      }
-
+    async (parsed: NativeSsafyCodeLoginResult) => {
       const response = await exchangeSsafyToken(parsed.code);
       if (autoLogin && response.refreshToken) {
         await savePersistedAuthSession({

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { setNativeAuthToken } from '../services/auth';
 
 interface AuthUser {
-  userId: string;
+  userId?: string | null;
   name?: string;
   role?: string;
 }

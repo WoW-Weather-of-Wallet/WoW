@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 
 export interface PersistedAuthUser {
-  userId: string;
+  userId?: string | null;
   name?: string;
   role?: string;
 }
