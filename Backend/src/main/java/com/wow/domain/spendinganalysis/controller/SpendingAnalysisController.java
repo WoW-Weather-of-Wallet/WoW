@@ -1,7 +1,37 @@
 package com.wow.domain.spendinganalysis.controller;
 
+import com.wow.domain.security.CustomUserDetails;
+import com.wow.domain.spendinganalysis.dto.SpendingQuarterlyResponse;
+import com.wow.domain.spendinganalysis.service.SpendingAnalysisService;
+import com.wow.global.common.ApiResponse;
+import com.wow.global.exception.InvalidTokenException;
+import io.swagger.v3.oas.annotations.Operation;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/v1/spending")
 public class SpendingAnalysisController {
+
+    private final SpendingAnalysisService spendingAnalysisService;
+
+    @Operation(summary = "분기 소비 유형 분석 결과 조회")
+    @GetMapping("/quarterly")
+    public ResponseEntity<ApiResponse<SpendingQuarterlyResponse>> getQuarterlySpendingAnalysis(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        if (userDetails == null) {
+            throw new InvalidTokenException("유효하지 않은 인증 정보입니다.");
+        }
+
+        SpendingQuarterlyResponse response =
+                spendingAnalysisService.getQuarterlySpendingAnalysis(userDetails.getId());
+
+        return ResponseEntity.ok(ApiResponse.success(200, "분기 소비 유형 분석 결과 조회 성공", response));
+    }
 }
