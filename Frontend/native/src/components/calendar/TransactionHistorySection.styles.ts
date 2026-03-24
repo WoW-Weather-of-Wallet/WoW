@@ -85,13 +85,17 @@ export const styles = StyleSheet.create({
   itemTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: wp(4),
+    gap: wp(6),
     marginBottom: hp(4),
   },
   itemTitle: {
     fontSize: fp(16),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
+  },
+  fixedPinEmoji: {
+    fontSize: fp(12),
+    lineHeight: fp(14),
   },
   itemCategory: {
     fontSize: fp(13),
