@@ -1,12 +1,6 @@
 ﻿import { Alert } from 'react-native';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  mockCalendarDayDetails,
-  mockCalendarDays,
-  mockCalendarTransactions,
-  mockFixedExpenses,
-  mockManageFixedExpenses,
-  mockSelectableTransactions,
   type CalendarDayDetail,
   type CalendarDayItem,
   type CalendarTransactionGroup,
@@ -97,18 +91,13 @@ export function useCalendarMockState() {
   const [activeTab, setActiveTab] = useState<CalendarTab>('calendar');
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [memoValue, setMemoValue] = useState('');
-  const [calendarDaySource, setCalendarDaySource] = useState<CalendarDayItem[]>(mockCalendarDays);
+  const [calendarDaySource, setCalendarDaySource] = useState<CalendarDayItem[]>([]);
   const [calendarDayDetails, setCalendarDayDetails] =
-    useState<Record<string, CalendarDayDetail>>(mockCalendarDayDetails);
-  const [fixedExpenseItems, setFixedExpenseItems] = useState<FixedExpenseItem[]>(mockFixedExpenses);
-  const [manageItems, setManageItems] = useState<ManageFixedExpenseItem[]>(
-    mockManageFixedExpenses.map((item) => ({
-      ...item,
-      category: extractCategoryFromSubtitle(item.subtitle),
-    })),
-  );
+    useState<Record<string, CalendarDayDetail>>({});
+  const [fixedExpenseItems, setFixedExpenseItems] = useState<FixedExpenseItem[]>([]);
+  const [manageItems, setManageItems] = useState<ManageFixedExpenseItem[]>([]);
   const [transactionGroups, setTransactionGroups] =
-    useState<CalendarTransactionGroup[]>(mockCalendarTransactions);
+    useState<CalendarTransactionGroup[]>([]);
   const [isManageModalVisible, setIsManageModalVisible] = useState(false);
   const [isPickerVisible, setIsPickerVisible] = useState(false);
   const [isDetailSheetVisible, setIsDetailSheetVisible] = useState(false);
@@ -153,11 +142,11 @@ export function useCalendarMockState() {
     return {
       ...BASE_OVERVIEW,
       monthLabel,
-      weatherTitle: liveHeader?.weatherName ?? BASE_OVERVIEW.weatherTitle,
+      weatherTitle: liveHeader?.weatherName ?? '-',
       weatherSubtitle: monthLabel,
-      weatherHint: liveHeader?.description ?? BASE_OVERVIEW.weatherHint,
+      weatherHint: liveHeader?.description ?? '-',
       savingsAmount: savedAmount,
-      goalLabel: liveHeader ? buildSavingsLabel(savedAmount) : BASE_OVERVIEW.goalLabel,
+      goalLabel: liveHeader ? buildSavingsLabel(savedAmount) : '-',
     };
   }, [liveHeader, monthLabel]);
 
@@ -275,7 +264,7 @@ export function useCalendarMockState() {
 
   useEffect(() => {
     if (!accessToken) {
-      setTransactionGroups(mockCalendarTransactions);
+      setTransactionGroups([]);
       return;
     }
 
@@ -305,13 +294,8 @@ export function useCalendarMockState() {
 
   useEffect(() => {
     if (!accessToken) {
-      setFixedExpenseItems(mockFixedExpenses);
-      setManageItems(
-        mockManageFixedExpenses.map((item) => ({
-          ...item,
-          category: extractCategoryFromSubtitle(item.subtitle),
-        })),
-      );
+      setFixedExpenseItems([]);
+      setManageItems([]);
       return;
     }
 
@@ -379,7 +363,7 @@ export function useCalendarMockState() {
   );
   const selectableTransactions = useMemo<SelectableTransactionCandidate[]>(() => {
     if (!accessToken) {
-      return mockSelectableTransactions;
+      return [];
     }
 
     return filteredTransactionGroups.flatMap((group) =>

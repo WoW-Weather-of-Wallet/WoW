@@ -12,10 +12,22 @@ interface HomeInsightSectionProps {
 export default function HomeInsightSection({
   items,
 }: HomeInsightSectionProps) {
+  const displayItems =
+    items.length > 0
+      ? items
+      : [
+          {
+            id: 'empty-insight',
+            label: '-',
+            value: '-',
+            changeText: '-',
+          },
+        ];
+
   return (
     <SurfaceCard>
-      <SectionHeader title="이번 달 핵심 지표" actionLabel="더보기" />
-      {items.map((item) => (
+      <SectionHeader title="소비 인사이트" actionLabel="-" />
+      {displayItems.map((item) => (
         <View key={item.id} style={styles.infoCard}>
           <Text style={styles.infoLabel}>{item.label}</Text>
           <Text style={styles.infoValue}>{item.value}</Text>
@@ -25,4 +37,3 @@ export default function HomeInsightSection({
     </SurfaceCard>
   );
 }
-

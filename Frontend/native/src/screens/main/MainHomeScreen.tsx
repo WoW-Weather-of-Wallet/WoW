@@ -3,21 +3,10 @@ import { ScrollView, StatusBar, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import {
-  mockHomeInsights,
-  mockHomeSummary,
-  mockScheduleItems,
-  mockSpendingCategories,
-} from '../../mock/dashboard';
-import {
-  mockHomeCalendarPreview,
-  type CalendarDayItem,
-  type CalendarWeatherTone,
-} from '../../mock/calendar';
+import { type CalendarDayItem, type CalendarWeatherTone } from '../../mock/calendar';
 import { COLORS, hp } from '../../constants/theme';
 import { styles } from './MainHomeScreen.styles';
 import { useModalState } from '../../hooks/useModalState';
-import DataSourceNotice from '../../components/common/DataSourceNotice';
 import {
   HomeBudgetReportCard,
   HomeCategorySection,
@@ -31,7 +20,11 @@ import {
 } from '../../components/main';
 import { getCalendarHeader, getCalendarMonthly } from '../../services/calendar';
 import { useAuthStore } from '../../store/authStore';
-import type { CalendarBackendDayType, CalendarHeaderResponse, CalendarMonthlyResponse } from '../../types/calendar';
+import type {
+  CalendarBackendDayType,
+  CalendarHeaderResponse,
+  CalendarMonthlyResponse,
+} from '../../types/calendar';
 
 export default function MainHomeScreen() {
   const insets = useSafeAreaInsets();
@@ -40,19 +33,19 @@ export default function MainHomeScreen() {
   const reportModal = useModalState();
   const spendingTypeModal = useModalState();
   const [liveHeader, setLiveHeader] = React.useState<CalendarHeaderResponse | null>(null);
-  const [weeklyPreviewItems, setWeeklyPreviewItems] =
-    React.useState<CalendarDayItem[]>(mockHomeCalendarPreview);
+  const [weeklyPreviewItems, setWeeklyPreviewItems] = React.useState<CalendarDayItem[]>([]);
   const [isWeatherLoading, setIsWeatherLoading] = React.useState(false);
+  const today = React.useMemo(() => new Date(), []);
+  const monthLabel = `${today.getMonth() + 1}월`;
 
   const loadHomeCalendarData = React.useCallback(async () => {
     if (!accessToken) {
       setLiveHeader(null);
-      setWeeklyPreviewItems(mockHomeCalendarPreview);
+      setWeeklyPreviewItems([]);
       setIsWeatherLoading(false);
       return;
     }
 
-    const today = new Date();
     const weekDates = buildWeekDates(today);
     const monthParams = buildMonthParams(weekDates);
 
@@ -87,11 +80,11 @@ export default function MainHomeScreen() {
     } catch (error) {
       console.warn('Failed to load home calendar preview from backend', error);
       setLiveHeader(null);
-      setWeeklyPreviewItems(mockHomeCalendarPreview);
+      setWeeklyPreviewItems([]);
     } finally {
       setIsWeatherLoading(false);
     }
-  }, [accessToken]);
+  }, [accessToken, today]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -113,14 +106,6 @@ export default function MainHomeScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {false && <DataSourceNotice
-          type={liveHeader ? 'mixed' : 'mock'}
-          description={
-            liveHeader
-              ? '소비 날씨와 주간 미리보기는 캘린더 API를 사용하고, 예산·인사이트·일정 카드는 현재 mock 데이터입니다.'
-              : '현재 홈 화면은 mock 데이터가 포함되어 있습니다. 로그인 또는 API 응답 상태에 따라 일부 값은 실데이터로 바뀝니다.'
-          }
-        />}
         <HomeTodayWeatherCard
           weatherName={liveHeader?.weatherName}
           description={liveHeader?.description}
@@ -129,10 +114,19 @@ export default function MainHomeScreen() {
         />
         <HomeSpendingTypeCard onPress={spendingTypeModal.open} />
         <HomeWeeklyPreviewCard items={weeklyPreviewItems} />
-        <HomeBudgetReportCard {...mockHomeSummary} onPress={reportModal.open} />
-        <HomeInsightSection items={mockHomeInsights} />
-        <HomeCategorySection items={mockSpendingCategories} />
-        <HomeScheduleSection items={mockScheduleItems} />
+        <HomeBudgetReportCard
+          monthLabel={monthLabel}
+          userName="-"
+          remainingBudget={null}
+          budgetUsageRate={null}
+          spentAmount={null}
+          totalBudget={null}
+          forecastText="-"
+          onPress={reportModal.open}
+        />
+        <HomeInsightSection items={[]} />
+        <HomeCategorySection items={[]} />
+        <HomeScheduleSection items={[]} />
       </ScrollView>
 
       <HomeSpendingTypeSheet visible={spendingTypeModal.visible} onClose={spendingTypeModal.close} />
