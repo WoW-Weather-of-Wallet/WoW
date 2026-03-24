@@ -139,36 +139,6 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     color: COLORS.primary,
   },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: wp(10),
-  },
-  categoryChip: {
-    minWidth: wp(78),
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: wp(5),
-    paddingHorizontal: wp(14),
-    paddingVertical: hp(10),
-    borderWidth: 1,
-    borderColor: COLORS.chipBorder,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.white,
-  },
-  categoryChipActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  categoryChipText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textPrimary,
-  },
-  categoryChipTextActive: {
-    color: COLORS.white,
-  },
   paymentMethodGrid: {
     flexDirection: 'row',
     gap: wp(10),
@@ -558,6 +528,9 @@ export const styles = StyleSheet.create({
   categorySelectScroll: {
     maxHeight: hp(320),
   },
+  categorySelectContent: {
+    paddingBottom: hp(8),
+  },
   recommendBadge: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
@@ -573,30 +546,5 @@ export const styles = StyleSheet.create({
     fontSize: fp(12),
     fontFamily: FONTS.semiBold,
     color: COLORS.warningOrange,
-  },
-  categorySelectGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: wp(12),
-    paddingBottom: hp(8),
-  },
-  categorySelectCard: {
-    width: '31%',
-    minHeight: hp(84),
-    borderRadius: RADIUS.xl,
-    borderWidth: 1.5,
-    borderColor: COLORS.chipBorder,
-    backgroundColor: COLORS.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: hp(8),
-    paddingHorizontal: wp(8),
-    paddingVertical: hp(12),
-  },
-  categorySelectText: {
-    fontSize: fp(12),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    textAlign: 'center',
   },
 });
