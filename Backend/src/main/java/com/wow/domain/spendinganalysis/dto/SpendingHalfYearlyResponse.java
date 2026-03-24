@@ -21,15 +21,14 @@ public class SpendingHalfYearlyResponse {
 
     public static SpendingHalfYearlyResponse of(
             AiAnalysis aiAnalysis,
-            List<AiAnalysisCategoryResult> categoryResults,
-            String summary
+            List<AiAnalysisCategoryResult> categoryResults
     ) {
         SpendingType spendingType = aiAnalysis.getSpendingType();
 
         SpendingTypeInfo spendingTypeInfo = new SpendingTypeInfo(
                 spendingType.getName(),
                 spendingType.getIconCode(),
-                summary
+                spendingType.getSummary()
         );
 
         List<CategoryResult> results = categoryResults.stream()

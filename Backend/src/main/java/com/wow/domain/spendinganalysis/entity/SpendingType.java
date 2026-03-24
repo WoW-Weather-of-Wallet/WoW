@@ -29,4 +29,7 @@ public class SpendingType {
 
     @Column(name = "icon_code", length = 20)
     private String iconCode;
+
+    @Column(name = "summary", length = 255)
+    private String summary;
 }
