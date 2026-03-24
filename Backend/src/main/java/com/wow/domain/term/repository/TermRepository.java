@@ -11,5 +11,7 @@ public interface TermRepository extends JpaRepository<Term, Long> {
 
     List<Term> findAllByOrderByIdAsc();
 
+    List<Term> findAllByRequiredTrueAndEffectiveAtLessThanEqualOrderByIdAsc(LocalDate date);
+
     Optional<Term> findFirstByRequiredTrueAndEffectiveAtLessThanEqualOrderByEffectiveAtDescIdDesc(LocalDate date);
 }

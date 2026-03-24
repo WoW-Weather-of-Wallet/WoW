@@ -177,7 +177,7 @@ public class SsafyOAuthService {
             throw new DuplicateException("이미 사용 중인 전화번호입니다.");
         }
 
-        Term currentRequiredTerm = termService.getCurrentRequiredTerm();
+        List<Term> currentRequiredTerms = termService.getCurrentRequiredTerms();
 
         // [fix] 수정 전: smsService.checkVerified() + try/finally { smsService.deleteVerified() } | 이유: 원자적 checkAndConsume으로 레이스 컨디션 방지
         smsService.checkAndConsumeVerified(phoneNumber);
@@ -196,12 +196,12 @@ public class SsafyOAuthService {
 
         userRepository.save(newUser);
 
-        userTermRepository.save(UserTerm.builder()
-                .user(newUser)
-                .term(currentRequiredTerm)
-                .agreed(request.isTermsAgreed())
-                .agreedAt(LocalDateTime.now())
-                .build());
+        /*
+         * SSAFY signup uses the same boolean contract as the normal signup API.
+         * We map that single flag to the full set of active required terms so the
+         * persisted agreement history matches what the UI actually asked the user.
+         */
+        saveRequiredTermAgreements(newUser, currentRequiredTerms);
 
         redisTemplate.delete(RedisKeys.SSAFY_PENDING_PREFIX + request.getPendingToken());
         return issueToken(newUser);
@@ -325,6 +325,19 @@ public class SsafyOAuthService {
                 refreshToken,
                 UserSummaryResponse.from(user)
         );
+    }
+
+    private void saveRequiredTermAgreements(User user, List<Term> requiredTerms) {
+        LocalDateTime agreedAt = LocalDateTime.now();
+        List<UserTerm> userTerms = requiredTerms.stream()
+                .map(term -> UserTerm.builder()
+                        .user(user)
+                        .term(term)
+                        .agreed(true)
+                        .agreedAt(agreedAt)
+                        .build())
+                .toList();
+        userTermRepository.saveAll(userTerms);
     }
 
     private String buildAppRedirectUri() {

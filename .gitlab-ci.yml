@@ -7,7 +7,10 @@ build-front:
   tags:
     - build
   rules:
-    - if: '$CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+    - if: '$CI_COMMIT_BRANCH == "front"'
+    - if: '$CI_COMMIT_BRANCH =~ /^front-/'
       changes:
         - Frontend/react/**/*
         - Frontend/native/**/*
@@ -22,7 +25,10 @@ build-back:
   tags:
     - build
   rules:
-    - if: '$CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+    - if: '$CI_COMMIT_BRANCH == "back"'
+    - if: '$CI_COMMIT_BRANCH =~ /^back-/'
       changes:
         - Backend/**/*
   script:
@@ -61,4 +67,3 @@ deploy:
       ENV
     - docker-compose -f docker-compose.prod.yml down
     - docker-compose -f docker-compose.prod.yml up -d
-
