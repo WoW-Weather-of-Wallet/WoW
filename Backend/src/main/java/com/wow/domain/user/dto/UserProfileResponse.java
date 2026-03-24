@@ -24,25 +24,13 @@ public class UserProfileResponse {
 
     public static UserProfileResponse from(User user) {
         return new UserProfileResponse(
-                resolveUserId(user),
+                UserIdentityResolver.resolveUserId(user),
                 user.getName(),
                 user.getGender(),
                 user.getPhoneNumber(),
                 user.getBirthDate(),
                 user.isAlarmEnabled(),
-                resolveLoginType(user)
+                UserIdentityResolver.resolveLoginType(user)
         );
     }
-
-    private static String resolveUserId(User user) {
-        if (user.getUserId() != null) return user.getUserId();
-        return null;
-    }
-
-    private static String resolveLoginType(User user) {
-        if (user.getUserId() != null) return "NORMAL";
-        if (user.getSsafyOauthId() != null) return "SSAFY";
-        return null;
-    }
-
 }

@@ -1,9 +1,9 @@
 package com.wow;
 
+import com.wow.support.BackendIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@BackendIntegrationTest
 class BackendApplicationTests {
 
 	@Test
