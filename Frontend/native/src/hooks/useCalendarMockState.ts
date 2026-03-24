@@ -808,14 +808,12 @@ export function useCalendarMockState() {
       }
 
       await Promise.all(saveTasks);
-
-      // 직접 입력 저장 직후 히스토리를 다시 조회해야
-      // 서버가 발급한 transactionId를 받아 삭제/고정지출 연동에 재사용할 수 있습니다.
-      const transactionsResponse = await getCalendarTransactions({
-        year: displayedMonth.getFullYear(),
-        month: displayedMonth.getMonth() + 1,
-      });
-      setTransactionGroups(mapCalendarTransactionsResponse(transactionsResponse));
+      await Promise.all([
+        reloadDisplayedMonthCalendarData(),
+        reloadDisplayedMonthTransactionsData(),
+      ]);
+      setIsAddEntryVisible(false);
+      return;
     }
 
     const patch = buildManualEntryPatch(entries);
