@@ -23,11 +23,12 @@ public class CalendarTransactionResponse {
     @Getter
     @AllArgsConstructor
     public static class TransactionItem {
-        private Long transactionId;      // ← 추가
+        private Long transactionId;
         private String icon;
         private String merchantName;
         private String category;
         private int amount;
         private Boolean isFixed;
+        private String paymentType;
     }
 }
