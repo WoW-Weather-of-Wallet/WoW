@@ -4,7 +4,7 @@
 // =============================================
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, Platform } from 'react-native';
+import { AppState, Linking, Platform } from 'react-native';
 import {
   NavigationContainer,
   createNavigationContainerRef,
@@ -37,6 +37,7 @@ import {
   verifyPinCode,
 } from '../services/localSecurity';
 import {
+  getSsafyLogoutUrl,
   logout as logoutRequest,
   registerNativeAuthLifecycleCallbacks,
 } from '../services/auth';
@@ -69,6 +70,7 @@ function NavigationWrapper() {
   const {
     isAuthenticated,
     sessionSource,
+    user: sessionUser,
     logout,
     updateAccessToken,
   } = useAuthStore();
@@ -260,6 +262,8 @@ function NavigationWrapper() {
   );
 
   const handleLockLogout = useCallback(async () => {
+    const shouldLogoutSsafy = sessionUser?.userId == null;
+
     try {
       await fcmService.unregisterFcmToken();
     } catch (error) {
@@ -282,7 +286,15 @@ function NavigationWrapper() {
         routes: [{ name: 'Login' }],
       });
     }
-  }, [logout, unlockApp]);
+
+    if (shouldLogoutSsafy) {
+      setTimeout(() => {
+        Linking.openURL(getSsafyLogoutUrl()).catch((error) => {
+          console.warn('[QuickLogin] SSAFY browser logout failed:', error);
+        });
+      }, 0);
+    }
+  }, [logout, sessionUser?.userId, unlockApp]);
 
   return (
     <>
