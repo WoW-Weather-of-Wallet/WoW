@@ -30,12 +30,12 @@ export default function CalendarHeroCard({
   onPressAdd,
   onPressInfo,
 }: CalendarHeroCardProps) {
-  // 이전 시도:
-  // - 월 이동을 별도 상단 바로 분리했지만, 기존 화면 흐름과 시각 톤이 너무 달라졌습니다.
-  //
-  // 변경 이유:
-  // - 사용자가 익숙한 기존 구조를 유지하면서도, 보라색 히어로 카드 자체만 상단에 고정되게
-  //   만들기 위해 월 이동 UI를 다시 카드 내부로 되돌립니다.
+  const weatherTitle = headerFetchState === 'live' ? overview.weatherTitle : '-';
+  const weatherHint = headerFetchState === 'live' ? overview.weatherHint : '-';
+  const savingsAmountText =
+    headerFetchState === 'live' ? `${overview.savingsAmount.toLocaleString()}원` : '-';
+  const goalLabel = headerFetchState === 'live' ? overview.goalLabel : '-';
+
   return (
     <LinearGradient
       colors={[COLORS.calendarHeroStart, COLORS.calendarHeroEnd]}
@@ -51,7 +51,7 @@ export default function CalendarHeroCard({
           </TouchableOpacity>
         </View>
         <TouchableOpacity activeOpacity={0.9} style={styles.addButton} onPress={onPressAdd}>
-          <Text style={styles.addButtonText}>+ 내역 추가</Text>
+          <Text style={styles.addButtonText}>+ 직접 입력</Text>
         </TouchableOpacity>
       </View>
 
@@ -70,20 +70,20 @@ export default function CalendarHeroCard({
           <Ionicons name={weatherIconName} size={wp(25)} color={COLORS.weatherSun} />
         </View>
         <View style={styles.weatherTextBlock}>
-          <Text style={styles.weatherTitle}>{overview.weatherTitle}</Text>
-          <Text style={styles.weatherHint}>{overview.weatherHint}</Text>
+          <Text style={styles.weatherTitle}>{weatherTitle}</Text>
+          <Text style={styles.weatherHint}>{weatherHint}</Text>
         </View>
       </View>
 
       <View style={styles.summaryRow}>
         <View>
-          <Text style={styles.summaryLabel}>지난달 대비 절약 금액</Text>
-          <Text style={styles.summaryAmount}>{overview.savingsAmount.toLocaleString()}원</Text>
+          <Text style={styles.summaryLabel}>이번 달 절약 금액</Text>
+          <Text style={styles.summaryAmount}>{savingsAmountText}</Text>
         </View>
 
         <View style={styles.goalBadge}>
           <Ionicons name="bulb-outline" size={wp(13)} color={COLORS.primary} />
-          <Text style={styles.goalBadgeText}>{overview.goalLabel}</Text>
+          <Text style={styles.goalBadgeText}>{goalLabel}</Text>
         </View>
       </View>
 
@@ -95,18 +95,17 @@ export default function CalendarHeroCard({
 }
 
 function buildStatusMessage(state: CalendarHeaderFetchState, errorMessage: string | null) {
-  // The calendar body is still mock-driven, so we surface whether the header is live or fallback.
   if (state === 'loading') {
-    return '헤더 데이터를 불러오는 중입니다.';
+    return '캘린더 정보를 불러오는 중입니다.';
   }
 
   if (state === 'live') {
-    return '백엔드 캘린더 헤더와 연결되었습니다.';
+    return '최신 정보를 불러왔습니다.';
   }
 
   if (state === 'fallback') {
-    return errorMessage ?? '현재 월이 아니거나 로그인되지 않아 기본 헤더를 표시 중입니다.';
+    return errorMessage ?? '-';
   }
 
-  return '캘린더 헤더 준비 중입니다.';
+  return '-';
 }

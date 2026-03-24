@@ -24,9 +24,6 @@ interface FixedExpenseSectionProps {
   onPressManage: () => void;
 }
 
-/**
- * 캘린더 하단 고정지출 요약 영역입니다. 관리 화면으로 이어지는 진입점 역할도 함께 맡습니다.
- */
 export default function FixedExpenseSection({
   totalAmount,
   items,
@@ -38,7 +35,7 @@ export default function FixedExpenseSection({
     <SurfaceCard>
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
-          <Text style={styles.pinEmoji}>📌</Text>
+          <Text style={styles.pinEmoji}>핀</Text>
           <Text style={styles.headerTitle}>고정지출</Text>
         </View>
         <TouchableOpacity activeOpacity={0.86} onPress={onPressManage}>
@@ -46,94 +43,92 @@ export default function FixedExpenseSection({
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.totalLabel}>전체 ₩{totalAmount.toLocaleString()}</Text>
+      <Text style={styles.totalLabel}>
+        {items.length > 0 ? `총 ${totalAmount.toLocaleString()}원` : '-'}
+      </Text>
 
       <View style={styles.list}>
-        {items.map((item) => {
-          const detailItems = detailItemsByCategory[item.title] ?? [];
+        {items.length === 0 ? (
+          <Text style={styles.emptyDetailText}>-</Text>
+        ) : (
+          items.map((item) => {
+            const detailItems = detailItemsByCategory[item.title] ?? [];
 
-          return (
-            <View key={item.id} style={styles.groupBlock}>
-              {/*
-                이전 코드:
-                - 카테고리 요약 행만 있고, 실제 연결 항목은 여기서 볼 수 없었습니다.
+            return (
+              <View key={item.id} style={styles.groupBlock}>
+                <TouchableOpacity activeOpacity={0.9} style={styles.rowCard} onPress={() => onToggleExpand(item.id)}>
+                  <View style={styles.rowLeft}>
+                    <View style={[styles.iconWrap, { backgroundColor: item.iconTone }]}>
+                      <Ionicons
+                        name={item.icon as keyof typeof Ionicons.glyphMap}
+                        size={wp(20)}
+                        color={COLORS.textPrimary}
+                      />
+                    </View>
+                    <View style={styles.textBlock}>
+                      <Text style={styles.title}>{item.title}</Text>
+                      <Text style={styles.subtitle}>{item.subtitle}</Text>
+                    </View>
+                  </View>
 
-                변경 이유:
-                - 사용자가 "인테리어/가정용품, 시스템/통신 같은 카테고리 박스"를 눌렀을 때만 상세를 열어
-                  카테고리는 상세 조회에서만 보이게 맞춥니다.
-              */}
-              <TouchableOpacity activeOpacity={0.9} style={styles.rowCard} onPress={() => onToggleExpand(item.id)}>
-                <View style={styles.rowLeft}>
-                  <View style={[styles.iconWrap, { backgroundColor: item.iconTone }]}>
+                  <View style={styles.rowRight}>
+                    {item.statusLabel ? (
+                      <View
+                        style={[
+                          styles.statusChip,
+                          { backgroundColor: statusStyles[item.statusTone].backgroundColor },
+                        ]}
+                      >
+                        <Text style={[styles.statusText, { color: statusStyles[item.statusTone].color }]}>
+                          {item.statusLabel}
+                        </Text>
+                      </View>
+                    ) : null}
+                    <Text style={styles.amount}>
+                      {item.amount > 0 ? `₩${item.amount.toLocaleString()}` : '-'}
+                    </Text>
                     <Ionicons
-                      name={item.icon as keyof typeof Ionicons.glyphMap}
-                      size={wp(20)}
-                      color={COLORS.textPrimary}
+                      name={item.isExpanded ? 'chevron-up' : 'chevron-down'}
+                      size={wp(16)}
+                      color={COLORS.textTertiary}
                     />
                   </View>
-                  <View style={styles.textBlock}>
-                    <Text style={styles.title}>{item.title}</Text>
-                    <Text style={styles.subtitle}>{item.subtitle}</Text>
-                  </View>
-                </View>
+                </TouchableOpacity>
 
-                <View style={styles.rowRight}>
-                  {item.statusLabel ? (
-                    <View
-                      style={[
-                        styles.statusChip,
-                        { backgroundColor: statusStyles[item.statusTone].backgroundColor },
-                      ]}
-                    >
-                      <Text style={[styles.statusText, { color: statusStyles[item.statusTone].color }]}>
-                        {item.statusLabel}
-                      </Text>
-                    </View>
-                  ) : null}
-                  <Text style={styles.amount}>
-                    {item.amount > 0 ? `₩${item.amount.toLocaleString()}` : '₩0'}
-                  </Text>
-                  <Ionicons
-                    name={item.isExpanded ? 'chevron-up' : 'chevron-down'}
-                    size={wp(16)}
-                    color={COLORS.textTertiary}
-                  />
-                </View>
-              </TouchableOpacity>
-
-              {item.isExpanded ? (
-                <View style={styles.detailPanel}>
-                  {detailItems.length > 0 ? (
-                    detailItems.map((detail) => (
-                      <View key={detail.id} style={styles.detailRow}>
-                        <View style={styles.detailTextBlock}>
-                          <View style={styles.detailTitleRow}>
-                            <Text style={styles.detailTitle}>{detail.title}</Text>
-                            <View style={styles.detailCategoryBadge}>
-                              <Text style={styles.detailCategoryBadgeText}>{detail.category}</Text>
+                {item.isExpanded ? (
+                  <View style={styles.detailPanel}>
+                    {detailItems.length > 0 ? (
+                      detailItems.map((detail) => (
+                        <View key={detail.id} style={styles.detailRow}>
+                          <View style={styles.detailTextBlock}>
+                            <View style={styles.detailTitleRow}>
+                              <Text style={styles.detailTitle}>{detail.title}</Text>
+                              <View style={styles.detailCategoryBadge}>
+                                <Text style={styles.detailCategoryBadgeText}>{detail.category}</Text>
+                              </View>
                             </View>
+                            <Text style={styles.detailSubtitle}>
+                              {stripCategoryFromSubtitle(detail.subtitle, detail.category)}
+                            </Text>
                           </View>
-                          <Text style={styles.detailSubtitle}>
-                            {stripCategoryFromSubtitle(detail.subtitle, detail.category)}
-                          </Text>
-                        </View>
 
-                        <View style={styles.detailRight}>
-                          <Text style={styles.detailAmount}>₩{detail.amount.toLocaleString()}</Text>
-                          <Text style={styles.detailStatus}>
-                            {detail.isEnabled ? '자동 반영 중' : '비활성'}
-                          </Text>
+                          <View style={styles.detailRight}>
+                            <Text style={styles.detailAmount}>₩{detail.amount.toLocaleString()}</Text>
+                            <Text style={styles.detailStatus}>
+                              {detail.isEnabled ? '활성' : '비활성'}
+                            </Text>
+                          </View>
                         </View>
-                      </View>
-                    ))
-                  ) : (
-                    <Text style={styles.emptyDetailText}>아직 연결된 고정지출 항목이 없어요.</Text>
-                  )}
-                </View>
-              ) : null}
-            </View>
-          );
-        })}
+                      ))
+                    ) : (
+                      <Text style={styles.emptyDetailText}>-</Text>
+                    )}
+                  </View>
+                ) : null}
+              </View>
+            );
+          })
+        )}
       </View>
     </SurfaceCard>
   );
