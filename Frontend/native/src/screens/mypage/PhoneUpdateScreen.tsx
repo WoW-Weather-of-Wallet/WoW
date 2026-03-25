@@ -9,14 +9,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Modal,
-  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import SecureKeypad from '../../components/common/SecureKeypad';
 import StepIndicator from '../../components/common/StepIndicator';
+import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import { styles } from './PhoneUpdateScreen.styles';
 import { COLORS, hp, wp } from '../../constants/theme';
 import {
@@ -260,25 +259,19 @@ export default function PhoneUpdateScreen({
           </TouchableOpacity>
         </View>
 
-        <Modal visible={isTelecomModalVisible} transparent animationType="slide">
-          <Pressable style={styles.modalOverlay} onPress={() => setIsTelecomModalVisible(false)}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>통신사를 선택해 주세요</Text>
-              </View>
-              {TELECOM_OPTIONS.map((item) => (
-                <TouchableOpacity
-                  key={item}
-                  style={styles.modalItem}
-                  onPress={() => handleSelectTelecom(item)}
-                >
-                  <Text style={styles.modalItemText}>{item}</Text>
-                </TouchableOpacity>
-              ))}
-              <View style={{ height: insets.bottom }} />
-            </View>
-          </Pressable>
-        </Modal>
+        <TelecomSelectModal
+          visible={isTelecomModalVisible}
+          onClose={() => setIsTelecomModalVisible(false)}
+          onSelect={handleSelectTelecom}
+          options={TELECOM_OPTIONS}
+          bottomInset={insets.bottom}
+          overlayStyle={styles.modalOverlay}
+          contentStyle={styles.modalContent}
+          headerStyle={styles.modalHeader}
+          titleStyle={styles.modalTitle}
+          itemStyle={styles.modalItem}
+          itemTextStyle={styles.modalItemText}
+        />
       </KeyboardAvoidingView>
     );
   }

@@ -5,8 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Modal,
-  Pressable,
   Alert,
   ActivityIndicator,
 } from 'react-native';
@@ -15,8 +13,10 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import AuthStepLayout from '../../components/auth/AuthStepLayout';
+import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
+import { TELECOM_OPTIONS } from '../../constants/auth/identityVerification';
 import type { PhoneAuthRouteParams, SignupMode } from '../../types/auth';
 import type { RootScreenProps } from '../../types';
 import {
@@ -30,15 +30,6 @@ import {
 } from '../../services/auth';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { validateName, validatePhone } from '../../utils/validation';
-
-const TELECOMS = [
-  'SKT',
-  'KT',
-  'LG U+',
-  'SKT 알뜰폰',
-  'KT 알뜰폰',
-  'LG U+ 알뜰폰',
-];
 
 const TELECOM_PLACEHOLDER =
   '통신사를 선택해 주세요';
@@ -387,30 +378,19 @@ export default function PhoneAuthScreen({
         )}
       </AuthStepLayout>
 
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setModalVisible(false)}
-        >
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {'통신사를 선택해 주세요'}
-              </Text>
-            </View>
-            {TELECOMS.map((item) => (
-              <TouchableOpacity
-                key={item}
-                style={styles.modalItem}
-                onPress={() => handleTelecomSelect(item)}
-              >
-                <Text style={styles.modalItemText}>{item}</Text>
-              </TouchableOpacity>
-            ))}
-            <View style={{ height: insets.bottom }} />
-          </View>
-        </Pressable>
-      </Modal>
+      <TelecomSelectModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSelect={handleTelecomSelect}
+        options={TELECOM_OPTIONS}
+        bottomInset={insets.bottom}
+        overlayStyle={styles.modalOverlay}
+        contentStyle={styles.modalContent}
+        headerStyle={styles.modalHeader}
+        titleStyle={styles.modalTitle}
+        itemStyle={styles.modalItem}
+        itemTextStyle={styles.modalItemText}
+      />
 
       <TermsBottomSheet
         visible={termsVisible}

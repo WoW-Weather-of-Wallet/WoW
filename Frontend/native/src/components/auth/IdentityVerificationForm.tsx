@@ -4,18 +4,16 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Modal,
-  Pressable,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, wp, hp } from '../../constants/theme';
+import { TELECOM_OPTIONS } from '../../constants/auth/identityVerification';
+import TelecomSelectModal from '../common/TelecomSelectModal';
 import type { IdentityVerificationData } from '../../types/auth';
 import { styles } from './IdentityVerificationForm.styles';
-
-const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 알뜰폰'];
 const TELECOM_PLACEHOLDER = '통신사를 선택해주세요';
 
 interface IdentityVerificationFormProps {
@@ -200,21 +198,20 @@ export default function IdentityVerificationForm({
       </View>
 
       {/* 통신사 선택 모달 */}
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>통신사를 선택해주세요</Text>
-            </View>
-            {TELECOMS.map((item) => (
-              <TouchableOpacity key={item} style={styles.modalItem} onPress={() => handleTelecomSelect(item)}>
-                <Text style={styles.modalItemText}>{item}</Text>
-              </TouchableOpacity>
-            ))}
-            <View style={{ height: insets.bottom }} />
-          </View>
-        </Pressable>
-      </Modal>
+      <TelecomSelectModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSelect={handleTelecomSelect}
+        title="통신사를 선택해주세요"
+        options={TELECOM_OPTIONS}
+        bottomInset={insets.bottom}
+        overlayStyle={styles.modalOverlay}
+        contentStyle={styles.modalContent}
+        headerStyle={styles.modalHeader}
+        titleStyle={styles.modalTitle}
+        itemStyle={styles.modalItem}
+        itemTextStyle={styles.modalItemText}
+      />
     </View>
   );
 }
