@@ -12,6 +12,10 @@ import StepIndicator from '../../components/common/StepIndicator';
 import { styles } from './VerifyCodeScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import { verifySmsCode, findUserId } from '../../services/auth';
+import {
+  buildBirthDateFromIdentity,
+  buildGenderFromIdentity,
+} from '../../utils/authIdentity';
 import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 
@@ -24,33 +28,6 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
   const [verifyError, setVerifyError] = useState('');
   const shakeTranslateX = useSharedValue(0);
   const signupMode = route.params?.signupMode === 'ssafy' ? 'ssafy' : 'normal';
-
-  const getBirthDateFromIdentity = () => {
-    const ssnFront = route.params?.ssnFront ?? '';
-    const ssnBack = route.params?.ssnBack ?? '';
-
-    if (ssnFront.length !== 6 || ssnBack.length === 0) {
-      return null;
-    }
-
-    const centuryCode = ssnBack[0];
-    const century =
-      centuryCode === '1' || centuryCode === '2' || centuryCode === '5' || centuryCode === '6'
-        ? '19'
-        : '20';
-
-    return `${century}${ssnFront.slice(0, 2)}-${ssnFront.slice(2, 4)}-${ssnFront.slice(4, 6)}`;
-  };
-
-  const getGenderFromIdentity = () => {
-    const ssnBack = route.params?.ssnBack ?? '';
-
-    if (ssnBack.length === 0) {
-      return null;
-    }
-
-    return parseInt(ssnBack[0], 10) % 2 !== 0 ? 'M' : 'F';
-  };
 
   const handlePressNumber = (num: string) => {
     if (isVerifying || code.length >= MAX_CODE_LENGTH) {
@@ -74,8 +51,8 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
   };
 
   const handleFindIdFlow = async () => {
-    const birthDate = getBirthDateFromIdentity();
-    const gender = getGenderFromIdentity();
+    const birthDate = buildBirthDateFromIdentity(route.params?.ssnFront, route.params?.ssnBack);
+    const gender = buildGenderFromIdentity(route.params?.ssnBack);
 
     if (!birthDate || !gender) {
       throw new Error('생년월일 정보를 다시 확인해 주세요.');
@@ -155,8 +132,9 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
           signupMode: 'ssafy',
           pendingToken: route.params.pendingToken,
           name: route.params.name,
-          birthDate: getBirthDateFromIdentity() ?? undefined,
-          gender: getGenderFromIdentity() ?? undefined,
+          birthDate:
+            buildBirthDateFromIdentity(route.params?.ssnFront, route.params?.ssnBack) ?? undefined,
+          gender: buildGenderFromIdentity(route.params?.ssnBack) ?? undefined,
           phoneNumber: route.params.phone,
           termsAgreed: route.params.termsAgreed,
           alarmEnabled: true,

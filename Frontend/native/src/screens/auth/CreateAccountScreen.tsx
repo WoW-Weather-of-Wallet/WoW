@@ -14,57 +14,11 @@ import AuthStepLayout from '../../components/auth/AuthStepLayout';
 import { styles, CONSTANTS } from './CreateAccountScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import { checkUserId, signup, type NativeSignupRequest } from '../../services/auth';
+import type { CreateAccountRouteParams } from '../../types/auth';
+import { buildBirthDateFromIdentity, buildGenderFromIdentity } from '../../utils/authIdentity';
 import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { validateId, validatePassword, validateName, validatePhone } from '../../utils/validation';
-
-type CreateAccountRouteParams = {
-  name?: string;
-  phone?: string;
-  ssnFront?: string;
-  ssnBack?: string;
-  // 이전 단계에서 선택한 필수 약관 전체 동의 여부입니다.
-  termsAgreed?: boolean;
-};
-
-/**
- * 주민등록번호 앞/뒷자리를 기반으로 생년월일을 YYYY-MM-DD 형태로 만듭니다.
- */
-const buildBirthDate = (ssnFront?: string, ssnBack?: string) => {
-  if (!ssnFront || ssnFront.length !== 6 || !ssnBack) {
-    return '2000-01-01';
-  }
-
-  // 주민등록번호 뒷자리 첫 숫자로 연도 접두사를 판별합니다.
-  // 1, 2, 5, 6: 1900년대 (5, 6은 외국인)
-  // 3, 4, 7, 8: 2000년대 (7, 8은 외국인)
-  // 9, 0: 1800년대
-  let yearPrefix = '19';
-  if (['3', '4', '7', '8'].includes(ssnBack)) {
-    yearPrefix = '20';
-  } else if (['9', '0'].includes(ssnBack)) {
-    yearPrefix = '18';
-  }
-
-  const year = `${yearPrefix}${ssnFront.slice(0, 2)}`;
-  const month = ssnFront.slice(2, 4);
-  const day = ssnFront.slice(4, 6);
-
-  return `${year}-${month}-${day}`;
-};
-
-/**
- * 주민등록번호 뒷자리 첫 숫자를 성별 값으로 변환합니다.
- */
-const buildGender = (ssnBack?: string) => {
-  if (!ssnBack) {
-    return 'M';
-  }
-
-  // 홀수면 남성, 짝수면 여성 (한국 주민등록번호 표준 규칙)
-  const isOdd = parseInt(ssnBack, 10) % 2 !== 0;
-  return isOdd ? 'M' : 'F';
-};
 
 export default function CreateAccountScreen({ route, navigation }: any) {
   const routeParams = (route?.params ?? {}) as CreateAccountRouteParams;
@@ -184,9 +138,11 @@ export default function CreateAccountScreen({ route, navigation }: any) {
       userId: trimmedUserId,
       pw: password,
       name: currentName.trim(),
-      gender: buildGender(routeParams.ssnBack),
+      gender: buildGenderFromIdentity(routeParams.ssnBack) ?? 'M',
       phoneNumber: currentPhone.replace(/[^0-9]/g, ''),
-      birthDate: buildBirthDate(routeParams.ssnFront, routeParams.ssnBack),
+      birthDate:
+        buildBirthDateFromIdentity(routeParams.ssnFront, routeParams.ssnBack) ??
+        '2000-01-01',
       alarmEnabled: true,
       termsAgreed: routeParams.termsAgreed === true,
     };

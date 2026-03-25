@@ -13,6 +13,10 @@ import AuthScreenLayout from '../../components/auth/AuthScreenLayout';
 import AuthIntroBlock from '../../components/auth/AuthIntroBlock';
 import CustomTextInput from '../../components/common/CustomTextInput';
 import { findPassword } from '../../services/auth';
+import {
+  buildBirthDateFromIdentity,
+  buildGenderFromIdentity,
+} from '../../utils/authIdentity';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { validatePassword } from '../../utils/validation';
 
@@ -33,29 +37,6 @@ export default function ResetPasswordScreen() {
     confirmPassword.length >= 8 &&
     password === confirmPassword;
 
-  // 서버에 전달하기 전에 본인확인 정보에서 생년월일을 다시 조합합니다.
-  const getBirthDateFromIdentity = () => {
-    if (!ssnFront || !ssnBack || ssnFront.length !== 6) {
-      return null;
-    }
-
-    const centuryCode = ssnBack[0];
-    const century =
-      centuryCode === '1' || centuryCode === '2' || centuryCode === '5' || centuryCode === '6'
-        ? '19'
-        : '20';
-
-    return `${century}${ssnFront.slice(0, 2)}-${ssnFront.slice(2, 4)}-${ssnFront.slice(4, 6)}`;
-  };
-
-  const getGenderFromIdentity = () => {
-    if (!ssnBack || ssnBack.length === 0) {
-      return null;
-    }
-
-    return parseInt(ssnBack[0], 10) % 2 !== 0 ? 'M' : 'F';
-  };
-
   const handleReset = async () => {
     if (!isFormValid) {
       return;
@@ -63,8 +44,8 @@ export default function ResetPasswordScreen() {
 
     setIsSubmitting(true);
     try {
-      const birthDate = getBirthDateFromIdentity();
-      const gender = getGenderFromIdentity();
+      const birthDate = buildBirthDateFromIdentity(ssnFront, ssnBack);
+      const gender = buildGenderFromIdentity(ssnBack);
 
       if (!birthDate || !gender || !name || !phoneNumber) {
         throw new Error('본인 확인 정보가 누락되었어요.');

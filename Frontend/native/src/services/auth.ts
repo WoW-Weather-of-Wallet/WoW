@@ -4,6 +4,7 @@ import {
   loadPersistedAuthSession,
   savePersistedAuthSession,
 } from './sessionStorage';
+import { decodeUnicodeEscapes } from '../utils/authIdentity';
 
 export const BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL || 'https://j14d106.p.ssafy.io';
@@ -476,16 +477,6 @@ const getParamValue = (params: URLSearchParams, keys: string[]) => {
   }
 
   return null;
-};
-
-const decodeUnicodeEscapes = (value: string | null) => {
-  if (!value || !value.includes('\\u')) {
-    return value;
-  }
-
-  return value.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex: string) =>
-    String.fromCharCode(parseInt(hex, 16)),
-  );
 };
 
 export const parseSsafyCallbackUrl = (

@@ -17,6 +17,12 @@ import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import AuthStepLayout from '../../components/auth/AuthStepLayout';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
+import type { SignupMode } from '../../types/auth';
+import {
+  buildBirthDateFromIdentity,
+  buildGenderFromIdentity,
+  decodeUnicodeEscapes,
+} from '../../utils/authIdentity';
 import {
   checkSignupIdentity,
   checkSsafySignup,
@@ -43,35 +49,14 @@ const SSAFY_TOKEN_EXPIRED_MESSAGE =
 const SEND_CODE_FALLBACK =
   '인증번호 전송에 실패했어요. 입력한 정보를 다시 확인해 주세요.';
 
-const buildBirthDate = (front: string, back: string) => {
-  if (front.length !== 6 || back.length !== 1) {
-    return null;
-  }
-
-  const yearPrefix = ['3', '4', '7', '8'].includes(back) ? '20' : '19';
-  return `${yearPrefix}${front.slice(0, 2)}-${front.slice(2, 4)}-${front.slice(4, 6)}`;
-};
-
-const buildGender = (back: string) => {
-  if (!back) {
-    return null;
-  }
-
-  return parseInt(back, 10) % 2 !== 0 ? 'M' : 'F';
-};
-
-const decodeUnicodeEscapes = (value: string) =>
-  value.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex: string) =>
-    String.fromCharCode(parseInt(hex, 16)),
-  );
-
 export default function PhoneAuthScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
-  const signupMode = route.params?.signupMode === 'ssafy' ? 'ssafy' : 'normal';
+  const signupMode: SignupMode =
+    route.params?.signupMode === 'ssafy' ? 'ssafy' : 'normal';
   const isSsafySignup = signupMode === 'ssafy';
   const initialSsafyName =
     typeof route.params?.name === 'string'
-      ? decodeUnicodeEscapes(route.params.name).trim()
+      ? (decodeUnicodeEscapes(route.params.name) ?? '').trim()
       : '';
 
   const [step, setStep] = useState(isSsafySignup && initialSsafyName.length >= 2 ? 2 : 1);
@@ -148,8 +133,8 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
       return;
     }
 
-    const birthDate = buildBirthDate(ssnFront, ssnBack);
-    const gender = buildGender(ssnBack);
+    const birthDate = buildBirthDateFromIdentity(ssnFront, ssnBack);
+    const gender = buildGenderFromIdentity(ssnBack);
 
     if (!birthDate || !gender) {
       setSubmitError(INVALID_IDENTITY_MESSAGE);

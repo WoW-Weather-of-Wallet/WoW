@@ -16,28 +16,16 @@ import { COLORS, wp, hp } from '../../constants/theme';
 import { login, registerSsafy } from '../../services/auth';
 import { savePersistedAuthSession } from '../../services/sessionStorage';
 import { useAuthStore } from '../../store/authStore';
+import type { SignupMode, WelcomeRouteParams } from '../../types/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
-
-type WelcomeRouteParams = {
-  signupMode?: 'normal' | 'ssafy';
-  userId?: string;
-  pendingToken?: string;
-  pw?: string;
-  name?: string;
-  birthDate?: string;
-  gender?: string;
-  phoneNumber?: string;
-  // The backend now treats this as agreement to all active required terms.
-  termsAgreed?: boolean;
-  alarmEnabled?: boolean;
-};
 
 export default function WelcomeScreen({ route, navigation }: any) {
   const insets = useSafeAreaInsets();
   const loginToStore = useAuthStore((state) => state.login);
   const routeParams = (route?.params ?? {}) as WelcomeRouteParams;
-  const signupMode = routeParams.signupMode === 'ssafy' ? 'ssafy' : 'normal';
+  const signupMode: SignupMode =
+    routeParams.signupMode === 'ssafy' ? 'ssafy' : 'normal';
   const isSsafySignup = signupMode === 'ssafy';
   const [isConfirming, setIsConfirming] = useState(false);
 
