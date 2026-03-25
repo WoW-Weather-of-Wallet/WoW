@@ -18,9 +18,9 @@ import { CommonActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import SecureKeypad from '../../components/common/SecureKeypad';
 import StepIndicator from '../../components/common/StepIndicator';
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
+import VerificationCodeStep from '../../components/common/VerificationCodeStep';
 import { styles } from './WithdrawScreen.styles';
 import { COLORS, hp, wp } from '../../constants/theme';
 import {
@@ -179,11 +179,6 @@ export default function WithdrawScreen({
       setIsDeleting(false);
     }
   };
-
-  const renderDots = () =>
-    Array.from({ length: VERIFICATION_CODE_LENGTH }).map((_, index) => (
-      <View key={`withdraw-dot-${index}`} style={[styles.dot, index < code.length && styles.dotFilled]} />
-    ));
 
   if (phase === 'form') {
     const isButtonActive =
@@ -352,63 +347,46 @@ export default function WithdrawScreen({
   }
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.verifyContent, { paddingTop: insets.top + hp(28) }]}>
-        <TouchableOpacity style={styles.backButton} onPress={backToForm}>
-          <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
-        </TouchableOpacity>
-
+    <VerificationCodeStep
+      containerStyle={styles.container}
+      contentStyle={[styles.verifyContent, { paddingTop: insets.top + hp(28) }]}
+      backButtonStyle={styles.backButton}
+      titleStyle={styles.title}
+      subtitleStyle={styles.subtitle}
+      dotsContainerStyle={styles.dotsContainer}
+      dotStyle={styles.dot}
+      dotFilledStyle={styles.dotFilled}
+      feedbackRowStyle={styles.feedbackRow}
+      loadingTextStyle={styles.loadingText}
+      errorTextStyle={styles.errorText}
+      successTextStyle={styles.successText}
+      resendRowStyle={styles.resendRow}
+      resendTextStyle={styles.resendText}
+      keypadWrapperStyle={[styles.keypadWrapper, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}
+      onBack={backToForm}
+      backIconSize={wp(24)}
+      backIconColor={COLORS.textPrimary}
+      loadingIndicatorColor={COLORS.primary}
+      successIconColor={COLORS.success}
+      stepIndicator={
         <View style={{ marginTop: 0, marginBottom: hp(12) }}>
           <StepIndicator currentStep={2} totalSteps={2} compact />
         </View>
-
-        <Animated.View entering={FadeInDown.duration(400)}>
-          <Text style={styles.title}>
-            {isVerified ? '본인 확인이\n완료되었어요.' : '인증번호 6자리를\n입력해 주세요.'}
-          </Text>
-          <Text style={styles.subtitle}>
-            {requestedPhoneDisplay}으로 전송된 인증번호를 입력해 주세요.
-          </Text>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(120).duration(400)} style={styles.dotsContainer}>
-          {renderDots()}
-        </Animated.View>
-
-        {isVerifying ? (
-          <View style={styles.feedbackRow}>
-            <ActivityIndicator color={COLORS.primary} size="small" />
-            <Text style={styles.loadingText}>인증번호를 확인하고 있어요.</Text>
-          </View>
-        ) : null}
-
-        {isVerified ? (
-          <View style={styles.feedbackRow}>
-            <Ionicons name="checkmark-circle" size={wp(18)} color={COLORS.success} />
-            <Text style={styles.successText}>본인 확인 완료! 탈퇴 버튼을 눌러주세요.</Text>
-          </View>
-        ) : null}
-
-        {verifyError.length > 0 && !isVerified ? (
-          <Text style={styles.errorText}>{verifyError}</Text>
-        ) : null}
-
-        {!isVerified ? (
-          <View style={styles.resendRow}>
-            <TouchableOpacity onPress={() => void resendCode()} disabled={isSending}>
-              <Text style={styles.resendText}>
-                {isSending ? '재발송 중...' : '인증번호 다시 받기'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
-      </View>
-
-      {!isVerified ? (
-        <View style={[styles.keypadWrapper, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
-          <SecureKeypad onPressNumber={handlePressNumber} onPressDelete={handlePressDelete} />
-        </View>
-      ) : (
+      }
+      title={isVerified ? '본인 확인이\n완료되었어요.' : '인증번호 6자리를\n입력해 주세요.'}
+      subtitle={`${requestedPhoneDisplay}으로 전송된 인증번호를 입력해 주세요.`}
+      code={code}
+      codeLength={VERIFICATION_CODE_LENGTH}
+      isVerifying={isVerifying}
+      loadingText="인증번호를 확인하고 있어요."
+      verifyError={verifyError}
+      isVerified={isVerified}
+      successMessage="본인 확인 완료! 탈퇴 버튼을 눌러주세요."
+      isSending={isSending}
+      onResend={() => void resendCode()}
+      onPressNumber={handlePressNumber}
+      onPressDelete={handlePressDelete}
+      bottomAction={
         <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
           <TouchableOpacity
             style={[styles.withdrawButton, isDeleting && styles.disabledButton]}
@@ -422,7 +400,7 @@ export default function WithdrawScreen({
             )}
           </TouchableOpacity>
         </View>
-      )}
-    </View>
+      }
+    />
   );
 }

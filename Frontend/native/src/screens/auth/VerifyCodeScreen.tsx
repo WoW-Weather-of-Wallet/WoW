@@ -1,12 +1,6 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, {
-  FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated';
-import SecureKeypad from '../../components/common/SecureKeypad';
+import VerificationCodeStep from '../../components/common/VerificationCodeStep';
 import StepIndicator from '../../components/common/StepIndicator';
 import { COLORS, hp } from '../../constants/theme';
 import { useVerifyCodeFlow } from '../../hooks/useVerifyCodeFlow';
@@ -20,7 +14,6 @@ export default function VerifyCodeScreen({ route }: RootScreenProps<'VerifyCode'
   const insets = useSafeAreaInsets();
   const routeParams = (route?.params ?? {}) as VerifyCodeRouteParams;
   const [code, setCode] = useState('');
-  const shakeTranslateX = useSharedValue(0);
   const {
     isRecoveryFlow,
     isVerifying,
@@ -51,53 +44,32 @@ export default function VerifyCodeScreen({ route }: RootScreenProps<'VerifyCode'
     setCode(code.slice(0, -1));
   };
 
-  const renderDots = () => {
-    const dots = [];
-
-    for (let i = 0; i < MAX_CODE_LENGTH; i += 1) {
-      const isFilled = i < code.length;
-      dots.push(<View key={i} style={[styles.dot, isFilled && styles.dotFilled]} />);
-    }
-
-    return dots;
-  };
-
-  const shakeAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: shakeTranslateX.value }],
-  }));
-
   return (
-    <View style={styles.container}>
-      <View style={[styles.content, { paddingTop: insets.top + hp(60) }]}>
-        {!isRecoveryFlow && <StepIndicator currentStep={2} totalSteps={5} />}
-
-        <Animated.View entering={FadeInDown.delay(100).duration(500)}>
-          <Text style={styles.title}>인증번호 6자리를 입력해 주세요</Text>
-          <Text style={styles.subtitle}>
-            문자로 받은 인증번호를 입력하면 다음 단계로 이동해요.
-          </Text>
-        </Animated.View>
-
-        <Animated.View
-          entering={FadeInDown.delay(200).duration(500)}
-          style={[styles.dotsContainer, shakeAnimatedStyle]}
-        >
-          {renderDots()}
-        </Animated.View>
-
-        {isVerifying && (
-          <View style={styles.loadingRow}>
-            <ActivityIndicator color={COLORS.primary} />
-            <Text style={styles.loadingText}>인증번호를 확인하고 있어요</Text>
-          </View>
-        )}
-
-        {verifyError.length > 0 && <Text style={styles.errorText}>{verifyError}</Text>}
-      </View>
-
-      <View style={[styles.keypadWrapper, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
-        <SecureKeypad onPressNumber={handlePressNumber} onPressDelete={handlePressDelete} />
-      </View>
-    </View>
+    <VerificationCodeStep
+      containerStyle={styles.container}
+      contentStyle={[styles.content, { paddingTop: insets.top + hp(60) }]}
+      titleStyle={styles.title}
+      subtitleStyle={styles.subtitle}
+      dotsContainerStyle={styles.dotsContainer}
+      dotStyle={styles.dot}
+      dotFilledStyle={styles.dotFilled}
+      feedbackRowStyle={styles.loadingRow}
+      loadingTextStyle={styles.loadingText}
+      errorTextStyle={styles.errorText}
+      keypadWrapperStyle={[styles.keypadWrapper, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}
+      stepIndicator={
+        !isRecoveryFlow ? <StepIndicator currentStep={2} totalSteps={5} /> : undefined
+      }
+      title="인증번호 6자리를 입력해 주세요"
+      subtitle="문자로 받은 인증번호를 입력하면 다음 단계로 이동해요."
+      code={code}
+      codeLength={MAX_CODE_LENGTH}
+      isVerifying={isVerifying}
+      loadingText="인증번호를 확인하고 있어요"
+      verifyError={verifyError}
+      onPressNumber={handlePressNumber}
+      onPressDelete={handlePressDelete}
+      loadingIndicatorColor={COLORS.primary}
+    />
   );
 }
