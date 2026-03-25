@@ -72,9 +72,13 @@ export const styles = StyleSheet.create({
   carouselContainer: {
     marginVertical: hp(30),
     height: hp(320),
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
   },
   featureCard: {
     width: wp(310), // ScrollView 가로 패딩 제외 실제 카드 너비
+    maxWidth: 340,
     height: hp(300),
     marginRight: wp(16),
     borderRadius: RADIUS.xxl,

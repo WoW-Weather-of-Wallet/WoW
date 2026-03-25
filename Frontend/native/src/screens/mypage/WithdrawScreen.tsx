@@ -360,8 +360,6 @@ export default function WithdrawScreen({ navigation, route }: any) {
                   setSsnBack(text.replace(/[^0-9]/g, ''));
                   setSubmitError('');
                 }}
-                placeholder="0"
-                placeholderTextColor={COLORS.textTertiary}
                 keyboardType="number-pad"
                 maxLength={1}
               />

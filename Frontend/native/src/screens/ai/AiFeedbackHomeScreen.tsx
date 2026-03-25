@@ -108,7 +108,7 @@ const CAROUSEL_DATA = [
   },
   {
     id: 3,
-    title: '백그라운드 알림',
+    title: '분석 완료 알림',
     desc: '분석 중 화면을 떠나도 괜찮습니다. 완료되는 즉시 알림으로 알려드려요.',
     renderPreview: () => <MiniNotifPreview />,
   },

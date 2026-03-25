@@ -29,6 +29,7 @@ export const styles = StyleSheet.create({
   profileHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    // 다시 왼쪽 정렬로 복구
   },
   avatarCircle: {
     width: wp(68),
@@ -45,13 +46,13 @@ export const styles = StyleSheet.create({
     color: COLORS.textInverse,
   },
   profileTextBlock: {
-    flex: 1,
+    flex: 1, // 우측 공간을 모두 차지하게 함
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: wp(8),
-    marginBottom: hp(4),
+    justifyContent: 'space-between',
+    width: '100%',
   },
   profileName: {
     fontSize: fp(22),

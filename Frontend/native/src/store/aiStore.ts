@@ -53,6 +53,14 @@ export const useAiStore = create<AiState>((set, get) => ({
           resultData: { completedAt: new Date().toISOString() },
           showToast: true
         });
+        
+        // [Item 5] 시뮬레이션 완료 시에도 시스템 알림(상단 바)을 강제 발생시켜 사용자 인지 유도
+        const { fcmService } = require('../services/fcmService');
+        void fcmService.presentLocalNotification(
+          'AI 소비 분석 결과 도착!',
+          '지금 바로 리포트를 확인해보세요.',
+          { action: 'ai_feedback' }
+        );
       }
       analysisTimer = null;
     }, 8500);
