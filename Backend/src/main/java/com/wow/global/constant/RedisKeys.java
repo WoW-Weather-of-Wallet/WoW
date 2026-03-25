@@ -27,4 +27,6 @@ public final class RedisKeys {
     public static final String FIND_ID_BLOCK_PREFIX = "auth:find-id:block:";
     public static final String FIND_PASSWORD_ATTEMPT_PREFIX = "auth:find-password:attempt:";
     public static final String FIND_PASSWORD_BLOCK_PREFIX = "auth:find-password:block:";
+
+    public static final String SPENDING_MONTHLY_COMPARE_PREFIX = "spending:monthly:compare:";
 }

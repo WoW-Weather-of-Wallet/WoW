@@ -8,6 +8,7 @@ import com.wow.domain.calendar.repository.FixedExpenseRepository;
 import com.wow.domain.calendar.repository.TransactionRepository;
 import com.wow.domain.expensecategory.entity.ExpenseCategory;
 import com.wow.domain.expensecategory.repository.ExpenseCategoryRepository;
+import com.wow.domain.spendinganalysis.service.SpendingAnalysisService;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.global.exception.BadRequestException;
@@ -48,6 +49,7 @@ public class CalendarService {
     private final UserRepository userRepository;
     private final ExpenseCategoryRepository expenseCategoryRepository;
     private final FixedExpenseRepository fixedExpenseRepository;
+    private final SpendingAnalysisService spendingAnalysisService;
 
     @Value("${flask.url}")
     private String flaskUrl;
@@ -296,6 +298,7 @@ public class CalendarService {
                 .toList();
 
         transactionRepository.saveAll(entities);
+        spendingAnalysisService.evictMonthlyCompareCache(userId);
         return new TransactionConfirmResponse(entities.size(), representativeDate);
     }
 
@@ -340,6 +343,7 @@ public class CalendarService {
                 .toList();
 
         transactionRepository.saveAll(entities);
+        spendingAnalysisService.evictMonthlyCompareCache(userId);
 
         List<TransactionCustomResponse.TransactionCustomItem> responseItems = entities.stream()
                 .map(TransactionCustomResponse.TransactionCustomItem::from)
@@ -503,6 +507,7 @@ public class CalendarService {
         }
 
         transactionRepository.delete(transaction);
+        spendingAnalysisService.evictMonthlyCompareCache(userId);
     }
 
     // 현금 처리로 인해서 삭제로직 변경
@@ -567,6 +572,7 @@ public class CalendarService {
                 .toList();
 
         transactionRepository.saveAll(entities);
+        spendingAnalysisService.evictMonthlyCompareCache(userId);
 
         List<TransactionCustomResponse.TransactionCustomItem> responseItems = entities.stream()
                 .map(TransactionCustomResponse.TransactionCustomItem::from)
