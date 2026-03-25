@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, fp, hp, wp } from '../../constants/theme';
+import type { RootNavigationProp } from '../../types';
 
 interface AuthScreenLayoutProps {
   title: string;
@@ -65,7 +66,7 @@ export default function AuthScreenLayout({
   keyboardVerticalOffset,
   scrollContentStyle,
 }: AuthScreenLayoutProps) {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<RootNavigationProp>();
   const insets = useSafeAreaInsets();
 
   const scrollView = (

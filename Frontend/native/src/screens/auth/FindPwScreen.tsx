@@ -17,10 +17,11 @@ import IdentityVerificationForm from '../../components/auth/IdentityVerification
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import { useRecoverySmsFlow } from '../../hooks/useRecoverySmsFlow';
 import type { FindPwRouteParams } from '../../types/auth';
+import type { RootRouteProp } from '../../types';
 import { validateId } from '../../utils/validation';
 
 export default function FindPwScreen() {
-  const route = useRoute<any>();
+  const route = useRoute<RootRouteProp<'FindPw'>>();
   const routeParams = (route?.params ?? {}) as FindPwRouteParams;
   const insets = useSafeAreaInsets();
   const [userId, setUserId] = useState(routeParams.prefilledId || '');

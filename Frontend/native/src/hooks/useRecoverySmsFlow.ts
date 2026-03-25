@@ -5,6 +5,7 @@ import type {
   IdentityVerificationData,
   RecoveryFlow,
 } from '../types/auth';
+import type { RootNavigationProp } from '../types';
 import { sendSmsCode } from '../services/auth';
 import { buildAuthErrorPresentation } from '../utils/authErrorPresentation';
 
@@ -19,7 +20,7 @@ export function useRecoverySmsFlow({
   fallbackMessage,
   buildParams,
 }: UseRecoverySmsFlowOptions) {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<RootNavigationProp>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [termsVisible, setTermsVisible] = useState(false);
   const [pendingData, setPendingData] = useState<IdentityVerificationData | null>(null);

@@ -21,6 +21,7 @@ import {
   savePersistedAuthSession,
 } from '../../services/sessionStorage';
 import { useAuthStore } from '../../store/authStore';
+import type { RootNavigationProp } from '../../types';
 
 // 스플래시 로고 이미지
 const splashLogo = require('../../assets/splash.png');
@@ -34,7 +35,7 @@ const splashLogo = require('../../assets/splash.png');
  * 3. 전체 페이드아웃 후 LoginScreen으로 전환
  */
 export default function SplashScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<RootNavigationProp>();
   const login = useAuthStore((state) => state.login);
   const logout = useAuthStore((state) => state.logout);
 

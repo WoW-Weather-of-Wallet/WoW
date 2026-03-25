@@ -15,11 +15,15 @@ import { styles } from './WelcomeScreen.styles';
 import { COLORS, wp, hp } from '../../constants/theme';
 import { useAuthSessionLogin } from '../../hooks/useAuthSessionLogin';
 import { login, registerSsafy } from '../../services/auth';
+import type { RootScreenProps } from '../../types';
 import type { SignupMode, WelcomeRouteParams } from '../../types/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 
-export default function WelcomeScreen({ route, navigation }: any) {
+export default function WelcomeScreen({
+  route,
+  navigation,
+}: RootScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
   const { completeAuthSession } = useAuthSessionLogin();
   const routeParams = (route?.params ?? {}) as WelcomeRouteParams;

@@ -1,7 +1,27 @@
-﻿// =============================================
+import type { RouteProp } from '@react-navigation/native';
+import type {
+  NativeStackNavigationProp,
+  NativeStackScreenProps,
+} from '@react-navigation/native-stack';
+import type {
+  AccountRecoveryResultRouteParams,
+  CreateAccountRouteParams,
+  FindPwRouteParams,
+  PhoneAuthRouteParams,
+  ResetPasswordRouteParams,
+  VerifyCodeRouteParams,
+  WelcomeRouteParams,
+} from './auth';
+
+// =============================================
 // types/ - 앱 내부에서 공통으로 쓰는 타입 정의
 // navigation, user, api 타입을 이 폴더에서 모아 관리합니다.
 // =============================================
+
+export interface TermsPdfParams {
+  title: string;
+  url: string;
+}
 
 /**
  * 루트 스택 네비게이션 파라미터 정의
@@ -15,11 +35,26 @@ export type RootStackParamList = {
   Signup: undefined;
   Onboarding: undefined;
   Main: undefined;
-  PhoneAuth: undefined;
-  VerifyCode: undefined;
-  CreateAccount: undefined;
+  PhoneAuth: PhoneAuthRouteParams | undefined;
+  VerifyCode: VerifyCodeRouteParams;
+  CreateAccount: CreateAccountRouteParams | undefined;
+  Welcome: WelcomeRouteParams | undefined;
+  AccountRecoveryEntry: undefined;
+  FindId: undefined;
+  FindPw: FindPwRouteParams | undefined;
+  AccountRecoveryResult: AccountRecoveryResultRouteParams;
+  ResetPassword: ResetPasswordRouteParams;
   MainTabs: undefined;
+  TermsPdf: TermsPdfParams;
 };
+
+export type RootNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+export type RootRouteProp<T extends keyof RootStackParamList> = RouteProp<
+  RootStackParamList,
+  T
+>;
+export type RootScreenProps<T extends keyof RootStackParamList> =
+  NativeStackScreenProps<RootStackParamList, T>;
 
 /**
  * 메인 하단 탭 파라미터 정의

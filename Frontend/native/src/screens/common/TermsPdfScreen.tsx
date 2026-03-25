@@ -7,23 +7,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { styles } from './TermsPdfScreen.styles';
 import { COLORS, hp, wp } from '../../constants/theme';
-
-type TermsPdfRouteParams = {
-  TermsPdf: {
-    title: string;
-    url: string;
-  };
-};
+import type { RootNavigationProp, RootRouteProp } from '../../types';
 
 export default function TermsPdfScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<RouteProp<TermsPdfRouteParams, 'TermsPdf'>>();
+  const navigation = useNavigation<RootNavigationProp>();
+  const route = useRoute<RootRouteProp<'TermsPdf'>>();
   const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(true);
 

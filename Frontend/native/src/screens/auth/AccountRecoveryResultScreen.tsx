@@ -14,10 +14,11 @@ import { styles } from './AccountRecoveryResultScreen.styles';
 import { COLORS, wp, hp } from '../../constants/theme';
 import { getSsafyLoginUrl } from '../../services/auth';
 import type { AccountRecoveryResultRouteParams } from '../../types/auth';
+import type { RootNavigationProp, RootRouteProp } from '../../types';
 
 export default function AccountRecoveryResultScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<any>();
+  const navigation = useNavigation<RootNavigationProp>();
+  const route = useRoute<RootRouteProp<'AccountRecoveryResult'>>();
   const insets = useSafeAreaInsets();
   const routeParams = (route?.params ?? {}) as AccountRecoveryResultRouteParams;
   const { name, userId, userType } = routeParams;

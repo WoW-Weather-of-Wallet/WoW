@@ -42,9 +42,10 @@ import {
   registerNativeAuthLifecycleCallbacks,
 } from '../services/auth';
 import { useLocalSecurityStore } from '../store/localSecurityStore';
+import type { RootStackParamList } from '../types';
 
-const Stack = createNativeStackNavigator();
-export const navigationRef = createNavigationContainerRef<any>();
+const Stack = createNativeStackNavigator<RootStackParamList>();
+export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 const BACKGROUND_LOCK_THRESHOLD_MS = 10 * 60 * 1000;
 // const BACKGROUND_LOCK_THRESHOLD_MS = 0; // 테스트용: 백그라운드 복귀 즉시 간편로그인
 

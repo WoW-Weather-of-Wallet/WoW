@@ -8,14 +8,15 @@ import CustomTextInput from '../../components/common/CustomTextInput';
 import { hp } from '../../constants/theme';
 import { findPassword } from '../../services/auth';
 import type { ResetPasswordRouteParams } from '../../types/auth';
+import type { RootNavigationProp, RootRouteProp } from '../../types';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { buildIdentityProfile } from '../../utils/authIdentity';
 import { validatePassword } from '../../utils/validation';
 import { styles } from './ResetPasswordScreen.styles';
 
 export default function ResetPasswordScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<any>();
+  const navigation = useNavigation<RootNavigationProp>();
+  const route = useRoute<RootRouteProp<'ResetPassword'>>();
   const insets = useSafeAreaInsets();
   const routeParams = (route?.params ?? {}) as ResetPasswordRouteParams;
   const { userId, name, ssnFront, ssnBack, phoneNumber } = routeParams;

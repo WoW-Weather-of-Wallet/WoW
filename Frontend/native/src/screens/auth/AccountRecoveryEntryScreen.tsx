@@ -12,9 +12,10 @@ import AuthIntroBlock from '../../components/auth/AuthIntroBlock';
 import { getSsafyLoginUrl } from '../../services/auth';
 import RecoveryOption from '../../components/auth/RecoveryOption';
 import SsafyRecoveryNotice from '../../components/auth/SsafyRecoveryNotice';
+import type { RootNavigationProp } from '../../types';
 
 export default function AccountRecoveryEntryScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<RootNavigationProp>();
   const insets = useSafeAreaInsets();
 
   const handleFindId = () => {

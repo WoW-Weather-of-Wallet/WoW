@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { findUserId, verifySmsCode } from '../services/auth';
 import type { VerifyCodeRouteParams } from '../types/auth';
+import type { RootNavigationProp } from '../types';
 import { buildAuthErrorPresentation } from '../utils/authErrorPresentation';
 import { buildIdentityProfile } from '../utils/authIdentity';
 import { extractApiErrorMessage } from '../utils/error';
@@ -13,7 +14,7 @@ const VERIFY_CODE_FALLBACK = '인증번호 확인에 실패했어요. 다시 시
 const ACCOUNT_NOT_FOUND_MESSAGE = '입력한 정보와 일치하는 계정을 찾지 못했어요.';
 
 export function useVerifyCodeFlow(params: VerifyCodeRouteParams) {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<RootNavigationProp>();
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyError, setVerifyError] = useState('');
   const signupMode = params.signupMode === 'ssafy' ? 'ssafy' : 'normal';

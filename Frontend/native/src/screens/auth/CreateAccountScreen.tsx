@@ -15,12 +15,16 @@ import { styles, CONSTANTS } from './CreateAccountScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import { checkUserId, signup, type NativeSignupRequest } from '../../services/auth';
 import type { CreateAccountRouteParams } from '../../types/auth';
+import type { RootScreenProps } from '../../types';
 import { buildIdentityProfile } from '../../utils/authIdentity';
 import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { validateId, validatePassword, validateName, validatePhone } from '../../utils/validation';
 
-export default function CreateAccountScreen({ route, navigation }: any) {
+export default function CreateAccountScreen({
+  route,
+  navigation,
+}: RootScreenProps<'CreateAccount'>) {
   const routeParams = (route?.params ?? {}) as CreateAccountRouteParams;
 
   const [step, setStep] = useState(1);

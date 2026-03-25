@@ -12,10 +12,11 @@ import { COLORS, hp } from '../../constants/theme';
 import { useVerifyCodeFlow } from '../../hooks/useVerifyCodeFlow';
 import { styles } from './VerifyCodeScreen.styles';
 import type { VerifyCodeRouteParams } from '../../types/auth';
+import type { RootScreenProps } from '../../types';
 
 const MAX_CODE_LENGTH = 6;
 
-export default function VerifyCodeScreen({ route }: any) {
+export default function VerifyCodeScreen({ route }: RootScreenProps<'VerifyCode'>) {
   const insets = useSafeAreaInsets();
   const routeParams = (route?.params ?? {}) as VerifyCodeRouteParams;
   const [code, setCode] = useState('');

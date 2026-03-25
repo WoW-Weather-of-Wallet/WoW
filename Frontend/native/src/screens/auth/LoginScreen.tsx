@@ -33,6 +33,7 @@ import {
   type NativeSsafyCodeLoginResult,
   parseSsafyCallbackUrl,
 } from '../../services/auth';
+import type { RootScreenProps } from '../../types';
 import { extractApiErrorMessage } from '../../utils/error';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -205,7 +206,7 @@ const buildLoginErrorPresentation = (
   };
 };
 
-export default function LoginScreen({ navigation }: any) {
+export default function LoginScreen({ navigation }: RootScreenProps<'Login'>) {
   const insets = useSafeAreaInsets();
   const { completeAuthSession } = useAuthSessionLogin();
   const [userId, setUserId] = useState('');

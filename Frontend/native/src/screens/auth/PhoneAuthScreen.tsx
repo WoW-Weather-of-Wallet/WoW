@@ -18,6 +18,7 @@ import AuthStepLayout from '../../components/auth/AuthStepLayout';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import type { PhoneAuthRouteParams, SignupMode } from '../../types/auth';
+import type { RootScreenProps } from '../../types';
 import {
   buildIdentityProfile,
   decodeUnicodeEscapes,
@@ -48,7 +49,10 @@ const SSAFY_TOKEN_EXPIRED_MESSAGE =
 const SEND_CODE_FALLBACK =
   '인증번호 전송에 실패했어요. 입력한 정보를 다시 확인해 주세요.';
 
-export default function PhoneAuthScreen({ navigation, route }: any) {
+export default function PhoneAuthScreen({
+  navigation,
+  route,
+}: RootScreenProps<'PhoneAuth'>) {
   const insets = useSafeAreaInsets();
   const routeParams = (route?.params ?? {}) as PhoneAuthRouteParams;
   const signupMode: SignupMode =

@@ -29,8 +29,11 @@ import { PermissionMeta } from '../../constants/auth/permissionConfig';
 import { getPermissionItems } from '../../constants/auth/permissionConfig';
 import { PermissionKey, useAppPermissions } from '../../hooks';
 import { useAuthStore } from '../../store/authStore';
+import type { RootScreenProps } from '../../types';
 
-export default function AccessPermissionScreen({ navigation }: any) {
+export default function AccessPermissionScreen({
+  navigation,
+}: RootScreenProps<'Permission'>) {
   const insets = useSafeAreaInsets();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const {
