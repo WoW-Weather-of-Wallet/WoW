@@ -17,7 +17,11 @@ import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import { TELECOM_OPTIONS } from '../../constants/auth/identityVerification';
-import type { PhoneAuthRouteParams, SignupMode } from '../../types/auth';
+import type {
+  IdentityVerificationData,
+  PhoneAuthRouteParams,
+  SignupMode,
+} from '../../types/auth';
 import type { RootScreenProps } from '../../types';
 import {
   buildIdentityProfile,
@@ -29,12 +33,11 @@ import {
   sendSmsCode,
 } from '../../services/auth';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
+import { useIdentityVerificationForm } from '../../hooks';
 import { validateName, validatePhone } from '../../utils/validation';
 
-const TELECOM_PLACEHOLDER =
-  '통신사를 선택해 주세요';
-const INVALID_IDENTITY_MESSAGE =
-  '주민등록번호를 다시 확인해 주세요.';
+const TELECOM_PLACEHOLDER = '통신사를 선택해 주세요';
+const INVALID_IDENTITY_MESSAGE = '주민등록번호를 다시 확인해 주세요.';
 const SSAFY_TOKEN_EXPIRED_MESSAGE =
   'SSAFY 인증 정보가 만료되었습니다. 다시 로그인해 주세요.';
 const SEND_CODE_FALLBACK =
@@ -54,81 +57,81 @@ export default function PhoneAuthScreen({
       ? (decodeUnicodeEscapes(routeParams.name) ?? '').trim()
       : '';
 
-  const [step, setStep] = useState(isSsafySignup && initialSsafyName.length >= 2 ? 2 : 1);
-  const [name, setName] = useState(initialSsafyName);
-  const [ssnFront, setSsnFront] = useState('');
-  const [ssnBack, setSsnBack] = useState('');
-  const [telecom, setTelecom] = useState(TELECOM_PLACEHOLDER);
-  const [phone, setPhone] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
   const [termsVisible, setTermsVisible] = useState(false);
+  const [pendingIdentityData, setPendingIdentityData] =
+    useState<IdentityVerificationData | null>(null);
   // 현재 회원가입 API는 boolean 하나만 받기 때문에
   // 바텀시트 결과를 "필수 약관 전체 동의 여부"로 합쳐서 전달합니다.
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  const ssnFrontRef = useRef<TextInput>(null);
-  const ssnBackRef = useRef<TextInput>(null);
-  const phoneRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const {
+    step,
+    name,
+    ssnFront,
+    ssnBack,
+    telecom,
+    phone,
+    modalVisible,
+    isFormValid,
+    ssnFrontRef,
+    ssnBackRef,
+    phoneRef,
+    setName,
+    handleNameSubmit,
+    handleSsnFrontChange,
+    handleSsnBackChange,
+    handleTelecomSelect,
+    handlePhoneChange,
+    openTelecomModal,
+    closeTelecomModal,
+    handleSubmit,
+  } = useIdentityVerificationForm({
+    initialValues: { name: initialSsafyName },
+    telecomPlaceholder: TELECOM_PLACEHOLDER,
+    onComplete: (data) => {
+      setPendingIdentityData(data);
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      setTermsVisible(true);
+    },
+    onValuesChange: () => {
+      if (submitError) {
+        setSubmitError('');
+      }
+    },
+  });
 
-  const handleNameSubmit = () => {
-    if (name.trim().length >= 2) {
-      setStep((prev) => Math.max(prev, 2));
-      setTimeout(() => ssnFrontRef.current?.focus(), 150);
-    }
-  };
-
-  const handleSsnFrontChange = (text: string) => {
-    const numeric = text.replace(/[^0-9]/g, '');
-    setSsnFront(numeric);
-
-    if (numeric.length === 6) {
-      ssnBackRef.current?.focus();
-    }
-  };
-
-  const handleSsnBackChange = (text: string) => {
-    const numeric = text.replace(/[^0-9]/g, '');
-    setSsnBack(numeric);
-
-    if (numeric.length === 1) {
-      setStep((prev) => Math.max(prev, 3));
-      ssnBackRef.current?.blur();
-      setTimeout(() => setModalVisible(true), 300);
-    }
-  };
-
-  const handleTelecomSelect = (value: string) => {
-    setTelecom(value);
-    setModalVisible(false);
-    setTimeout(() => phoneRef.current?.focus(), 250);
-  };
-
-  const handleSendCode = async (agreedTerms = termsAgreed) => {
-    if (isSendingCode) {
+  const handleSendCode = async (
+    agreedTerms = termsAgreed,
+    identityData = pendingIdentityData,
+  ) => {
+    if (isSendingCode || !identityData) {
       return;
     }
 
     setIsSendingCode(true);
     setSubmitError('');
 
-    const nameValidation = validateName(name);
+    const nameValidation = validateName(identityData.name);
     if (!nameValidation.isValid) {
       setSubmitError(nameValidation.message);
       setIsSendingCode(false);
       return;
     }
 
-    const phoneValidation = validatePhone(phone);
+    const phoneValidation = validatePhone(identityData.phone);
     if (!phoneValidation.isValid) {
       setSubmitError(phoneValidation.message);
       setIsSendingCode(false);
       return;
     }
 
-    const identityProfile = buildIdentityProfile(ssnFront, ssnBack);
+    const identityProfile = buildIdentityProfile(
+      identityData.ssnFront,
+      identityData.ssnBack,
+    );
 
     if (!identityProfile) {
       setSubmitError(INVALID_IDENTITY_MESSAGE);
@@ -136,7 +139,7 @@ export default function PhoneAuthScreen({
       return;
     }
 
-    const normalizedPhoneNumber = phone.replace(/[^0-9]/g, '');
+    const normalizedPhoneNumber = identityData.phone.replace(/[^0-9]/g, '');
 
     try {
       if (isSsafySignup) {
@@ -152,7 +155,7 @@ export default function PhoneAuthScreen({
         });
       } else {
         await checkSignupIdentity({
-          name: name.trim(),
+          name: identityData.name.trim(),
           gender: identityProfile.gender,
           birthDate: identityProfile.birthDate,
           phoneNumber: normalizedPhoneNumber,
@@ -164,10 +167,10 @@ export default function PhoneAuthScreen({
       navigation.navigate('VerifyCode', {
         ...routeParams,
         signupMode,
-        name: name.trim(),
-        ssnFront,
-        ssnBack,
-        telecom,
+        name: identityData.name.trim(),
+        ssnFront: identityData.ssnFront,
+        ssnBack: identityData.ssnBack,
+        telecom: identityData.telecom,
         phone: normalizedPhoneNumber,
         // 다음 화면들도 기존 boolean 계약을 그대로 사용하므로
         // 여기서는 "필수 약관 전체 동의" 의미로 넘깁니다.
@@ -180,52 +183,13 @@ export default function PhoneAuthScreen({
       });
       setSubmitError(presentation.inlineMessage);
       Alert.alert(
-        isSsafySignup
-          ? 'SSAFY 회원가입 안내'
-          : presentation.title,
+        isSsafySignup ? 'SSAFY 회원가입 안내' : presentation.title,
         presentation.alertMessage,
       );
     } finally {
       setIsSendingCode(false);
     }
   };
-
-  const getButtonState = () => {
-    switch (step) {
-      case 1:
-        return {
-          isActive: name.trim().length >= 2,
-          text: '다음',
-          onPress: handleNameSubmit,
-        };
-      case 2:
-        return {
-          isActive: ssnFront.length === 6 && ssnBack.length === 1,
-          text: '다음',
-          onPress: () => {
-            setStep((prev) => Math.max(prev, 2));
-            ssnBackRef.current?.blur();
-            setTimeout(() => setModalVisible(true), 300);
-          },
-        };
-      default:
-        return {
-          isActive:
-            telecom !== TELECOM_PLACEHOLDER &&
-            phone.length >= 10 &&
-            !isSendingCode,
-          text: isSendingCode
-            ? '인증번호 전송 중...'
-            : '다음',
-          onPress: () => {
-            scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-            setTermsVisible(true);
-          },
-        };
-    }
-  };
-
-  const btnState = getButtonState();
 
   return (
     <>
@@ -240,9 +204,12 @@ export default function PhoneAuthScreen({
         bottomMinPadding={CONSTANTS.bottomMinPadding}
         bottomContent={
           <TouchableOpacity
-            style={[styles.confirmButton, btnState.isActive && styles.activeButton]}
-            disabled={!btnState.isActive}
-            onPress={btnState.onPress}
+            style={[
+              styles.confirmButton,
+              isFormValid && !isSendingCode && styles.activeButton,
+            ]}
+            disabled={!isFormValid || isSendingCode}
+            onPress={handleSubmit}
           >
             {isSendingCode ? (
               <ActivityIndicator color={COLORS.textInverse} />
@@ -250,27 +217,28 @@ export default function PhoneAuthScreen({
               <Text
                 style={[
                   styles.confirmButtonText,
-                  btnState.isActive && styles.activeButtonText,
+                  isFormValid && !isSendingCode && styles.activeButtonText,
                 ]}
               >
-                {btnState.text}
+                다음
               </Text>
             )}
           </TouchableOpacity>
         }
       >
-
         <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
           <View style={styles.underlineContainer}>
             <TextInput
-              style={[styles.bareInput, { letterSpacing: name.length > 0 ? 2 : 0 }]}
+              style={[
+                styles.bareInput,
+                { letterSpacing: name.length > 0 ? 2 : 0 },
+              ]}
               value={name}
               onChangeText={(value) => {
                 if (isSsafySignup) {
                   return;
                 }
                 setName(value);
-                setSubmitError('');
               }}
               placeholder="이름"
               placeholderTextColor={COLORS.textTertiary}
@@ -282,7 +250,7 @@ export default function PhoneAuthScreen({
           </View>
           {isSsafySignup && (
             <Text style={{ color: COLORS.textTertiary, marginTop: hp(12) }}>
-              {'SSAFY 계정의 이름은 수정할 수 없어요.'}
+              SSAFY 계정의 이름은 수정할 수 없어요.
             </Text>
           )}
         </Animated.View>
@@ -338,7 +306,7 @@ export default function PhoneAuthScreen({
           <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
             <TouchableOpacity
               style={styles.telecomSelector}
-              onPress={() => setModalVisible(true)}
+              onPress={openTelecomModal}
             >
               <Text
                 style={[
@@ -358,29 +326,29 @@ export default function PhoneAuthScreen({
             <View style={[styles.underlineContainer, { marginTop: hp(32) }]}>
               <TextInput
                 ref={phoneRef}
-                style={[styles.bareInput, { letterSpacing: phone.length > 0 ? 2 : 0 }]}
+                style={[
+                  styles.bareInput,
+                  { letterSpacing: phone.length > 0 ? 2 : 0 },
+                ]}
                 value={phone}
-                onChangeText={(text) => {
-                  setPhone(text.replace(/[^0-9]/g, ''));
-                  setSubmitError('');
-                }}
-                placeholder={
-                  '휴대폰 번호 (- 없이 입력)'
-                }
+                onChangeText={handlePhoneChange}
+                placeholder="휴대폰 번호 (- 없이 입력)"
                 placeholderTextColor={COLORS.textTertiary}
                 keyboardType="number-pad"
                 maxLength={11}
               />
             </View>
 
-            {submitError.length > 0 && <Text style={styles.errorText}>{submitError}</Text>}
+            {submitError.length > 0 && (
+              <Text style={styles.errorText}>{submitError}</Text>
+            )}
           </Animated.View>
         )}
       </AuthStepLayout>
 
       <TelecomSelectModal
         visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        onClose={closeTelecomModal}
         onSelect={handleTelecomSelect}
         options={TELECOM_OPTIONS}
         bottomInset={insets.bottom}
@@ -399,7 +367,7 @@ export default function PhoneAuthScreen({
         onConfirm={(agreed) => {
           setTermsAgreed(agreed);
           setTermsVisible(false);
-          void handleSendCode(agreed);
+          void handleSendCode(agreed, pendingIdentityData);
         }}
       />
     </>

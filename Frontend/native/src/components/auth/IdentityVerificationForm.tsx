@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, wp, hp } from '../../constants/theme';
 import { TELECOM_OPTIONS } from '../../constants/auth/identityVerification';
+import { useIdentityVerificationForm } from '../../hooks';
 import TelecomSelectModal from '../common/TelecomSelectModal';
 import type { IdentityVerificationData } from '../../types/auth';
 import { styles } from './IdentityVerificationForm.styles';
@@ -22,6 +23,10 @@ interface IdentityVerificationFormProps {
   isSubmitting?: boolean;
   errorMessage?: string;
   onValuesChange?: (data: IdentityVerificationData) => void;
+  initialValues?: Partial<IdentityVerificationData>;
+  nameEditable?: boolean;
+  nameHelperText?: string;
+  autoFocusName?: boolean;
 }
 
 /**
@@ -31,80 +36,43 @@ interface IdentityVerificationFormProps {
  */
 export default function IdentityVerificationForm({
   onComplete,
-  submitButtonText = '다음',
+  submitButtonText = '인증번호 받기',
   isSubmitting = false,
   errorMessage = '',
   onValuesChange,
+  initialValues,
+  nameEditable = true,
+  nameHelperText,
+  autoFocusName = true,
 }: IdentityVerificationFormProps) {
   const insets = useSafeAreaInsets();
-  
-  const [step, setStep] = useState(1);
-  const [name, setName] = useState('');
-  const [ssnFront, setSsnFront] = useState('');
-  const [ssnBack, setSsnBack] = useState('');
-  const [telecom, setTelecom] = useState(TELECOM_PLACEHOLDER);
-  const [phone, setPhone] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
-
-  const ssnFrontRef = useRef<TextInput>(null);
-  const ssnBackRef = useRef<TextInput>(null);
-  const phoneRef = useRef<TextInput>(null);
-
-  // 값이 변경될 때마다 부모 컴포넌트에 알림 (선택 사항)
-  useEffect(() => {
-    if (onValuesChange) {
-      onValuesChange({ name, ssnFront, ssnBack, telecom, phone });
-    }
-  }, [name, ssnFront, ssnBack, telecom, phone]);
-
-  const handleNameSubmit = () => {
-    if (name.trim().length >= 2) {
-      setStep((prev) => Math.max(prev, 2));
-      setTimeout(() => ssnFrontRef.current?.focus(), 150);
-    }
-  };
-
-  const handleSsnFrontChange = (text: string) => {
-    const numeric = text.replace(/[^0-9]/g, '');
-    setSsnFront(numeric);
-    if (numeric.length === 6) {
-      ssnBackRef.current?.focus();
-    }
-  };
-
-  const handleSsnBackChange = (text: string) => {
-    const numeric = text.replace(/[^0-9]/g, '');
-    setSsnBack(numeric);
-    if (numeric.length === 1) {
-      setStep((prev) => Math.max(prev, 3));
-      ssnBackRef.current?.blur();
-      setTimeout(() => setModalVisible(true), 300);
-    }
-  };
-
-  const handleTelecomSelect = (value: string) => {
-    setTelecom(value);
-    setModalVisible(false);
-    setTimeout(() => phoneRef.current?.focus(), 250);
-  };
-
-  const isFormValid = () => {
-    if (step === 1) return name.trim().length >= 2;
-    if (step === 2) return ssnFront.length === 6 && ssnBack.length === 1;
-    return telecom !== TELECOM_PLACEHOLDER && phone.length >= 10;
-  };
-
-  const handleSubmit = () => {
-    if (step < 3) {
-      if (step === 1) handleNameSubmit();
-      else if (step === 2) {
-        setStep(3);
-        setTimeout(() => setModalVisible(true), 100);
-      }
-    } else {
-      onComplete({ name, ssnFront, ssnBack, telecom, phone });
-    }
-  };
+  const {
+    step,
+    name,
+    ssnFront,
+    ssnBack,
+    telecom,
+    phone,
+    modalVisible,
+    isFormValid,
+    ssnFrontRef,
+    ssnBackRef,
+    phoneRef,
+    setName,
+    handleNameSubmit,
+    handleSsnFrontChange,
+    handleSsnBackChange,
+    handleTelecomSelect,
+    handlePhoneChange,
+    openTelecomModal,
+    closeTelecomModal,
+    handleSubmit,
+  } = useIdentityVerificationForm({
+    initialValues,
+    telecomPlaceholder: TELECOM_PLACEHOLDER,
+    onComplete,
+    onValuesChange,
+  });
 
   return (
     <View style={styles.container}>
@@ -119,9 +87,11 @@ export default function IdentityVerificationForm({
             placeholderTextColor={COLORS.textTertiary}
             onSubmitEditing={handleNameSubmit}
             returnKeyType="next"
-            autoFocus
+            autoFocus={autoFocusName}
+            editable={nameEditable}
           />
         </View>
+        {nameHelperText ? <Text style={styles.errorText}>{nameHelperText}</Text> : null}
       </View>
 
       {/* 2단계: 주민등록번호 */}
@@ -157,7 +127,7 @@ export default function IdentityVerificationForm({
       {/* 3단계: 통신사 및 휴대폰 번호 */}
       {step >= 3 && (
         <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
-          <TouchableOpacity style={styles.telecomSelector} onPress={() => setModalVisible(true)}>
+          <TouchableOpacity style={styles.telecomSelector} onPress={openTelecomModal}>
             <Text style={[styles.telecomText, telecom === TELECOM_PLACEHOLDER && styles.placeholderText]}>
               {telecom}
             </Text>
@@ -169,7 +139,7 @@ export default function IdentityVerificationForm({
               ref={phoneRef}
               style={[styles.bareInput, { letterSpacing: phone.length > 0 ? 2 : 0 }]}
               value={phone}
-              onChangeText={(text) => setPhone(text.replace(/[^0-9]/g, ''))}
+              onChangeText={handlePhoneChange}
               placeholder="휴대폰 번호 (- 없이 입력)"
               placeholderTextColor={COLORS.textTertiary}
               keyboardType="number-pad"
@@ -183,15 +153,15 @@ export default function IdentityVerificationForm({
 
       <View style={[styles.buttonWrapper, { marginBottom: Math.max(insets.bottom, hp(20)) }]}>
         <TouchableOpacity
-          style={[styles.confirmButton, isFormValid() && !isSubmitting && styles.activeButton]}
-          disabled={!isFormValid() || isSubmitting}
+          style={[styles.confirmButton, isFormValid && !isSubmitting && styles.activeButton]}
+          disabled={!isFormValid || isSubmitting}
           onPress={handleSubmit}
         >
           {isSubmitting ? (
             <ActivityIndicator color={COLORS.white} />
           ) : (
-            <Text style={[styles.confirmButtonText, isFormValid() && styles.activeButtonText]}>
-              {step < 3 ? '다음' : '인증번호 받기'}
+            <Text style={[styles.confirmButtonText, isFormValid && styles.activeButtonText]}>
+              {step < 3 ? '다음' : submitButtonText}
             </Text>
           )}
         </TouchableOpacity>
@@ -200,7 +170,7 @@ export default function IdentityVerificationForm({
       {/* 통신사 선택 모달 */}
       <TelecomSelectModal
         visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        onClose={closeTelecomModal}
         onSelect={handleTelecomSelect}
         title="통신사를 선택해주세요"
         options={TELECOM_OPTIONS}
