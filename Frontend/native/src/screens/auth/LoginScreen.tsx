@@ -33,7 +33,6 @@ import {
   getSsafyLoginUrl,
   login,
   type NativeSsafyCodeLoginResult,
-  type NativeSsafyDirectLoginResult,
   parseSsafyCallbackUrl,
 } from '../../services/auth';
 import { savePersistedAuthSession } from '../../services/sessionStorage';
@@ -139,26 +138,14 @@ export default function LoginScreen({ navigation }: any) {
   }, []);
 
   const completeSsafyLogin = useCallback(
-    async (parsed: NativeSsafyCodeLoginResult | NativeSsafyDirectLoginResult) => {
-      if ('accessToken' in parsed) {
-        loginToStore({
-          accessToken: parsed.accessToken,
-          user:
-            parsed.user ?? {
-              userId: 'ssafy-user',
-            },
-          autoLogin,
-        });
-        navigation.replace('MainTabs');
-        return;
-      }
-
+    async (parsed: NativeSsafyCodeLoginResult) => {
       const response = await exchangeSsafyToken(parsed.code);
       if (autoLogin && response.refreshToken) {
         await savePersistedAuthSession({
           refreshToken: response.refreshToken,
           user: response.user,
           autoLoginEnabled: true,
+          loginType: 'SSAFY',
         });
       }
       loginToStore({
@@ -166,6 +153,7 @@ export default function LoginScreen({ navigation }: any) {
         user: response.user,
         autoLogin,
         source: 'ssafy',
+        loginType: 'SSAFY',
       });
       navigation.replace('MainTabs');
     },
@@ -274,6 +262,7 @@ export default function LoginScreen({ navigation }: any) {
           refreshToken: response.refreshToken,
           user: response.user,
           autoLoginEnabled: true,
+          loginType: 'NORMAL',
         });
       }
 
@@ -281,6 +270,7 @@ export default function LoginScreen({ navigation }: any) {
         accessToken: response.accessToken,
         user: response.user,
         autoLogin,
+        loginType: 'NORMAL',
       });
 
       navigation.replace('MainTabs');

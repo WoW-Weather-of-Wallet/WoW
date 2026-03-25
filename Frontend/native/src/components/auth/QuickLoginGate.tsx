@@ -15,6 +15,7 @@ interface QuickLoginGateProps {
   biometricAvailable: boolean;
   biometricEnabled: boolean;
   pinEnabled: boolean;
+  logoutNotice?: string;
   isBiometricLoading?: boolean;
   errorMessage?: string;
   onSubmitPin: (pin: string) => Promise<boolean> | boolean;
@@ -28,6 +29,7 @@ export default function QuickLoginGate({
   biometricAvailable,
   biometricEnabled,
   pinEnabled,
+  logoutNotice,
   isBiometricLoading = false,
   errorMessage,
   onSubmitPin,
@@ -165,6 +167,7 @@ export default function QuickLoginGate({
       >
         <Text style={styles.secondaryActionText}>다른 계정으로 로그인</Text>
       </TouchableOpacity>
+      {logoutNotice ? <Text style={styles.secondaryActionHint}>{logoutNotice}</Text> : null}
     </View>
   );
 }
@@ -284,5 +287,13 @@ const styles = {
     fontSize: fp(14),
     fontFamily: FONTS.semiBold,
     color: COLORS.textTertiary,
+  },
+  secondaryActionHint: {
+    marginTop: hp(8),
+    textAlign: 'center' as const,
+    fontSize: fp(12),
+    lineHeight: fp(18),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
   },
 };

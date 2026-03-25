@@ -4,7 +4,7 @@
 // =============================================
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, Platform } from 'react-native';
+import { Alert, AppState, Linking, Platform } from 'react-native';
 import {
   NavigationContainer,
   createNavigationContainerRef,
@@ -37,6 +37,7 @@ import {
   verifyPinCode,
 } from '../services/localSecurity';
 import {
+  getSsafyLogoutUrl,
   logout as logoutRequest,
   registerNativeAuthLifecycleCallbacks,
 } from '../services/auth';
@@ -69,6 +70,8 @@ function NavigationWrapper() {
   const {
     isAuthenticated,
     sessionSource,
+    user: sessionUser,
+    loginType,
     logout,
     updateAccessToken,
   } = useAuthStore();
@@ -260,6 +263,8 @@ function NavigationWrapper() {
   );
 
   const handleLockLogout = useCallback(async () => {
+    const shouldLogoutSsafy = loginType === 'SSAFY';
+
     try {
       await fcmService.unregisterFcmToken();
     } catch (error) {
@@ -282,7 +287,15 @@ function NavigationWrapper() {
         routes: [{ name: 'Login' }],
       });
     }
-  }, [logout, unlockApp]);
+
+    if (shouldLogoutSsafy) {
+      setTimeout(() => {
+        Linking.openURL(getSsafyLogoutUrl()).catch((error) => {
+          console.warn('[QuickLogin] SSAFY browser logout failed:', error);
+        });
+      }, 0);
+    }
+  }, [loginType, logout, unlockApp]);
 
   return (
     <>
@@ -410,11 +423,34 @@ function NavigationWrapper() {
         onSubmitPin={handleSubmitPin}
         onPressBiometric={handleBiometricPress}
         onPressDifferentAccount={() => {
+          if (loginType === 'SSAFY') {
+            Alert.alert(
+              '다른 계정으로 로그인',
+              '현재 계정에서 로그아웃한 뒤 SSAFY 브라우저 세션도 함께 종료합니다.',
+              [
+                { text: '취소', style: 'cancel' },
+                {
+                  text: '로그아웃',
+                  style: 'destructive',
+                  onPress: () => {
+                    void handleLockLogout();
+                  },
+                },
+              ],
+            );
+            return;
+          }
+
           void handleLockLogout();
         }}
         onToggleBiometric={(enabled) => {
           void handleToggleBiometric(enabled);
         }}
+        logoutNotice={
+          loginType === 'SSAFY'
+            ? '다른 계정으로 로그인하면 SSAFY 브라우저 로그아웃이 함께 진행됩니다.'
+            : undefined
+        }
       />
     </>
   );

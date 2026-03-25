@@ -1,16 +1,15 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SurfaceCard from '../common/SurfaceCard';
 import { COLORS, wp } from '../../constants/theme';
 import { styles } from './TransactionHistorySection.styles';
-import type { CalendarTransactionGroup, CalendarTransactionItem } from '../../mock/calendar';
+import type { CalendarTransactionGroup } from '../../mock/calendar';
 
 interface TransactionHistorySectionProps {
   monthLabel: string;
   groups: CalendarTransactionGroup[];
   emptyTitle: string;
   emptyDescription: string;
-  onDeleteTransaction?: (transactionId: number, dateKey: string, title: string) => void;
 }
 
 export default function TransactionHistorySection({
@@ -18,7 +17,6 @@ export default function TransactionHistorySection({
   groups,
   emptyTitle,
   emptyDescription,
-  onDeleteTransaction,
 }: TransactionHistorySectionProps) {
   const totalSpent = groups.reduce((sum, group) => sum + group.dailySpent, 0);
 
@@ -74,25 +72,6 @@ export default function TransactionHistorySection({
                         {item.amount < 0 ? '+' : '-'}₩{Math.abs(item.amount).toLocaleString()}
                       </Text>
                       {item.time ? <Text style={styles.time}>{item.time}</Text> : null}
-                      {canDeleteTransaction(item) && onDeleteTransaction ? (
-                        <Pressable
-                          style={styles.deleteChip}
-                          onPress={() =>
-                            onDeleteTransaction(
-                              item.backendTransactionId as number,
-                              group.id,
-                              item.title,
-                            )
-                          }
-                        >
-                          <Ionicons
-                            name="trash-outline"
-                            size={wp(12)}
-                            color={COLORS.spentRed}
-                          />
-                          <Text style={styles.deleteChipText}>삭제</Text>
-                        </Pressable>
-                      ) : null}
                     </View>
                   </View>
                 ))}
@@ -103,10 +82,4 @@ export default function TransactionHistorySection({
       )}
     </SurfaceCard>
   );
-}
-
-function canDeleteTransaction(item: CalendarTransactionItem) {
-  // 고정지출로 연결된 거래는 삭제 시 다른 화면 상태와 꼬일 수 있어
-  // 히스토리에서 바로 삭제하지 않도록 제한합니다.
-  return item.backendTransactionId != null && !item.isFixedExpense;
 }
