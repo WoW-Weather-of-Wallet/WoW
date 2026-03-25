@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MyPageScreen from '../screens/main/MyPageScreen';
 import SettingsScreen from '../screens/mypage/SettingsScreen';
 import WithdrawScreen from '../screens/mypage/WithdrawScreen';
+import PhoneUpdateScreen from '../screens/mypage/PhoneUpdateScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +24,11 @@ export default function MyPageStackNavigator() {
       <Stack.Screen
         name="Withdraw"
         component={WithdrawScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="PhoneUpdate"
+        component={PhoneUpdateScreen}
         options={{ animation: 'slide_from_right' }}
       />
     </Stack.Navigator>

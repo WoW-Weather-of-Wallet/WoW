@@ -51,6 +51,18 @@ type EditMode = 'profile' | 'phone' | 'password' | null;
 type PinModalStep = 'create' | 'confirm' | 'verify-current' | 'new' | 'confirm-new';
 type PinModalMode = 'setup' | 'change' | 'disable';
 
+const maskPhoneNumber = (phone: string) => {
+  if (!phone) return '-';
+  const cleaned = phone.replace(/[^0-9]/g, '');
+  if (cleaned.length === 11) {
+    return `${cleaned.slice(0, 3)}-****-${cleaned.slice(7)}`;
+  }
+  if (cleaned.length === 10) {
+    return `${cleaned.slice(0, 3)}-***-${cleaned.slice(6)}`;
+  }
+  return phone;
+};
+
 /**
  * MyPageScreen (Settings Overhaul)
  * 마이페이지를 설정 중심으로 개편하되, 기존의 '사용자 분류 뱃지'를 프리미엄하게 통합합니다.
@@ -407,7 +419,7 @@ export default function MyPageScreen() {
           <SettingItem label="비밀번호 변경" onPress={openPasswordEditor} />
           <SettingItem 
             label="휴대폰 번호" 
-            value={profile?.phoneNumber ? `${profile.phoneNumber.slice(0,3)}-****-${profile.phoneNumber.slice(7)}` : '-'} 
+            value={maskPhoneNumber(profile?.phoneNumber ?? '')} 
             onPress={openPhoneGuidance} 
           />
         </SettingSection>
@@ -539,29 +551,38 @@ export default function MyPageScreen() {
             <Text style={styles.modalTitle}>휴대폰 번호</Text>
             <View style={styles.readOnlyInput}>
               <Text style={styles.readOnlyLabel}>현재 번호</Text>
-              <Text style={styles.readOnlyValue}>{profile?.phoneNumber || '-'}</Text>
+              <Text style={styles.readOnlyValue}>{maskPhoneNumber(profile?.phoneNumber ?? '')}</Text>
             </View>
             
             <View style={styles.hyperlinkContainer}>
               <Text style={styles.hyperlinkText}>
-                전화번호 변경을 희망하실 경우, 새로운 번호로 
-                <Text 
-                  style={styles.hyperlinkAction}
-                  onPress={() => {
-                    closeEditor();
-                    navigation.navigate('PhoneAuth', { signupMode: 'normal' });
-                  }}
-                > 회원가입을 다시 시도
-                </Text>해주시기 바랍니다.
+                휴대폰 번호 변경은 본인 확인 후 새 번호로 인증을 완료하면 바로 진행할 수 있습니다.
               </Text>
               <Text style={[styles.readOnlyHint, { textAlign: 'center', marginTop: hp(8) }]}>
-                (기존 번호로 가입된 명의 정보는 삭제 후 진행을 권장합니다)
+                이름, 생년월일, 성별 정보는 가입 시 확인된 내용으로 고정됩니다.
               </Text>
             </View>
 
             <View style={styles.modalButtonRow}>
-              <TouchableOpacity style={styles.primaryButton} onPress={closeEditor}>
-                <Text style={styles.primaryButtonText}>닫기</Text>
+              <TouchableOpacity
+                style={[styles.primaryButton, { backgroundColor: COLORS.gray100 }]}
+                onPress={closeEditor}
+              >
+                <Text style={[styles.primaryButtonText, { color: COLORS.textPrimary }]}>닫기</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={() => {
+                  closeEditor();
+                  navigation.navigate('PhoneUpdate', {
+                    phoneNumber: profile?.phoneNumber ?? '',
+                    name: profile?.name ?? '',
+                    birthDate: profile?.birthDate ?? '',
+                    gender: profile?.gender ?? '',
+                  });
+                }}
+              >
+                <Text style={styles.primaryButtonText}>변경하기</Text>
               </TouchableOpacity>
             </View>
           </View>
