@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 
 export interface PersistedAuthUser {
-  userId: string;
+  userId?: string | null;
   name?: string;
   role?: string;
 }
@@ -10,6 +10,7 @@ export interface PersistedAuthSession {
   refreshToken: string;
   user: PersistedAuthUser;
   autoLoginEnabled: boolean;
+  loginType?: 'NORMAL' | 'SSAFY' | string | null;
 }
 
 const AUTH_SESSION_KEY = 'wow.auth.session.v1';

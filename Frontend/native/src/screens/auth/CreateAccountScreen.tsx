@@ -23,15 +23,12 @@ import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { validateId, validatePassword, validateName, validatePhone } from '../../utils/validation';
 
 type CreateAccountRouteParams = {
-  // 일반 회원가입/SSAFY 회원가입 공용 화면에서 분기 기준으로 사용
-  signupMode?: 'normal' | 'ssafy';
   name?: string;
   phone?: string;
   ssnFront?: string;
   ssnBack?: string;
   // This flag represents agreement to every required term selected earlier.
   termsAgreed?: boolean;
-  ssafyOauthId?: string;
 };
 
 /**
@@ -76,11 +73,8 @@ const buildGender = (ssnBack?: string) => {
 export default function CreateAccountScreen({ route, navigation }: any) {
   const insets = useSafeAreaInsets();
   const routeParams = (route?.params ?? {}) as CreateAccountRouteParams;
-  const signupMode = routeParams.signupMode === 'ssafy' ? 'ssafy' : 'normal';
-  const isSsafySignup = signupMode === 'ssafy';
 
-  // 일반 회원가입은 아이디 입력부터 시작하고, SSAFY 회원가입은 비밀번호 설정 단계부터 시작한다.
-  const [step, setStep] = useState(isSsafySignup ? 2 : 1);
+  const [step, setStep] = useState(1);
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -147,10 +141,10 @@ export default function CreateAccountScreen({ route, navigation }: any) {
     setConfirmPassword(filteredText);
   };
 
-  const passwordValidation = validatePassword(password, signupMode === 'normal' ? id : undefined);
+  const passwordValidation = validatePassword(password, id);
   const isPasswordValid = passwordValidation.isValid;
   const isPasswordMatch = isPasswordValid && password === confirmPassword;
-  const hasSignupIdentifier = isSsafySignup ? Boolean(routeParams.ssafyOauthId?.trim()) : Boolean(isIdAvailable);
+  const hasSignupIdentifier = Boolean(isIdAvailable);
   const isFormValid = hasSignupIdentifier && isPasswordMatch && !isSubmitting;
 
   const handleNextStep = () => {
@@ -166,9 +160,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
     }
 
     const trimmedUserId = id.trim();
-    const ssafyOauthId = routeParams.ssafyOauthId?.trim();
-
-    if (!trimmedUserId && !ssafyOauthId) {
+    if (!trimmedUserId) {
       setSubmitError('회원가입 식별 정보가 없어 다시 로그인부터 진행해주세요.');
       return;
     }
@@ -194,38 +186,35 @@ export default function CreateAccountScreen({ route, navigation }: any) {
     }
 
     const signupPayload: NativeSignupRequest = {
-      userId: isSsafySignup ? undefined : trimmedUserId,
-      ssafyOauthId: isSsafySignup ? ssafyOauthId : undefined,
+      userId: trimmedUserId,
       pw: password,
       name: currentName.trim(),
       gender: buildGender(routeParams.ssnBack),
       phoneNumber: currentPhone.replace(/[^0-9]/g, ''),
       birthDate: buildBirthDate(routeParams.ssnFront, routeParams.ssnBack),
       alarmEnabled: true,
-        termsAgreed: routeParams.termsAgreed === true,
+      termsAgreed: routeParams.termsAgreed === true,
     };
 
     try {
       await signup(signupPayload);
       navigation.dispatch(
-          CommonActions.reset({
-            index: 0,
-            routes: [{
-              name: 'Welcome',
-              params: {
-                signupMode,
-                name: signupPayload.name,
-                userId: id,
-                pw: signupPayload.pw,
-                birthDate: signupPayload.birthDate,
-                gender: signupPayload.gender,
-                phoneNumber: signupPayload.phoneNumber,
-                termsAgreed: signupPayload.termsAgreed,
-                alarmEnabled: signupPayload.alarmEnabled,
-                ssafyOauthId: signupPayload.ssafyOauthId,
-              },
-            }],
-          }),
+        CommonActions.reset({
+          index: 0,
+          routes: [{
+            name: 'Welcome',
+            params: {
+              name: signupPayload.name,
+              userId: id,
+              pw: signupPayload.pw,
+              birthDate: signupPayload.birthDate,
+              gender: signupPayload.gender,
+              phoneNumber: signupPayload.phoneNumber,
+              termsAgreed: signupPayload.termsAgreed,
+              alarmEnabled: signupPayload.alarmEnabled,
+            },
+          }],
+        }),
       );
     } catch (error: any) {
       const presentation = buildAuthErrorPresentation(error, {
@@ -249,7 +238,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
   };
 
   const getButtonState = () => {
-    if (!isSsafySignup && step === 1) {
+    if (step === 1) {
       return { text: '다음', isActive: false, onPress: undefined as (() => void) | undefined };
     }
 
@@ -286,15 +275,10 @@ export default function CreateAccountScreen({ route, navigation }: any) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <StepIndicator
-          currentStep={isSsafySignup ? (step === 1 ? 3 : 4) : (step === 1 ? 3 : 4)}
-          totalSteps={5}
-        />
+        <StepIndicator currentStep={step === 1 ? 3 : 4} totalSteps={5} />
 
         <Text style={styles.title}>
-          {isSsafySignup
-            ? '비밀번호를\n입력해주세요.'
-            : step === 1
+          {step === 1
             ? '회원가입 아이디를\n입력해주세요.'
             : step === 2
               ? '비밀번호를\n입력해주세요.'
@@ -306,62 +290,60 @@ export default function CreateAccountScreen({ route, navigation }: any) {
             }
           </Text>
 
-        {!isSsafySignup && (
-          <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
-            <View style={styles.idInputRow}>
-              <View style={[styles.underlineContainer, styles.idInputUnderline]}>
-                <TextInput
-                  ref={idRef}
-                  style={[styles.bareInput, id.length > 0 && styles.bareInputLetterSpacing]}
-                  value={id}
-                  onChangeText={handleIdChange}
-                  placeholder="아이디 (4자 이상)"
-                  placeholderTextColor={COLORS.textTertiary}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="done"
-                  onSubmitEditing={id.length >= 4 && isIdAvailable === null ? handleCheckId : undefined}
-                  editable={!isCheckingId && !isSubmitting}
-                  autoFocus
-                />
-              </View>
-
-              <TouchableOpacity
-                style={[
-                  styles.checkButton,
-                  id.length >= 4 ? styles.checkButtonActive : styles.checkButtonInactive,
-                  isIdAvailable === true && styles.checkButtonSuccess,
-                ]}
-                disabled={id.length < 4 || isCheckingId || isIdAvailable === true || isSubmitting}
-                onPress={handleCheckId}
-              >
-                {isCheckingId ? (
-                  <ActivityIndicator color={COLORS.textInverse} size="small" />
-                ) : isIdAvailable === true ? (
-                  <Ionicons name="checkmark" size={CONSTANTS.checkButtonIconSize} color={COLORS.textInverse} />
-                ) : (
-                  <Text style={styles.checkButtonText}>중복확인</Text>
-                )}
-              </TouchableOpacity>
+        <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
+          <View style={styles.idInputRow}>
+            <View style={[styles.underlineContainer, styles.idInputUnderline]}>
+              <TextInput
+                ref={idRef}
+                style={[styles.bareInput, id.length > 0 && styles.bareInputLetterSpacing]}
+                value={id}
+                onChangeText={handleIdChange}
+                placeholder="아이디 (4자 이상)"
+                placeholderTextColor={COLORS.textTertiary}
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="done"
+                onSubmitEditing={id.length >= 4 && isIdAvailable === null ? handleCheckId : undefined}
+                editable={!isCheckingId && !isSubmitting}
+                autoFocus
+              />
             </View>
 
-            {isIdAvailable === true && (
-              <Animated.Text entering={FadeInDown.duration(300)} style={styles.successMessage}>
-                사용할 수 있는 아이디예요.
-              </Animated.Text>
-            )}
-            {isIdAvailable === false && submitError.length === 0 && (
-              <Animated.Text entering={FadeInDown.duration(300)} style={styles.errorMessage}>
-                이미 사용 중인 아이디예요.
-              </Animated.Text>
-            )}
-            {id.length === 0 && (
-              <Text style={styles.guideMessage}>영문 소문자, 숫자를 조합해주세요.</Text>
-            )}
-          </Animated.View>
-        )}
+            <TouchableOpacity
+              style={[
+                styles.checkButton,
+                id.length >= 4 ? styles.checkButtonActive : styles.checkButtonInactive,
+                isIdAvailable === true && styles.checkButtonSuccess,
+              ]}
+              disabled={id.length < 4 || isCheckingId || isIdAvailable === true || isSubmitting}
+              onPress={handleCheckId}
+            >
+              {isCheckingId ? (
+                <ActivityIndicator color={COLORS.textInverse} size="small" />
+              ) : isIdAvailable === true ? (
+                <Ionicons name="checkmark" size={CONSTANTS.checkButtonIconSize} color={COLORS.textInverse} />
+              ) : (
+                <Text style={styles.checkButtonText}>중복확인</Text>
+              )}
+            </TouchableOpacity>
+          </View>
 
-        {(isSsafySignup || step >= 2) && (
+          {isIdAvailable === true && (
+            <Animated.Text entering={FadeInDown.duration(300)} style={styles.successMessage}>
+              사용할 수 있는 아이디예요.
+            </Animated.Text>
+          )}
+          {isIdAvailable === false && submitError.length === 0 && (
+            <Animated.Text entering={FadeInDown.duration(300)} style={styles.errorMessage}>
+              이미 사용 중인 아이디예요.
+            </Animated.Text>
+          )}
+          {id.length === 0 && (
+            <Text style={styles.guideMessage}>영문 소문자, 숫자를 조합해주세요.</Text>
+          )}
+        </Animated.View>
+
+        {step >= 2 && (
           <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
             <View style={[styles.underlineContainer, styles.passwordRow]}>
               <TextInput

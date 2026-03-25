@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -31,6 +32,7 @@ import AgreedTermsModal from '../../components/mypage/AgreedTermsModal';
 import {
   changePassword,
   getProfile,
+  getSsafyLogoutUrl,
   logout as logoutRequest,
   type NativeUserProfileResponse,
 } from '../../services/auth';
@@ -60,6 +62,7 @@ export default function MyPageScreen() {
   const navigation = useNavigation<any>();
   const logout = useAuthStore((state) => state.logout);
   const sessionUser = useAuthStore((state) => state.user);
+  const sessionLoginType = useAuthStore((state) => state.loginType);
   const securityPreferences = useLocalSecurityStore((state) => state.preferences);
   const refreshSecurityPreferences = useLocalSecurityStore((state) => state.refreshPreferences);
   const persistBiometricEnabled = useLocalSecurityStore((state) => state.setBiometricEnabled);
@@ -247,24 +250,48 @@ export default function MyPageScreen() {
 
   /* ── 로그아웃 처리 ── */
   const handleLogout = () => {
-    Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
-      { text: '취소', style: 'cancel' },
-      {
-        text: '로그아웃',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            try { await fcmService.unregisterFcmToken(); } catch (e) {}
-            await logoutRequest();
+    const shouldLogoutSsafy =
+      (profile?.loginType ?? sessionLoginType) === 'SSAFY';
+
+    Alert.alert(
+      '로그아웃',
+      shouldLogoutSsafy
+        ? '로그아웃 후 SSAFY 브라우저 세션도 함께 종료됩니다.'
+        : '정말 로그아웃 하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '로그아웃',
+          style: 'destructive',
+          onPress: async () => {
+            let logoutError: unknown = null;
+
+            try {
+              try { await fcmService.unregisterFcmToken(); } catch (e) {}
+              await logoutRequest();
+            } catch (error) {
+              logoutError = error;
+            }
+
             await clearPersistedAuthSession();
             logout();
             navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
-          } catch (error) {
-            Alert.alert('오류', '로그아웃 처리 중 문제가 발생했습니다.');
-          }
+
+            if (shouldLogoutSsafy) {
+              setTimeout(() => {
+                Linking.openURL(getSsafyLogoutUrl()).catch((error) => {
+                  console.warn('[MyPage] SSAFY browser logout failed:', error);
+                });
+              }, 0);
+            }
+
+            if (logoutError) {
+              Alert.alert('로그아웃 안내', '서버 로그아웃 요청은 실패했지만, 현재 기기에서는 로그아웃 처리되었습니다.');
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   /**

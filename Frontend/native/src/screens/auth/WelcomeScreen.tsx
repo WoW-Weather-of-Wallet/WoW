@@ -72,6 +72,7 @@ export default function WelcomeScreen({ route, navigation }: any) {
             refreshToken: registerResponse.refreshToken,
             user: registerResponse.user,
             autoLoginEnabled: true,
+            loginType: 'SSAFY',
           });
         }
 
@@ -80,6 +81,7 @@ export default function WelcomeScreen({ route, navigation }: any) {
           user: registerResponse.user,
           autoLogin: true,
           source: 'ssafy',
+          loginType: 'SSAFY',
         });
 
         navigation.reset({
@@ -119,6 +121,7 @@ export default function WelcomeScreen({ route, navigation }: any) {
           refreshToken: loginResponse.refreshToken,
           user: loginResponse.user,
           autoLoginEnabled: true,
+          loginType: 'NORMAL',
         });
       }
 
@@ -126,6 +129,7 @@ export default function WelcomeScreen({ route, navigation }: any) {
         accessToken: loginResponse.accessToken,
         user: loginResponse.user,
         autoLogin: true,
+        loginType: 'NORMAL',
       });
 
       navigation.reset({
