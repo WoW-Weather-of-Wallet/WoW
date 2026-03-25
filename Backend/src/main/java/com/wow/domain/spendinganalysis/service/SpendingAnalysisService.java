@@ -18,9 +18,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -112,15 +110,8 @@ public class SpendingAnalysisService {
         List<AiAnalysisCategoryResult> currentMonthCategoryResults = findCategoryResults(currentMonthAnalysis);
         List<AiAnalysisCategoryResult> lastMonthCategoryResults = findCategoryResults(lastMonthAnalysis);
 
-        Map<Integer, BigDecimal> lastMonthRatiosByCategory = lastMonthCategoryResults.stream()
-                .collect(Collectors.toMap(
-                        result -> result.getCategory().getId(),
-                        result -> normalizeRatio(result.getMyRatio()),
-                        (left, right) -> left
-                ));
-
         List<SpendingMonthlyCompareResponse.CategoryData> currentCategories = currentMonthCategoryResults.stream()
-                .map(result -> toCurrentCategory(result, lastMonthRatiosByCategory))
+                .map(this::toCurrentCategory)
                 .toList();
 
         List<SpendingMonthlyCompareResponse.CategoryData> lastCategories = lastMonthCategoryResults.stream()
@@ -170,19 +161,14 @@ public class SpendingAnalysisService {
     }
 
     private SpendingMonthlyCompareResponse.CategoryData toCurrentCategory(
-            AiAnalysisCategoryResult categoryResult,
-            Map<Integer, BigDecimal> lastMonthRatiosByCategory
+            AiAnalysisCategoryResult categoryResult
     ) {
-        int categoryId = categoryResult.getCategory().getId();
         BigDecimal currentRatio = normalizeRatio(categoryResult.getMyRatio());
-        BigDecimal lastRatio = lastMonthRatiosByCategory.getOrDefault(categoryId, BigDecimal.ZERO);
-
         return SpendingMonthlyCompareResponse.CategoryData.current(
-                categoryId,
+                categoryResult.getCategory().getId(),
                 categoryResult.getCategory().getCategoryName(),
                 categoryResult.getCategory().getCategoryIcon(),
-                toPercentage(currentRatio),
-                calculateTrend(currentRatio, lastRatio)
+                toPercentage(currentRatio)
         );
     }
 
@@ -195,20 +181,6 @@ public class SpendingAnalysisService {
                 categoryResult.getCategory().getCategoryIcon(),
                 toPercentage(normalizeRatio(categoryResult.getMyRatio()))
         );
-    }
-
-    private SpendingMonthlyCompareResponse.Trend calculateTrend(
-            BigDecimal currentRatio,
-            BigDecimal lastRatio
-    ) {
-        int compareResult = currentRatio.compareTo(lastRatio);
-        if (compareResult > 0) {
-            return SpendingMonthlyCompareResponse.Trend.UP;
-        }
-        if (compareResult < 0) {
-            return SpendingMonthlyCompareResponse.Trend.DOWN;
-        }
-        return SpendingMonthlyCompareResponse.Trend.SAME;
     }
 
     private int toPercentage(BigDecimal ratio) {

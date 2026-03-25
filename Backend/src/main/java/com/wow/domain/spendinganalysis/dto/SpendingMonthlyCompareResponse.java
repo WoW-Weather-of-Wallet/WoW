@@ -1,6 +1,5 @@
 package com.wow.domain.spendinganalysis.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -55,17 +54,13 @@ public class SpendingMonthlyCompareResponse {
         private String icon;
         private Integer percentage;
 
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        private Trend trend;
-
         public static CategoryData current(
                 Integer categoryId,
                 String categoryName,
                 String icon,
-                Integer percentage,
-                Trend trend
+                Integer percentage
         ) {
-            return new CategoryData(categoryId, categoryName, icon, percentage, trend);
+            return new CategoryData(categoryId, categoryName, icon, percentage);
         }
 
         public static CategoryData previous(
@@ -74,13 +69,7 @@ public class SpendingMonthlyCompareResponse {
                 String icon,
                 Integer percentage
         ) {
-            return new CategoryData(categoryId, categoryName, icon, percentage, null);
+            return new CategoryData(categoryId, categoryName, icon, percentage);
         }
-    }
-
-    public enum Trend {
-        UP,
-        DOWN,
-        SAME
     }
 }
