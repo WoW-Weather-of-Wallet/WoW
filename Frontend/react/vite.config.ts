@@ -14,7 +14,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://192.168.100.165:8080',
+        target: 'https://j14d106.p.ssafy.io',
         changeOrigin: true,
       },
     },
