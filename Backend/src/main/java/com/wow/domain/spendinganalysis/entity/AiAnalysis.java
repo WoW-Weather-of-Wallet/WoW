@@ -49,9 +49,6 @@ public class AiAnalysis {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "comparison_description", columnDefinition = "TEXT")
-    private String comparisonDescription;
-
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
