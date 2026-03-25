@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Modal,
   Pressable,
+  ScrollView,
   Text,
   TouchableOpacity,
   View,
@@ -127,7 +128,11 @@ export default function TermsBottomSheet({
 
           <View style={styles.divider} />
 
-          <View style={styles.agreementsList}>
+          <ScrollView
+            style={styles.agreementsList}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.agreementsListContent}
+          >
             {isLoading ? (
               <View style={styles.row}>
                 <View style={styles.rowLeft}>
@@ -149,7 +154,7 @@ export default function TermsBottomSheet({
                 onViewPress={() => handleViewDocument(key)}
               />
             ))}
-          </View>
+          </ScrollView>
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity

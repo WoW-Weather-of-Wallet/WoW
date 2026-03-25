@@ -81,7 +81,7 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
     lineHeight: fp(24),
-    textAlign: 'left',
+    textAlign: 'center',
     paddingHorizontal: wp(10),
     width: '100%', // 가로를 가득 채우도록 변경
   },

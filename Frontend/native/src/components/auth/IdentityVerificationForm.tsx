@@ -134,7 +134,7 @@ export default function IdentityVerificationForm({
       </View>
 
       {/* 2단계: 주민등록번호 */}
-      {((step >= 2 && name.trim().length >= 2) || (name.trim().length >= 2 && step < 2)) && (
+      {step >= 2 && (
         <Animated.View entering={FadeInDown.duration(500)} style={styles.ssnSection}>
           <View style={[styles.underlineContainer, { flex: 1.1 }]}>
             <TextInput
@@ -164,7 +164,7 @@ export default function IdentityVerificationForm({
       )}
 
       {/* 3단계: 통신사 및 휴대폰 번호 */}
-      {((step >= 3 && ssnFront.length === 6 && ssnBack.length === 1) || (ssnFront.length === 6 && ssnBack.length === 1 && step < 3)) && (
+      {step >= 3 && (
         <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
           <TouchableOpacity style={styles.telecomSelector} onPress={() => setModalVisible(true)}>
             <Text style={[styles.telecomText, telecom === TELECOM_PLACEHOLDER && styles.placeholderText]}>

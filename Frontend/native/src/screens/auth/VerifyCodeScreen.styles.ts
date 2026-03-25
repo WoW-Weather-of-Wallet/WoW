@@ -13,9 +13,12 @@ export const styles = StyleSheet.create({
     lineHeight: fp(40), letterSpacing: -0.5, marginBottom: hp(12),
   },
   subtitle: {
-    fontSize: fp(16), fontFamily: FONTS.medium, color: COLORS.textTertiary, marginBottom: hp(60),
+    fontSize: fp(16), fontFamily: FONTS.medium, color: COLORS.textTertiary, marginBottom: hp(32),
   },
-  dotsContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: wp(16) },
+  dotsContainer: { 
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', 
+    gap: wp(16), marginTop: hp(48),
+  },
   dot: { width: wp(16), height: wp(16), borderRadius: wp(8), backgroundColor: COLORS.gray200 },
   dotFilled: { backgroundColor: COLORS.primary },
   loadingRow: { marginTop: hp(28), alignItems: 'center', gap: hp(10) },
