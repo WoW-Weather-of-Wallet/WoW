@@ -39,6 +39,7 @@ import {
 } from '../../services/localSecurity';
 import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
+import { maskPhoneNumber } from '../../utils/phoneFormat';
 import { validatePassword } from '../../utils/validation';
 import type { MyPageStackNavigationProp } from '../../types';
 
@@ -47,18 +48,6 @@ import { styles } from './MyPageScreen.styles';
 type EditMode = 'profile' | 'phone' | 'password' | null;
 type PinModalStep = 'create' | 'confirm' | 'verify-current' | 'new' | 'confirm-new';
 type PinModalMode = 'setup' | 'change' | 'disable';
-
-const maskPhoneNumber = (phone: string) => {
-  if (!phone) return '-';
-  const cleaned = phone.replace(/[^0-9]/g, '');
-  if (cleaned.length === 11) {
-    return `${cleaned.slice(0, 3)}-****-${cleaned.slice(7)}`;
-  }
-  if (cleaned.length === 10) {
-    return `${cleaned.slice(0, 3)}-***-${cleaned.slice(6)}`;
-  }
-  return phone;
-};
 
 /**
  * MyPageScreen (Settings Overhaul)

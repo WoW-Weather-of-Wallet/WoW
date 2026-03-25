@@ -46,28 +46,13 @@ import {
 } from '../../services/localSecurity';
 import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
+import { maskPhoneNumber } from '../../utils/phoneFormat';
 import { validatePassword } from '../../utils/validation';
 import type { MyPageStackNavigationProp } from '../../types';
 
 type EditMode = 'profile' | 'password' | null;
 type PinModalStep = 'create' | 'confirm' | 'verify-current' | 'new' | 'confirm-new';
 type PinModalMode = 'setup' | 'change' | 'disable';
-
-/**
- * 휴대폰 번호를 마스킹 처리합니다. (01012345678 -> 010-****-5678)
- * 번호가 11자리가 아닐 경우를 대비한 유연한 처리를 포함합니다.
- */
-const maskPhoneNumber = (phone: string) => {
-  if (!phone) return '-';
-  const cleaned = phone.replace(/[^0-9]/g, '');
-  
-  if (cleaned.length === 11) {
-    return `${cleaned.slice(0, 3)}-****-${cleaned.slice(7)}`;
-  } else if (cleaned.length === 10) {
-    return `${cleaned.slice(0, 3)}-***-${cleaned.slice(6)}`;
-  }
-  return phone;
-};
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();

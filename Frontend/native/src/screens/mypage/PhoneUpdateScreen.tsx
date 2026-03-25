@@ -20,41 +20,19 @@ import StepIndicator from '../../components/common/StepIndicator';
 import { styles } from './PhoneUpdateScreen.styles';
 import { COLORS, hp, wp } from '../../constants/theme';
 import {
-  sendSmsCode,
-  verifySmsCode,
+  TELECOM_OPTIONS,
+  TELECOM_PLACEHOLDER,
+  VERIFICATION_CODE_LENGTH,
+} from '../../constants/auth/identityVerification';
+import {
   updatePhone,
   normalizePhoneNumber,
 } from '../../services/auth';
-import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { extractApiErrorMessage } from '../../utils/error';
+import { buildIdentityBackFromProfile, buildIdentityFrontFromBirthDate } from '../../utils/profileIdentity';
 import { validatePhone } from '../../utils/validation';
+import { useSmsVerification } from '../../hooks';
 import type { MyPageStackScreenProps } from '../../types';
-
-const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 알뜰폰'];
-const TELECOM_PLACEHOLDER = '통신사를 선택해 주세요';
-const MAX_CODE_LENGTH = 6;
-
-const toBirthFront = (birthDate: string): string => {
-  if (!birthDate) return '';
-  const digits = birthDate.replace(/-/g, '');
-  return digits.length >= 8 ? digits.slice(2, 8) : '';
-};
-
-const toBirthBack = (gender: string, birthDate: string): string => {
-  if (!gender || !birthDate) return '';
-  const year = parseInt(birthDate.slice(0, 4), 10);
-  const isMale = gender === 'M';
-  if (year >= 2000) return isMale ? '3' : '4';
-  return isMale ? '1' : '2';
-};
-
-const maskPhone = (phone: string): string => {
-  if (!phone) return '-';
-  const cleaned = phone.replace(/[^0-9]/g, '');
-  if (cleaned.length === 11) return `${cleaned.slice(0, 3)}-****-${cleaned.slice(7)}`;
-  if (cleaned.length === 10) return `${cleaned.slice(0, 3)}-***-${cleaned.slice(6)}`;
-  return phone;
-};
 
 export default function PhoneUpdateScreen({
   navigation,
@@ -66,21 +44,33 @@ export default function PhoneUpdateScreen({
   const profileName: string = route.params?.name ?? '';
   const profileBirthDate: string = route.params?.birthDate ?? '';
   const profileGender: string = route.params?.gender ?? '';
-  const expectedSsnFront = toBirthFront(profileBirthDate);
-  const expectedSsnBack = toBirthBack(profileGender, profileBirthDate);
+  const expectedSsnFront = buildIdentityFrontFromBirthDate(profileBirthDate);
+  const expectedSsnBack = buildIdentityBackFromProfile(profileGender, profileBirthDate);
 
-  const [phase, setPhase] = useState<'form' | 'verify'>('form');
   const [telecom, setTelecom] = useState(TELECOM_PLACEHOLDER);
   const [phone, setPhone] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [isTelecomModalVisible, setIsTelecomModalVisible] = useState(false);
-  const [requestedPhoneNumber, setRequestedPhoneNumber] = useState('');
-  const [code, setCode] = useState('');
-  const [verifyError, setVerifyError] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const {
+    phase,
+    code,
+    verifyError,
+    requestedPhoneNumber,
+    requestedPhoneDisplay,
+    isSending,
+    isVerifying,
+    isVerified,
+    startVerification,
+    handlePressNumber,
+    handlePressDelete,
+    resendCode,
+    backToForm,
+  } = useSmsVerification({
+    sendFallbackMessage: '인증번호를 보내지 못했어요. 다시 시도해주세요.',
+    resendFallbackMessage: '인증번호 재발송에 실패했어요. 잠시 후 다시 시도해주세요.',
+    verifyFallbackMessage: '인증번호가 올바르지 않아요. 다시 확인해주세요.',
+  });
 
   const validateForm = () => {
     const normalizedPhoneNumber = normalizePhoneNumber(phone);
@@ -119,97 +109,8 @@ export default function PhoneUpdateScreen({
     }
 
     const normalizedPhoneNumber = normalizePhoneNumber(phone);
-    setIsSending(true);
     setSubmitError('');
-
-    try {
-      await sendSmsCode({ phoneNumber: normalizedPhoneNumber });
-      setRequestedPhoneNumber(normalizedPhoneNumber);
-      setCode('');
-      setVerifyError('');
-      setIsVerified(false);
-      setPhase('verify');
-    } catch (error) {
-      const presentation = buildAuthErrorPresentation(error, {
-        flow: 'sms-send',
-        fallbackMessage: '인증번호를 보내지 못했어요. 다시 시도해주세요.',
-      });
-      Alert.alert(presentation.title, presentation.alertMessage);
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  const handleVerifyCode = async (finalCode: string) => {
-    if (!requestedPhoneNumber) {
-      return;
-    }
-
-    setIsVerifying(true);
-    setVerifyError('');
-
-    try {
-      await verifySmsCode({
-        phoneNumber: requestedPhoneNumber,
-        code: finalCode,
-      });
-      setIsVerified(true);
-    } catch (error) {
-      const presentation = buildAuthErrorPresentation(error, {
-        flow: 'sms-verify',
-        fallbackMessage: '인증번호가 올바르지 않아요. 다시 확인해주세요.',
-      });
-      setVerifyError(presentation.inlineMessage);
-      setCode('');
-      Alert.alert(presentation.title, presentation.alertMessage);
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handlePressNumber = (num: string) => {
-    if (isVerifying || isVerified || code.length >= MAX_CODE_LENGTH) {
-      return;
-    }
-
-    const nextCode = code + num;
-    setCode(nextCode);
-
-    if (nextCode.length === MAX_CODE_LENGTH) {
-      void handleVerifyCode(nextCode);
-    }
-  };
-
-  const handlePressDelete = () => {
-    if (isVerifying || code.length === 0) {
-      return;
-    }
-
-    setCode((prev) => prev.slice(0, -1));
-  };
-
-  const handleResendCode = async () => {
-    if (isSending || !requestedPhoneNumber) {
-      return;
-    }
-
-    setIsSending(true);
-    setCode('');
-    setVerifyError('');
-    setIsVerified(false);
-
-    try {
-      await sendSmsCode({ phoneNumber: requestedPhoneNumber });
-      Alert.alert('재발송 완료', `${maskPhone(requestedPhoneNumber)}으로 인증번호를 다시 전송했습니다.`);
-    } catch (error) {
-      const presentation = buildAuthErrorPresentation(error, {
-        flow: 'sms-send',
-        fallbackMessage: '인증번호 재발송에 실패했어요. 잠시 후 다시 시도해주세요.',
-      });
-      Alert.alert(presentation.title, presentation.alertMessage);
-    } finally {
-      setIsSending(false);
-    }
+    await startVerification(normalizedPhoneNumber);
   };
 
   const handleUpdatePhone = async () => {
@@ -239,7 +140,7 @@ export default function PhoneUpdateScreen({
   };
 
   const renderDots = () =>
-    Array.from({ length: MAX_CODE_LENGTH }).map((_, index) => (
+    Array.from({ length: VERIFICATION_CODE_LENGTH }).map((_, index) => (
       <View key={`phone-update-dot-${index}`} style={[styles.dot, index < code.length && styles.dotFilled]} />
     ));
 
@@ -365,7 +266,7 @@ export default function PhoneUpdateScreen({
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>통신사를 선택해 주세요</Text>
               </View>
-              {TELECOMS.map((item) => (
+              {TELECOM_OPTIONS.map((item) => (
                 <TouchableOpacity
                   key={item}
                   style={styles.modalItem}
@@ -385,7 +286,7 @@ export default function PhoneUpdateScreen({
   return (
     <View style={styles.container}>
       <View style={[styles.verifyContent, { paddingTop: insets.top + hp(28) }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => setPhase('form')}>
+        <TouchableOpacity style={styles.backButton} onPress={backToForm}>
           <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
         </TouchableOpacity>
 
@@ -398,7 +299,7 @@ export default function PhoneUpdateScreen({
             {isVerified ? '휴대폰 번호 확인이\n완료되었어요.' : '인증번호 6자리를\n입력해 주세요.'}
           </Text>
           <Text style={styles.subtitle}>
-            {maskPhone(requestedPhoneNumber)}으로 전송된 인증번호를 입력해 주세요.
+            {requestedPhoneDisplay}으로 전송된 인증번호를 입력해 주세요.
           </Text>
         </Animated.View>
 
@@ -426,7 +327,7 @@ export default function PhoneUpdateScreen({
 
         {!isVerified ? (
           <View style={styles.resendRow}>
-            <TouchableOpacity onPress={() => void handleResendCode()} disabled={isSending}>
+            <TouchableOpacity onPress={() => void resendCode()} disabled={isSending}>
               <Text style={styles.resendText}>
                 {isSending ? '재발송 중...' : '인증번호 다시 받기'}
               </Text>
