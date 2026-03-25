@@ -17,6 +17,7 @@ import GradientButton from '../../components/common/GradientButton';
 import { useAiStore } from '../../store/aiStore';
 import { NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import DataSourceNotice from '../../components/common/DataSourceNotice';
+import type { AiFeedbackStackScreenProps } from '../../types';
 
 /**
  * [UI-Mini-Component] 실제 대시보드를 축소한 느낌의 분석 프리뷰
@@ -114,7 +115,9 @@ const CAROUSEL_DATA = [
   },
 ];
 
-export default function AiFeedbackHomeScreen({ navigation }: any) {
+export default function AiFeedbackHomeScreen({
+  navigation,
+}: AiFeedbackStackScreenProps<'AiFeedbackHome'>) {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const { status, startAnalysis, simulateAnalysis } = useAiStore();

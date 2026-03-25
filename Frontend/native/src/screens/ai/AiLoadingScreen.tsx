@@ -18,6 +18,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DataSourceNotice from '../../components/common/DataSourceNotice';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import type { AiFeedbackStackScreenProps } from '../../types';
 
 /**
  * [UX-Plan] 로딩 단계별 구성을 정의합니다.
@@ -115,7 +116,9 @@ const CompletionCheck = () => {
   );
 };
 
-export default function AiLoadingScreen({ navigation }: any) {
+export default function AiLoadingScreen({
+  navigation,
+}: AiFeedbackStackScreenProps<'AiLoading'>) {
   const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState(0);
   const progress = useSharedValue(0);

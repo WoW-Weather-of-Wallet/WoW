@@ -8,8 +8,11 @@ import { styles } from './AiResultScreen.styles';
 import GradientButton from '../../components/common/GradientButton';
 import { COLORS, hp, wp } from '../../constants/theme';
 import { useAiStore } from '../../store/aiStore';
+import type { AiFeedbackStackScreenProps } from '../../types';
 
-export default function AiResultScreen({ navigation }: any) {
+export default function AiResultScreen({
+  navigation,
+}: AiFeedbackStackScreenProps<'AiResult'>) {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const { reset, resultData } = useAiStore();

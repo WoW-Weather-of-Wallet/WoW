@@ -28,6 +28,7 @@ import {
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { extractApiErrorMessage } from '../../utils/error';
 import { validatePhone } from '../../utils/validation';
+import type { MyPageStackScreenProps } from '../../types';
 
 const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 알뜰폰'];
 const TELECOM_PLACEHOLDER = '통신사를 선택해 주세요';
@@ -55,7 +56,10 @@ const maskPhone = (phone: string): string => {
   return phone;
 };
 
-export default function PhoneUpdateScreen({ navigation, route }: any) {
+export default function PhoneUpdateScreen({
+  navigation,
+  route,
+}: MyPageStackScreenProps<'PhoneUpdate'>) {
   const insets = useSafeAreaInsets();
 
   const rawPhone: string = route.params?.phoneNumber ?? '';

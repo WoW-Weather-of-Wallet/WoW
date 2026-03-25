@@ -1,7 +1,15 @@
-import type { RouteProp } from '@react-navigation/native';
+import type {
+  CompositeNavigationProp,
+  NavigatorScreenParams,
+  RouteProp,
+} from '@react-navigation/native';
+import type {
+  BottomTabNavigationProp,
+  BottomTabScreenProps,
+} from '@react-navigation/bottom-tabs';
 import type {
   NativeStackNavigationProp,
-  NativeStackScreenProps,
+  NativeStackScreenProps
 } from '@react-navigation/native-stack';
 import type {
   AccountRecoveryResultRouteParams,
@@ -22,6 +30,33 @@ export interface TermsPdfParams {
   title: string;
   url: string;
 }
+
+export interface VerifiedProfileParams {
+  phoneNumber: string;
+  name: string;
+  birthDate: string;
+  gender: string;
+}
+
+export type AiFeedbackStackParamList = {
+  AiFeedbackHome: undefined;
+  AiLoading: undefined;
+  AiResult: undefined;
+};
+
+export type MyPageStackParamList = {
+  MyPageHome: undefined;
+  Settings: undefined;
+  Withdraw: VerifiedProfileParams;
+  PhoneUpdate: VerifiedProfileParams;
+};
+
+export type MainTabParamList = {
+  MainHome: undefined;
+  Calendar: { action?: 'add_record' } | undefined;
+  AiFeedback: NavigatorScreenParams<AiFeedbackStackParamList> | undefined;
+  MyPage: NavigatorScreenParams<MyPageStackParamList> | undefined;
+};
 
 /**
  * 루트 스택 네비게이션 파라미터 정의
@@ -44,7 +79,7 @@ export type RootStackParamList = {
   FindPw: FindPwRouteParams | undefined;
   AccountRecoveryResult: AccountRecoveryResultRouteParams;
   ResetPassword: ResetPasswordRouteParams;
-  MainTabs: undefined;
+  MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   TermsPdf: TermsPdfParams;
 };
 
@@ -56,14 +91,47 @@ export type RootRouteProp<T extends keyof RootStackParamList> = RouteProp<
 export type RootScreenProps<T extends keyof RootStackParamList> =
   NativeStackScreenProps<RootStackParamList, T>;
 
-/**
- * 메인 하단 탭 파라미터 정의
- * 현재는 메인/마이 2개 탭만 사용하지만, 추후 캘린더/리포트 탭을
- * 추가할 때도 동일한 타입에 화면 이름을 확장하면 됩니다.
- */
-export type MainTabParamList = {
-  MainHome: undefined;
-  MyPage: undefined;
+export type MainTabNavigationProp<T extends keyof MainTabParamList> =
+  CompositeNavigationProp<
+    BottomTabNavigationProp<MainTabParamList, T>,
+    RootNavigationProp
+  >;
+export type MainTabRouteProp<T extends keyof MainTabParamList> = RouteProp<
+  MainTabParamList,
+  T
+>;
+export type MainTabScreenProps<T extends keyof MainTabParamList> =
+  BottomTabScreenProps<MainTabParamList, T>;
+
+export type AiFeedbackStackNavigationProp<
+  T extends keyof AiFeedbackStackParamList,
+> = CompositeNavigationProp<
+  NativeStackNavigationProp<AiFeedbackStackParamList, T>,
+  RootNavigationProp
+>;
+export type AiFeedbackStackRouteProp<
+  T extends keyof AiFeedbackStackParamList,
+> = RouteProp<AiFeedbackStackParamList, T>;
+export type AiFeedbackStackScreenProps<
+  T extends keyof AiFeedbackStackParamList,
+> = {
+  navigation: AiFeedbackStackNavigationProp<T>;
+  route: AiFeedbackStackRouteProp<T>;
+};
+
+export type MyPageStackNavigationProp<
+  T extends keyof MyPageStackParamList,
+> = CompositeNavigationProp<
+  NativeStackNavigationProp<MyPageStackParamList, T>,
+  RootNavigationProp
+>;
+export type MyPageStackRouteProp<T extends keyof MyPageStackParamList> = RouteProp<
+  MyPageStackParamList,
+  T
+>;
+export type MyPageStackScreenProps<T extends keyof MyPageStackParamList> = {
+  navigation: MyPageStackNavigationProp<T>;
+  route: MyPageStackRouteProp<T>;
 };
 
 /**

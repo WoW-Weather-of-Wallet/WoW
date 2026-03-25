@@ -10,8 +10,9 @@ import AiFeedbackStackNavigator from './AiFeedbackStackNavigator';
 import MyPageStackNavigator from './MyPageStackNavigator';
 import { styles } from './MainTabNavigator.styles';
 import { COLORS, hp } from '../constants/theme';
+import type { MainTabParamList } from '../types';
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
 /**
  * MainTabNavigator

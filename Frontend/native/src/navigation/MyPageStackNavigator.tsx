@@ -4,8 +4,9 @@ import MyPageScreen from '../screens/main/MyPageScreen';
 import SettingsScreen from '../screens/mypage/SettingsScreen';
 import WithdrawScreen from '../screens/mypage/WithdrawScreen';
 import PhoneUpdateScreen from '../screens/mypage/PhoneUpdateScreen';
+import type { MyPageStackParamList } from '../types';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<MyPageStackParamList>();
 
 /**
  * 마이페이지 탭 안에서 설정·회원탈퇴 화면까지 함께 관리합니다.

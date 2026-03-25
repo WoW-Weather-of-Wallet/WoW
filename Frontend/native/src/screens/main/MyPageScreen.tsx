@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -40,6 +40,7 @@ import {
 import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { validatePassword } from '../../utils/validation';
+import type { MyPageStackNavigationProp } from '../../types';
 
 import { styles } from './MyPageScreen.styles';
 
@@ -67,7 +68,7 @@ const maskPhoneNumber = (phone: string) => {
 export default function MyPageScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<MyPageStackNavigationProp<'MyPageHome'>>();
   const logout = useAuthStore((state) => state.logout);
   const sessionUser = useAuthStore((state) => state.user);
   const sessionLoginType = useAuthStore((state) => state.loginType);
@@ -275,7 +276,12 @@ export default function MyPageScreen() {
 
             await clearPersistedAuthSession();
             logout();
-            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              }),
+            );
 
             if (shouldLogoutSsafy) {
               setTimeout(() => {

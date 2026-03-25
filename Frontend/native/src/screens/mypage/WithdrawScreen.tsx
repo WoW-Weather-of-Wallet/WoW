@@ -16,6 +16,7 @@ import {
   Modal,
   Pressable,
 } from 'react-native';
+import { CommonActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,6 +36,7 @@ import { fcmService } from '../../services/fcmService';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { extractApiErrorMessage } from '../../utils/error';
 import { validateName, validatePhone } from '../../utils/validation';
+import type { MyPageStackScreenProps } from '../../types';
 
 const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 알뜰폰'];
 const TELECOM_PLACEHOLDER = '통신사를 선택해 주세요';
@@ -64,7 +66,10 @@ const maskPhone = (phone: string): string => {
 
 const normalizeName = (name: string) => name.trim().replace(/\s+/g, '');
 
-export default function WithdrawScreen({ navigation, route }: any) {
+export default function WithdrawScreen({
+  navigation,
+  route,
+}: MyPageStackScreenProps<'Withdraw'>) {
   const insets = useSafeAreaInsets();
   const logout = useAuthStore((state) => state.logout);
 
@@ -259,7 +264,12 @@ export default function WithdrawScreen({ navigation, route }: any) {
       await deleteAccount();
       await clearPersistedAuthSession();
       logout();
-      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        }),
+      );
     } catch (error) {
       const message = extractApiErrorMessage(
         error,

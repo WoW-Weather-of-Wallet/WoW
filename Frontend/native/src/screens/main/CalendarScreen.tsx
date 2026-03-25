@@ -21,6 +21,7 @@ import {
   FixedExpenseSection,
   TransactionHistorySection,
 } from '../../components/calendar';
+import type { MainTabNavigationProp, MainTabRouteProp } from '../../types';
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
@@ -76,8 +77,8 @@ export default function CalendarScreen() {
     handleSaveMemo,
   } = useCalendarMockState();
 
-  const route = useRoute<any>();
-  const navigation = useNavigation<any>();
+  const route = useRoute<MainTabRouteProp<'Calendar'>>();
+  const navigation = useNavigation<MainTabNavigationProp<'Calendar'>>();
 
   // [UX-Fix] 알림 클릭 등을 통한 딥링크(네비게이션 파라미터) 처리
   React.useEffect(() => {
