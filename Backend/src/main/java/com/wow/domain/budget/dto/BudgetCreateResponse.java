@@ -8,5 +8,5 @@ import lombok.Getter;
 public class BudgetCreateResponse {
     private Long id;
     private Integer amount;
-    private String budgetMonth;
+    private String budgetDate;
 }
