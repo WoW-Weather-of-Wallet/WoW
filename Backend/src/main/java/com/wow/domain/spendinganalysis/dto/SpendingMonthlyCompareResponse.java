@@ -3,10 +3,12 @@ package com.wow.domain.spendinganalysis.dto;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class SpendingMonthlyCompareResponse {
 
@@ -25,6 +27,7 @@ public class SpendingMonthlyCompareResponse {
     }
 
     @Getter
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class MonthData {
         private int year;
@@ -47,6 +50,7 @@ public class SpendingMonthlyCompareResponse {
     }
 
     @Getter
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class CategoryData {
         private Integer categoryId;

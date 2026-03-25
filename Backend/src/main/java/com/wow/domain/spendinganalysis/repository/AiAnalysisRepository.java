@@ -4,7 +4,6 @@ import com.wow.domain.spendinganalysis.entity.AiAnalysis;
 import com.wow.domain.spendinganalysis.entity.AiAnalysisType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface AiAnalysisRepository extends JpaRepository<AiAnalysis, Long> {
@@ -12,19 +11,5 @@ public interface AiAnalysisRepository extends JpaRepository<AiAnalysis, Long> {
     Optional<AiAnalysis> findFirstByUser_IdAndAnalysisTypeOrderByYearDescMonthDescCreatedAtDescIdDesc(
             Long userId,
             AiAnalysisType analysisType
-    );
-
-    Optional<AiAnalysis> findFirstByUser_IdAndAnalysisTypeAndYearAndMonthOrderByCreatedAtDescIdDesc(
-            Long userId,
-            AiAnalysisType analysisType,
-            Integer year,
-            Integer month
-    );
-
-    Optional<AiAnalysis> findFirstByUser_IdAndAnalysisTypeAndCreatedAtBetweenOrderByCreatedAtDescIdDesc(
-            Long userId,
-            AiAnalysisType analysisType,
-            LocalDateTime startDateTime,
-            LocalDateTime endDateTime
     );
 }

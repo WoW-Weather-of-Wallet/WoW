@@ -1,5 +1,7 @@
 package com.wow.domain.spendinganalysis.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wow.domain.calendar.repository.TransactionRepository;
 import com.wow.domain.spendinganalysis.dto.SpendingHalfYearlyResponse;
 import com.wow.domain.spendinganalysis.dto.SpendingMonthlyCompareResponse;
 import com.wow.domain.spendinganalysis.entity.AiAnalysis;
@@ -7,16 +9,19 @@ import com.wow.domain.spendinganalysis.entity.AiAnalysisCategoryResult;
 import com.wow.domain.spendinganalysis.entity.AiAnalysisType;
 import com.wow.domain.spendinganalysis.repository.AiAnalysisCategoryResultRepository;
 import com.wow.domain.spendinganalysis.repository.AiAnalysisRepository;
+import com.wow.global.constant.RedisKeys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,10 +33,15 @@ public class SpendingAnalysisService {
     private static final int EARLY_MONTH_DAY = 7;
 
     private static final AiAnalysisType ANALYSIS_TYPE_HALFYEARLY = AiAnalysisType.HALFYEARLY;
-    private static final AiAnalysisType ANALYSIS_TYPE_MONTHLY = AiAnalysisType.MONTHLY;
+
+    private static final Duration MONTHLY_COMPARE_CACHE_TTL = Duration.ofMinutes(30);
+    private static final DateTimeFormatter CACHE_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
 
     private final AiAnalysisRepository aiAnalysisRepository;
     private final AiAnalysisCategoryResultRepository aiAnalysisCategoryResultRepository;
+    private final TransactionRepository transactionRepository;
+    private final StringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
 
     public SpendingHalfYearlyResponse getHalfYearlySpendingAnalysis(Long userId) {
         AiAnalysis aiAnalysis = findLatestHalfYearlyAnalysis(userId).orElse(null);
@@ -48,177 +58,141 @@ public class SpendingAnalysisService {
 
     public SpendingMonthlyCompareResponse getMonthlySpendingCompare(Long userId) {
         LocalDate today = LocalDate.now();
+        String cacheKey = buildMonthlyCompareCacheKey(userId, today);
+        SpendingMonthlyCompareResponse cachedResponse = readMonthlyCompareCache(cacheKey);
+        if (cachedResponse != null) {
+            return cachedResponse;
+        }
 
-        if (isEarlyMonth(today)) {
-            YearMonth currentTargetMonth = YearMonth.from(today.minusMonths(1));
-            YearMonth lastTargetMonth = currentTargetMonth.minusMonths(1);
+        YearMonth currentTargetMonth = isEarlyMonth(today)
+                ? YearMonth.from(today.minusMonths(1))
+                : YearMonth.from(today);
+        YearMonth defaultLastTargetMonth = currentTargetMonth.minusMonths(1);
 
-            AiAnalysis currentMonthAnalysis = findLatestMonthlyAnalysis(userId, currentTargetMonth).orElse(null);
-            AiAnalysis lastMonthAnalysis = findLatestMonthlyAnalysis(userId, lastTargetMonth).orElse(null);
+        MonthAggregate currentMonthAggregate = buildMonthAggregate(
+                userId,
+                currentTargetMonth,
+                true
+        );
 
-            return buildMonthlyCompareResponse(
-                    currentMonthAnalysis,
-                    currentTargetMonth,
-                    lastMonthAnalysis,
-                    lastTargetMonth
+        MonthAggregate lastMonthAggregate;
+        if (!currentMonthAggregate.hasData()) {
+            YearMonth fallbackLastTargetMonth = YearMonth.from(today.minusMonths(1));
+            lastMonthAggregate = buildMonthAggregate(
+                    userId,
+                    fallbackLastTargetMonth,
+                    false
+            );
+        } else {
+            lastMonthAggregate = buildMonthAggregate(
+                    userId,
+                    defaultLastTargetMonth,
+                    false
             );
         }
 
-        AiAnalysis currentMonthAnalysis = findLatestMonthlyAnalysis(userId).orElse(null);
-
-        if (currentMonthAnalysis == null) {
-            YearMonth currentTargetMonth = YearMonth.from(today);
-            YearMonth lastTargetMonth = currentTargetMonth.minusMonths(1);
-            return SpendingMonthlyCompareResponse.empty(
-                    SpendingMonthlyCompareResponse.MonthData.empty(
-                            currentTargetMonth.getYear(),
-                            currentTargetMonth.getMonthValue()
-                    ),
-                    SpendingMonthlyCompareResponse.MonthData.empty(
-                            lastTargetMonth.getYear(),
-                            lastTargetMonth.getMonthValue()
-                    )
-            );
-        }
-
-        YearMonth currentTargetMonth = YearMonth.of(
-                currentMonthAnalysis.getYear(),
-                currentMonthAnalysis.getMonth()
+        SpendingMonthlyCompareResponse response = SpendingMonthlyCompareResponse.of(
+                currentMonthAggregate.monthData(),
+                lastMonthAggregate.monthData()
         );
 
-        LocalDate previousReferenceDate = resolveReferenceDate(currentMonthAnalysis, currentTargetMonth).minusMonths(1);
-        YearMonth lastTargetMonth = YearMonth.from(previousReferenceDate);
-
-        AiAnalysis lastMonthAnalysis = findMonthlyAnalysisByDate(userId, previousReferenceDate)
-                .or(() -> findLatestMonthlyAnalysis(userId, lastTargetMonth))
-                .orElse(null);
-
-        return buildMonthlyCompareResponse(
-                currentMonthAnalysis,
-                currentTargetMonth,
-                lastMonthAnalysis,
-                lastTargetMonth
-        );
+        writeMonthlyCompareCache(cacheKey, response);
+        return response;
     }
 
-    private SpendingMonthlyCompareResponse buildMonthlyCompareResponse(
-            AiAnalysis currentMonthAnalysis,
-            YearMonth currentTargetMonth,
-            AiAnalysis lastMonthAnalysis,
-            YearMonth lastTargetMonth
-    ) {
-        List<AiAnalysisCategoryResult> currentMonthCategoryResults = findCategoryResults(currentMonthAnalysis);
-        List<AiAnalysisCategoryResult> lastMonthCategoryResults = findCategoryResults(lastMonthAnalysis);
-
-        List<SpendingMonthlyCompareResponse.CategoryData> currentCategories = currentMonthCategoryResults.stream()
-                .map(this::toCurrentCategory)
-                .toList();
-
-        List<SpendingMonthlyCompareResponse.CategoryData> lastCategories = lastMonthCategoryResults.stream()
-                .map(this::toLastCategory)
-                .toList();
-
-        SpendingMonthlyCompareResponse.MonthData currentMonth = buildMonthData(
-                currentMonthAnalysis,
-                currentTargetMonth,
-                currentCategories,
-                currentMonthCategoryResults
-        );
-
-        SpendingMonthlyCompareResponse.MonthData lastMonth = buildMonthData(
-                lastMonthAnalysis,
-                lastTargetMonth,
-                lastCategories,
-                lastMonthCategoryResults
-        );
-
-        if (currentMonthAnalysis == null && lastMonthAnalysis == null) {
-            return SpendingMonthlyCompareResponse.empty(currentMonth, lastMonth);
+    @Transactional
+    public void evictMonthlyCompareCache(Long userId) {
+        String cacheKey = buildMonthlyCompareCacheKey(userId, LocalDate.now());
+        try {
+            redisTemplate.delete(cacheKey);
+        } catch (Exception ignored) {
+            // Keep business flow even when Redis is temporarily unavailable.
         }
-
-        return SpendingMonthlyCompareResponse.of(currentMonth, lastMonth);
     }
 
-    private SpendingMonthlyCompareResponse.MonthData buildMonthData(
-            AiAnalysis analysis,
+    private MonthAggregate buildMonthAggregate(
+            Long userId,
             YearMonth targetMonth,
-            List<SpendingMonthlyCompareResponse.CategoryData> categories,
-            List<AiAnalysisCategoryResult> categoryResults
+            boolean currentMonthStyle
     ) {
-        if (analysis == null) {
-            return SpendingMonthlyCompareResponse.MonthData.empty(
-                    targetMonth.getYear(),
-                    targetMonth.getMonthValue()
-            );
+        List<TransactionRepository.CategoryAmountSummary> categorySummaries =
+                findCategoryAmountSummaries(userId, targetMonth);
+
+        if (categorySummaries.isEmpty()) {
+            return MonthAggregate.empty(targetMonth);
         }
 
-        return SpendingMonthlyCompareResponse.MonthData.of(
-                analysis.getYear(),
-                analysis.getMonth(),
-                calculateTotalAmount(categoryResults),
+        int totalAmount = categorySummaries.stream()
+                .map(TransactionRepository.CategoryAmountSummary::getTotalAmount)
+                .mapToInt(this::toAmount)
+                .sum();
+
+        if (totalAmount <= 0) {
+            return MonthAggregate.empty(targetMonth);
+        }
+
+        List<SpendingMonthlyCompareResponse.CategoryData> categories = categorySummaries.stream()
+                .map(summary -> toCategoryData(summary, totalAmount, currentMonthStyle))
+                .toList();
+
+        SpendingMonthlyCompareResponse.MonthData monthData = SpendingMonthlyCompareResponse.MonthData.of(
+                targetMonth.getYear(),
+                targetMonth.getMonthValue(),
+                totalAmount,
                 categories
         );
+        return new MonthAggregate(monthData, true);
     }
 
-    private SpendingMonthlyCompareResponse.CategoryData toCurrentCategory(
-            AiAnalysisCategoryResult categoryResult
+    private List<TransactionRepository.CategoryAmountSummary> findCategoryAmountSummaries(
+            Long userId,
+            YearMonth targetMonth
     ) {
-        BigDecimal currentRatio = normalizeRatio(categoryResult.getMyRatio());
-        return SpendingMonthlyCompareResponse.CategoryData.current(
-                categoryResult.getCategory().getId(),
-                categoryResult.getCategory().getCategoryName(),
-                categoryResult.getCategory().getCategoryIcon(),
-                toPercentage(currentRatio)
-        );
+        LocalDateTime start = targetMonth.atDay(1).atStartOfDay();
+        LocalDateTime end = targetMonth.plusMonths(1).atDay(1).atStartOfDay();
+        return transactionRepository.findCategoryAmountSummariesByUserIdAndRange(userId, start, end);
     }
 
-    private SpendingMonthlyCompareResponse.CategoryData toLastCategory(
-            AiAnalysisCategoryResult categoryResult
+    private SpendingMonthlyCompareResponse.CategoryData toCategoryData(
+            TransactionRepository.CategoryAmountSummary summary,
+            int totalAmount,
+            boolean currentMonthStyle
     ) {
+        int percentage = calculatePercentage(summary.getTotalAmount(), totalAmount);
+
+        if (currentMonthStyle) {
+            return SpendingMonthlyCompareResponse.CategoryData.current(
+                    summary.getCategoryId(),
+                    summary.getCategoryName(),
+                    summary.getCategoryIcon(),
+                    percentage
+            );
+        }
+
         return SpendingMonthlyCompareResponse.CategoryData.previous(
-                categoryResult.getCategory().getId(),
-                categoryResult.getCategory().getCategoryName(),
-                categoryResult.getCategory().getCategoryIcon(),
-                toPercentage(normalizeRatio(categoryResult.getMyRatio()))
+                summary.getCategoryId(),
+                summary.getCategoryName(),
+                summary.getCategoryIcon(),
+                percentage
         );
     }
 
-    private int toPercentage(BigDecimal ratio) {
-        return ratio.setScale(0, RoundingMode.HALF_UP).intValue();
-    }
-
-    private int calculateTotalAmount(List<AiAnalysisCategoryResult> categoryResults) {
-        return categoryResults.stream()
-                .mapToInt(this::extractPrice)
-                .sum();
-    }
-
-    private int extractPrice(AiAnalysisCategoryResult categoryResult) {
-        return categoryResult.getPrice() == null ? 0 : categoryResult.getPrice();
-    }
-
-    private BigDecimal normalizeRatio(BigDecimal ratio) {
-        return ratio == null ? BigDecimal.ZERO : ratio;
-    }
-
-    private List<AiAnalysisCategoryResult> findCategoryResults(AiAnalysis aiAnalysis) {
-        if (aiAnalysis == null) {
-            return List.of();
+    private int calculatePercentage(BigDecimal categoryAmount, int totalAmount) {
+        if (totalAmount <= 0) {
+            return 0;
         }
-
-        return aiAnalysisCategoryResultRepository.findByAiAnalysis_IdOrderByMyRatioDesc(aiAnalysis.getId());
+        return normalizeAmount(categoryAmount)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(totalAmount), 0, RoundingMode.HALF_UP)
+                .intValue();
     }
 
-    private boolean isEarlyMonth(LocalDate today) {
-        return today.getDayOfMonth() <= EARLY_MONTH_DAY;
+    private int toAmount(BigDecimal amount) {
+        return normalizeAmount(amount).setScale(0, RoundingMode.HALF_UP).intValue();
     }
 
-    private LocalDate resolveReferenceDate(AiAnalysis aiAnalysis, YearMonth fallbackMonth) {
-        LocalDateTime createdAt = aiAnalysis.getCreatedAt();
-        if (createdAt != null) {
-            return createdAt.toLocalDate();
-        }
-        return fallbackMonth.atDay(1);
+    private BigDecimal normalizeAmount(BigDecimal amount) {
+        return amount == null ? BigDecimal.ZERO : amount;
     }
 
     private Optional<AiAnalysis> findLatestHalfYearlyAnalysis(Long userId) {
@@ -229,31 +203,50 @@ public class SpendingAnalysisService {
                 );
     }
 
-    private Optional<AiAnalysis> findLatestMonthlyAnalysis(Long userId) {
-        return aiAnalysisRepository
-                .findFirstByUser_IdAndAnalysisTypeOrderByYearDescMonthDescCreatedAtDescIdDesc(
-                        userId,
-                        ANALYSIS_TYPE_MONTHLY
-                );
+    private boolean isEarlyMonth(LocalDate today) {
+        return today.getDayOfMonth() <= EARLY_MONTH_DAY;
     }
 
-    private Optional<AiAnalysis> findLatestMonthlyAnalysis(Long userId, YearMonth targetMonth) {
-        return aiAnalysisRepository
-                .findFirstByUser_IdAndAnalysisTypeAndYearAndMonthOrderByCreatedAtDescIdDesc(
-                        userId,
-                        ANALYSIS_TYPE_MONTHLY,
-                        targetMonth.getYear(),
-                        targetMonth.getMonthValue()
-                );
+    private String buildMonthlyCompareCacheKey(Long userId, LocalDate today) {
+        return RedisKeys.SPENDING_MONTHLY_COMPARE_PREFIX
+                + userId
+                + ":"
+                + today.format(CACHE_DATE_FORMAT);
     }
 
-    private Optional<AiAnalysis> findMonthlyAnalysisByDate(Long userId, LocalDate targetDate) {
-        return aiAnalysisRepository
-                .findFirstByUser_IdAndAnalysisTypeAndCreatedAtBetweenOrderByCreatedAtDescIdDesc(
-                        userId,
-                        ANALYSIS_TYPE_MONTHLY,
-                        targetDate.atStartOfDay(),
-                        targetDate.atTime(LocalTime.MAX)
-                );
+    private SpendingMonthlyCompareResponse readMonthlyCompareCache(String cacheKey) {
+        try {
+            String cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached == null || cached.isBlank()) {
+                return null;
+            }
+            return objectMapper.readValue(cached, SpendingMonthlyCompareResponse.class);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private void writeMonthlyCompareCache(String cacheKey, SpendingMonthlyCompareResponse response) {
+        try {
+            String serialized = objectMapper.writeValueAsString(response);
+            redisTemplate.opsForValue().set(cacheKey, serialized, MONTHLY_COMPARE_CACHE_TTL);
+        } catch (Exception ignored) {
+            // Keep business flow even when Redis is temporarily unavailable.
+        }
+    }
+
+    private record MonthAggregate(
+            SpendingMonthlyCompareResponse.MonthData monthData,
+            boolean hasData
+    ) {
+        private static MonthAggregate empty(YearMonth month) {
+            return new MonthAggregate(
+                    SpendingMonthlyCompareResponse.MonthData.empty(
+                            month.getYear(),
+                            month.getMonthValue()
+                    ),
+                    false
+            );
+        }
     }
 }
