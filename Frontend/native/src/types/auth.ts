@@ -1,6 +1,15 @@
 export type SignupMode = 'normal' | 'ssafy';
+export type RecoveryFlow = 'FindId' | 'FindPw';
 
 export type IdentityGender = 'M' | 'F';
+
+export interface IdentityVerificationData {
+  name: string;
+  ssnFront: string;
+  ssnBack: string;
+  telecom: string;
+  phone: string;
+}
 
 export interface SignupIdentityRouteParams {
   name?: string;

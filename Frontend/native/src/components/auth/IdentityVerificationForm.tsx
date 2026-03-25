@@ -12,25 +12,18 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, wp, hp } from '../../constants/theme';
+import type { IdentityVerificationData } from '../../types/auth';
 import { styles } from './IdentityVerificationForm.styles';
 
 const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 알뜰폰'];
 const TELECOM_PLACEHOLDER = '통신사를 선택해주세요';
 
-export interface IdentityData {
-  name: string;
-  ssnFront: string;
-  ssnBack: string;
-  telecom: string;
-  phone: string;
-}
-
 interface IdentityVerificationFormProps {
-  onComplete: (data: IdentityData) => void;
+  onComplete: (data: IdentityVerificationData) => void;
   submitButtonText?: string;
   isSubmitting?: boolean;
   errorMessage?: string;
-  onValuesChange?: (data: IdentityData) => void;
+  onValuesChange?: (data: IdentityVerificationData) => void;
 }
 
 /**
@@ -225,4 +218,6 @@ export default function IdentityVerificationForm({
     </View>
   );
 }
+
+export type { IdentityVerificationData as IdentityData };
 

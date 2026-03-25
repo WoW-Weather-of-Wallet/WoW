@@ -6,28 +6,36 @@ import {
   Alert,
   TextInput,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { styles } from './FindPwScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import AuthScreenLayout from '../../components/auth/AuthScreenLayout';
 import AuthIntroBlock from '../../components/auth/AuthIntroBlock';
-import IdentityVerificationForm, { IdentityData } from '../../components/auth/IdentityVerificationForm';
+import IdentityVerificationForm from '../../components/auth/IdentityVerificationForm';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
-import { sendSmsCode } from '../../services/auth';
-import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
+import { useRecoverySmsFlow } from '../../hooks/useRecoverySmsFlow';
 import { validateId } from '../../utils/validation';
 
 export default function FindPwScreen() {
-  const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
   const [userId, setUserId] = useState(route.params?.prefilledId || '');
   const [showVerification, setShowVerification] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [termsVisible, setTermsVisible] = useState(false);
-  const [pendingData, setPendingData] = useState<IdentityData | null>(null);
+  const {
+    isSubmitting,
+    termsVisible,
+    handleIdentityComplete,
+    handleTermsClose,
+    handleTermsConfirm,
+  } = useRecoverySmsFlow({
+    flow: 'FindPw',
+    fallbackMessage: '인증번호 발송에 실패했어요. 잠시 후 다시 시도해 주세요.',
+    buildParams: () => ({
+      userId: userId.trim(),
+    }),
+  });
 
   React.useEffect(() => {
     if (route.params?.prefilledId) {
@@ -43,38 +51,6 @@ export default function FindPwScreen() {
     }
 
     Alert.alert('오류', validation.message);
-  };
-
-  const handleComplete = (data: IdentityData) => {
-    setPendingData(data);
-    setTermsVisible(true);
-  };
-
-  const handleTermsConfirm = async () => {
-    if (!pendingData) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      // 비밀번호 재설정 전 본인확인 완료 상태를 만들기 위해 SMS 인증을 먼저 시작합니다.
-      await sendSmsCode({ phoneNumber: pendingData.phone });
-
-      // 인증 화면에서 userId와 본인확인 정보를 함께 사용하므로 한 번에 전달합니다.
-      navigation.navigate('VerifyCode', {
-        ...pendingData,
-        userId: userId.trim(),
-        flow: 'FindPw',
-      });
-    } catch (error: any) {
-      const presentation = buildAuthErrorPresentation(error, {
-        flow: 'sms-send',
-        fallbackMessage: '인증번호 발송에 실패했어요. 잠시 후 다시 시도해 주세요.',
-      });
-      Alert.alert(presentation.title, presentation.alertMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const handleUserIdChange = (text: string) => {
@@ -143,7 +119,7 @@ export default function FindPwScreen() {
           <Animated.View entering={FadeInDown.duration(500)} style={styles.formWrapper}>
             <View style={styles.divider} />
             <IdentityVerificationForm
-              onComplete={handleComplete}
+              onComplete={handleIdentityComplete}
               isSubmitting={isSubmitting}
             />
           </Animated.View>
@@ -153,7 +129,7 @@ export default function FindPwScreen() {
       <TermsBottomSheet
         visible={termsVisible}
         flow="FindPw"
-        onClose={() => setTermsVisible(false)}
+        onClose={handleTermsClose}
         onConfirm={handleTermsConfirm}
       />
     </>
