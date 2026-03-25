@@ -33,23 +33,26 @@ const TELECOMS = ['SKT', 'KT', 'LG U+', 'SKT 알뜰폰', 'KT 알뜰폰', 'LG U+ 
 const TELECOM_PLACEHOLDER = '통신사를 선택해 주세요';
 const MAX_CODE_LENGTH = 6;
 
+const toBirthFront = (birthDate: string): string => {
+  if (!birthDate) return '';
+  const digits = birthDate.replace(/-/g, '');
+  return digits.length >= 8 ? digits.slice(2, 8) : '';
+};
+
+const toBirthBack = (gender: string, birthDate: string): string => {
+  if (!gender || !birthDate) return '';
+  const year = parseInt(birthDate.slice(0, 4), 10);
+  const isMale = gender === 'M';
+  if (year >= 2000) return isMale ? '3' : '4';
+  return isMale ? '1' : '2';
+};
+
 const maskPhone = (phone: string): string => {
   if (!phone) return '-';
   const cleaned = phone.replace(/[^0-9]/g, '');
   if (cleaned.length === 11) return `${cleaned.slice(0, 3)}-****-${cleaned.slice(7)}`;
   if (cleaned.length === 10) return `${cleaned.slice(0, 3)}-***-${cleaned.slice(6)}`;
   return phone;
-};
-
-const formatBirthDate = (birthDate: string): string => {
-  if (!birthDate) return '-';
-  return birthDate;
-};
-
-const toGenderLabel = (gender: string): string => {
-  if (gender === 'M') return '남성';
-  if (gender === 'F') return '여성';
-  return '-';
 };
 
 export default function PhoneUpdateScreen({ navigation, route }: any) {
@@ -59,6 +62,8 @@ export default function PhoneUpdateScreen({ navigation, route }: any) {
   const profileName: string = route.params?.name ?? '';
   const profileBirthDate: string = route.params?.birthDate ?? '';
   const profileGender: string = route.params?.gender ?? '';
+  const expectedSsnFront = toBirthFront(profileBirthDate);
+  const expectedSsnBack = toBirthBack(profileGender, profileBirthDate);
 
   const [phase, setPhase] = useState<'form' | 'verify'>('form');
   const [telecom, setTelecom] = useState(TELECOM_PLACEHOLDER);
@@ -262,35 +267,40 @@ export default function PhoneUpdateScreen({ navigation, route }: any) {
           </View>
 
           <Animated.View entering={FadeInDown.duration(400)}>
-            <Text style={styles.title}>새 휴대폰 번호를{'\n'}입력해 주세요.</Text>
-            <Text style={styles.formSubtitle}>
-              가입 시 확인된 정보는 변경할 수 없어요.{'\n'}새 번호로 본인 인증을 진행합니다.
-            </Text>
+            <Text style={styles.title}>새 휴대폰 번호를 입력해주세요.</Text>
+            <Text style={styles.formSubtitle}>통신사 선택 후, 새로운 번호로 본인 인증을 진행합니다.</Text>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.summaryCard}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>이름</Text>
-              <Text style={styles.summaryValue}>{profileName || '-'}</Text>
+          <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.inputSection}>
+            <View style={styles.underlineContainer}>
+              <Text style={[styles.bareText, { letterSpacing: profileName ? 2 : 0 }]}>
+                {profileName || '-'}
+              </Text>
             </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>생년월일</Text>
-              <Text style={styles.summaryValue}>{formatBirthDate(profileBirthDate)}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>성별</Text>
-              <Text style={styles.summaryValue}>{toGenderLabel(profileGender)}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>현재 번호</Text>
-              <Text style={styles.summaryValue}>{maskPhone(rawPhone)}</Text>
-            </View>
-            <Text style={styles.summaryHint}>
-              기본 정보는 가입 시 본인 인증으로 확인된 정보라 직접 수정할 수 없습니다.
-            </Text>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(180).duration(400)} style={styles.inputSection}>
+          <Animated.View entering={FadeInDown.delay(160).duration(400)} style={styles.ssnSection}>
+            <View style={[styles.underlineContainer, { flex: 1.1, justifyContent: 'center' }]}>
+              <Text
+                style={[
+                  styles.bareText,
+                  {
+                    textAlign: 'center',
+                    letterSpacing: expectedSsnFront ? 4 : 0,
+                  },
+                ]}
+              >
+                {expectedSsnFront || 'YYMMDD'}
+              </Text>
+            </View>
+            <Text style={styles.dash}>-</Text>
+            <View style={[styles.underlineContainer, styles.ssnBackContainer]}>
+              <Text style={[styles.bareText, styles.ssnBackText]}>{expectedSsnBack || '0'}</Text>
+              <Text style={styles.ssnMasking}>******</Text>
+            </View>
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.delay(220).duration(400)} style={styles.inputSection}>
             <TouchableOpacity
               style={styles.telecomSelector}
               onPress={() => setIsTelecomModalVisible(true)}
@@ -306,20 +316,24 @@ export default function PhoneUpdateScreen({ navigation, route }: any) {
               <Ionicons name="chevron-down" size={wp(24)} color={COLORS.textPrimary} />
             </TouchableOpacity>
 
-            <View style={[styles.underlineContainer, { marginTop: hp(32) }]}>
-              <TextInput
-                style={[styles.bareInput, { letterSpacing: phone.length > 0 ? 2 : 0 }]}
-                value={phone}
-                onChangeText={(text) => {
-                  setPhone(text.replace(/[^0-9]/g, ''));
-                  setSubmitError('');
-                }}
-                placeholder="새 휴대폰 번호 (- 없이 입력)"
-                placeholderTextColor={COLORS.textTertiary}
-                keyboardType="number-pad"
-                maxLength={11}
-              />
-            </View>
+            {telecom !== TELECOM_PLACEHOLDER ? (
+              <Animated.View entering={FadeInDown.duration(350)}>
+                <View style={[styles.underlineContainer, { marginTop: hp(32) }]}>
+                  <TextInput
+                    style={[styles.bareInput, { letterSpacing: phone.length > 0 ? 2 : 0 }]}
+                    value={phone}
+                    onChangeText={(text) => {
+                      setPhone(text.replace(/[^0-9]/g, ''));
+                      setSubmitError('');
+                    }}
+                    placeholder="새 휴대폰 번호 (- 없이 입력)"
+                    placeholderTextColor={COLORS.textTertiary}
+                    keyboardType="number-pad"
+                    maxLength={11}
+                  />
+                </View>
+              </Animated.View>
+            ) : null}
 
             {submitError.length > 0 ? <Text style={styles.errorText}>{submitError}</Text> : null}
           </Animated.View>

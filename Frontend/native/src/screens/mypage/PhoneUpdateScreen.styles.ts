@@ -85,6 +85,38 @@ export const styles = StyleSheet.create({
     padding: 0,
     margin: 0,
   },
+  bareText: {
+    fontSize: fp(24),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  ssnSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: hp(24),
+  },
+  dash: {
+    fontSize: fp(20),
+    fontFamily: FONTS.regular,
+    color: COLORS.textPrimary,
+    marginHorizontal: wp(12),
+    marginBottom: hp(16),
+  },
+  ssnBackContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ssnBackText: {
+    width: wp(30),
+    textAlign: 'center',
+  },
+  ssnMasking: {
+    fontSize: fp(24),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    letterSpacing: wp(4),
+  },
   telecomSelector: {
     flexDirection: 'row',
     justifyContent: 'space-between',
