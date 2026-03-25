@@ -11,22 +11,18 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class SpendingMonthlyCompareResponse {
 
-    private static final String EMPTY_DESCRIPTION = "비교할 소비 데이터가 없어요.";
-
     private MonthData currentMonth;
     private MonthData lastMonth;
-    private String description;
 
     public static SpendingMonthlyCompareResponse of(
             MonthData currentMonth,
-            MonthData lastMonth,
-            String description
+            MonthData lastMonth
     ) {
-        return new SpendingMonthlyCompareResponse(currentMonth, lastMonth, description);
+        return new SpendingMonthlyCompareResponse(currentMonth, lastMonth);
     }
 
     public static SpendingMonthlyCompareResponse empty(MonthData currentMonth, MonthData lastMonth) {
-        return new SpendingMonthlyCompareResponse(currentMonth, lastMonth, EMPTY_DESCRIPTION);
+        return new SpendingMonthlyCompareResponse(currentMonth, lastMonth);
     }
 
     @Getter

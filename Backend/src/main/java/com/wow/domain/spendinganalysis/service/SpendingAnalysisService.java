@@ -17,7 +17,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,10 +31,6 @@ public class SpendingAnalysisService {
 
     private static final AiAnalysisType ANALYSIS_TYPE_HALFYEARLY = AiAnalysisType.HALFYEARLY;
     private static final AiAnalysisType ANALYSIS_TYPE_MONTHLY = AiAnalysisType.MONTHLY;
-
-    private static final String EMPTY_COMPARE_DESCRIPTION = "비교할 소비 데이터가 없어요.";
-    private static final String NO_LAST_MONTH_DATA_DESCRIPTION = "지난 달 데이터가 없어 이번 달 소비만 보여드려요.";
-    private static final String NO_CURRENT_MONTH_DATA_DESCRIPTION = "이번 달 데이터가 없어 지난 달 소비만 보여드려요.";
 
     private final AiAnalysisRepository aiAnalysisRepository;
     private final AiAnalysisCategoryResultRepository aiAnalysisCategoryResultRepository;
@@ -150,15 +145,7 @@ public class SpendingAnalysisService {
             return SpendingMonthlyCompareResponse.empty(currentMonth, lastMonth);
         }
 
-        String description = buildDescription(
-                currentMonthAnalysis,
-                lastMonthAnalysis,
-                currentMonth.getTotalAmount(),
-                lastMonth.getTotalAmount(),
-                currentMonthCategoryResults
-        );
-
-        return SpendingMonthlyCompareResponse.of(currentMonth, lastMonth, description);
+        return SpendingMonthlyCompareResponse.of(currentMonth, lastMonth);
     }
 
     private SpendingMonthlyCompareResponse.MonthData buildMonthData(
@@ -180,50 +167,6 @@ public class SpendingAnalysisService {
                 calculateTotalAmount(categoryResults),
                 categories
         );
-    }
-
-    private String buildDescription(
-            AiAnalysis currentMonthAnalysis,
-            AiAnalysis lastMonthAnalysis,
-            int currentTotalAmount,
-            int lastTotalAmount,
-            List<AiAnalysisCategoryResult> currentMonthCategoryResults
-    ) {
-        if (currentMonthAnalysis == null && lastMonthAnalysis == null) {
-            return EMPTY_COMPARE_DESCRIPTION;
-        }
-
-        if (lastMonthAnalysis == null) {
-            return NO_LAST_MONTH_DATA_DESCRIPTION;
-        }
-
-        if (currentMonthAnalysis == null) {
-            return NO_CURRENT_MONTH_DATA_DESCRIPTION;
-        }
-
-        int diff = currentTotalAmount - lastTotalAmount;
-        String topCategoryName = findTopCategoryName(currentMonthCategoryResults);
-
-        if (diff > 0) {
-            return "지난 달보다 " + formatAmount(diff) + "원 더 썼어요. " + topCategoryName + "가 주요 원인이에요.";
-        }
-
-        if (diff < 0) {
-            return "지난 달보다 " + formatAmount(-diff) + "원 덜 썼어요. " + topCategoryName + " 비중이 가장 높아요.";
-        }
-
-        return "지난 달과 같은 금액을 썼어요. " + topCategoryName + " 비중이 가장 높아요.";
-    }
-
-    private String findTopCategoryName(List<AiAnalysisCategoryResult> categoryResults) {
-        return categoryResults.stream()
-                .max(Comparator.comparingInt(this::extractPrice))
-                .map(result -> result.getCategory().getCategoryName())
-                .orElse("기타");
-    }
-
-    private String formatAmount(int amount) {
-        return String.format("%,d", amount);
     }
 
     private SpendingMonthlyCompareResponse.CategoryData toCurrentCategory(
