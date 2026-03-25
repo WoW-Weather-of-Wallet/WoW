@@ -35,12 +35,8 @@ import {
   getProfile,
   getSsafyLogoutUrl,
   logout as logoutRequest,
-  sendSmsCode,
   updateNotificationSettings,
-  updatePhone,
   updateProfile,
-  verifySmsCode,
-  normalizePhoneNumber,
   type NativeUserProfileResponse,
 } from '../../services/auth';
 import { clearPersistedAuthSession } from '../../services/sessionStorage';
@@ -52,7 +48,7 @@ import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { validatePassword } from '../../utils/validation';
 
-type EditMode = 'profile' | 'phone' | 'password' | null;
+type EditMode = 'profile' | 'password' | null;
 type PinModalStep = 'create' | 'confirm' | 'verify-current' | 'new' | 'confirm-new';
 type PinModalMode = 'setup' | 'change' | 'disable';
 
@@ -97,13 +93,9 @@ export default function SettingsScreen() {
   const [name, setName] = useState('');
   const [gender, setGender] = useState('');
   const [birthDate, setBirthDate] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [phoneCode, setPhoneCode] = useState('');
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
-  const [isPhoneCodeSent, setIsPhoneCodeSent] = useState(false);
-  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const [isTermsModalVisible, setIsTermsModalVisible] = useState(false);
   const [isPinModalVisible, setIsPinModalVisible] = useState(false);
   const [pinModalMode, setPinModalMode] = useState<PinModalMode>('setup');
@@ -157,12 +149,9 @@ export default function SettingsScreen() {
     setName('');
     setGender('');
     setBirthDate('');
-    setPhoneNumber('');
-    setPhoneCode('');
     setCurrentPw('');
     setNewPw('');
     setConfirmPw('');
-    setIsPhoneVerified(false);
     setIsCurrentPwVisible(false);
     setIsNewPwVisible(false);
     setIsConfirmPwVisible(false);
@@ -181,11 +170,12 @@ export default function SettingsScreen() {
   };
 
   const openPhoneEditor = () => {
-    setPhoneNumber(profile?.phoneNumber ?? '');
-    setPhoneCode('');
-    setIsPhoneCodeSent(false);
-    setIsPhoneVerified(false);
-    setEditMode('phone');
+    navigation.navigate('PhoneUpdate', {
+      phoneNumber: profile?.phoneNumber ?? '',
+      name: profile?.name ?? '',
+      birthDate: profile?.birthDate ?? '',
+      gender: profile?.gender ?? '',
+    });
   };
 
   const openPasswordEditor = () => {
@@ -412,58 +402,6 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleSendPhoneCode = async () => {
-    const normalizedPhone = normalizePhoneNumber(phoneNumber);
-
-    if (isSubmitting || normalizedPhone.length < 10) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      await sendSmsCode({ phoneNumber: normalizedPhone });
-      setIsPhoneCodeSent(true);
-      setIsPhoneVerified(false);
-      Alert.alert('인증번호 발송', '인증번호를 문자로 전송했습니다.');
-    } catch (error) {
-      const presentation = buildAuthErrorPresentation(error, {
-        flow: 'sms-send',
-        fallbackMessage: '인증번호를 보내지 못했어요. 다시 시도해주세요.',
-      });
-      Alert.alert(presentation.title, presentation.alertMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleVerifyPhoneCode = async () => {
-    const normalizedPhone = normalizePhoneNumber(phoneNumber);
-
-    if (isSubmitting || !isPhoneCodeSent || phoneCode.trim().length !== 6) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      await verifySmsCode({
-        phoneNumber: normalizedPhone,
-        code: phoneCode.trim(),
-      });
-      setIsPhoneVerified(true);
-      Alert.alert('인증 완료', '휴대폰 번호 인증이 완료되었습니다.');
-    } catch (error) {
-      const presentation = buildAuthErrorPresentation(error, {
-        flow: 'sms-verify',
-        fallbackMessage: '인증번호를 확인하지 못했어요. 다시 시도해주세요.',
-      });
-      Alert.alert(presentation.title, presentation.alertMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleSubmit = async () => {
     if (!editMode || isSubmitting) {
       return;
@@ -484,31 +422,6 @@ export default function SettingsScreen() {
           userId: updated.userId ?? undefined,
           name: updated.name,
         });
-      }
-
-      if (editMode === 'phone') {
-        /**
-         * [Defense-Log] 백엔드 중복 체크 로직(P2)이 본인 번호를 제외하지 못하는 이슈 대응
-         * 현재 번호와 동일한 경우 백엔드에서 400 에러("이미 가입된 번호")를 낼 수 있으므로
-         * 프론트엔드에서 미리 체크하여 불필요한 요청을 방지합니다.
-         */
-        const normalizedNew = normalizePhoneNumber(phoneNumber);
-        const normalizedOld = normalizePhoneNumber(profile?.phoneNumber ?? '');
-        
-        if (normalizedNew === normalizedOld) {
-          Alert.alert('정보 유지', '현재 등록된 번호와 동일해요.');
-          closeEditor();
-          return;
-        }
-
-        if (!isPhoneVerified) {
-          throw new Error('휴대폰 번호 변경 전에 SMS 인증을 완료해주세요.');
-        }
-
-        await updatePhone({
-          phoneNumber: normalizedNew,
-        });
-        await loadProfile();
       }
 
       if (editMode === 'password') {
@@ -535,13 +448,7 @@ export default function SettingsScreen() {
 
       closeEditor();
     } catch (error) {
-      if (editMode === 'phone') {
-        const presentation = buildAuthErrorPresentation(error, {
-          flow: 'phone-update',
-          fallbackMessage: '휴대폰 번호 변경을 저장하지 못했어요.',
-        });
-        Alert.alert(presentation.title, presentation.alertMessage);
-      } else if (editMode === 'password') {
+      if (editMode === 'password') {
         const presentation = buildAuthErrorPresentation(error, {
           flow: 'password-reset',
           fallbackMessage: '비밀번호를 변경하지 못했어요.',
@@ -766,9 +673,7 @@ export default function SettingsScreen() {
             <Text style={styles.modalTitle}>
               {editMode === 'profile'
                 ? '프로필 정보 수정'
-                : editMode === 'phone'
-                  ? '휴대폰 번호 수정'
-                  : '비밀번호 변경'}
+                : '비밀번호 변경'}
             </Text>
 
             {editMode === 'profile' ? (
@@ -791,58 +696,6 @@ export default function SettingsScreen() {
                   <Text style={styles.readOnlyValue}>{birthDate}</Text>
                 </View>
                 <Text style={styles.readOnlyHint}>* 기본 정보는 본인인증을 통해 확인된 정보라 직접 수정할 수 없어요.</Text>
-              </>
-            ) : null}
-
-
-            {editMode === 'phone' ? (
-              <>
-                <TextInput
-                  style={styles.input}
-                  placeholder="휴대폰 번호 (- 없이 입력)"
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={phoneNumber}
-                  onChangeText={(value) => {
-                    setPhoneNumber(value);
-                    setIsPhoneVerified(false);
-                  }}
-                  keyboardType="number-pad"
-                />
-                <TouchableOpacity
-                  style={[styles.inlineActionButton, styles.secondaryInlineActionButton]}
-                  onPress={() => void handleSendPhoneCode()}
-                  disabled={isSubmitting}
-                >
-                  <Text style={styles.secondaryInlineActionText}>
-                    {isPhoneCodeSent ? '인증번호 다시 발송' : '인증번호 발송'}
-                  </Text>
-                </TouchableOpacity>
-
-                {isPhoneCodeSent ? (
-                  <>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="인증번호 6자리"
-                      placeholderTextColor={COLORS.textTertiary}
-                      value={phoneCode}
-                      onChangeText={setPhoneCode}
-                      keyboardType="number-pad"
-                      maxLength={6}
-                    />
-                    <TouchableOpacity
-                      style={[
-                        styles.inlineActionButton,
-                        isPhoneVerified && styles.verifiedInlineActionButton,
-                      ]}
-                      onPress={() => void handleVerifyPhoneCode()}
-                      disabled={isSubmitting || isPhoneVerified}
-                    >
-                      <Text style={styles.inlineActionText}>
-                        {isPhoneVerified ? '인증 완료' : '인증번호 확인'}
-                      </Text>
-                    </TouchableOpacity>
-                  </>
-                ) : null}
               </>
             ) : null}
 

@@ -20,7 +20,8 @@ const Tab = createBottomTabNavigator();
  */
 export default function MainTabNavigator() {
   const insets = useSafeAreaInsets();
-  const shouldHideTabBarForRoute = (routeName?: string) => routeName === 'Withdraw';
+  const shouldHideTabBarForRoute = (routeName?: string) =>
+    routeName === 'Withdraw' || routeName === 'PhoneUpdate';
 
   return (
     <>
