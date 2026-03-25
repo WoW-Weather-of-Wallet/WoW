@@ -16,11 +16,11 @@ Notifications.setNotificationHandler({
     // 대신 UI(토스트, 배너 등)를 통해 알림 내용을 처리하도록 유도합니다.
     // (사용자가 의도적으로 앱을 사용 중일 때 알림이 화면을 가리는 현상을 방지)
     return {
-      shouldShowAlert: false, // 시스템 알림 팝업 억제
-      shouldPlaySound: true,  // 소리는 재생 (진동 포함)
+      shouldShowAlert: true,  // 시스템 알림 팝업 허용
+      shouldPlaySound: true,  // 소리 재생 (진동 포함)
       shouldSetBadge: true,
-      shouldShowBanner: false,
-      shouldShowList: false,
+      shouldShowBanner: true, // 상단 배너 표시
+      shouldShowList: true,   // 알림 센터 목록 표시
     };
   },
 });
@@ -149,33 +149,8 @@ export const fcmService = {
       }
       
       // B. 그 외 주요 알림 (지출 추가, 캘린더 이동 등)
-      // 앱 사용을 방해하지 않으면서도 수신 사실을 알리기 위해 선택형 Alert를 띄웁니다.
-      if (action === 'add_record' || action === 'calendar_main') {
-        Alert.alert(
-          title || '알림 도착',
-          `${body}\n\n지금 해당 화면으로 이동하시겠습니까?`,
-          [
-            { text: '나중에', style: 'cancel' },
-            { 
-              text: '이동하기', 
-              onPress: () => {
-                // RootNavigator에서 관리하는 navigationRef를 통해 페이지 이동 처리
-                if (navigationRef.isReady()) {
-                  if (action === 'add_record') {
-                    navigationRef.navigate('MainTabs', {
-                      screen: 'Calendar',
-                      params: { action: 'add_record' }
-                    });
-                  } else {
-                    navigationRef.navigate('MainTabs', { screen: 'Calendar' });
-                  }
-                }
-              } 
-            }
-          ],
-          { cancelable: true }
-        );
-      }
+      // 시스템 알림(shouldShowAlert: true)을 통해 사용자에게 이미 노출되므로,
+      // 별도의 앱 내 Alert(모달) 호출은 일관성을 위해 제거합니다.
     });
 
     // 2. 토큰 갱신 리스너 (구글이 기기 토큰을 강제로 변경했을 때)
