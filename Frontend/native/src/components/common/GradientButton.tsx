@@ -11,8 +11,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
-import { COLORS } from '../../constants/theme';
-import { styles } from './GradientButton.styles';
+import { COLORS, FONTS, RADIUS, fp, hp } from '../../constants/theme';
 
 interface GradientButtonProps {
   title: string;
@@ -24,6 +23,22 @@ interface GradientButtonProps {
 }
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+const solidButtonStyle = {
+  paddingVertical: hp(16),
+  borderRadius: RADIUS.xl,
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
+};
+const outlineButtonStyle = {
+  ...solidButtonStyle,
+  borderWidth: 1.5,
+  borderColor: COLORS.border,
+  backgroundColor: COLORS.background,
+};
+const buttonTextStyle = {
+  fontSize: fp(16),
+  letterSpacing: 0.3,
+};
 
 /**
  * GradientButton - 그라데이션/아웃라인 버튼 컴포넌트
@@ -60,9 +75,14 @@ export default function GradientButton({
         onPressOut={handlePressOut}
         activeOpacity={0.8}
         disabled={disabled}
-        style={[animatedStyle, styles.outlineButton, style]}
+        style={[animatedStyle, outlineButtonStyle, style]}
       >
-        <Text style={[styles.outlineText, textStyle]}>{title}</Text>
+        <Text
+          className="font-sans-semibold text-text"
+          style={[buttonTextStyle, { fontFamily: FONTS.semiBold }, textStyle]}
+        >
+          {title}
+        </Text>
       </AnimatedTouchable>
     );
   }
@@ -80,9 +100,14 @@ export default function GradientButton({
         colors={[COLORS.primaryLight, COLORS.primary]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.solidButton}
+        style={solidButtonStyle}
       >
-        <Text style={[styles.solidText, textStyle]}>{title}</Text>
+        <Text
+          className="font-sans-semibold text-text-inverse"
+          style={[buttonTextStyle, { fontFamily: FONTS.semiBold }, textStyle]}
+        >
+          {title}
+        </Text>
       </LinearGradient>
     </AnimatedTouchable>
   );

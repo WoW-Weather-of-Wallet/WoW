@@ -11,8 +11,7 @@ import Animated, {
   withTiming,
   interpolateColor,
 } from 'react-native-reanimated';
-import { COLORS } from '../../constants/theme';
-import { styles } from './CustomTextInput.styles';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
 interface CustomTextInputProps extends RNTextInputProps {
   label: string;
@@ -54,9 +53,27 @@ export default function CustomTextInput({
   };
 
   return (
-    <AnimatedView style={[styles.container, animatedBorderStyle, containerStyle]}>
+    <AnimatedView
+      style={[
+        {
+          borderWidth: 1.5,
+          borderRadius: RADIUS.xl,
+          backgroundColor: COLORS.background,
+          paddingHorizontal: wp(20),
+          paddingVertical: hp(4),
+        },
+        animatedBorderStyle,
+        containerStyle,
+      ]}
+    >
       <RNTextInput
-        style={styles.input}
+        className="font-sans text-text"
+        style={{
+          fontSize: fp(15),
+          fontFamily: FONTS.regular,
+          color: COLORS.textPrimary,
+          paddingVertical: hp(14),
+        }}
         placeholder={label}
         placeholderTextColor={COLORS.textTertiary}
         onFocus={handleFocus}
