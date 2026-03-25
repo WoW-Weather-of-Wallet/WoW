@@ -16,6 +16,8 @@ export const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.xxl,
     overflow: 'hidden',
+    maxWidth: 420,
+    alignSelf: 'center',
     paddingBottom: hp(24),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
@@ -81,7 +83,7 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
     lineHeight: fp(24),
-    textAlign: 'center',
+    textAlign: 'left',
     paddingHorizontal: wp(10),
     width: '100%', // 가로를 가득 채우도록 변경
   },

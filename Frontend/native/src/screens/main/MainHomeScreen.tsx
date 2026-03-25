@@ -21,6 +21,7 @@ import type { CalendarHeaderResponse } from '../../types/calendar';
 export default function MainHomeScreen() {
   const insets = useSafeAreaInsets();
   const accessToken = useAuthStore((state) => state.accessToken);
+  const sessionUserName = useAuthStore((state) => state.user?.name);
   const tabBarHeight = useBottomTabBarHeight();
   const reportModal = useModalState();
   const spendingTypeModal = useModalState();
@@ -28,6 +29,10 @@ export default function MainHomeScreen() {
   const [isWeatherLoading, setIsWeatherLoading] = React.useState(false);
   const today = React.useMemo(() => new Date(), []);
   const monthLabel = `${today.getMonth() + 1}월`;
+  const trimmedUserName = sessionUserName?.trim();
+  const homeHeading = trimmedUserName
+    ? `${trimmedUserName}님, 이번 달 소비 흐름을 살펴볼까요?`
+    : '이번 달 소비 흐름을 한눈에 살펴볼까요?';
 
   const loadHomeHeader = React.useCallback(async () => {
     if (!accessToken) {
@@ -82,12 +87,12 @@ export default function MainHomeScreen() {
         <HomeSpendingTypeCard onPress={spendingTypeModal.open} />
         <HomeBudgetReportCard
           monthLabel={monthLabel}
-          userName="-"
+          userName={trimmedUserName}
           remainingBudget={null}
           budgetUsageRate={null}
           spentAmount={null}
           totalBudget={null}
-          forecastText="-"
+          forecastText={null}
           onPress={reportModal.open}
         />
         {/* 카테고리별 소비는 실제 API 연결 전까지 화면에서 제외합니다. */}

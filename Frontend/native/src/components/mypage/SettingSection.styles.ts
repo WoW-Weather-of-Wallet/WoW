@@ -3,14 +3,14 @@ import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
 
 export const styles = StyleSheet.create({
   container: {
-    marginTop: hp(20),
+    marginTop: hp(4),
   },
   sectionTitle: {
-    fontSize: fp(13),
+    fontSize: fp(15),
     fontFamily: FONTS.bold,
     color: COLORS.textTertiary,
-    marginLeft: wp(22),
-    marginBottom: hp(8),
+    marginLeft: wp(18),
+    marginBottom: hp(10),
     textTransform: 'uppercase',
   },
   content: {

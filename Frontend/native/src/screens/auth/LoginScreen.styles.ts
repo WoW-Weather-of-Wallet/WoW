@@ -81,19 +81,6 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
   },
-  autoLoginContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingVertical: hp(8),
-    marginBottom: hp(16),
-  },
-  autoLoginText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textPrimary,
-    marginRight: wp(10),
-  },
 
   /* ── 구분선 ── */
   dividerContainer: {

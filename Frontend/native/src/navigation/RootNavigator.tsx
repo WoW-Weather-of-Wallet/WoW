@@ -412,7 +412,6 @@ function NavigationWrapper() {
           }}
         />
       </Stack.Navigator>
-      <AiNotification />
       <QuickLoginGate
         visible={isAuthenticated && isAppLocked}
         biometricAvailable={preferences.pinEnabled && Platform.OS !== 'ios'}

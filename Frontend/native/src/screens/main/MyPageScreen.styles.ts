@@ -11,9 +11,17 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.backgroundSecondary,
   },
+  profileDock: {
+    paddingHorizontal: wp(20),
+    paddingBottom: hp(8),
+    backgroundColor: COLORS.backgroundSecondary,
+  },
+  scrollView: {
+    flex: 1,
+  },
   contentContainer: {
     paddingHorizontal: wp(20),
-    gap: hp(18),
+    gap: hp(10),
   },
 
   /* ── 프로필 헤더 ── */
@@ -24,11 +32,16 @@ export const styles = StyleSheet.create({
     gap: hp(18),
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
-    marginTop: hp(10),
+    shadowColor: COLORS.textPrimary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 4,
   },
   profileHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    // 다시 왼쪽 정렬로 복구
   },
   avatarCircle: {
     width: wp(68),
@@ -45,13 +58,14 @@ export const styles = StyleSheet.create({
     color: COLORS.textInverse,
   },
   profileTextBlock: {
-    flex: 1,
+    flex: 1, // 우측 공간을 모두 차지하게 함
+    gap: hp(6),
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: wp(8),
-    marginBottom: hp(4),
+    justifyContent: 'space-between',
+    width: '100%',
   },
   profileName: {
     fontSize: fp(22),
@@ -61,11 +75,6 @@ export const styles = StyleSheet.create({
   profileNameHighlight: {
     fontFamily: FONTS.extraBold,
     color: COLORS.primaryDark,
-  },
-  profileDescription: {
-    fontSize: fp(13),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
   },
   profileBadge: {
     backgroundColor: COLORS.primary + '15', // very light primary
@@ -180,20 +189,6 @@ export const styles = StyleSheet.create({
   },
 
   /* ── 설정 및 모달 ── */
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(12),
-    paddingBottom: hp(12),
-  },
-  toggleDescription: {
-    flex: 1,
-    fontSize: fp(12),
-    lineHeight: fp(18),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
   modalBackdrop: {
     flex: 1,
     backgroundColor: COLORS.modalOverlay,

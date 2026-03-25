@@ -20,16 +20,60 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
   },
-  scheduleRight: { alignItems: 'flex-end' },
+  scheduleRight: { alignItems: 'flex-end', gap: hp(6) },
   scheduleAmount: {
     fontSize: fp(14),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    marginBottom: hp(4),
   },
-  scheduleStatus: {
+  statusChip: {
+    borderRadius: RADIUS.full,
+    paddingHorizontal: wp(10),
+    paddingVertical: hp(5),
+  },
+  statusChipDone: {
+    backgroundColor: COLORS.statusDoneBackground,
+  },
+  statusChipUpcoming: {
+    backgroundColor: COLORS.statusWarningBackground,
+  },
+  statusChipText: {
     fontSize: fp(12),
     fontFamily: FONTS.semiBold,
-    color: COLORS.warning,
+  },
+  statusChipTextDone: {
+    color: COLORS.statusDoneText,
+  },
+  statusChipTextUpcoming: {
+    color: COLORS.statusWarningText,
+  },
+  emptyState: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(14),
+    paddingVertical: hp(8),
+  },
+  emptyIconWrap: {
+    width: wp(48),
+    height: wp(48),
+    borderRadius: wp(24),
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primary50,
+  },
+  emptyTextWrap: {
+    flex: 1,
+    gap: hp(4),
+  },
+  emptyTitle: {
+    fontSize: fp(15),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
+  },
+  emptyDescription: {
+    fontSize: fp(13),
+    lineHeight: fp(19),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
   },
 });

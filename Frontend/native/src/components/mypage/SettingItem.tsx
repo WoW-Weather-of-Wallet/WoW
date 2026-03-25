@@ -12,6 +12,7 @@ interface SettingItemProps {
   onPress?: () => void;
   onToggle?: (val: boolean) => void;
   isDanger?: boolean;
+  isDisabled?: boolean;
 }
 
 /**
@@ -26,6 +27,7 @@ export default function SettingItem({
   onPress,
   onToggle,
   isDanger = false,
+  isDisabled = false,
 }: SettingItemProps) {
   const content = (
     <View style={styles.container}>
@@ -47,6 +49,7 @@ export default function SettingItem({
           <Switch
             value={isToggled}
             onValueChange={onToggle}
+            disabled={isDisabled}
             trackColor={{ false: COLORS.switchTrackFalse, true: COLORS.primary }}
             thumbColor={COLORS.white}
           />
@@ -63,7 +66,7 @@ export default function SettingItem({
     <TouchableOpacity 
       activeOpacity={0.6} 
       onPress={onPress}
-      disabled={!onPress}
+      disabled={!onPress || isDisabled}
     >
       {content}
     </TouchableOpacity>

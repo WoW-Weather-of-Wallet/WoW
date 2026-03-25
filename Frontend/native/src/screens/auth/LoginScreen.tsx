@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
-  Switch,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -117,7 +116,7 @@ export default function LoginScreen({ navigation }: any) {
   const loginToStore = useAuthStore((state) => state.login);
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
-  const [autoLogin, setAutoLogin] = useState(false);
+  const autoLogin = true;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState('');
   const handledSsafyUrlRef = useRef<string | null>(null);
@@ -140,7 +139,7 @@ export default function LoginScreen({ navigation }: any) {
   const completeSsafyLogin = useCallback(
     async (parsed: NativeSsafyCodeLoginResult) => {
       const response = await exchangeSsafyToken(parsed.code);
-      if (autoLogin && response.refreshToken) {
+      if (response.refreshToken) {
         await savePersistedAuthSession({
           refreshToken: response.refreshToken,
           user: response.user,
@@ -257,7 +256,7 @@ export default function LoginScreen({ navigation }: any) {
         pw: password,
       });
 
-      if (autoLogin && response.refreshToken) {
+      if (response.refreshToken) {
         await savePersistedAuthSession({
           refreshToken: response.refreshToken,
           user: response.user,
@@ -404,23 +403,6 @@ export default function LoginScreen({ navigation }: any) {
 
           <Animated.View
             entering={FadeInDown.delay(450).duration(500).springify()}
-            style={styles.autoLoginContainer}
-          >
-            <Text style={styles.autoLoginText}>{'자동 로그인'}</Text>
-            <Switch
-              value={autoLogin}
-              onValueChange={setAutoLogin}
-              trackColor={{
-                false: COLORS.border,
-                true: COLORS.primarySoft,
-              }}
-              thumbColor={autoLogin ? COLORS.primary : COLORS.switchThumbInactive}
-              ios_backgroundColor={COLORS.border}
-            />
-          </Animated.View>
-
-          <Animated.View
-            entering={FadeInDown.delay(550).duration(500).springify()}
             style={styles.dividerContainer}
           >
             <View style={styles.dividerLine} />
@@ -428,7 +410,7 @@ export default function LoginScreen({ navigation }: any) {
             <View style={styles.dividerLine} />
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(650).duration(500).springify()}>
+          <Animated.View entering={FadeInDown.delay(550).duration(500).springify()}>
             <TouchableOpacity
               onPress={handleSSAFYLoginPress}
               style={styles.ssafyButton}
