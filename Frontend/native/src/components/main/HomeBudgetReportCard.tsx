@@ -26,7 +26,24 @@ export default function HomeBudgetReportCard({
   forecastText,
   onPress,
 }: HomeBudgetReportCardProps) {
-  const usageRate = budgetUsageRate ?? 0;
+  const usageRate = Math.max(0, Math.min(budgetUsageRate ?? 0, 100));
+  const hasBudgetData = [remainingBudget, budgetUsageRate, spentAmount, totalBudget].some(
+    (value) => value != null,
+  );
+  const trimmedUserName = userName?.trim();
+  const helperMessage = hasBudgetData
+    ? `이번 달 소비 ${spentAmount == null ? '-' : `${spentAmount.toLocaleString()}원`} / 총 예산 ${
+        totalBudget == null ? '-' : `${totalBudget.toLocaleString()}원`
+      }`
+    : '지출 데이터가 쌓이면 이번 달 예산 흐름을 정확하게 안내해드릴게요.';
+  const forecastMessage =
+    forecastText?.trim() ||
+    (hasBudgetData
+      ? '월말 예측 문구를 곧 보여드릴게요.'
+      : '월간 리포트를 열어 소비 패턴과 절약 팁을 먼저 확인해보세요.');
+  const remainingValue =
+    remainingBudget == null ? '준비 중' : `${remainingBudget.toLocaleString()}원`;
+  const usageLabel = budgetUsageRate == null ? '예산 분석 대기' : `${budgetUsageRate}% 사용`;
 
   return (
     <TouchableOpacity activeOpacity={0.94} onPress={onPress}>
@@ -38,7 +55,13 @@ export default function HomeBudgetReportCard({
           <View style={styles.flex1}>
             <Text style={styles.eyebrow}>{monthLabel}</Text>
             <Text style={styles.heroTitle}>
-              <Text style={styles.heroTitleHighlight}>{userName || '-'}</Text>
+              {trimmedUserName ? (
+                <>
+                  <Text style={styles.heroTitleHighlight}>{trimmedUserName}</Text>님의 예산 현황
+                </>
+              ) : (
+                '이번 달 예산 리포트'
+              )}
             </Text>
           </View>
           <View style={styles.aiBadge}>
@@ -53,15 +76,11 @@ export default function HomeBudgetReportCard({
 
         <View style={styles.rowBetween}>
           <View>
-            <Text style={styles.amountLabel}>남은 예산</Text>
-            <Text style={styles.amountValue}>
-              {remainingBudget == null ? '-' : `${remainingBudget.toLocaleString()}원`}
-            </Text>
+            <Text style={styles.amountLabel}>{hasBudgetData ? '남은 예산' : '리포트 준비 중'}</Text>
+            <Text style={styles.amountValue}>{remainingValue}</Text>
           </View>
           <View style={styles.usageChip}>
-            <Text style={styles.usageChipText}>
-              {budgetUsageRate == null ? '-' : `${budgetUsageRate}% 사용`}
-            </Text>
+            <Text style={styles.usageChipText}>{usageLabel}</Text>
           </View>
         </View>
 
@@ -71,11 +90,8 @@ export default function HomeBudgetReportCard({
           />
         </View>
 
-        <Text style={styles.helperText}>
-          이번 달 소비 {spentAmount == null ? '-' : `${spentAmount.toLocaleString()}원`} / 총 예산{' '}
-          {totalBudget == null ? '-' : `${totalBudget.toLocaleString()}원`}
-        </Text>
-        <Text style={styles.forecastText}>{forecastText || '-'}</Text>
+        <Text style={styles.helperText}>{helperMessage}</Text>
+        <Text style={styles.forecastText}>{forecastMessage}</Text>
       </LinearGradient>
     </TouchableOpacity>
   );

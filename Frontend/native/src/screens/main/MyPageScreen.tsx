@@ -1,25 +1,21 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Linking,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StatusBar,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import * as Notifications from 'expo-notifications';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import { COLORS, hp, wp } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
@@ -102,14 +98,6 @@ export default function MyPageScreen() {
   const [pinInput, setPinInput] = useState('');
   const [pinDraft, setPinDraft] = useState('');
   const [pinError, setPinError] = useState('');
-  const [fcmToken, setFcmToken] = useState<string | null>(null);
-
-  // [Test] FCM 토큰 획득
-  useEffect(() => {
-    Notifications.getDevicePushTokenAsync()
-      .then(result => setFcmToken(result.data))
-      .catch(err => console.log('[FCM-Test] 토큰 획득 실패:', err));
-  }, []);
   const [isPinSubmitting, setIsPinSubmitting] = useState(false);
 
   // 약관 모달 상태
@@ -326,24 +314,22 @@ export default function MyPageScreen() {
   };
 
   const displayName = profile?.name ?? sessionUser?.name ?? '사용자';
-  const displayBadge = profile?.loginType === 'SSAFY' ? 'SSAFY 회원' : '일반 회원';
+  const displayBadge =
+    (profile?.loginType ?? sessionLoginType) === 'SSAFY' ? 'SSAFY 회원' : '일반 회원';
   const displayInitial = displayName.slice(0, 1);
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-      
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.contentContainer,
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.backgroundSecondary} />
+
+      <View
+        style={[
+          styles.profileDock,
           {
             paddingTop: insets.top + hp(12),
-            paddingBottom: tabBarHeight + hp(40),
           },
         ]}
       >
-        {/* ── 사용자 프로필 헤더 (뱃지 통합) ── */}
         <View style={styles.profileCard}>
           <View style={styles.profileHeaderRow}>
             <View style={styles.avatarCircle}>
@@ -368,7 +354,19 @@ export default function MyPageScreen() {
             </View>
           )}
         </View>
+      </View>
 
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.contentContainer,
+          {
+            paddingTop: hp(16),
+            paddingBottom: tabBarHeight + hp(40),
+          },
+        ]}
+      >
         {/* [LEGACY: Legacy Sections - Preserved for Reference]
           <View style={styles.profileSummaryRow}>
             <View style={styles.profileSummaryItem}>
@@ -427,18 +425,10 @@ export default function MyPageScreen() {
         <SettingSection title="알림 및 보안">
           <SettingItem 
             label="알림 상태" 
-            value={profile?.alarmEnabled ? '사용 중' : '꺼짐'} 
-            type="text" 
+            type="toggle"
+            isToggled={profile?.alarmEnabled || false}
+            isDisabled
           />
-          <View style={styles.toggleRow}>
-            <Text style={styles.toggleDescription}>모든 금융 알림을 수신합니다.</Text>
-            <Switch
-              value={profile?.alarmEnabled || false}
-              disabled
-              trackColor={{ false: COLORS.gray100, true: COLORS.primary }}
-              thumbColor={COLORS.white}
-            />
-          </View>
           <View style={{ height: hp(12) }} />
           <SettingItem
             label={securityPreferences.pinEnabled ? '간편비밀번호 변경' : '간편비밀번호 설정'}
@@ -477,43 +467,6 @@ export default function MyPageScreen() {
             <Ionicons name="exit-outline" size={wp(20)} color={COLORS.error} />
           </TouchableOpacity>
         </View>
-
-        {/* ── [Test] FCM 토큰 확인 섹션 (회원 탈퇴 아래) ── */}
-        {fcmToken && (
-          <View style={{ padding: wp(20), paddingBottom: hp(10), borderTopWidth: 1, borderTopColor: COLORS.gray100 }}>
-            <Text style={{ fontSize: wp(12), color: COLORS.gray400, marginBottom: hp(8) }}>
-              [테스트용] FCM 기기 토큰
-            </Text>
-            <TouchableOpacity 
-              activeOpacity={0.7}
-              onPress={async () => {
-                await Clipboard.setStringAsync(fcmToken);
-                Alert.alert('복사 완료', 'FCM 토큰이 클립보드에 복사되었습니다. 테스트 시 붙여넣기를 사용하세요.');
-              }}
-              style={{ 
-                padding: wp(12), 
-                backgroundColor: COLORS.gray50, 
-                borderRadius: 8, 
-                borderStyle: 'dashed', 
-                borderWidth: 1, 
-                borderColor: COLORS.gray200, 
-                flexDirection: 'row', 
-                alignItems: 'center', 
-                justifyContent: 'space-between' 
-              }}
-            >
-              <Text numberOfLines={1} style={{ fontSize: wp(10), color: COLORS.gray500, flex: 1 }}>
-                {fcmToken}
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: wp(4), marginLeft: wp(8) }}>
-                <Ionicons name="copy-outline" size={wp(14)} color={COLORS.primary} />
-                <Text style={{ fontSize: wp(10), color: COLORS.primary, fontWeight: 'bold' }}>
-                  복사하기
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        )}
       </ScrollView>
 
       {/* ── 프로필 정보 모달 ── */}
