@@ -212,6 +212,13 @@ export const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     marginBottom: hp(6),
   },
+  modalDescription: {
+    fontSize: fp(13),
+    lineHeight: fp(20),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+    marginBottom: hp(2),
+  },
   
   /* ── 입력 및 필드 ── */
   input: {
@@ -267,7 +274,7 @@ export const styles = StyleSheet.create({
     lineHeight: fp(20),
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   hyperlinkAction: {
     fontFamily: FONTS.bold,
@@ -293,6 +300,18 @@ export const styles = StyleSheet.create({
     fontSize: fp(15),
     fontFamily: FONTS.semiBold,
     color: COLORS.textInverse,
+  },
+  secondaryButton: {
+    flex: 1,
+    paddingVertical: hp(14),
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.gray100,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    fontSize: fp(15),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
   },
 
   /* ── PIN 모달 전용 ── */

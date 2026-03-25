@@ -548,7 +548,10 @@ export default function MyPageScreen() {
       <Modal visible={editMode === 'phone'} transparent animationType="fade">
         <Pressable style={styles.modalBackdrop} onPress={closeEditor}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>휴대폰 번호</Text>
+            <Text style={styles.modalTitle}>휴대폰 번호 변경</Text>
+            <Text style={styles.modalDescription}>
+              현재 등록된 번호를 확인한 뒤, 새 번호로 본인 인증을 진행해 주세요.
+            </Text>
             <View style={styles.readOnlyInput}>
               <Text style={styles.readOnlyLabel}>현재 번호</Text>
               <Text style={styles.readOnlyValue}>{maskPhoneNumber(profile?.phoneNumber ?? '')}</Text>
@@ -556,19 +559,19 @@ export default function MyPageScreen() {
             
             <View style={styles.hyperlinkContainer}>
               <Text style={styles.hyperlinkText}>
-                휴대폰 번호 변경은 본인 확인 후 새 번호로 인증을 완료하면 바로 진행할 수 있습니다.
+                새 휴대폰 번호로 인증번호를 받아 본인 확인을 완료하면 번호를 변경할 수 있습니다.
               </Text>
-              <Text style={[styles.readOnlyHint, { textAlign: 'center', marginTop: hp(8) }]}>
+              <Text style={[styles.readOnlyHint, { textAlign: 'left', marginTop: hp(8) }]}>
                 이름, 생년월일, 성별 정보는 가입 시 확인된 내용으로 고정됩니다.
               </Text>
             </View>
 
             <View style={styles.modalButtonRow}>
               <TouchableOpacity
-                style={[styles.primaryButton, { backgroundColor: COLORS.gray100 }]}
+                style={styles.secondaryButton}
                 onPress={closeEditor}
               >
-                <Text style={[styles.primaryButtonText, { color: COLORS.textPrimary }]}>닫기</Text>
+                <Text style={styles.secondaryButtonText}>취소</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.primaryButton}
@@ -582,7 +585,7 @@ export default function MyPageScreen() {
                   });
                 }}
               >
-                <Text style={styles.primaryButtonText}>변경하기</Text>
+                <Text style={styles.primaryButtonText}>본인 인증하기</Text>
               </TouchableOpacity>
             </View>
           </View>
