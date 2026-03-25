@@ -5,7 +5,6 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import BottomSheetModal from '../common/BottomSheetModal';
 import {
-  CALENDAR_ENTRY_CATEGORIES,
   CALENDAR_EXCEL_BANKS,
   type CalendarEntryCategoryKey,
 } from '../../constants/calendar/addEntry';
@@ -24,6 +23,7 @@ import {
 } from '../../services/calendar';
 // 엑셀 가이드 서비스 호출 제거 (수동 호출 방식으로 변경)
 import ExcelUploadGuideModal from './ExcelUploadGuideModal';
+import CalendarCategorySelector from './CalendarCategorySelector';
 import type {
   CalendarUploadBackendItem,
   CalendarUploadBackendSummary,
@@ -421,31 +421,11 @@ export default function CalendarAddEntrySheet({
               ) : null}
 
               <FieldLabel label="카테고리" />
-              <View style={styles.categoryGrid}>
-                {CALENDAR_ENTRY_CATEGORIES.map((category) => {
-                  const isActive = selectedCategory === category.key;
-
-                  return (
-                    <TouchableOpacity
-                      key={category.key}
-                      activeOpacity={0.88}
-                      style={[styles.categoryChip, isActive && styles.categoryChipActive]}
-                      onPress={() => setSelectedCategory(category.key)}
-                    >
-                      <Ionicons
-                        name={category.icon}
-                        size={wp(14)}
-                        color={isActive ? COLORS.white : COLORS.textSecondary}
-                      />
-                      <Text
-                        style={[styles.categoryChipText, isActive && styles.categoryChipTextActive]}
-                      >
-                        {category.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+              <CalendarCategorySelector
+                variant="chip"
+                selectedCategory={selectedCategory}
+                onSelect={setSelectedCategory}
+              />
 
               <FieldLabel label="결제수단" />
               {/*
@@ -815,19 +795,15 @@ export default function CalendarAddEntrySheet({
             <Text style={styles.recommendBadgeText}>자동 분류가 애매한 항목은 직접 고를 수 있어요.</Text>
           </View>
 
-          <View style={styles.categorySelectGrid}>
-            {CALENDAR_ENTRY_CATEGORIES.map((category) => (
-              <TouchableOpacity
-                key={category.key}
-                activeOpacity={0.88}
-                style={styles.categorySelectCard}
-                onPress={() => handleSelectUploadCategory(category.key)}
-              >
-                <Ionicons name={category.icon} size={wp(22)} color={COLORS.primary} />
-                <Text style={styles.categorySelectText}>{category.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <ScrollView
+            style={styles.categorySelectScroll}
+            contentContainerStyle={styles.categorySelectContent}
+            bounces={false}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}
+          >
+            <CalendarCategorySelector variant="chip" onSelect={handleSelectUploadCategory} />
+          </ScrollView>
         </View>
       </BottomSheetModal>
     </>

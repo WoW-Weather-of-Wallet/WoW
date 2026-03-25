@@ -62,7 +62,7 @@ export default function TransactionHistorySection({
                         <View style={styles.itemTitleRow}>
                           <Text style={styles.itemTitle}>{item.title}</Text>
                           {item.isFixedExpense ? (
-                            <Ionicons name="pin" size={wp(12)} color={COLORS.primary} />
+                            <Text style={styles.fixedPinEmoji}>📌</Text>
                           ) : null}
                         </View>
                         <Text style={styles.itemCategory}>{item.category}</Text>

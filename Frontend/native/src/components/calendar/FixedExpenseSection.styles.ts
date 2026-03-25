@@ -19,7 +19,8 @@ export const styles = StyleSheet.create({
     gap: wp(8),
   },
   pinEmoji: {
-    fontSize: fp(16),
+    fontSize: fp(17),
+    lineHeight: fp(20),
   },
   headerTitle: {
     fontSize: fp(18),

@@ -32,14 +32,14 @@ export default function FixedExpenseSection({
   onPressManage,
 }: FixedExpenseSectionProps) {
   return (
-    <SurfaceCard>
-      <View style={styles.headerRow}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.pinEmoji}>핀</Text>
-          <Text style={styles.headerTitle}>고정지출</Text>
-        </View>
-        <TouchableOpacity activeOpacity={0.86} onPress={onPressManage}>
-          <Text style={styles.manageText}>관리</Text>
+      <SurfaceCard>
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.pinEmoji}>📌</Text>
+            <Text style={styles.headerTitle}>고정지출</Text>
+          </View>
+          <TouchableOpacity activeOpacity={0.86} onPress={onPressManage}>
+            <Text style={styles.manageText}>관리</Text>
         </TouchableOpacity>
       </View>
 
