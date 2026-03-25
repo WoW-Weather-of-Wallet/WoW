@@ -346,7 +346,6 @@ export default function MyPageScreen() {
                   <Text style={styles.profileBadgeText}>{displayBadge}</Text>
                 </View>
               </View>
-              <Text style={styles.profileDescription}>오늘도 스마트한 금융 생활 되세요!</Text>
             </View>
           </View>
 

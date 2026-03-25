@@ -145,7 +145,6 @@ export const fcmService = {
       if (action === 'ai_feedback') {
         const { setSuccess } = require('../store/aiStore').useAiStore.getState();
         setSuccess({ completedAt: new Date().toISOString(), fromPush: true });
-        return;
       }
       
       // B. 그 외 주요 알림 (지출 추가, 캘린더 이동 등)
@@ -174,5 +173,20 @@ export const fcmService = {
     } catch (error) {
       console.error('[FCM] 토큰 해제 실패:', error);
     }
-  }
+  },
+
+  /**
+   * [P2] 로컬 알림 강제 호출 지원
+   * 백엔드 FCM 없이도 시스템 표준 상단 알림 바를 띄울 때 사용합니다. (시뮬레이션 등)
+   */
+  async presentLocalNotification(title: string, body: string, data?: any) {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        data,
+      },
+      trigger: null, // 즉시 실행
+    });
+  },
 };
