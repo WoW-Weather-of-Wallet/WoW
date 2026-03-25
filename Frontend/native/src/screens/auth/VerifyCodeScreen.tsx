@@ -221,9 +221,6 @@ export default function VerifyCodeScreen({ route, navigation }: any) {
           <Text style={styles.title}>인증번호 6자리를 입력해 주세요.</Text>
           <Text style={styles.subtitle}>문자로 받은 인증번호를 입력하면 다음 단계로 이동해요.</Text>
         </Animated.View>
-        <Text style={[styles.subtitle, { marginTop: hp(10) }]}>
-          {'필수 약관 동의와 본인 확인이 완료되면 다음 단계로 진행해요.'}
-        </Text>
 
         <Animated.View
           entering={FadeInDown.delay(200).duration(500)}

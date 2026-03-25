@@ -21,7 +21,7 @@ export const styles = StyleSheet.create({
     marginBottom: hp(28),
   },
   title: {
-    fontSize: fp(22),
+    fontSize: fp(20),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
   },
@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
     marginBottom: hp(24),
   },
   allAgreeText: {
-    fontSize: fp(18),
+    fontSize: fp(16),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
     marginLeft: wp(12),
@@ -48,8 +48,12 @@ export const styles = StyleSheet.create({
     marginBottom: hp(24),
   },
   agreementsList: {
+    maxHeight: hp(320),
+    marginBottom: hp(24),
+  },
+  agreementsListContent: {
     gap: hp(20),
-    marginBottom: hp(40),
+    paddingBottom: hp(12),
   },
   row: {
     flexDirection: 'row',
@@ -65,7 +69,7 @@ export const styles = StyleSheet.create({
     marginRight: wp(12),
   },
   rowText: {
-    fontSize: fp(16),
+    fontSize: fp(15),
     fontFamily: FONTS.medium,
     color: COLORS.gray600,
     flex: 1,
@@ -94,9 +98,9 @@ export const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   confirmButtonText: {
-    fontSize: fp(20),
+    fontSize: fp(18),
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: COLORS.textTertiary,
   },
   activeButtonText: {
     color: COLORS.white,
