@@ -75,21 +75,11 @@ public class SpendingAnalysisService {
                 true
         );
 
-        MonthAggregate lastMonthAggregate;
-        if (!currentMonthAggregate.hasData()) {
-            YearMonth fallbackLastTargetMonth = YearMonth.from(today.minusMonths(1));
-            lastMonthAggregate = buildMonthAggregate(
-                    userId,
-                    fallbackLastTargetMonth,
-                    false
-            );
-        } else {
-            lastMonthAggregate = buildMonthAggregate(
-                    userId,
-                    defaultLastTargetMonth,
-                    false
-            );
-        }
+        MonthAggregate lastMonthAggregate = buildMonthAggregate(
+                userId,
+                defaultLastTargetMonth,
+                false
+        );
 
         SpendingMonthlyCompareResponse response = SpendingMonthlyCompareResponse.of(
                 currentMonthAggregate.monthData(),
