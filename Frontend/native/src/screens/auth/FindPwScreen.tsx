@@ -1,21 +1,18 @@
 import React, { useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  StatusBar,
   Text,
   TouchableOpacity,
   View,
   Alert,
-  ScrollView,
   TextInput,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { styles } from './FindPwScreen.styles';
-import { COLORS, wp, hp } from '../../constants/theme';
+import { COLORS, hp } from '../../constants/theme';
+import AuthScreenLayout from '../../components/auth/AuthScreenLayout';
+import AuthIntroBlock from '../../components/auth/AuthIntroBlock';
 import IdentityVerificationForm, { IdentityData } from '../../components/auth/IdentityVerificationForm';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import { sendSmsCode } from '../../services/auth';
@@ -86,89 +83,72 @@ export default function FindPwScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-
-      <View style={[styles.header, { paddingTop: insets.top, height: hp(56) + insets.top }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>비밀번호 찾기</Text>
-        <View style={styles.headerRight} />
-      </View>
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.content}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? hp(20) : 0}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.introContainer}>
-            <Text style={styles.introTitle}>비밀번호를 찾기 위해 로그인 아이디를 먼저 입력해 주세요.</Text>
-            <Text style={styles.introSub}>
-              {showVerification
-                ? '본인 확인이 완료되면 새로운 비밀번호를 설정할 수 있어요.'
-                : '가입한 아이디를 확인한 뒤 본인인증을 진행할게요.'}
-            </Text>
+    <>
+      <AuthScreenLayout title="비밀번호 찾기">
+        <AuthIntroBlock
+          title="비밀번호를 찾기 위해 로그인 아이디를 먼저 입력해 주세요."
+          description={
+            showVerification
+              ? '본인 확인이 완료되면 새로운 비밀번호를 설정할 수 있어요.'
+              : '가입한 아이디를 확인한 뒤 본인인증을 진행할게요.'
+          }
+        />
+        <View style={styles.inputSection}>
+          <Text style={styles.inputLabel}>아이디</Text>
+          <View style={styles.underlineContainer}>
+            <TextInput
+              style={[styles.bareInput, { letterSpacing: userId.length > 0 ? 1 : 0 }]}
+              value={userId}
+              onChangeText={handleUserIdChange}
+              placeholder="로그인 아이디를 입력해 주세요"
+              placeholderTextColor={COLORS.textTertiary}
+              onSubmitEditing={handleIdSubmit}
+              returnKeyType="next"
+              autoFocus={!showVerification}
+              editable={!showVerification}
+              autoCapitalize="none"
+            />
           </View>
-
-          <View style={styles.inputSection}>
-            <Text style={styles.inputLabel}>아이디</Text>
-            <View style={styles.underlineContainer}>
-              <TextInput
-                style={[styles.bareInput, { letterSpacing: userId.length > 0 ? 1 : 0 }]}
-                value={userId}
-                onChangeText={handleUserIdChange}
-                placeholder="로그인 아이디를 입력해 주세요"
-                placeholderTextColor={COLORS.textTertiary}
-                onSubmitEditing={handleIdSubmit}
-                returnKeyType="next"
-                autoFocus={!showVerification}
-                editable={!showVerification}
-                autoCapitalize="none"
-              />
-            </View>
-            {!showVerification && (
-              <>
-                <Text style={styles.helperText}>* 영문 또는 숫자 조합 4~20자로 입력해 주세요.</Text>
-                <TouchableOpacity
+          {!showVerification && (
+            <>
+              <Text style={styles.helperText}>* 영문 또는 숫자 조합 4~20자로 입력해 주세요.</Text>
+              <TouchableOpacity
+                style={[
+                  styles.idNextButton,
+                  userId.trim().length >= 4 &&
+                    userId.trim().length <= 20 &&
+                    styles.activeIdNextButton,
+                ]}
+                onPress={handleIdSubmit}
+                disabled={userId.trim().length < 4 || userId.trim().length > 20}
+              >
+                <Text
                   style={[
-                    styles.idNextButton,
-                    userId.trim().length >= 4 && userId.trim().length <= 20 && styles.activeIdNextButton,
+                    styles.idNextButtonText,
+                    userId.trim().length >= 4 &&
+                      userId.trim().length <= 20 &&
+                      styles.activeIdNextButtonText,
                   ]}
-                  onPress={handleIdSubmit}
-                  disabled={userId.trim().length < 4 || userId.trim().length > 20}
                 >
-                  <Text
-                    style={[
-                      styles.idNextButtonText,
-                      userId.trim().length >= 4 && userId.trim().length <= 20 && styles.activeIdNextButtonText,
-                    ]}
-                  >
-                    다음
-                  </Text>
-                </TouchableOpacity>
+                  다음
+                </Text>
+              </TouchableOpacity>
 
-                <View style={{ height: Math.max(insets.bottom, hp(20)) }} />
-              </>
-            )}
-          </View>
-
-          {showVerification && (
-            <Animated.View entering={FadeInDown.duration(500)} style={styles.formWrapper}>
-              <View style={styles.divider} />
-              <IdentityVerificationForm
-                onComplete={handleComplete}
-                isSubmitting={isSubmitting}
-              />
-            </Animated.View>
+              <View style={{ height: Math.max(insets.bottom, hp(20)) }} />
+            </>
           )}
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </View>
+
+        {showVerification && (
+          <Animated.View entering={FadeInDown.duration(500)} style={styles.formWrapper}>
+            <View style={styles.divider} />
+            <IdentityVerificationForm
+              onComplete={handleComplete}
+              isSubmitting={isSubmitting}
+            />
+          </Animated.View>
+        )}
+      </AuthScreenLayout>
 
       <TermsBottomSheet
         visible={termsVisible}
@@ -176,6 +156,6 @@ export default function FindPwScreen() {
         onClose={() => setTermsVisible(false)}
         onConfirm={handleTermsConfirm}
       />
-    </View>
+    </>
   );
 }

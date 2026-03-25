@@ -4,8 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   Modal,
   Pressable,
@@ -16,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
-import StepIndicator from '../../components/common/StepIndicator';
+import AuthStepLayout from '../../components/auth/AuthStepLayout';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import {
@@ -84,8 +82,8 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
   const [phone, setPhone] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [termsVisible, setTermsVisible] = useState(false);
-  // The signup APIs still accept one boolean, so we collapse the sheet result
-  // into "all required terms were agreed" before moving to the next screen.
+  // 현재 회원가입 API는 boolean 하나만 받기 때문에
+  // 바텀시트 결과를 "필수 약관 전체 동의 여부"로 합쳐서 전달합니다.
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -192,8 +190,8 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
         ssnBack,
         telecom,
         phone: normalizedPhoneNumber,
-        // Downstream screens keep using the existing boolean contract, which now
-        // means agreement to the full required terms set.
+        // 다음 화면들도 기존 boolean 계약을 그대로 사용하므로
+        // 여기서는 "필수 약관 전체 동의" 의미로 넘깁니다.
         termsAgreed: agreedTerms,
       });
     } catch (error: any) {
@@ -251,33 +249,37 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
   const btnState = getButtonState();
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <ScrollView
-        ref={scrollViewRef}
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingTop: insets.top + CONSTANTS.scrollContentPaddingTop,
-            paddingBottom: insets.bottom + CONSTANTS.scrollContentPaddingBottom,
-          },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <>
+      <AuthStepLayout
+        currentStep={1}
+        totalSteps={5}
+        title={'본인 확인을 위해\n인증이 필요해요.'}
+        description="인증번호 요청 전에 필수 약관 전체 동의가 필요해요."
+        scrollViewRef={scrollViewRef}
+        scrollContentPaddingTop={CONSTANTS.scrollContentPaddingTop}
+        scrollContentPaddingBottom={CONSTANTS.scrollContentPaddingBottom}
+        bottomMinPadding={CONSTANTS.bottomMinPadding}
+        bottomContent={
+          <TouchableOpacity
+            style={[styles.confirmButton, btnState.isActive && styles.activeButton]}
+            disabled={!btnState.isActive}
+            onPress={btnState.onPress}
+          >
+            {isSendingCode ? (
+              <ActivityIndicator color={COLORS.textInverse} />
+            ) : (
+              <Text
+                style={[
+                  styles.confirmButtonText,
+                  btnState.isActive && styles.activeButtonText,
+                ]}
+              >
+                {btnState.text}
+              </Text>
+            )}
+          </TouchableOpacity>
+        }
       >
-        <StepIndicator currentStep={1} totalSteps={5} />
-
-        <Text style={styles.title}>
-          {'본인 확인을 위해'}{'\n'}
-          {'인증이 필요해요.'}
-        </Text>
-        <Text style={{ color: COLORS.textTertiary, marginTop: hp(12), lineHeight: hp(22) }}>
-          {
-            '인증번호 요청 전에 필수 약관 전체 동의가 필요해요.'
-          }
-        </Text>
 
         <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
           <View style={styles.underlineContainer}>
@@ -395,33 +397,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
             {submitError.length > 0 && <Text style={styles.errorText}>{submitError}</Text>}
           </Animated.View>
         )}
-      </ScrollView>
-
-      <View
-        style={[
-          styles.bottomContainer,
-          { paddingBottom: Math.max(insets.bottom, CONSTANTS.bottomMinPadding) },
-        ]}
-      >
-        <TouchableOpacity
-          style={[styles.confirmButton, btnState.isActive && styles.activeButton]}
-          disabled={!btnState.isActive}
-          onPress={btnState.onPress}
-        >
-          {isSendingCode ? (
-            <ActivityIndicator color={COLORS.textInverse} />
-          ) : (
-            <Text
-              style={[
-                styles.confirmButtonText,
-                btnState.isActive && styles.activeButtonText,
-              ]}
-            >
-              {btnState.text}
-            </Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      </AuthStepLayout>
 
       <Modal visible={modalVisible} transparent animationType="slide">
         <Pressable
@@ -458,6 +434,6 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
           void handleSendCode(agreed);
         }}
       />
-    </KeyboardAvoidingView>
+    </>
   );
 }

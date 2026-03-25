@@ -1,20 +1,16 @@
 import React, { useRef, useState } from 'react';
 import {
-  View,
   Text,
   TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   ActivityIndicator,
   Alert,
+  View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { CommonActions } from '@react-navigation/native';
-import StepIndicator from '../../components/common/StepIndicator';
+import AuthStepLayout from '../../components/auth/AuthStepLayout';
 import { styles, CONSTANTS } from './CreateAccountScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import { checkUserId, signup, type NativeSignupRequest } from '../../services/auth';
@@ -27,7 +23,7 @@ type CreateAccountRouteParams = {
   phone?: string;
   ssnFront?: string;
   ssnBack?: string;
-  // This flag represents agreement to every required term selected earlier.
+  // 이전 단계에서 선택한 필수 약관 전체 동의 여부입니다.
   termsAgreed?: boolean;
 };
 
@@ -39,7 +35,7 @@ const buildBirthDate = (ssnFront?: string, ssnBack?: string) => {
     return '2000-01-01';
   }
 
-  // [UX-Refinement] 주민등록번호 뒷자리 첫 숫자에 따른 연도 접두사 판별 (외국인 및 1800년대생 포함)
+  // 주민등록번호 뒷자리 첫 숫자로 연도 접두사를 판별합니다.
   // 1, 2, 5, 6: 1900년대 (5, 6은 외국인)
   // 3, 4, 7, 8: 2000년대 (7, 8은 외국인)
   // 9, 0: 1800년대
@@ -71,7 +67,6 @@ const buildGender = (ssnBack?: string) => {
 };
 
 export default function CreateAccountScreen({ route, navigation }: any) {
-  const insets = useSafeAreaInsets();
   const routeParams = (route?.params ?? {}) as CreateAccountRouteParams;
 
   const [step, setStep] = useState(1);
@@ -83,7 +78,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  // 비밀번호 입력은 필요할 때만 노출해서 가독성을 높입니다.
+  // 비밀번호 입력은 필요한 시점에만 노출해 읽기 흐름을 단순하게 유지합니다.
   const [isPwVisible, setIsPwVisible] = useState(false);
   const [isConfirmPwVisible, setIsConfirmPwVisible] = useState(false);
 
@@ -91,7 +86,7 @@ export default function CreateAccountScreen({ route, navigation }: any) {
   const pwRef = useRef<TextInput>(null);
   const confirmPwRef = useRef<TextInput>(null);
 
-  // 일반 회원가입의 아이디 중복확인 단계
+  // 일반 회원가입에서는 아이디 중복확인을 먼저 통과해야 다음 단계로 이동합니다.
   const handleCheckId = async () => {
     const trimmedId = id.trim();
     const idValidation = validateId(trimmedId);
@@ -260,35 +255,40 @@ export default function CreateAccountScreen({ route, navigation }: any) {
   const btnState = getButtonState();
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+    <AuthStepLayout
+      currentStep={step === 1 ? 3 : 4}
+      totalSteps={5}
+      title={
+        step === 1
+          ? '회원가입 아이디를\n입력해주세요.'
+          : step === 2
+            ? '비밀번호를\n입력해주세요.'
+            : '비밀번호를\n한 번 더 입력해주세요.'
+      }
+      description="이전 단계에서 필수 약관 전체 동의와 휴대폰 인증을 마친 상태예요."
+      scrollContentPaddingTop={CONSTANTS.scrollContentPaddingTop}
+      scrollContentPaddingBottom={CONSTANTS.scrollContentPaddingBottom}
+      bottomMinPadding={CONSTANTS.bottomContainerPaddingBottom}
+      bottomContent={
+        step >= 2 ? (
+          <Animated.View entering={FadeInDown.duration(500)}>
+            <TouchableOpacity
+              style={[styles.confirmButton, btnState.isActive && styles.activeButton]}
+              disabled={!btnState.isActive}
+              onPress={btnState.onPress}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator color={COLORS.textInverse} />
+              ) : (
+                <Text style={[styles.confirmButtonText, btnState.isActive && styles.activeButtonText]}>
+                  {btnState.text}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </Animated.View>
+        ) : null
+      }
     >
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingTop: insets.top + CONSTANTS.scrollContentPaddingTop,
-            paddingBottom: insets.bottom + CONSTANTS.scrollContentPaddingBottom,
-          },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <StepIndicator currentStep={step === 1 ? 3 : 4} totalSteps={5} />
-
-        <Text style={styles.title}>
-          {step === 1
-            ? '회원가입 아이디를\n입력해주세요.'
-            : step === 2
-              ? '비밀번호를\n입력해주세요.'
-              : '비밀번호를\n한 번 더 입력해주세요.'}
-          </Text>
-          <Text style={{ color: COLORS.textTertiary, marginTop: hp(12), lineHeight: hp(22) }}>
-            {
-              '이전 단계에서 필수 약관 전체 동의와 휴대폰 인증을 마친 상태예요.'
-            }
-          </Text>
 
         <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
           <View style={styles.idInputRow}>
@@ -421,28 +421,6 @@ export default function CreateAccountScreen({ route, navigation }: any) {
         )}
 
         {submitError.length > 0 && <Text style={styles.submitErrorText}>{submitError}</Text>}
-      </ScrollView>
-
-      {step >= 2 && (
-        <Animated.View
-          entering={FadeInDown.duration(500)}
-          style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, CONSTANTS.bottomContainerPaddingBottom) }]}
-        >
-          <TouchableOpacity
-            style={[styles.confirmButton, btnState.isActive && styles.activeButton]}
-            disabled={!btnState.isActive}
-            onPress={btnState.onPress}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator color={COLORS.textInverse} />
-            ) : (
-              <Text style={[styles.confirmButtonText, btnState.isActive && styles.activeButtonText]}>
-                {btnState.text}
-              </Text>
-            )}
-          </TouchableOpacity>
-        </Animated.View>
-      )}
-    </KeyboardAvoidingView>
+    </AuthStepLayout>
   );
 }

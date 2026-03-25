@@ -26,25 +26,6 @@ export const CONSTANTS = {
  * 스타일시트
  * ─────────────────────────────────────────────── */
 export const styles = StyleSheet.create({
-  /* ── 레이아웃 ── */
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrollContent: {
-    paddingHorizontal: wp(28),
-  },
-
-  /* ── 타이틀 ── */
-  title: {
-    fontSize: fp(28),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    lineHeight: fp(40),
-    marginBottom: hp(40),
-    letterSpacing: -0.5,
-  },
-
   /* ── 입력 섹션 공통 ── */
   inputSection: {
     marginBottom: hp(32),
@@ -114,13 +95,6 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: COLORS.error,
     marginTop: hp(12),
-  },
-
-  /* ── 하단 확인 버튼 ── */
-  bottomContainer: {
-    paddingHorizontal: wp(28),
-    backgroundColor: COLORS.background,
-    paddingTop: hp(12),
   },
   confirmButton: {
     backgroundColor: COLORS.border,
