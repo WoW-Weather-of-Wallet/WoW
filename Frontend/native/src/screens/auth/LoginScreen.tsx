@@ -24,8 +24,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import CustomTextInput from '../../components/common/CustomTextInput';
 import GradientButton from '../../components/common/GradientButton';
-import { useAuthStore } from '../../store/authStore';
 import { COLORS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import { useAuthSessionLogin } from '../../hooks/useAuthSessionLogin';
 import {
   exchangeSsafyToken,
   getSsafyLoginUrl,
@@ -33,7 +33,6 @@ import {
   type NativeSsafyCodeLoginResult,
   parseSsafyCallbackUrl,
 } from '../../services/auth';
-import { savePersistedAuthSession } from '../../services/sessionStorage';
 import { extractApiErrorMessage } from '../../utils/error';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -208,7 +207,7 @@ const buildLoginErrorPresentation = (
 
 export default function LoginScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
-  const loginToStore = useAuthStore((state) => state.login);
+  const { completeAuthSession } = useAuthSessionLogin();
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const autoLogin = true;
@@ -234,24 +233,15 @@ export default function LoginScreen({ navigation }: any) {
   const completeSsafyLogin = useCallback(
     async (parsed: NativeSsafyCodeLoginResult) => {
       const response = await exchangeSsafyToken(parsed.code);
-      if (response.refreshToken) {
-        await savePersistedAuthSession({
-          refreshToken: response.refreshToken,
-          user: response.user,
-          autoLoginEnabled: true,
-          loginType: 'SSAFY',
-        });
-      }
-      loginToStore({
-        accessToken: response.accessToken,
-        user: response.user,
+      await completeAuthSession({
+        response,
         autoLogin,
         source: 'ssafy',
         loginType: 'SSAFY',
       });
       navigation.replace('MainTabs');
     },
-    [autoLogin, loginToStore, navigation],
+    [autoLogin, completeAuthSession, navigation],
   );
 
   const processSsafyCallbackUrl = useCallback(
@@ -350,23 +340,11 @@ export default function LoginScreen({ navigation }: any) {
         userId: userId.trim(),
         pw: password,
       });
-
-      if (response.refreshToken) {
-        await savePersistedAuthSession({
-          refreshToken: response.refreshToken,
-          user: response.user,
-          autoLoginEnabled: true,
-          loginType: 'NORMAL',
-        });
-      }
-
-      loginToStore({
-        accessToken: response.accessToken,
-        user: response.user,
+      await completeAuthSession({
+        response,
         autoLogin,
         loginType: 'NORMAL',
       });
-
       navigation.replace('MainTabs');
     } catch (error: any) {
       const presentation = buildLoginErrorPresentation(error, 'general');

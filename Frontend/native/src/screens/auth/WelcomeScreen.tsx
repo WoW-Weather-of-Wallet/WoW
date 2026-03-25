@@ -13,16 +13,15 @@ import { Ionicons } from '@expo/vector-icons';
 import StepIndicator from '../../components/common/StepIndicator';
 import { styles } from './WelcomeScreen.styles';
 import { COLORS, wp, hp } from '../../constants/theme';
+import { useAuthSessionLogin } from '../../hooks/useAuthSessionLogin';
 import { login, registerSsafy } from '../../services/auth';
-import { savePersistedAuthSession } from '../../services/sessionStorage';
-import { useAuthStore } from '../../store/authStore';
 import type { SignupMode, WelcomeRouteParams } from '../../types/auth';
 import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 
 export default function WelcomeScreen({ route, navigation }: any) {
   const insets = useSafeAreaInsets();
-  const loginToStore = useAuthStore((state) => state.login);
+  const { completeAuthSession } = useAuthSessionLogin();
   const routeParams = (route?.params ?? {}) as WelcomeRouteParams;
   const signupMode: SignupMode =
     routeParams.signupMode === 'ssafy' ? 'ssafy' : 'normal';
@@ -54,22 +53,10 @@ export default function WelcomeScreen({ route, navigation }: any) {
           termsAgreed: routeParams.termsAgreed === true,
           alarmEnabled: routeParams.alarmEnabled !== false,
         });
-
-        if (registerResponse.refreshToken) {
-          await savePersistedAuthSession({
-            refreshToken: registerResponse.refreshToken,
-            user: registerResponse.user,
-            autoLoginEnabled: true,
-            loginType: 'SSAFY',
-          });
-        }
-
-        loginToStore({
-          accessToken: registerResponse.accessToken,
-          user: registerResponse.user,
-          autoLogin: true,
-          source: 'ssafy',
+        await completeAuthSession({
+          response: registerResponse,
           loginType: 'SSAFY',
+          source: 'ssafy',
         });
 
         navigation.reset({
@@ -103,20 +90,8 @@ export default function WelcomeScreen({ route, navigation }: any) {
         userId: routeParams.userId,
         pw: routeParams.pw,
       });
-
-      if (loginResponse.refreshToken) {
-        await savePersistedAuthSession({
-          refreshToken: loginResponse.refreshToken,
-          user: loginResponse.user,
-          autoLoginEnabled: true,
-          loginType: 'NORMAL',
-        });
-      }
-
-      loginToStore({
-        accessToken: loginResponse.accessToken,
-        user: loginResponse.user,
-        autoLogin: true,
+      await completeAuthSession({
+        response: loginResponse,
         loginType: 'NORMAL',
       });
 

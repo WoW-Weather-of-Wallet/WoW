@@ -16,12 +16,14 @@ import AuthIntroBlock from '../../components/auth/AuthIntroBlock';
 import IdentityVerificationForm from '../../components/auth/IdentityVerificationForm';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import { useRecoverySmsFlow } from '../../hooks/useRecoverySmsFlow';
+import type { FindPwRouteParams } from '../../types/auth';
 import { validateId } from '../../utils/validation';
 
 export default function FindPwScreen() {
   const route = useRoute<any>();
+  const routeParams = (route?.params ?? {}) as FindPwRouteParams;
   const insets = useSafeAreaInsets();
-  const [userId, setUserId] = useState(route.params?.prefilledId || '');
+  const [userId, setUserId] = useState(routeParams.prefilledId || '');
   const [showVerification, setShowVerification] = useState(false);
   const {
     isSubmitting,
@@ -38,10 +40,10 @@ export default function FindPwScreen() {
   });
 
   React.useEffect(() => {
-    if (route.params?.prefilledId) {
-      setUserId(route.params.prefilledId);
+    if (routeParams.prefilledId) {
+      setUserId(routeParams.prefilledId);
     }
-  }, [route.params?.prefilledId]);
+  }, [routeParams.prefilledId]);
 
   const handleIdSubmit = () => {
     const validation = validateId(userId.trim());

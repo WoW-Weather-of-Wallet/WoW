@@ -13,12 +13,14 @@ import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 import { styles } from './AccountRecoveryResultScreen.styles';
 import { COLORS, wp, hp } from '../../constants/theme';
 import { getSsafyLoginUrl } from '../../services/auth';
+import type { AccountRecoveryResultRouteParams } from '../../types/auth';
 
 export default function AccountRecoveryResultScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
-  const { name, userId, userType } = route.params || {};
+  const routeParams = (route?.params ?? {}) as AccountRecoveryResultRouteParams;
+  const { name, userId, userType } = routeParams;
 
   const isSsafy = userType === 'ssafy';
   const isLocal = userType === 'local';

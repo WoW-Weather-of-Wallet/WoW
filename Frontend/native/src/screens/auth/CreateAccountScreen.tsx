@@ -15,7 +15,7 @@ import { styles, CONSTANTS } from './CreateAccountScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import { checkUserId, signup, type NativeSignupRequest } from '../../services/auth';
 import type { CreateAccountRouteParams } from '../../types/auth';
-import { buildBirthDateFromIdentity, buildGenderFromIdentity } from '../../utils/authIdentity';
+import { buildIdentityProfile } from '../../utils/authIdentity';
 import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { validateId, validatePassword, validateName, validatePhone } from '../../utils/validation';
@@ -134,15 +134,18 @@ export default function CreateAccountScreen({ route, navigation }: any) {
       return;
     }
 
+    const identityProfile = buildIdentityProfile(
+      routeParams.ssnFront,
+      routeParams.ssnBack,
+    );
+
     const signupPayload: NativeSignupRequest = {
       userId: trimmedUserId,
       pw: password,
       name: currentName.trim(),
-      gender: buildGenderFromIdentity(routeParams.ssnBack) ?? 'M',
+      gender: identityProfile?.gender ?? 'M',
       phoneNumber: currentPhone.replace(/[^0-9]/g, ''),
-      birthDate:
-        buildBirthDateFromIdentity(routeParams.ssnFront, routeParams.ssnBack) ??
-        '2000-01-01',
+      birthDate: identityProfile?.birthDate ?? '2000-01-01',
       alarmEnabled: true,
       termsAgreed: routeParams.termsAgreed === true,
     };

@@ -1,5 +1,10 @@
 import type { IdentityGender } from '../types/auth';
 
+export interface IdentityProfile {
+  birthDate: string;
+  gender: IdentityGender;
+}
+
 const getBirthYearPrefix = (ssnBackCode: string) => {
   if (['1', '2', '5', '6'].includes(ssnBackCode)) {
     return '19';
@@ -44,6 +49,23 @@ export const buildGenderFromIdentity = (
   }
 
   return parseInt(ssnBack[0], 10) % 2 !== 0 ? 'M' : 'F';
+};
+
+export const buildIdentityProfile = (
+  ssnFront?: string,
+  ssnBack?: string,
+): IdentityProfile | null => {
+  const birthDate = buildBirthDateFromIdentity(ssnFront, ssnBack);
+  const gender = buildGenderFromIdentity(ssnBack);
+
+  if (!birthDate || !gender) {
+    return null;
+  }
+
+  return {
+    birthDate,
+    gender,
+  };
 };
 
 export const decodeUnicodeEscapes = (value: string | null) => {

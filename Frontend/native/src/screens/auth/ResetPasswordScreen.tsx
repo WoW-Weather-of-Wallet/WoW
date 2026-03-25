@@ -1,30 +1,24 @@
 import React, { useState } from 'react';
-import {
-  Text,
-  TouchableOpacity,
-  View,
-  Alert,
-} from 'react-native';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { styles } from './ResetPasswordScreen.styles';
-import { hp } from '../../constants/theme';
-import AuthScreenLayout from '../../components/auth/AuthScreenLayout';
 import AuthIntroBlock from '../../components/auth/AuthIntroBlock';
+import AuthScreenLayout from '../../components/auth/AuthScreenLayout';
 import CustomTextInput from '../../components/common/CustomTextInput';
+import { hp } from '../../constants/theme';
 import { findPassword } from '../../services/auth';
-import {
-  buildBirthDateFromIdentity,
-  buildGenderFromIdentity,
-} from '../../utils/authIdentity';
+import type { ResetPasswordRouteParams } from '../../types/auth';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
+import { buildIdentityProfile } from '../../utils/authIdentity';
 import { validatePassword } from '../../utils/validation';
+import { styles } from './ResetPasswordScreen.styles';
 
 export default function ResetPasswordScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
-  const { userId, name, ssnFront, ssnBack, phoneNumber } = route.params || {};
+  const routeParams = (route?.params ?? {}) as ResetPasswordRouteParams;
+  const { userId, name, ssnFront, ssnBack, phoneNumber } = routeParams;
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -43,11 +37,11 @@ export default function ResetPasswordScreen() {
     }
 
     setIsSubmitting(true);
-    try {
-      const birthDate = buildBirthDateFromIdentity(ssnFront, ssnBack);
-      const gender = buildGenderFromIdentity(ssnBack);
 
-      if (!birthDate || !gender || !name || !phoneNumber) {
+    try {
+      const identityProfile = buildIdentityProfile(ssnFront, ssnBack);
+
+      if (!identityProfile || !name || !phoneNumber || !userId) {
         throw new Error('본인 확인 정보가 누락되었어요.');
       }
 
@@ -55,8 +49,8 @@ export default function ResetPasswordScreen() {
       await findPassword({
         userId,
         name,
-        birthDate,
-        gender,
+        birthDate: identityProfile.birthDate,
+        gender: identityProfile.gender,
         phoneNumber,
         newPw: password,
       });
@@ -77,12 +71,16 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <AuthScreenLayout title="비밀번호 재설정" scrollContentStyle={{ paddingBottom: hp(24) }}>
+    <AuthScreenLayout
+      title="비밀번호 재설정"
+      scrollContentStyle={{ paddingBottom: hp(24) }}
+    >
       <AuthIntroBlock
-        title="새 비밀번호를 입력해주세요."
+        title="새 비밀번호를 입력해 주세요."
         description="영문, 숫자, 특수문자를 포함한 8~20자로 설정해 주세요."
         marginBottom={hp(40)}
       />
+
       <View style={styles.formContainer}>
         <View style={styles.inputWrapper}>
           <CustomTextInput
@@ -103,10 +101,10 @@ export default function ResetPasswordScreen() {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
-            placeholder="비밀번호를 다시 입력해주세요"
+            placeholder="비밀번호를 다시 입력해 주세요"
           />
           {confirmPassword.length > 0 && password !== confirmPassword && (
-            <Text style={styles.errorText}>* 비밀번호가 일치하지 않아요.</Text>
+            <Text style={styles.errorText}>* 비밀번호가 일치하지 않아요</Text>
           )}
         </View>
       </View>
@@ -117,13 +115,18 @@ export default function ResetPasswordScreen() {
           onPress={() => void handleReset()}
           disabled={!isFormValid || isSubmitting}
         >
-          <Text style={[styles.mainButtonText, !isFormValid && styles.disabledButtonText]}>
+          <Text
+            style={[
+              styles.mainButtonText,
+              !isFormValid && styles.disabledButtonText,
+            ]}
+          >
             비밀번호 변경하기
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* 하단 시스템 영역과 겹치지 않도록 동적 여백을 추가합니다. */}
+      {/* 하단 제스처 영역과 겹치지 않도록 동적 여백을 추가합니다. */}
       <View style={{ height: Math.max(insets.bottom, hp(20)) }} />
     </AuthScreenLayout>
   );

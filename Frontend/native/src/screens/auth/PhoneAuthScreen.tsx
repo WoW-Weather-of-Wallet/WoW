@@ -17,10 +17,9 @@ import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import AuthStepLayout from '../../components/auth/AuthStepLayout';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
-import type { SignupMode } from '../../types/auth';
+import type { PhoneAuthRouteParams, SignupMode } from '../../types/auth';
 import {
-  buildBirthDateFromIdentity,
-  buildGenderFromIdentity,
+  buildIdentityProfile,
   decodeUnicodeEscapes,
 } from '../../utils/authIdentity';
 import {
@@ -51,12 +50,13 @@ const SEND_CODE_FALLBACK =
 
 export default function PhoneAuthScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
+  const routeParams = (route?.params ?? {}) as PhoneAuthRouteParams;
   const signupMode: SignupMode =
-    route.params?.signupMode === 'ssafy' ? 'ssafy' : 'normal';
+    routeParams.signupMode === 'ssafy' ? 'ssafy' : 'normal';
   const isSsafySignup = signupMode === 'ssafy';
   const initialSsafyName =
-    typeof route.params?.name === 'string'
-      ? (decodeUnicodeEscapes(route.params.name) ?? '').trim()
+    typeof routeParams.name === 'string'
+      ? (decodeUnicodeEscapes(routeParams.name) ?? '').trim()
       : '';
 
   const [step, setStep] = useState(isSsafySignup && initialSsafyName.length >= 2 ? 2 : 1);
@@ -133,10 +133,9 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
       return;
     }
 
-    const birthDate = buildBirthDateFromIdentity(ssnFront, ssnBack);
-    const gender = buildGenderFromIdentity(ssnBack);
+    const identityProfile = buildIdentityProfile(ssnFront, ssnBack);
 
-    if (!birthDate || !gender) {
+    if (!identityProfile) {
       setSubmitError(INVALID_IDENTITY_MESSAGE);
       setIsSendingCode(false);
       return;
@@ -146,21 +145,21 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
 
     try {
       if (isSsafySignup) {
-        if (!route.params?.pendingToken) {
+        if (!routeParams.pendingToken) {
           throw new Error(SSAFY_TOKEN_EXPIRED_MESSAGE);
         }
 
         await checkSsafySignup({
-          pendingToken: route.params.pendingToken,
-          gender,
-          birthDate,
+          pendingToken: routeParams.pendingToken,
+          gender: identityProfile.gender,
+          birthDate: identityProfile.birthDate,
           phoneNumber: normalizedPhoneNumber,
         });
       } else {
         await checkSignupIdentity({
           name: name.trim(),
-          gender,
-          birthDate,
+          gender: identityProfile.gender,
+          birthDate: identityProfile.birthDate,
           phoneNumber: normalizedPhoneNumber,
         });
       }
@@ -168,7 +167,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
       await sendSmsCode({ phoneNumber: normalizedPhoneNumber });
 
       navigation.navigate('VerifyCode', {
-        ...route.params,
+        ...routeParams,
         signupMode,
         name: name.trim(),
         ssnFront,
@@ -411,7 +410,7 @@ export default function PhoneAuthScreen({ navigation, route }: any) {
 
       <TermsBottomSheet
         visible={termsVisible}
-        flow={route.params?.flow}
+        flow={routeParams.flow}
         onClose={() => setTermsVisible(false)}
         onConfirm={(agreed) => {
           setTermsAgreed(agreed);
