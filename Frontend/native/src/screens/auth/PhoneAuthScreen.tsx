@@ -3,15 +3,15 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import AuthStepLayout from '../../components/auth/AuthStepLayout';
+import AuthActionButton from '../../components/common/AuthActionButton';
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
@@ -101,27 +101,18 @@ export default function PhoneAuthScreen({
         scrollContentPaddingBottom={CONSTANTS.scrollContentPaddingBottom}
         bottomMinPadding={CONSTANTS.bottomMinPadding}
         bottomContent={
-          <TouchableOpacity
-            style={[
-              styles.confirmButton,
-              isFormValid && !isSendingCode && styles.activeButton,
-            ]}
+          <AuthActionButton
+            label="다음"
+            loading={isSendingCode}
             disabled={!isFormValid || isSendingCode}
+            active={isFormValid && !isSendingCode}
             onPress={handleSubmit}
-          >
-            {isSendingCode ? (
-              <ActivityIndicator color={COLORS.textInverse} />
-            ) : (
-              <Text
-                style={[
-                  styles.confirmButtonText,
-                  isFormValid && !isSendingCode && styles.activeButtonText,
-                ]}
-              >
-                다음
-              </Text>
-            )}
-          </TouchableOpacity>
+            containerStyle={styles.confirmButton}
+            activeContainerStyle={styles.activeButton}
+            textStyle={styles.confirmButtonText}
+            activeTextStyle={styles.activeButtonText}
+            loadingColor={COLORS.textInverse}
+          />
         }
       >
         <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>

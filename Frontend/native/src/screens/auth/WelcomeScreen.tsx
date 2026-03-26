@@ -2,14 +2,13 @@ import React from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
-  ActivityIndicator,
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import KeyValueInfoCard from '../../components/common/KeyValueInfoCard';
+import AuthActionButton from '../../components/common/AuthActionButton';
 import StepIndicator from '../../components/common/StepIndicator';
 import { styles } from './WelcomeScreen.styles';
 import { COLORS, wp, hp } from '../../constants/theme';
@@ -68,17 +67,16 @@ export default function WelcomeScreen({
           entering={FadeInDown.delay(380).duration(500)}
           style={[styles.bottomSection, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}
         >
-          <TouchableOpacity
-            style={[styles.confirmButton, isConfirming && styles.confirmButtonDisabled]}
-            onPress={() => void handleConfirm()}
+          <AuthActionButton
+            label="시작하기"
+            loading={isConfirming}
             disabled={isConfirming}
-          >
-            {isConfirming ? (
-              <ActivityIndicator color={COLORS.textInverse} />
-            ) : (
-              <Text style={styles.confirmButtonText}>시작하기</Text>
-            )}
-          </TouchableOpacity>
+            onPress={() => void handleConfirm()}
+            containerStyle={styles.confirmButton}
+            disabledContainerStyle={styles.confirmButtonDisabled}
+            textStyle={styles.confirmButtonText}
+            loadingColor={COLORS.textInverse}
+          />
         </Animated.View>
       </View>
     </View>

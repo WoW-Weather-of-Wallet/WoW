@@ -1,14 +1,15 @@
 import React from 'react';
 import {
+  ActivityIndicator,
   Text,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   View,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import AuthStepLayout from '../../components/auth/AuthStepLayout';
+import AuthActionButton from '../../components/common/AuthActionButton';
 import { styles, CONSTANTS } from './CreateAccountScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import { useCreateAccountStepFlow } from '../../hooks';
@@ -62,19 +63,18 @@ export default function CreateAccountScreen({
       bottomContent={
         step >= 2 ? (
           <Animated.View entering={FadeInDown.duration(500)}>
-            <TouchableOpacity
-              style={[styles.confirmButton, buttonState.isActive && styles.activeButton]}
+            <AuthActionButton
+              label={buttonState.text}
+              loading={isSubmitting}
               disabled={!buttonState.isActive}
+              active={buttonState.isActive}
               onPress={buttonState.onPress}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator color={COLORS.textInverse} />
-              ) : (
-                <Text style={[styles.confirmButtonText, buttonState.isActive && styles.activeButtonText]}>
-                  {buttonState.text}
-                </Text>
-              )}
-            </TouchableOpacity>
+              containerStyle={styles.confirmButton}
+              activeContainerStyle={styles.activeButton}
+              textStyle={styles.confirmButtonText}
+              activeTextStyle={styles.activeButtonText}
+              loadingColor={COLORS.textInverse}
+            />
           </Animated.View>
         ) : null
       }
