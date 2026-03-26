@@ -6,12 +6,12 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  StatusBar,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { StatusBar } from 'react-native';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -312,11 +312,8 @@ export default function MyPageScreen() {
   const displayBadge =
     (profile?.loginType ?? sessionLoginType) === 'SSAFY' ? 'SSAFY 회원' : '일반 회원';
   const displayInitial = displayName.slice(0, 1);
-
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.backgroundSecondary} />
-
       <View
         style={[
           styles.profileDock,

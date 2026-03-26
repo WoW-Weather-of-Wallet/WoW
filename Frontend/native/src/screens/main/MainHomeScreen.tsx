@@ -1,11 +1,9 @@
 import React from 'react';
-import { ScrollView, StatusBar, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { COLORS, hp } from '../../constants/theme';
+import { hp } from '../../constants/theme';
 import { styles } from './MainHomeScreen.styles';
 import { useModalState } from '../../hooks/useModalState';
+import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import {
   HomeBudgetReportCard,
   HomeMonthlyReportSheet,
@@ -19,10 +17,8 @@ import { useAuthStore } from '../../store/authStore';
 import type { CalendarHeaderResponse } from '../../types/calendar';
 
 export default function MainHomeScreen() {
-  const insets = useSafeAreaInsets();
   const accessToken = useAuthStore((state) => state.accessToken);
   const sessionUserName = useAuthStore((state) => state.user?.name);
-  const tabBarHeight = useBottomTabBarHeight();
   const reportModal = useModalState();
   const spendingTypeModal = useModalState();
   const [liveHeader, setLiveHeader] = React.useState<CalendarHeaderResponse | null>(null);
@@ -30,9 +26,6 @@ export default function MainHomeScreen() {
   const today = React.useMemo(() => new Date(), []);
   const monthLabel = `${today.getMonth() + 1}월`;
   const trimmedUserName = sessionUserName?.trim();
-  const homeHeading = trimmedUserName
-    ? `${trimmedUserName}님, 이번 달 소비 흐름을 살펴볼까요?`
-    : '이번 달 소비 흐름을 한눈에 살펴볼까요?';
 
   const loadHomeHeader = React.useCallback(async () => {
     if (!accessToken) {
@@ -65,18 +58,12 @@ export default function MainHomeScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.backgroundSecondary} />
-
-      <ScrollView
-        contentContainerStyle={[
-          styles.contentContainer,
-          {
-            paddingTop: insets.top + hp(12),
-            paddingBottom: tabBarHeight + hp(30),
-          },
-        ]}
-        showsVerticalScrollIndicator={false}
+    <>
+      <BottomTabScreenLayout
+        containerStyle={styles.container}
+        contentContainerStyle={styles.contentContainer}
+        scrollTopPadding={hp(12)}
+        scrollBottomPadding={hp(30)}
       >
         <HomeTodayWeatherCard
           weatherName={liveHeader?.weatherName}
@@ -97,10 +84,10 @@ export default function MainHomeScreen() {
         />
         {/* 카테고리별 소비는 실제 API 연결 전까지 화면에서 제외합니다. */}
         <HomeScheduleSection items={[]} />
-      </ScrollView>
+      </BottomTabScreenLayout>
 
       <HomeSpendingTypeSheet visible={spendingTypeModal.visible} onClose={spendingTypeModal.close} />
       <HomeMonthlyReportSheet visible={reportModal.visible} onClose={reportModal.close} />
-    </View>
+    </>
   );
 }

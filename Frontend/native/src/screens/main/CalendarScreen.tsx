@@ -1,13 +1,12 @@
 import React from 'react';
-import { ScrollView, StatusBar, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { View } from 'react-native';
 import { useFocusEffect, useRoute, useNavigation } from '@react-navigation/native';
-import { COLORS, hp } from '../../constants/theme';
+import { hp } from '../../constants/theme';
 import { styles } from './CalendarScreen.styles';
 import { useCalendarMockState } from '../../hooks/useCalendarMockState';
 import { setHideCalendarGuide, shouldHideCalendarGuide } from '../../services/guidePreference';
 import DataSourceNotice from '../../components/common/DataSourceNotice';
+import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import {
   CalendarAddEntrySheet,
   CalendarDayDetailSheet,
@@ -24,8 +23,6 @@ import {
 import type { MainTabNavigationProp, MainTabRouteProp } from '../../types';
 
 export default function CalendarScreen() {
-  const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
   const hasCheckedGuideRef = React.useRef(false);
   const [isGuideVisible, setIsGuideVisible] = React.useState(false);
   const {
@@ -98,10 +95,13 @@ export default function CalendarScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.backgroundSecondary} />
-
-      <View style={[styles.topDock, { paddingTop: insets.top + hp(12) }]}>
+    <>
+      <BottomTabScreenLayout
+        containerStyle={styles.container}
+        topDockStyle={styles.topDock}
+        topDockTopPadding={hp(12)}
+        topDockContent={
+          <>
         {false && <DataSourceNotice
           type={headerFetchState === 'live' ? 'mixed' : 'mock'}
           description={
@@ -141,17 +141,12 @@ export default function CalendarScreen() {
         <View style={styles.tabWrap}>
           <CalendarTabSwitcher activeTab={activeTab} onChange={setActiveTab} />
         </View>
-      </View>
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.contentContainer,
-          {
-            paddingBottom: tabBarHeight + hp(30),
-          },
-        ]}
-        showsVerticalScrollIndicator={false}
+          </>
+        }
+        scrollViewStyle={styles.scrollView}
+        contentContainerStyle={styles.contentContainer}
+        scrollTopPadding={hp(8)}
+        scrollBottomPadding={hp(30)}
       >
         {activeTab === 'calendar' ? (
           <>
@@ -176,7 +171,7 @@ export default function CalendarScreen() {
             emptyDescription={emptyHistoryDescription}
           />
         )}
-      </ScrollView>
+      </BottomTabScreenLayout>
 
       <CalendarAddEntrySheet
         visible={isAddEntryVisible}
@@ -235,6 +230,6 @@ export default function CalendarScreen() {
         visible={isGuideVisible}
         onClose={handleCloseGuide}
       />
-    </View>
+    </>
   );
 }
