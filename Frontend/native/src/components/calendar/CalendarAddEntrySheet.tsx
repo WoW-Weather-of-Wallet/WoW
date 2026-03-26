@@ -21,6 +21,13 @@ import {
   saveCalendarOverrides,
   uploadCalendarTransactions,
 } from '../../services/calendar';
+import {
+  buildFileSummary as buildCalendarFileSummary,
+  buildOverrideRows as buildCalendarOverrideRows,
+  buildUploadRequest as buildCalendarUploadRequest,
+  formatDateLabel as formatCalendarDateLabel,
+  mergeUploadGroupsWithBackendItems as mergeCalendarUploadGroupsWithBackendItems,
+} from '../../utils/calendarAddEntry';
 // 엑셀 가이드 서비스 호출 제거 (수동 호출 방식으로 변경)
 import ExcelUploadGuideModal from './ExcelUploadGuideModal';
 import CalendarCategorySelector from './CalendarCategorySelector';
@@ -241,7 +248,7 @@ export default function CalendarAddEntrySheet({
     try {
       // Native currently selects one file at a time, so we infer whether it is
       // a bank or card export from the filename before calling the backend.
-      const summary = await uploadCalendarTransactions(buildUploadRequest(nextFile));
+      const summary = await uploadCalendarTransactions(buildCalendarUploadRequest(nextFile));
       setBackendSummary(summary);
 
       // 수정 전 코드:
@@ -253,7 +260,10 @@ export default function CalendarAddEntrySheet({
       // - 백엔드 응답은 요약 통계와 설명 보조 정보만 덧붙이는 용도로 사용합니다.
       if (summary.items.length > 0) {
         setUploadGroups((current) =>
-          mergeUploadGroupsWithBackendItems(current.length > 0 ? current : nextGroups, summary.items),
+          mergeCalendarUploadGroupsWithBackendItems(
+            current.length > 0 ? current : nextGroups,
+            summary.items,
+          ),
         );
         setUploadErrorMessage(null);
       }
@@ -307,7 +317,7 @@ export default function CalendarAddEntrySheet({
     setIsConfirmLoading(true);
 
     try {
-      const overrideRows = buildOverrideRows(uploadGroups, backendSummary?.items ?? []);
+      const overrideRows = buildCalendarOverrideRows(uploadGroups, backendSummary?.items ?? []);
       if (overrideRows.length > 0) {
         await saveCalendarOverrides(overrideRows);
       }
@@ -388,7 +398,9 @@ export default function CalendarAddEntrySheet({
                   {draftEntries.map((draft) => (
                     <View key={draft.id} style={styles.draftCard}>
                       <View style={styles.draftHeaderRow}>
-                        <Text style={styles.draftDateText}>{formatDateLabel(draft.dateKey)}</Text>
+                        <Text style={styles.draftDateText}>
+                          {formatCalendarDateLabel(draft.dateKey)}
+                        </Text>
                         <Text style={styles.draftAmountText}>-{draft.amount.toLocaleString()}원</Text>
                       </View>
 
@@ -563,7 +575,9 @@ export default function CalendarAddEntrySheet({
                   {selectedExcelFile ? selectedExcelFile.name : '업로드할 파일을 선택해주세요'}
                 </Text>
                 <Text style={styles.uploadHint}>
-                  {selectedExcelFile ? buildFileSummary(selectedExcelFile) : '.xlsx, .csv, .xls 지원'}
+                  {selectedExcelFile
+                    ? buildCalendarFileSummary(selectedExcelFile)
+                    : '.xlsx, .csv, .xls 지원'}
                 </Text>
               </TouchableOpacity>
 
@@ -581,7 +595,9 @@ export default function CalendarAddEntrySheet({
                     <Text style={styles.fileInfoTitle}>선택한 파일</Text>
                   </View>
                   <Text style={styles.fileInfoName}>{selectedExcelFile.name}</Text>
-                  <Text style={styles.fileInfoMeta}>{buildFileSummary(selectedExcelFile)}</Text>
+                  <Text style={styles.fileInfoMeta}>
+                    {buildCalendarFileSummary(selectedExcelFile)}
+                  </Text>
                 </View>
               ) : null}
 
