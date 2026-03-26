@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import SurfaceCard from '../common/SurfaceCard';
-import { styles } from './FixedExpenseSection.styles';
+import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
 import type { FixedExpenseItem } from '../../mock/calendar';
 import FixedExpenseGroupBlock from './FixedExpenseGroupBlock';
 
@@ -31,24 +31,54 @@ export default function FixedExpenseSection({
   onPressManage,
 }: FixedExpenseSectionProps) {
   return (
-      <SurfaceCard>
-        <View style={styles.headerRow}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.pinEmoji}>📌</Text>
-            <Text style={styles.headerTitle}>고정지출</Text>
-          </View>
-          <TouchableOpacity activeOpacity={0.86} onPress={onPressManage}>
-            <Text style={styles.manageText}>관리</Text>
+    <SurfaceCard>
+      <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center" style={{ gap: wp(8) }}>
+          <Text
+            style={{
+              fontSize: fp(18),
+              fontFamily: FONTS.bold,
+              color: COLORS.textPrimary,
+            }}
+          >
+            고정지출
+          </Text>
+        </View>
+        <TouchableOpacity activeOpacity={0.86} onPress={onPressManage}>
+          <Text
+            style={{
+              fontSize: fp(14),
+              fontFamily: FONTS.semiBold,
+              color: COLORS.primary,
+            }}
+          >
+            관리
+          </Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.totalLabel}>
+      <Text
+        style={{
+          marginTop: hp(4),
+          fontSize: fp(14),
+          fontFamily: FONTS.bold,
+          color: COLORS.primary,
+        }}
+      >
         {items.length > 0 ? `총 ${totalAmount.toLocaleString()}원` : '-'}
       </Text>
 
-      <View style={styles.list}>
+      <View style={{ gap: hp(12) }}>
         {items.length === 0 ? (
-          <Text style={styles.emptyDetailText}>-</Text>
+          <Text
+            style={{
+              fontSize: fp(12),
+              fontFamily: FONTS.medium,
+              color: COLORS.textSecondary,
+            }}
+          >
+            -
+          </Text>
         ) : (
           items.map((item) => {
             const detailItems = detailItemsByCategory[item.title] ?? [];

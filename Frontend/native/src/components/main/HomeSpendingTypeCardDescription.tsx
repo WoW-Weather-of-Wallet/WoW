@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text } from 'react-native';
-import { styles } from './HomeSpendingTypeCard.styles';
+
+import { COLORS, FONTS, fp, hp } from '../../constants/theme';
 
 interface HomeSpendingTypeCardDescriptionProps {
   description: string;
@@ -9,5 +10,13 @@ interface HomeSpendingTypeCardDescriptionProps {
 export default function HomeSpendingTypeCardDescription({
   description,
 }: HomeSpendingTypeCardDescriptionProps) {
-  return <Text style={styles.description}>{description}</Text>;
+  const descriptionStyle = {
+    marginTop: hp(14),
+    fontSize: fp(14),
+    lineHeight: fp(22),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  } as const;
+
+  return <Text style={descriptionStyle}>{description}</Text>;
 }

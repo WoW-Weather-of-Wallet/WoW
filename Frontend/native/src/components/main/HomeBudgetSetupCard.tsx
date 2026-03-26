@@ -1,8 +1,9 @@
 import React from 'react';
 import { Text, View } from 'react-native';
+
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import CustomTextInput from '../common/CustomTextInput';
 import GradientButton from '../common/GradientButton';
-import { styles } from './HomeMonthlyReportSheet.styles';
 
 interface HomeBudgetSetupCardProps {
   title: string;
@@ -25,10 +26,34 @@ export default function HomeBudgetSetupCard({
   onBudgetAmountChange,
   onSubmit,
 }: HomeBudgetSetupCardProps) {
+  const cardStyle = {
+    gap: hp(12),
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    backgroundColor: COLORS.backgroundSecondary,
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(16),
+    marginBottom: hp(20),
+  } as const;
+
+  const titleStyle = {
+    fontSize: fp(16),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  } as const;
+
+  const descriptionStyle = {
+    fontSize: fp(13),
+    lineHeight: fp(20),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  } as const;
+
   return (
-    <View style={styles.budgetFormCard}>
-      <Text style={styles.budgetFormTitle}>{title}</Text>
-      <Text style={styles.budgetFormDescription}>{description}</Text>
+    <View style={cardStyle}>
+      <Text style={titleStyle}>{title}</Text>
+      <Text style={descriptionStyle}>{description}</Text>
       <CustomTextInput
         label={inputLabel}
         value={budgetAmount}
@@ -39,7 +64,7 @@ export default function HomeBudgetSetupCard({
         title={buttonTitle}
         onPress={onSubmit}
         disabled={isDisabled}
-        style={isDisabled ? styles.disabledBudgetButton : undefined}
+        style={isDisabled ? { opacity: 0.45 } : undefined}
       />
     </View>
   );

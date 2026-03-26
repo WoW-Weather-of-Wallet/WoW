@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import BottomSheetModal from '../common/BottomSheetModal';
+
 import type { SpendingStyleMetric } from '../../constants/main/types';
+import { hp } from '../../constants/theme';
 import {
-  useHomeSpendingTypeSummary,
   type HomeSpendingTypeReason,
+  useHomeSpendingTypeSummary,
 } from '../../hooks/useHomeSpendingTypeSummary';
+import BottomSheetModal from '../common/BottomSheetModal';
 import HomeSpendingTypeIntroCard from './HomeSpendingTypeIntroCard';
 import HomeSpendingTypeReasonsSection from './HomeSpendingTypeReasonsSection';
 import HomeSpendingTypeStyleMapSection from './HomeSpendingTypeStyleMapSection';
 import SheetIconHeader from './SheetIconHeader';
 import SpendingStyleGuideModal from './SpendingStyleGuideModal';
-import { styles } from './HomeSpendingTypeSheet.styles';
 
 interface HomeSpendingTypeSheetProps {
   visible: boolean;
@@ -50,7 +51,7 @@ export default function HomeSpendingTypeSheet({
   return (
     <>
       <BottomSheetModal visible={visible} onClose={onClose} showHandle>
-        <View style={styles.sheetHeader}>
+        <View style={{ marginBottom: hp(2) }}>
           <SheetIconHeader
             iconName={iconName}
             eyebrow="AI 소비 유형 분석"

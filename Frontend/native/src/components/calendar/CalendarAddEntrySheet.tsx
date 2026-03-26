@@ -10,6 +10,7 @@ import {
   parseCsvToUploadGroups,
   parseSpreadsheetToUploadGroups,
 } from '../../constants/calendar/excel';
+import { hp } from '../../constants/theme';
 import { useCalendarAddEntryForm } from '../../hooks/useCalendarAddEntryForm';
 import {
   getCalendarApiErrorMessage,
@@ -32,7 +33,6 @@ import type {
   CalendarUploadPreviewGroup,
   ManualCalendarEntryDraft,
 } from '../../types/calendar';
-import { styles } from './CalendarAddEntrySheet.styles';
 
 interface CalendarAddEntrySheetProps {
   visible: boolean;
@@ -141,7 +141,10 @@ export default function CalendarAddEntrySheet({
     } catch (error) {
       console.warn('Failed to confirm manual calendar entries', error);
       setConfirmErrorMessage(
-        getCalendarApiErrorMessage(error, '직접 입력 내역을 저장하지 못했습니다. 다시 시도해주세요.'),
+        getCalendarApiErrorMessage(
+          error,
+          '직접 입력 내역을 저장하지 못했습니다. 다시 시도해주세요.',
+        ),
       );
     } finally {
       setIsConfirmLoading(false);
@@ -226,7 +229,10 @@ export default function CalendarAddEntrySheet({
     } catch (error) {
       console.warn('Failed to upload calendar file to backend', error);
       setBackendSummaryError(
-        getCalendarApiErrorMessage(error, '업로드 파일 분석에 실패했습니다. 다시 시도해주세요.'),
+        getCalendarApiErrorMessage(
+          error,
+          '업로드 파일 분석에 실패했습니다. 다시 시도해주세요.',
+        ),
       );
     } finally {
       setIsBackendSummaryLoading(false);
@@ -281,7 +287,10 @@ export default function CalendarAddEntrySheet({
     } catch (error) {
       console.warn('Failed to confirm uploaded calendar entries', error);
       setConfirmErrorMessage(
-        getCalendarApiErrorMessage(error, '업로드 내역을 저장하지 못했습니다. 다시 시도해주세요.'),
+        getCalendarApiErrorMessage(
+          error,
+          '업로드 내역을 저장하지 못했습니다. 다시 시도해주세요.',
+        ),
       );
     } finally {
       setIsConfirmLoading(false);
@@ -299,7 +308,7 @@ export default function CalendarAddEntrySheet({
         showCloseButton={false}
         subtitle=""
       >
-        <View style={styles.container}>
+        <View style={{ maxHeight: hp(620) }}>
           <CalendarEntryModeToggle activeMode={activeMode} onChangeMode={setActiveMode} />
 
           {activeMode === 'direct' ? (

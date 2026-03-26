@@ -1,8 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
-import { styles } from './CalendarHeroCard.styles';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
 interface CalendarHeroWeatherCardProps {
   weatherIconName: keyof typeof Ionicons.glyphMap;
@@ -16,13 +15,42 @@ export default function CalendarHeroWeatherCard({
   hint,
 }: CalendarHeroWeatherCardProps) {
   return (
-    <View style={styles.weatherCard}>
-      <View style={styles.weatherIconWrap}>
+    <View
+      className="flex-row items-center"
+      style={{
+        backgroundColor: COLORS.whiteOverlay14,
+        borderRadius: RADIUS.xl,
+        paddingHorizontal: wp(16),
+        paddingVertical: hp(14),
+        marginBottom: hp(16),
+      }}
+    >
+      <View
+        className="items-center justify-center"
+        style={{ width: wp(38), marginRight: wp(10) }}
+      >
         <Ionicons name={weatherIconName} size={wp(25)} color={COLORS.weatherSun} />
       </View>
-      <View style={styles.weatherTextBlock}>
-        <Text style={styles.weatherTitle}>{title}</Text>
-        <Text style={styles.weatherHint}>{hint}</Text>
+      <View className="flex-1">
+        <Text
+          style={{
+            fontSize: fp(17),
+            fontFamily: FONTS.bold,
+            color: COLORS.white,
+            marginBottom: hp(4),
+          }}
+        >
+          {title}
+        </Text>
+        <Text
+          style={{
+            fontSize: fp(12),
+            fontFamily: FONTS.medium,
+            color: COLORS.calendarHeroSubText,
+          }}
+        >
+          {hint}
+        </Text>
       </View>
     </View>
   );

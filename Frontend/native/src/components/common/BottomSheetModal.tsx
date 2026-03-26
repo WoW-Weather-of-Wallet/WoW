@@ -1,4 +1,10 @@
-import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import {
   Animated,
   Dimensions,
@@ -12,8 +18,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, wp, hp } from '../../constants/theme';
-import { styles } from './BottomSheetModal.styles';
+import {
+  COLORS,
+  FONTS,
+  RADIUS,
+  fp,
+  hp,
+  wp,
+} from '../../constants/theme';
 
 interface BottomSheetModalProps extends PropsWithChildren {
   visible: boolean;
@@ -26,11 +38,6 @@ interface BottomSheetModalProps extends PropsWithChildren {
   showCloseButton?: boolean;
 }
 
-/**
- * BottomSheetModal
- * 메인/캘린더에서 반복되는 하단 시트 레이아웃을 공통화합니다.
- * 닫기 버튼과 핸들, 기본 패딩을 맞춰 모달 경험을 통일합니다.
- */
 export default function BottomSheetModal({
   visible,
   onClose,
@@ -108,27 +115,90 @@ export default function BottomSheetModal({
 
   const headerBlock = (
     <View
-      style={styles.dragArea}
+      style={{ paddingBottom: hp(4) }}
       {...(enableSwipeToClose ? panResponder.panHandlers : {})}
     >
-      {showHandle ? <View style={styles.handle} /> : null}
+      {showHandle ? (
+        <View
+          className="self-center"
+          style={{
+            width: wp(42),
+            height: hp(6),
+            borderRadius: RADIUS.full,
+            backgroundColor: COLORS.modalHandle,
+            marginBottom: hp(18),
+          }}
+        />
+      ) : null}
 
       {title || subtitle ? (
-        <View style={styles.header}>
-          <View style={styles.headerTextBlock}>
-            {title ? <Text style={styles.title}>{title}</Text> : null}
-            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        <View
+          className="flex-row items-start justify-between"
+          style={{ gap: wp(12), marginBottom: hp(18) }}
+        >
+          <View className="flex-1">
+            {title ? (
+              <Text
+                style={{
+                  fontSize: fp(24),
+                  fontFamily: FONTS.bold,
+                  color: COLORS.textPrimary,
+                }}
+              >
+                {title}
+              </Text>
+            ) : null}
+            {subtitle ? (
+              <Text
+                style={{
+                  marginTop: hp(6),
+                  fontSize: fp(14),
+                  fontFamily: FONTS.medium,
+                  color: COLORS.textSecondary,
+                }}
+              >
+                {subtitle}
+              </Text>
+            ) : null}
           </View>
           {showCloseButton ? (
-            <TouchableOpacity activeOpacity={0.86} style={styles.closeButton} onPress={animateClose}>
-              <Ionicons name="close" size={wp(18)} color={COLORS.textSecondary} />
+            <TouchableOpacity
+              activeOpacity={0.86}
+              className="items-center justify-center"
+              style={{
+                width: wp(34),
+                height: wp(34),
+                borderRadius: wp(17),
+                backgroundColor: COLORS.backgroundSecondary,
+              }}
+              onPress={animateClose}
+            >
+              <Ionicons
+                name="close"
+                size={wp(18)}
+                color={COLORS.textSecondary}
+              />
             </TouchableOpacity>
           ) : null}
         </View>
       ) : showCloseButton ? (
-        <View style={styles.closeOnlyRow}>
-          <TouchableOpacity activeOpacity={0.86} style={styles.closeButton} onPress={animateClose}>
-            <Ionicons name="close" size={wp(18)} color={COLORS.textSecondary} />
+        <View className="items-end" style={{ marginBottom: hp(12) }}>
+          <TouchableOpacity
+            activeOpacity={0.86}
+            className="items-center justify-center"
+            style={{
+              width: wp(34),
+              height: wp(34),
+              borderRadius: wp(17),
+              backgroundColor: COLORS.backgroundSecondary,
+            }}
+            onPress={animateClose}
+          >
+            <Ionicons
+              name="close"
+              size={wp(18)}
+              color={COLORS.textSecondary}
+            />
           </TouchableOpacity>
         </View>
       ) : null}
@@ -136,17 +206,28 @@ export default function BottomSheetModal({
   );
 
   return (
-    <Modal transparent animationType="none" visible={visible} onRequestClose={animateClose}>
-      <View style={styles.backdrop}>
-        <Pressable style={styles.dismissArea} onPress={animateClose} />
+    <Modal
+      transparent
+      animationType="none"
+      visible={visible}
+      onRequestClose={animateClose}
+    >
+      <View
+        className="flex-1 justify-end"
+        style={{ backgroundColor: COLORS.modalOverlay }}
+      >
+        <Pressable className="w-full flex-1" onPress={animateClose} />
         <Animated.View
-          style={[
-            styles.sheet,
-            {
-              paddingBottom: insets.bottom + hp(18),
-              transform: [{ translateY }],
-            },
-          ]}
+          style={{
+            backgroundColor: COLORS.background,
+            borderTopLeftRadius: RADIUS.xxl,
+            borderTopRightRadius: RADIUS.xxl,
+            paddingHorizontal: wp(20),
+            paddingTop: hp(18),
+            paddingBottom: insets.bottom + hp(18),
+            maxHeight: '88%',
+            transform: [{ translateY }],
+          }}
         >
           {headerBlock}
 
@@ -154,7 +235,7 @@ export default function BottomSheetModal({
             <ScrollView
               bounces={false}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
+              contentContainerStyle={{ paddingBottom: hp(4) }}
             >
               {children}
             </ScrollView>
@@ -166,5 +247,3 @@ export default function BottomSheetModal({
     </Modal>
   );
 }
-
-

@@ -5,16 +5,21 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import AuthStepLayout from '../../components/auth/AuthStepLayout';
 import AuthActionButton from '../../components/common/AuthActionButton';
 import AuthUnderlineInput from '../../components/common/AuthUnderlineInput';
-import { styles, CONSTANTS } from './CreateAccountScreen.styles';
-import { COLORS, hp } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import { useCreateAccountStepFlow } from '../../hooks';
-import type { CreateAccountRouteParams } from '../../types/auth';
 import type { RootScreenProps } from '../../types';
+import type { CreateAccountRouteParams } from '../../types/auth';
+
+const SCROLL_CONTENT_PADDING_TOP = hp(20);
+const SCROLL_CONTENT_PADDING_BOTTOM = hp(40);
+const BOTTOM_CONTAINER_PADDING_BOTTOM = hp(20);
+const CHECK_BUTTON_ICON_SIZE = wp(20);
+const EYE_ICON_SIZE = wp(22);
 
 export default function CreateAccountScreen({
   route,
@@ -46,7 +51,6 @@ export default function CreateAccountScreen({
     togglePasswordVisibility,
     toggleConfirmPasswordVisibility,
     handleCheckId,
-    handleNextStep,
     handleCreateAccount,
     handleIdChange,
   } = useCreateAccountStepFlow(routeParams);
@@ -56,10 +60,10 @@ export default function CreateAccountScreen({
       currentStep={stepIndicatorCurrentStep}
       totalSteps={5}
       title={title}
-      description="입력한 정보는 안전하게 보호되며 회원가입 계정으로 사용할 수 있어요."
-      scrollContentPaddingTop={CONSTANTS.scrollContentPaddingTop}
-      scrollContentPaddingBottom={CONSTANTS.scrollContentPaddingBottom}
-      bottomMinPadding={CONSTANTS.bottomContainerPaddingBottom}
+      description="가입에 사용할 아이디와 비밀번호를 입력해 주세요."
+      scrollContentPaddingTop={SCROLL_CONTENT_PADDING_TOP}
+      scrollContentPaddingBottom={SCROLL_CONTENT_PADDING_BOTTOM}
+      bottomMinPadding={BOTTOM_CONTAINER_PADDING_BOTTOM}
       bottomContent={
         step >= 2 ? (
           <Animated.View entering={FadeInDown.duration(500)}>
@@ -69,74 +73,189 @@ export default function CreateAccountScreen({
               disabled={!buttonState.isActive}
               active={buttonState.isActive}
               onPress={buttonState.onPress}
-              containerStyle={styles.confirmButton}
-              activeContainerStyle={styles.activeButton}
-              textStyle={styles.confirmButtonText}
-              activeTextStyle={styles.activeButtonText}
+              containerStyle={{
+                backgroundColor: COLORS.border,
+                borderRadius: wp(30),
+                paddingVertical: hp(16),
+                alignItems: 'center',
+              }}
+              activeContainerStyle={{
+                backgroundColor: COLORS.textPrimary,
+              }}
+              textStyle={{
+                fontSize: fp(18),
+                fontFamily: FONTS.bold,
+                color: COLORS.textTertiary,
+              }}
+              activeTextStyle={{ color: COLORS.textInverse }}
               loadingColor={COLORS.textInverse}
             />
           </Animated.View>
         ) : null
       }
+    >
+      <Animated.View
+        entering={FadeInDown.duration(500)}
+        style={{ marginBottom: hp(32) }}
       >
-        <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
-          <View style={styles.idInputRow}>
-            <AuthUnderlineInput
-              ref={idRef}
-              containerStyle={[styles.underlineContainer, styles.idInputUnderline]}
-              inputStyle={[styles.bareInput, id.length > 0 && styles.bareInputLetterSpacing]}
-              value={id}
-              onChangeText={handleIdChange}
-              placeholder="아이디 (4자 이상)"
-              placeholderTextColor={COLORS.textTertiary}
-              autoCapitalize="none"
-              autoCorrect={false}
-              returnKeyType="done"
-              onSubmitEditing={id.length >= 4 && isIdAvailable === null ? handleCheckId : undefined}
-              editable={!isCheckingId && !isSubmitting}
-              autoFocus
-            />
+        <View
+          className="flex-row items-end justify-between"
+          style={{ gap: wp(12) }}
+        >
+          <AuthUnderlineInput
+            ref={idRef}
+            containerStyle={[
+              {
+                borderBottomWidth: 1.5,
+                borderBottomColor: COLORS.textPrimary,
+                paddingVertical: hp(8),
+                minHeight: hp(50),
+                justifyContent: 'center',
+              },
+              { flex: 1 },
+            ]}
+            inputStyle={[
+              {
+                fontSize: fp(20),
+                fontFamily: FONTS.semiBold,
+                color: COLORS.textPrimary,
+                padding: 0,
+                margin: 0,
+              },
+              id.length > 0 ? { letterSpacing: 1 } : null,
+            ]}
+            value={id}
+            onChangeText={handleIdChange}
+            placeholder="아이디 (4자 이상)"
+            placeholderTextColor={COLORS.textTertiary}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="done"
+            onSubmitEditing={
+              id.length >= 4 && isIdAvailable === null ? handleCheckId : undefined
+            }
+            editable={!isCheckingId && !isSubmitting}
+            autoFocus
+          />
 
           <TouchableOpacity
-            style={[
-              styles.checkButton,
-              id.length >= 4 ? styles.checkButtonActive : styles.checkButtonInactive,
-              isIdAvailable === true && styles.checkButtonSuccess,
-            ]}
-            disabled={id.length < 4 || isCheckingId || isIdAvailable === true || isSubmitting}
+            className="items-center justify-center"
+            style={{
+              paddingHorizontal: wp(16),
+              height: hp(44),
+              borderRadius: RADIUS.sm,
+              marginBottom: hp(4),
+              backgroundColor:
+                isIdAvailable === true
+                  ? COLORS.success
+                  : id.length >= 4
+                    ? COLORS.textPrimary
+                    : COLORS.backgroundSecondary,
+            }}
+            disabled={
+              id.length < 4 ||
+              isCheckingId ||
+              isIdAvailable === true ||
+              isSubmitting
+            }
             onPress={() => void handleCheckId()}
           >
             {isCheckingId ? (
               <ActivityIndicator color={COLORS.textInverse} size="small" />
             ) : isIdAvailable === true ? (
-              <Ionicons name="checkmark" size={CONSTANTS.checkButtonIconSize} color={COLORS.textInverse} />
+              <Ionicons
+                name="checkmark"
+                size={CHECK_BUTTON_ICON_SIZE}
+                color={COLORS.textInverse}
+              />
             ) : (
-              <Text style={styles.checkButtonText}>중복 확인</Text>
+              <Text
+                style={{
+                  fontSize: fp(14),
+                  fontFamily: FONTS.semiBold,
+                  color: COLORS.textInverse,
+                }}
+              >
+                중복 확인
+              </Text>
             )}
           </TouchableOpacity>
         </View>
 
-        {isIdAvailable === true && (
-          <Animated.Text entering={FadeInDown.duration(300)} style={styles.successMessage}>
+        {isIdAvailable === true ? (
+          <Animated.Text
+            entering={FadeInDown.duration(300)}
+            style={{
+              fontSize: fp(14),
+              fontFamily: FONTS.medium,
+              color: COLORS.success,
+              marginTop: hp(8),
+            }}
+          >
             사용할 수 있는 아이디예요.
           </Animated.Text>
-        )}
-        {isIdAvailable === false && submitError.length === 0 && (
-          <Animated.Text entering={FadeInDown.duration(300)} style={styles.errorMessage}>
+        ) : null}
+
+        {isIdAvailable === false && submitError.length === 0 ? (
+          <Animated.Text
+            entering={FadeInDown.duration(300)}
+            style={{
+              fontSize: fp(14),
+              fontFamily: FONTS.medium,
+              color: COLORS.error,
+              marginTop: hp(8),
+            }}
+          >
             이미 사용 중인 아이디예요.
           </Animated.Text>
-        )}
-        {id.length === 0 && (
-          <Text style={styles.guideMessage}>영문과 숫자를 조합해 아이디를 만들어 주세요.</Text>
-        )}
+        ) : null}
+
+        {id.length === 0 ? (
+          <Text
+            style={{
+              fontSize: fp(14),
+              fontFamily: FONTS.medium,
+              color: COLORS.textTertiary,
+              marginTop: hp(8),
+            }}
+          >
+            영문과 숫자를 조합한 아이디를 입력해 주세요.
+          </Text>
+        ) : null}
       </Animated.View>
 
-      {step >= 2 && (
-        <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
+      {step >= 2 ? (
+        <Animated.View
+          entering={FadeInDown.duration(500)}
+          style={{ marginBottom: hp(32) }}
+        >
           <AuthUnderlineInput
             ref={pwRef}
-            containerStyle={[styles.underlineContainer, styles.passwordRow]}
-            inputStyle={[styles.bareInput, styles.passwordInput, password.length > 0 && styles.bareInputLetterSpacing]}
+            containerStyle={[
+              {
+                borderBottomWidth: 1.5,
+                borderBottomColor: COLORS.textPrimary,
+                paddingVertical: hp(8),
+                minHeight: hp(50),
+                justifyContent: 'center',
+              },
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              },
+            ]}
+            inputStyle={[
+              {
+                fontSize: fp(20),
+                fontFamily: FONTS.semiBold,
+                color: COLORS.textPrimary,
+                padding: 0,
+                margin: 0,
+              },
+              { flex: 1 },
+              password.length > 0 ? { letterSpacing: 1 } : null,
+            ]}
             value={password}
             onChangeText={setPassword}
             placeholder="비밀번호 (8자 이상)"
@@ -145,35 +264,65 @@ export default function CreateAccountScreen({
             autoCorrect={false}
             secureTextEntry={!isPasswordVisible}
             returnKeyType="next"
-            onSubmitEditing={handleNextStep}
             editable={!isSubmitting}
             rightAccessory={
               <TouchableOpacity
                 onPress={togglePasswordVisibility}
-                style={styles.eyeIcon}
+                style={{ padding: wp(4) }}
                 activeOpacity={0.7}
               >
                 <Ionicons
                   name={isPasswordVisible ? 'eye-outline' : 'eye-off-outline'}
-                  size={CONSTANTS.eyeIconSize}
-                  color={isPasswordVisible ? COLORS.primary : COLORS.textTertiary}
+                  size={EYE_ICON_SIZE}
+                  color={
+                    isPasswordVisible ? COLORS.primary : COLORS.textTertiary
+                  }
                 />
               </TouchableOpacity>
             }
           />
-          {password.length > 0 && !isPasswordValid && (
-            <Animated.Text entering={FadeInDown.duration(300)} style={styles.errorMessage}>
+
+          {password.length > 0 && !isPasswordValid ? (
+            <Animated.Text
+              entering={FadeInDown.duration(300)}
+              style={{
+                fontSize: fp(14),
+                fontFamily: FONTS.medium,
+                color: COLORS.error,
+                marginTop: hp(8),
+              }}
+            >
               {passwordValidation.message}
             </Animated.Text>
-          )}
+          ) : null}
 
           <AuthUnderlineInput
             ref={confirmPwRef}
-            containerStyle={[styles.underlineContainer, styles.passwordRow, { marginTop: hp(24) }]}
+            containerStyle={[
+              {
+                borderBottomWidth: 1.5,
+                borderBottomColor: COLORS.textPrimary,
+                paddingVertical: hp(8),
+                minHeight: hp(50),
+                justifyContent: 'center',
+              },
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              },
+              { marginTop: hp(24) },
+            ]}
             inputStyle={[
-              styles.bareInput,
-              styles.passwordInput,
-              confirmPassword.length > 0 && styles.bareInputLetterSpacing,
+              {
+                fontSize: fp(20),
+                fontFamily: FONTS.semiBold,
+                color: COLORS.textPrimary,
+                padding: 0,
+                margin: 0,
+              },
+              { flex: 1 },
+              confirmPassword.length > 0 ? { letterSpacing: 1 } : null,
             ]}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
@@ -188,29 +337,65 @@ export default function CreateAccountScreen({
             rightAccessory={
               <TouchableOpacity
                 onPress={toggleConfirmPasswordVisibility}
-                style={styles.eyeIcon}
+                style={{ padding: wp(4) }}
                 activeOpacity={0.7}
               >
                 <Ionicons
-                  name={isConfirmPasswordVisible ? 'eye-outline' : 'eye-off-outline'}
-                  size={CONSTANTS.eyeIconSize}
-                  color={isConfirmPasswordVisible ? COLORS.primary : COLORS.textTertiary}
+                  name={
+                    isConfirmPasswordVisible ? 'eye-outline' : 'eye-off-outline'
+                  }
+                  size={EYE_ICON_SIZE}
+                  color={
+                    isConfirmPasswordVisible
+                      ? COLORS.primary
+                      : COLORS.textTertiary
+                  }
                 />
               </TouchableOpacity>
             }
           />
-          {canShowMismatch && !isPasswordMatch && (
-            <Text style={styles.errorMessage}>비밀번호가 일치하지 않아요.</Text>
-          )}
-          {isPasswordMatch && (
-            <Animated.Text entering={FadeInDown.duration(300)} style={styles.successMessage}>
+
+          {canShowMismatch && !isPasswordMatch ? (
+            <Text
+              style={{
+                fontSize: fp(14),
+                fontFamily: FONTS.medium,
+                color: COLORS.error,
+                marginTop: hp(8),
+              }}
+            >
+              비밀번호가 일치하지 않아요.
+            </Text>
+          ) : null}
+
+          {isPasswordMatch ? (
+            <Animated.Text
+              entering={FadeInDown.duration(300)}
+              style={{
+                fontSize: fp(14),
+                fontFamily: FONTS.medium,
+                color: COLORS.success,
+                marginTop: hp(8),
+              }}
+            >
               비밀번호가 일치해요.
             </Animated.Text>
-          )}
+          ) : null}
         </Animated.View>
-      )}
+      ) : null}
 
-      {submitError.length > 0 && <Text style={styles.submitErrorText}>{submitError}</Text>}
+      {submitError.length > 0 ? (
+        <Text
+          style={{
+            fontSize: fp(14),
+            fontFamily: FONTS.medium,
+            color: COLORS.error,
+            marginTop: hp(4),
+          }}
+        >
+          {submitError}
+        </Text>
+      ) : null}
     </AuthStepLayout>
   );
 }

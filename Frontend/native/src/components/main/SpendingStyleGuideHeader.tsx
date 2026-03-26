@@ -2,8 +2,7 @@ import React, { ReactNode } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { COLORS, wp } from '../../constants/theme';
-import { styles } from './SpendingStyleGuideModal.styles';
+import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
 
 type SpendingStyleGuideHeaderProps = {
   title: string;
@@ -16,19 +15,48 @@ export default function SpendingStyleGuideHeader({
   subtitle,
   onClose,
 }: SpendingStyleGuideHeaderProps) {
+  const headerStyle = {
+    paddingTop: hp(24),
+    paddingHorizontal: wp(24),
+    marginBottom: hp(16),
+  } as const;
+
+  const titleRowStyle = {
+    marginBottom: hp(8),
+  } as const;
+
+  const titleStyle = {
+    fontSize: fp(20),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: hp(8),
+  } as const;
+
+  const subtitleStyle = {
+    fontSize: fp(13),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+    lineHeight: fp(18),
+  } as const;
+
+  const closeButtonStyle = {
+    marginRight: wp(-4),
+  } as const;
+
   return (
-    <View style={styles.modalHeader}>
-      <View style={styles.titleRow}>
-        <Text style={styles.modalTitle}>{title}</Text>
+    <View style={headerStyle}>
+      <View className="flex-row items-center justify-between" style={titleRowStyle}>
+        <Text style={titleStyle}>{title}</Text>
         <TouchableOpacity
           activeOpacity={0.86}
-          style={styles.closeButton}
+          className="p-1"
+          style={closeButtonStyle}
           onPress={onClose}
         >
           <Ionicons name="close" size={wp(22)} color={COLORS.textPrimary} />
         </TouchableOpacity>
       </View>
-      <Text style={styles.modalSubTitle}>{subtitle}</Text>
+      <Text style={subtitleStyle}>{subtitle}</Text>
     </View>
   );
 }

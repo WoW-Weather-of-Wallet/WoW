@@ -1,40 +1,91 @@
 import React from 'react';
 import { View } from 'react-native';
-import { COLORS, hp, wp } from '../../constants/theme';
-import { styles } from '../../screens/ai/AiFeedbackHomeScreen.styles';
+
+import { COLORS, RADIUS, hp, wp } from '../../constants/theme';
 
 export function AiAnalysisPreview() {
   return (
-    <View style={styles.previewContainer}>
-      <View style={styles.miniUICard}>
-        <View style={[styles.miniSkeletonLine, { width: wp(40), marginTop: hp(4) }]} />
-        <View style={styles.miniDonutWrapper}>
-          <View style={styles.miniDonutBase} />
-          <View style={styles.miniDonutActive} />
-          <View style={styles.miniDonutCenterText} />
+    <View className="items-center justify-center" style={{ width: wp(120), height: hp(120), marginBottom: hp(20) }}>
+      <View
+        className="justify-between bg-white"
+        style={{
+          width: wp(110),
+          height: hp(100),
+          borderRadius: RADIUS.md,
+          padding: wp(10),
+          borderWidth: 1,
+          borderColor: 'rgba(0, 0, 0, 0.05)',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+          elevation: 2,
+        }}
+      >
+        <View style={{ height: hp(4), width: wp(40), borderRadius: 2, backgroundColor: 'rgba(0, 0, 0, 0.06)', marginTop: hp(4) }} />
+
+        <View className="items-center justify-center" style={{ marginVertical: hp(6) }}>
+          <View
+            style={{
+              width: wp(36),
+              height: wp(36),
+              borderRadius: wp(18),
+              borderWidth: 4,
+              borderColor: 'rgba(0, 0, 0, 0.04)',
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              width: wp(36),
+              height: wp(36),
+              borderRadius: wp(18),
+              borderWidth: 4,
+              borderColor: COLORS.primary,
+              borderTopColor: 'transparent',
+              borderRightColor: 'transparent',
+              transform: [{ rotate: '45deg' }],
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              width: wp(12),
+              height: hp(4),
+              borderRadius: 2,
+              backgroundColor: 'rgba(102, 102, 238, 0.2)',
+            }}
+          />
         </View>
-        <View style={styles.miniCategoryRow}>
-          <View style={[styles.miniCategoryDot, { backgroundColor: COLORS.primary }]} />
-          <View style={styles.miniCategoryBarBg}>
+
+        {[
+          { color: COLORS.primary, width: '70%' },
+          { color: COLORS.chartBlue, width: '40%' },
+        ].map((item, index) => (
+          <View key={index} className="flex-row items-center" style={{ gap: wp(4) }}>
             <View
-              style={[
-                styles.miniCategoryBarFill,
-                { width: '70%', backgroundColor: COLORS.primary },
-              ]}
+              style={{
+                width: wp(6),
+                height: wp(6),
+                borderRadius: wp(3),
+                backgroundColor: item.color,
+              }}
             />
-          </View>
-        </View>
-        <View style={styles.miniCategoryRow}>
-          <View style={[styles.miniCategoryDot, { backgroundColor: COLORS.chartBlue }]} />
-          <View style={styles.miniCategoryBarBg}>
             <View
-              style={[
-                styles.miniCategoryBarFill,
-                { width: '40%', backgroundColor: COLORS.chartBlue },
-              ]}
-            />
+              className="flex-1"
+              style={{ height: hp(4), borderRadius: 2, backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
+            >
+              <View
+                style={{
+                  width: item.width as never,
+                  height: '100%',
+                  borderRadius: 2,
+                  backgroundColor: item.color,
+                }}
+              />
+            </View>
           </View>
-        </View>
+        ))}
       </View>
     </View>
   );
@@ -42,27 +93,81 @@ export function AiAnalysisPreview() {
 
 export function AiGoalPreview() {
   return (
-    <View style={styles.previewContainer}>
-      <View style={styles.miniUICard}>
-        <View style={styles.miniGoalTop}>
-          <View style={[styles.miniSkeletonLine, { width: wp(30) }]} />
-          <View style={styles.miniGoalAmount} />
+    <View className="items-center justify-center" style={{ width: wp(120), height: hp(120), marginBottom: hp(20) }}>
+      <View
+        className="justify-between bg-white"
+        style={{
+          width: wp(110),
+          height: hp(100),
+          borderRadius: RADIUS.md,
+          padding: wp(10),
+          borderWidth: 1,
+          borderColor: 'rgba(0, 0, 0, 0.05)',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+          elevation: 2,
+        }}
+      >
+        <View className="items-center" style={{ gap: hp(4), marginTop: hp(4) }}>
+          <View style={{ height: hp(4), width: wp(30), borderRadius: 2, backgroundColor: 'rgba(0, 0, 0, 0.06)' }} />
+          <View
+            style={{
+              width: wp(50),
+              height: hp(8),
+              borderRadius: 2,
+              marginTop: hp(2),
+              backgroundColor: COLORS.primary,
+            }}
+          />
         </View>
-        <View style={styles.miniProgressBarOuter}>
-          <View style={styles.miniProgressBarInner} />
-          <View style={styles.miniProgressFlag} />
+
+        <View
+          style={{
+            height: hp(6),
+            marginTop: hp(10),
+            borderRadius: 3,
+            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+            position: 'relative',
+          }}
+        >
+          <View
+            style={{
+              width: '60%',
+              height: '100%',
+              borderRadius: 3,
+              backgroundColor: COLORS.chartBlue,
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              top: -hp(8),
+              left: '50%',
+              width: wp(12),
+              height: hp(10),
+              borderRadius: 2,
+              backgroundColor: '#374151',
+            }}
+          />
         </View>
-        <View style={styles.miniBarChartRow}>
+
+        <View
+          className="flex-row items-end justify-between"
+          style={{ height: hp(20), marginTop: hp(6), paddingHorizontal: wp(2) }}
+        >
           {[16, 14, 12, 18, 10, 8, 6].map((height, index) => (
             <View
               key={index}
-              style={[
-                styles.miniTrendBar,
-                {
-                  height: hp(height),
-                  backgroundColor: index >= 4 ? COLORS.chartGreen : 'rgba(0,0,0,0.08)',
-                },
-              ]}
+              style={{
+                width: wp(6),
+                height: hp(height),
+                borderRadius: 2,
+                borderTopLeftRadius: 2,
+                borderTopRightRadius: 2,
+                backgroundColor: index >= 4 ? COLORS.chartGreen : 'rgba(0, 0, 0, 0.08)',
+              }}
             />
           ))}
         </View>
@@ -73,23 +178,65 @@ export function AiGoalPreview() {
 
 export function AiNotificationPreview() {
   return (
-    <View style={styles.previewContainer}>
-      <View style={styles.miniPhoneOutline}>
-        <View style={styles.miniPhoneHeader}>
-          <View style={styles.miniProfileBlob} />
-          <View style={[styles.miniSkeletonLine, { width: wp(30) }]} />
-        </View>
-        <View style={[styles.miniSkeletonLine, { width: '100%', marginBottom: hp(6) }]} />
-        <View style={[styles.miniSkeletonLine, { width: '80%', marginBottom: hp(6) }]} />
-        <View style={[styles.miniSkeletonLine, { width: '60%' }]} />
-
-        <View style={styles.miniToast}>
-          <View style={styles.miniToastIcon} />
+    <View className="items-center justify-center" style={{ width: wp(120), height: hp(120), marginBottom: hp(20) }}>
+      <View
+        className="overflow-hidden bg-white"
+        style={{
+          width: wp(74),
+          height: hp(110),
+          borderRadius: RADIUS.lg,
+          borderWidth: 2,
+          borderColor: 'rgba(0, 0, 0, 0.1)',
+          padding: wp(6),
+        }}
+      >
+        <View className="flex-row items-center" style={{ gap: wp(4), marginBottom: hp(8) }}>
           <View
-            style={[
-              styles.miniSkeletonLine,
-              { flex: 1, height: hp(6), backgroundColor: 'rgba(0,0,0,0.04)' },
-            ]}
+            style={{
+              width: wp(10),
+              height: wp(10),
+              borderRadius: wp(5),
+              backgroundColor: 'rgba(0, 0, 0, 0.06)',
+            }}
+          />
+          <View style={{ height: hp(4), width: wp(30), borderRadius: 2, backgroundColor: 'rgba(0, 0, 0, 0.06)' }} />
+        </View>
+
+        <View style={{ height: hp(4), width: '100%', borderRadius: 2, backgroundColor: 'rgba(0, 0, 0, 0.06)', marginBottom: hp(6) }} />
+        <View style={{ height: hp(4), width: '80%', borderRadius: 2, backgroundColor: 'rgba(0, 0, 0, 0.06)', marginBottom: hp(6) }} />
+        <View style={{ height: hp(4), width: '60%', borderRadius: 2, backgroundColor: 'rgba(0, 0, 0, 0.06)' }} />
+
+        <View
+          className="flex-row items-center bg-white"
+          style={{
+            position: 'absolute',
+            top: hp(10),
+            left: wp(4),
+            right: wp(4),
+            gap: wp(4),
+            borderRadius: RADIUS.sm,
+            padding: wp(4),
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.15,
+            shadowRadius: 8,
+            elevation: 4,
+            zIndex: 10,
+            borderWidth: 1,
+            borderColor: 'rgba(0, 0, 0, 0.05)',
+          }}
+        >
+          <View
+            style={{
+              width: wp(8),
+              height: wp(8),
+              borderRadius: 2,
+              backgroundColor: COLORS.primary,
+            }}
+          />
+          <View
+            className="flex-1"
+            style={{ height: hp(6), borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.04)' }}
           />
         </View>
       </View>

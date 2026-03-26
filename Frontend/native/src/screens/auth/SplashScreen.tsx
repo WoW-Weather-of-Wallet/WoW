@@ -1,39 +1,27 @@
 import React, { useEffect } from 'react';
-import { View, Image, StatusBar } from 'react-native';
-import { styles } from './SplashScreen.styles';
-
+import { Image, StatusBar, View } from 'react-native';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  withDelay,
   Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
+import { COLORS, wp } from '../../constants/theme';
 import { useSplashBootstrap } from '../../hooks';
 
-// 스플래시 로고 이미지
 const splashLogo = require('../../assets/splash.png');
 
-/**
- * SplashScreen - 앱 시작 시 로고 애니메이션 화면
- *
- * 애니메이션 시퀀스:
- * 1. 로고 페이드인 + 스케일업 (0→1, 스프링)
- * 2. 잠시 유지
- * 3. 전체 페이드아웃 후 LoginScreen으로 전환
- */
 export default function SplashScreen() {
   useSplashBootstrap();
 
-  // 애니메이션 값
   const logoOpacity = useSharedValue(0);
   const logoScale = useSharedValue(0.6);
   const logoTranslateY = useSharedValue(30);
   const screenOpacity = useSharedValue(1);
 
   useEffect(() => {
-    // Step 1: 로고 페이드인 + 스케일업 + 슬라이드업
     logoOpacity.value = withTiming(1, {
       duration: 800,
       easing: Easing.out(Easing.cubic),
@@ -50,15 +38,15 @@ export default function SplashScreen() {
       stiffness: 90,
     });
 
-    // Step 2: 2.2초 유지 후 페이드아웃 효과
     screenOpacity.value = withDelay(
       2200,
-      withTiming(0, { duration: 500, easing: Easing.in(Easing.cubic) })
+      withTiming(0, {
+        duration: 500,
+        easing: Easing.in(Easing.cubic),
+      })
     );
-
   }, [logoOpacity, logoScale, logoTranslateY, screenOpacity]);
 
-  // 로고 애니메이션 스타일
   const logoAnimatedStyle = useAnimatedStyle(() => ({
     opacity: logoOpacity.value,
     transform: [
@@ -67,23 +55,36 @@ export default function SplashScreen() {
     ],
   }));
 
-  // 전체 화면 페이드아웃 스타일
   const screenAnimatedStyle = useAnimatedStyle(() => ({
     opacity: screenOpacity.value,
   }));
 
   return (
-    <Animated.View style={[styles.container, screenAnimatedStyle]}>
+    <Animated.View
+      style={[
+        {
+          flex: 1,
+        },
+        screenAnimatedStyle,
+      ]}
+    >
       <StatusBar
         barStyle="light-content"
         backgroundColor="transparent"
         translucent
       />
-      <View style={styles.gradient}>
-        <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
+
+      <View
+        className="flex-1 items-center justify-center"
+        style={{ backgroundColor: COLORS.background }}
+      >
+        <Animated.View
+          className="items-center justify-center"
+          style={logoAnimatedStyle}
+        >
           <Image
             source={splashLogo}
-            style={styles.logoImage}
+            style={{ width: wp(200), height: wp(200) }}
             resizeMode="contain"
           />
         </Animated.View>

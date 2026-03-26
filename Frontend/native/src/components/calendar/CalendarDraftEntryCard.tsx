@@ -1,10 +1,9 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import type { ManualCalendarEntryDraft } from '../../types/calendar';
 import { formatDateLabel as formatCalendarDateLabel } from '../../utils/calendarAddEntry';
-import { styles } from './CalendarAddEntrySheet.styles';
 
 interface CalendarDraftEntryCardProps {
   draft: ManualCalendarEntryDraft;
@@ -16,25 +15,86 @@ export default function CalendarDraftEntryCard({
   onRemove,
 }: CalendarDraftEntryCardProps) {
   return (
-    <View style={styles.draftCard}>
-      <View style={styles.draftHeaderRow}>
-        <Text style={styles.draftDateText}>{formatCalendarDateLabel(draft.dateKey)}</Text>
-        <Text style={styles.draftAmountText}>-{draft.amount.toLocaleString()}원</Text>
+    <View
+      style={{
+        borderRadius: RADIUS.lg,
+        backgroundColor: COLORS.draftCardBackground,
+        paddingHorizontal: wp(16),
+        paddingVertical: hp(14),
+      }}
+    >
+      <View className="flex-row items-center justify-between" style={{ marginBottom: hp(10) }}>
+        <Text
+          style={{
+            fontSize: fp(15),
+            fontFamily: FONTS.bold,
+            color: COLORS.primary,
+          }}
+        >
+          {formatCalendarDateLabel(draft.dateKey)}
+        </Text>
+        <Text
+          style={{
+            fontSize: fp(14),
+            fontFamily: FONTS.bold,
+            color: COLORS.spentRed,
+          }}
+        >
+          -{draft.amount.toLocaleString()}원
+        </Text>
       </View>
 
-      <View style={styles.draftBodyRow}>
-        <View style={styles.draftMetaWrap}>
-          <Text style={styles.draftMerchantText}>{draft.merchantName}</Text>
-          <View style={styles.draftBadge}>
-            <Text style={styles.draftBadgeText}>{draft.category}</Text>
+      <View className="flex-row items-center justify-between">
+        <View className="flex-1 flex-row items-center" style={{ gap: wp(10) }}>
+          <Text
+            style={{
+              fontSize: fp(17),
+              fontFamily: FONTS.bold,
+              color: COLORS.textPrimary,
+            }}
+          >
+            {draft.merchantName}
+          </Text>
+          <View
+            style={{
+              backgroundColor: COLORS.draftBadgeBackground,
+              borderRadius: RADIUS.full,
+              paddingHorizontal: wp(8),
+              paddingVertical: hp(4),
+            }}
+          >
+            <Text
+              style={{
+                fontSize: fp(11),
+                fontFamily: FONTS.bold,
+                color: COLORS.primary,
+              }}
+            >
+              {draft.category}
+            </Text>
           </View>
-          <View style={styles.paymentBadge}>
+          <View
+            className="flex-row items-center"
+            style={{
+              gap: wp(4),
+              backgroundColor: COLORS.primary50,
+              borderRadius: RADIUS.full,
+              paddingHorizontal: wp(8),
+              paddingVertical: hp(4),
+            }}
+          >
             <Ionicons
               name={draft.paymentMethod === 'cash' ? 'cash-outline' : 'card-outline'}
               size={wp(12)}
               color={COLORS.primary}
             />
-            <Text style={styles.paymentBadgeText}>
+            <Text
+              style={{
+                fontSize: fp(11),
+                fontFamily: FONTS.bold,
+                color: COLORS.primary,
+              }}
+            >
               {draft.paymentMethod === 'cash' ? '현금' : '카드'}
             </Text>
           </View>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { styles } from './FixedExpenseManageModal.styles';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
 interface FixedExpenseManageSummaryCardProps {
   totalAmount: number;
@@ -12,18 +12,79 @@ export default function FixedExpenseManageSummaryCard({
   onPressAdd,
 }: FixedExpenseManageSummaryCardProps) {
   return (
-    <View style={styles.summaryCard}>
-      <View style={styles.summaryTopRow}>
-        <View style={styles.summaryTextBlock}>
-          <Text style={styles.summaryLabel}>이번 달 고정지출 합계</Text>
-          <Text style={styles.summaryAmount}>{totalAmount.toLocaleString()}원</Text>
+    <View
+      style={{
+        marginHorizontal: wp(20),
+        marginTop: hp(8),
+        marginBottom: hp(22),
+        borderRadius: RADIUS.xxl,
+        backgroundColor: COLORS.fixedExpenseSummaryBackground,
+        paddingHorizontal: wp(18),
+        paddingVertical: hp(16),
+      }}
+    >
+      <View
+        className="flex-row items-start justify-between"
+        style={{ gap: wp(12) }}
+      >
+        <View className="flex-1">
+          <Text
+            style={{
+              fontSize: fp(13),
+              fontFamily: FONTS.medium,
+              color: COLORS.summaryTextLight,
+              marginBottom: hp(8),
+            }}
+          >
+            {'\uC774\uBC88 \uB2EC \uACE0\uC815\uC9C0\uCD9C \uD569\uACC4'}
+          </Text>
+          <Text
+            style={{
+              fontSize: fp(28),
+              fontFamily: FONTS.bold,
+              color: COLORS.textInverse,
+            }}
+          >
+            {`${totalAmount.toLocaleString()}\uC6D0`}
+          </Text>
         </View>
-        <TouchableOpacity activeOpacity={0.88} style={styles.addButton} onPress={onPressAdd}>
-          <Text style={styles.addButtonText}>+ 새 항목 추가</Text>
+        <TouchableOpacity
+          activeOpacity={0.88}
+          style={{
+            borderRadius: RADIUS.full,
+            backgroundColor: COLORS.addButtonBackground,
+            paddingHorizontal: wp(16),
+            paddingVertical: hp(9),
+            shadowColor: COLORS.gradientStart,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.1,
+            shadowRadius: 10,
+            elevation: 2,
+          }}
+          onPress={onPressAdd}
+        >
+          <Text
+            style={{
+              fontSize: fp(13),
+              fontFamily: FONTS.bold,
+              color: COLORS.textInverse,
+            }}
+          >
+            {'+ \uD56D\uBAA9 \uCD94\uAC00'}
+          </Text>
         </TouchableOpacity>
       </View>
-      <Text style={styles.summaryHint}>
-        자동이체나 반복 결제 내역을 등록해두면 매달 고정지출 관리가 더 쉬워집니다.
+      <Text
+        style={{
+          marginTop: hp(6),
+          fontSize: fp(12),
+          fontFamily: FONTS.medium,
+          color: COLORS.summaryTextHint,
+        }}
+      >
+        {
+          '\uB0A9\uBD80 \uC608\uC815\uC778 \uACE0\uC815\uC9C0\uCD9C\uB97C \uD55C \uBC88\uC5D0 \uD655\uC778\uD558\uACE0 \uD56D\uBAA9\uBCC4\uB85C \uAD00\uB9AC\uD560 \uC218 \uC788\uC5B4\uC694.'
+        }
       </Text>
     </View>
   );

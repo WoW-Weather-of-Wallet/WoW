@@ -1,9 +1,8 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import type { ManualEntryPaymentMethod } from '../../types/calendar';
-import { styles } from './CalendarAddEntrySheet.styles';
 
 const PAYMENT_METHOD_OPTIONS: Array<{
   key: ManualEntryPaymentMethod;
@@ -24,7 +23,7 @@ export default function CalendarPaymentMethodSelector({
   onSelect,
 }: CalendarPaymentMethodSelectorProps) {
   return (
-    <View style={styles.paymentMethodGrid}>
+    <View className="flex-row" style={{ gap: wp(10) }}>
       {PAYMENT_METHOD_OPTIONS.map((method) => {
         const isActive = selectedPaymentMethod === method.key;
 
@@ -32,7 +31,15 @@ export default function CalendarPaymentMethodSelector({
           <TouchableOpacity
             key={method.key}
             activeOpacity={0.88}
-            style={[styles.paymentMethodChip, isActive && styles.paymentMethodChipActive]}
+            className="flex-1 flex-row items-center justify-center"
+            style={{
+              minHeight: hp(48),
+              gap: wp(6),
+              borderRadius: RADIUS.lg,
+              borderWidth: 1,
+              borderColor: isActive ? COLORS.primary : COLORS.chipBorder,
+              backgroundColor: isActive ? COLORS.primary : COLORS.white,
+            }}
             onPress={() => onSelect(method.key)}
           >
             <Ionicons
@@ -41,10 +48,11 @@ export default function CalendarPaymentMethodSelector({
               color={isActive ? COLORS.white : COLORS.textSecondary}
             />
             <Text
-              style={[
-                styles.paymentMethodChipText,
-                isActive && styles.paymentMethodChipTextActive,
-              ]}
+              style={{
+                fontSize: fp(14),
+                fontFamily: FONTS.semiBold,
+                color: isActive ? COLORS.white : COLORS.textPrimary,
+              }}
             >
               {method.label}
             </Text>

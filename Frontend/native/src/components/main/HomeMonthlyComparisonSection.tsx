@@ -1,11 +1,10 @@
 import React from 'react';
 import { View } from 'react-native';
 
-import { COLORS } from '../../constants/theme';
+import { COLORS, hp, wp } from '../../constants/theme';
 import type { LegendListItem } from '../../constants/main/types';
 import LegendList from './LegendList';
 import HomeMonthlyComparisonRingCard from './HomeMonthlyComparisonRingCard';
-import { styles } from './HomeMonthlyReportSheet.styles';
 
 interface HomeMonthlyComparisonSectionProps {
   currentMonthLabel?: string;
@@ -26,9 +25,14 @@ export default function HomeMonthlyComparisonSection({
   comparisonLegend,
   emptyLegendLabel,
 }: HomeMonthlyComparisonSectionProps) {
+  const compareRowStyle = {
+    gap: wp(12),
+    marginBottom: hp(20),
+  } as const;
+
   return (
     <>
-      <View style={styles.compareRow}>
+      <View className="flex-row justify-between" style={compareRowStyle}>
         <HomeMonthlyComparisonRingCard
           monthLabel={currentMonthLabel}
           totalAmount={currentTotalAmount}

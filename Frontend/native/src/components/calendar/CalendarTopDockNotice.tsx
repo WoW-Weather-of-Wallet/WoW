@@ -14,8 +14,8 @@ export default function CalendarTopDockNotice({
 }: CalendarTopDockNoticeProps) {
   const description =
     headerFetchState === 'live'
-      ? '?ã…»ëœ‘ ?ì‡°????ã…»ëœ²?ëŒ„ê½£?ë‹¿í€¬, ï§Žë¶¾ãˆ?Â€ ?ì‡°? ???ê³—ì” ??è«›?æ€¨ì¢Žì ™ï§žÂ€ç•°??ë¨®ì««?ë¨®ë’— mock ?ë¨®ë’— fallback ?ê³—ì” ?ê³Œ? ?Ñ‹ë¸¿?â‘¸ë•²??'
-      : '?ê¾©ì˜± ï§¦ì„Žâ”›???ë¶¾ãˆƒ?Â€ mock ?ë¨®ë’— fallback ?ê³—ì” ?ê³Œ? ?Ñ‹ë¸¿?ì„ë¼± ?ë‰ë’¿?ëˆë–Ž.';
+      ? '실시간 데이터와 저장된 정보를 함께 반영한 화면입니다. 일부 항목은 mock 또는 fallback 데이터가 함께 보일 수 있어요.'
+      : '현재 실시간 데이터를 불러오지 못해 mock 또는 fallback 데이터로 내용을 보여드리고 있습니다.';
 
   return (
     <DataSourceNotice

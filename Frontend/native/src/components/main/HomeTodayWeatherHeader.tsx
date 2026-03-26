@@ -24,7 +24,7 @@ export default function HomeTodayWeatherHeader({
 
       <View className="ml-4 flex-1">
         <View className="flex-row items-center justify-between">
-          <Text className="text-sm font-medium text-white/80">?ㅻ뒛 ?뚮퉬 ?좎뵪</Text>
+          <Text className="text-sm font-medium text-white/80">오늘의 소비 날씨</Text>
           <Text className="text-sm font-semibold text-white/70">{dateLabel}</Text>
         </View>
         <View className="mt-1 flex-row items-baseline">

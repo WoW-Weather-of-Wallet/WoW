@@ -2,8 +2,7 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, wp } from '../../constants/theme';
-import { styles } from './CalendarHeroCard.styles';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import type { CalendarOverview } from '../../mock/calendar';
 import type { CalendarHeaderFetchState } from '../../types/calendar';
 import CalendarHeroHeader from './CalendarHeroHeader';
@@ -36,7 +35,9 @@ export default function CalendarHeroCard({
   const weatherTitle = headerFetchState === 'live' ? overview.weatherTitle : '-';
   const weatherHint = headerFetchState === 'live' ? overview.weatherHint : '-';
   const savingsAmountText =
-    headerFetchState === 'live' ? `${overview.savingsAmount.toLocaleString()}원` : '-';
+    headerFetchState === 'live'
+      ? `${overview.savingsAmount.toLocaleString()}\uC6D0`
+      : '-';
   const goalLabel = headerFetchState === 'live' ? overview.goalLabel : '-';
 
   return (
@@ -44,21 +45,58 @@ export default function CalendarHeroCard({
       colors={[COLORS.calendarHeroStart, COLORS.calendarHeroEnd]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={styles.heroCard}
+      style={{
+        borderRadius: RADIUS.xxl,
+        paddingHorizontal: wp(16),
+        paddingTop: hp(16),
+        paddingBottom: hp(18),
+        overflow: 'hidden',
+      }}
     >
       <CalendarHeroHeader
-        title="캘린더"
-        addLabel="+ 내역 추가"
+        title={'\uCEA8\uB9B0\uB354'}
+        addLabel={'+ \uB0B4\uC5ED \uCD94\uAC00'}
         onPressAdd={onPressAdd}
         onPressInfo={onPressInfo}
       />
 
-      <View style={styles.monthRow}>
-        <TouchableOpacity activeOpacity={0.85} style={styles.monthArrow} onPress={onPressPrevMonth}>
+      <View
+        className="flex-row items-center"
+        style={{ gap: wp(12), marginBottom: hp(16) }}
+      >
+        <TouchableOpacity
+          activeOpacity={0.85}
+          className="items-center justify-center"
+          style={{
+            width: wp(30),
+            height: wp(30),
+            borderRadius: wp(15),
+            backgroundColor: COLORS.whiteOverlay22,
+          }}
+          onPress={onPressPrevMonth}
+        >
           <Ionicons name="chevron-back" size={wp(18)} color={COLORS.white} />
         </TouchableOpacity>
-        <Text style={styles.monthLabel}>{monthLabel}</Text>
-        <TouchableOpacity activeOpacity={0.85} style={styles.monthArrow} onPress={onPressNextMonth}>
+        <Text
+          style={{
+            fontSize: fp(18),
+            fontFamily: FONTS.bold,
+            color: COLORS.white,
+          }}
+        >
+          {monthLabel}
+        </Text>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          className="items-center justify-center"
+          style={{
+            width: wp(30),
+            height: wp(30),
+            borderRadius: wp(15),
+            backgroundColor: COLORS.whiteOverlay22,
+          }}
+          onPress={onPressNextMonth}
+        >
           <Ionicons name="chevron-forward" size={wp(18)} color={COLORS.white} />
         </TouchableOpacity>
       </View>
@@ -70,25 +108,35 @@ export default function CalendarHeroCard({
       />
 
       <CalendarHeroSummaryRow
-        label="이번 달 절약 가능 금액"
+        label={'\uC774\uBC88 \uB2EC \uC808\uC57D \uAC00\uB2A5 \uAE08\uC561'}
         amountText={savingsAmountText}
         goalLabel={goalLabel}
       />
 
-      <Text style={styles.statusText}>
+      <Text
+        style={{
+          marginTop: hp(12),
+          fontSize: fp(11),
+          fontFamily: FONTS.medium,
+          color: COLORS.calendarHeroSubText,
+        }}
+      >
         {buildStatusMessage(headerFetchState, headerErrorMessage)}
       </Text>
     </LinearGradient>
   );
 }
 
-function buildStatusMessage(state: CalendarHeaderFetchState, errorMessage: string | null) {
+function buildStatusMessage(
+  state: CalendarHeaderFetchState,
+  errorMessage: string | null,
+) {
   if (state === 'loading') {
-    return '캘린더 요약 정보를 불러오는 중입니다.';
+    return '\uCEA8\uB9B0\uB354 \uC694\uC57D \uC815\uBCF4\uB97C \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.';
   }
 
   if (state === 'live') {
-    return '최신 데이터를 기준으로 요약했습니다.';
+    return '\uCD5C\uC2E0 \uB370\uC774\uD130\uB97C \uAE30\uC900\uC73C\uB85C \uC694\uC57D\uD588\uC5B4\uC694.';
   }
 
   if (state === 'fallback') {

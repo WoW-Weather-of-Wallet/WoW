@@ -1,10 +1,13 @@
 import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { COLORS, hp, wp } from '../../constants/theme';
-import { styles } from './AiFeedbackHomeScreen.styles';
+
+import {
+  AiCarouselPagination,
+  AiFeatureCarouselCard,
+} from '../../components/ai';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import GradientButton from '../../components/common/GradientButton';
-import { AiCarouselPagination, AiFeatureCarouselCard } from '../../components/ai';
+import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
 import { useAiFeatureCards, useAiFeatureCarousel } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import type { AiFeedbackStackScreenProps } from '../../types';
@@ -18,24 +21,43 @@ export default function AiFeedbackHomeScreen({
     itemWidth: wp(326),
   });
 
+  const titleStyle = {
+    fontSize: fp(28),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    lineHeight: fp(36),
+  } as const;
+
+  const highlightStyle = {
+    color: COLORS.primary,
+  } as const;
+
   return (
     <BottomTabScreenLayout
-      containerStyle={styles.container}
-      contentContainerStyle={styles.scrollContent}
+      containerStyle={{ flex: 1, backgroundColor: COLORS.background }}
+      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: wp(24) }}
       scrollTopPadding={hp(20)}
       scrollBottomPadding={hp(24)}
       backgroundColor={COLORS.background}
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>
+      <View style={{ marginTop: hp(20), marginBottom: hp(40) }}>
+        <Text style={titleStyle}>
           AI가 소비 흐름을 분석하고{'\n'}
-          <Text style={styles.highlight}>다음 절약 포인트를 먼저</Text>
+          <Text style={highlightStyle}>다음 절약 포인트를 먼저</Text>
           {'\n'}
           정리해드려요.
         </Text>
       </View>
 
-      <View style={styles.carouselContainer}>
+      <View
+        style={{
+          marginVertical: hp(30),
+          height: hp(320),
+          width: '100%',
+          maxWidth: 400,
+          alignSelf: 'center',
+        }}
+      >
         <ScrollView
           ref={scrollRef}
           horizontal
@@ -64,7 +86,7 @@ export default function AiFeedbackHomeScreen({
         onPressPage={scrollToPage}
       />
 
-      <View style={styles.bottomSection}>
+      <View style={{ paddingBottom: hp(20) }}>
         <GradientButton
           title={status === 'loading' ? '분석 준비 중' : '분석 시작하기'}
           onPress={() => {

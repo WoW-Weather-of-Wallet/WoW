@@ -1,8 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
-import { styles } from './CalendarAddEntrySheet.styles';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
 type EntryMode = 'direct' | 'excel';
 
@@ -15,6 +14,15 @@ const ENTRY_MODES: Array<{
   { key: 'excel', label: '파일 업로드', icon: 'folder-open-outline' },
 ];
 
+const activeModeButtonStyle = {
+  backgroundColor: COLORS.white,
+  shadowColor: '#2E245A',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.08,
+  shadowRadius: 10,
+  elevation: 2,
+};
+
 interface CalendarEntryModeToggleProps {
   activeMode: EntryMode;
   onChangeMode: (mode: EntryMode) => void;
@@ -25,7 +33,15 @@ export default function CalendarEntryModeToggle({
   onChangeMode,
 }: CalendarEntryModeToggleProps) {
   return (
-    <View style={styles.modeRow}>
+    <View
+      className="flex-row"
+      style={{
+        backgroundColor: COLORS.addEntryTabBackground,
+        borderRadius: RADIUS.xl,
+        padding: wp(4),
+        marginBottom: hp(18),
+      }}
+    >
       {ENTRY_MODES.map((mode) => {
         const isActive = activeMode === mode.key;
 
@@ -33,7 +49,15 @@ export default function CalendarEntryModeToggle({
           <TouchableOpacity
             key={mode.key}
             activeOpacity={0.88}
-            style={[styles.modeButton, isActive && styles.modeButtonActive]}
+            className="flex-1 flex-row items-center justify-center"
+            style={[
+              {
+                gap: wp(6),
+                paddingVertical: hp(12),
+                borderRadius: RADIUS.lg,
+              },
+              isActive && activeModeButtonStyle,
+            ]}
             onPress={() => onChangeMode(mode.key)}
           >
             <Ionicons
@@ -41,7 +65,15 @@ export default function CalendarEntryModeToggle({
               size={wp(16)}
               color={isActive ? COLORS.primary : COLORS.textTertiary}
             />
-            <Text style={[styles.modeText, isActive && styles.modeTextActive]}>{mode.label}</Text>
+            <Text
+              style={{
+                fontSize: fp(14),
+                fontFamily: FONTS.semiBold,
+                color: isActive ? COLORS.primary : COLORS.textSecondary,
+              }}
+            >
+              {mode.label}
+            </Text>
           </TouchableOpacity>
         );
       })}

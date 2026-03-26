@@ -1,4 +1,5 @@
 import React from 'react';
+
 import type { SpendingStyleMetric } from '../constants/main/types';
 
 export type HomeSpendingTypeReasonTone = 'red' | 'purple' | 'green';
@@ -31,15 +32,14 @@ export function useHomeSpendingTypeSummary({
   reasons,
 }: UseHomeSpendingTypeSummaryParams) {
   return React.useMemo(() => {
-    const displayTitle = title || '분석 전';
+    const displayTitle = title || '분석 준비 중';
     const displayDescription =
-      description || '아직 소비 유형 분석 결과가 없어요. 거래 데이터를 더 쌓아보세요.';
+      description || '아직 소비 유형 분석 결과가 없어요. 거래 데이터를 조금 더 모아보세요.';
     const displayIntroDescription =
-      description || '아직 6개월 소비 분석 결과가 없어요. 거래 데이터를 조금 더 쌓아보세요.';
+      description || '아직 6개월 소비 분석 결과가 없어요. 거래 데이터를 조금 더 모아보세요.';
     const displayMetrics = metrics ?? [];
     const hasMetrics = displayMetrics.length > 0;
-    const displayReasons =
-      reasons && reasons.length > 0 ? reasons : emptyReasons;
+    const displayReasons = reasons && reasons.length > 0 ? reasons : emptyReasons;
 
     return {
       displayTitle,

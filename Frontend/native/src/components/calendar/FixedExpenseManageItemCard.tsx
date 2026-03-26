@@ -1,8 +1,7 @@
 import React from 'react';
 import { Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
-import { styles } from './FixedExpenseManageModal.styles';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import {
   getFixedExpenseEnabledLabel,
   getFixedExpenseIconColor,
@@ -33,10 +32,29 @@ export default function FixedExpenseManageItemCard({
   onDeleteItem,
 }: FixedExpenseManageItemCardProps) {
   return (
-    <View style={styles.itemCard}>
-      <View style={styles.itemTopRow}>
-        <View style={styles.itemLeft}>
-          <View style={[styles.iconWrap, { backgroundColor: item.iconTone }]}>
+    <View
+      style={{
+        borderRadius: RADIUS.xl,
+        backgroundColor: COLORS.background,
+        paddingHorizontal: wp(16),
+        paddingVertical: hp(14),
+        gap: hp(10),
+      }}
+    >
+      <View
+        className="flex-row items-center justify-between"
+        style={{ gap: wp(12) }}
+      >
+        <View className="flex-1 flex-row items-center" style={{ gap: wp(12) }}>
+          <View
+            className="items-center justify-center"
+            style={{
+              width: wp(46),
+              height: wp(46),
+              borderRadius: wp(17),
+              backgroundColor: item.iconTone,
+            }}
+          >
             <Ionicons
               name={item.icon as keyof typeof Ionicons.glyphMap}
               size={wp(22)}
@@ -44,40 +62,102 @@ export default function FixedExpenseManageItemCard({
             />
           </View>
 
-          <View style={styles.itemTextBlock}>
-            <Text style={styles.itemTitle} numberOfLines={2}>
+          <View className="flex-1">
+            <Text
+              numberOfLines={2}
+              style={{
+                fontSize: fp(17),
+                fontFamily: FONTS.bold,
+                color: COLORS.textPrimary,
+                marginBottom: hp(4),
+              }}
+            >
               {item.title}
             </Text>
-            <Text style={styles.itemSubtitle} numberOfLines={2}>
+            <Text
+              numberOfLines={2}
+              style={{
+                fontSize: fp(13),
+                fontFamily: FONTS.medium,
+                color: COLORS.textSecondary,
+              }}
+            >
               {stripFixedExpenseCategorySuffix(item.subtitle)}
             </Text>
           </View>
         </View>
 
-        <View style={styles.itemAmountBlock}>
-          <Text style={styles.itemAmount}>{item.amount.toLocaleString()}원</Text>
+        <View style={{ minWidth: wp(82), alignItems: 'flex-end' }}>
+          <Text
+            style={{
+              fontSize: fp(16),
+              fontFamily: FONTS.bold,
+              color: COLORS.textPrimary,
+            }}
+          >
+            {`${item.amount.toLocaleString()}\uC6D0`}
+          </Text>
         </View>
       </View>
 
-      <View style={styles.controlRow}>
-        <View style={styles.controlActions}>
+      <View
+        className="flex-row items-center justify-between"
+        style={{ gap: wp(12), paddingTop: hp(2) }}
+      >
+        <View className="flex-row items-center" style={{ gap: wp(8) }}>
           <TouchableOpacity
             activeOpacity={0.86}
-            style={styles.editChip}
+            style={{
+              borderRadius: RADIUS.full,
+              backgroundColor: COLORS.stepperButtonBackground,
+              paddingHorizontal: wp(12),
+              paddingVertical: hp(7),
+            }}
             onPress={() => onPressEdit(item.id)}
           >
-            <Text style={styles.editChipText}>수정</Text>
+            <Text
+              style={{
+                fontSize: fp(12),
+                fontFamily: FONTS.semiBold,
+                color: COLORS.primary,
+              }}
+            >
+              {'\uC218\uC815'}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             activeOpacity={0.86}
-            style={styles.deleteChip}
+            style={{
+              borderRadius: RADIUS.full,
+              backgroundColor: COLORS.deleteChipBackground,
+              paddingHorizontal: wp(12),
+              paddingVertical: hp(7),
+            }}
             onPress={() => onDeleteItem(item.id)}
           >
-            <Text style={styles.deleteChipText}>삭제</Text>
+            <Text
+              style={{
+                fontSize: fp(12),
+                fontFamily: FONTS.semiBold,
+                color: COLORS.spentRed,
+              }}
+            >
+              {'\uC0AD\uC81C'}
+            </Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.switchWrap}>
-          <Text style={styles.switchLabel}>{getFixedExpenseEnabledLabel(item.isEnabled)}</Text>
+        <View className="flex-row items-center" style={{ gap: wp(6), flexShrink: 0 }}>
+          <Text
+            style={{
+              fontSize: fp(12),
+              fontFamily: FONTS.semiBold,
+              color: COLORS.textSecondary,
+              minWidth: wp(34),
+              textAlign: 'right',
+            }}
+          >
+            {getFixedExpenseEnabledLabel(item.isEnabled)}
+          </Text>
           <Switch
             value={item.isEnabled}
             trackColor={{ false: COLORS.border, true: COLORS.primaryLight }}

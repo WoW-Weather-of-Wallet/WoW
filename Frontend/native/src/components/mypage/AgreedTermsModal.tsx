@@ -11,13 +11,12 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import { TERM_DOCUMENT_KEYS, type TermDocumentKey } from '../../constants/terms';
 import { useTermDocuments } from '../../hooks/useTermDocuments';
 import { agreeTerms } from '../../services/terms';
 import type { RootNavigationProp } from '../../types';
 import { extractApiErrorMessage } from '../../utils/error';
-import { styles } from './AgreedTermsModal.styles';
 
 interface AgreedTermsModalProps {
   visible: boolean;
@@ -59,7 +58,7 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
     if (!document?.url) {
       Alert.alert(
         '문서 불러오기 실패',
-        '약관 문서를 아직 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
+        '아직 문서를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
       );
       return;
     }
@@ -104,13 +103,13 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
 
       if (response.savedCount > 0) {
         Alert.alert(
-          '재동의 완료',
-          `선택한 약관 ${response.savedCount}건 동의 기록을 저장했어요.`,
+          '동의 완료',
+          `선택한 약관 ${response.savedCount}건의 동의 기록을 저장했어요.`,
         );
       } else {
         Alert.alert(
           '최신 동의 상태',
-          '선택한 약관은 이미 동의 기록이 있어 추가 저장할 항목이 없었어요.',
+          '선택한 약관은 이미 최신 버전 기준으로 동의 기록이 있어 추가 저장하지 않았어요.',
         );
       }
 
@@ -127,35 +126,113 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.content} onPress={(event) => event.stopPropagation()}>
-          <View style={styles.header}>
-            <Text style={styles.title}>약관 확인 및 재동의</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+      <Pressable
+        className="flex-1 justify-end bg-[rgba(15,23,42,0.45)]"
+        onPress={onClose}
+      >
+        <Pressable
+          className="bg-[#F8FAFC]"
+          onPress={(event) => event.stopPropagation()}
+          style={{
+            borderTopLeftRadius: RADIUS.xl,
+            borderTopRightRadius: RADIUS.xl,
+            paddingHorizontal: wp(24),
+            paddingTop: hp(24),
+            paddingBottom: hp(40),
+            maxHeight: '88%',
+          }}
+        >
+          <View
+            className="flex-row items-center justify-between"
+            style={{ marginBottom: hp(16) }}
+          >
+            <Text
+              className="text-[#15192A]"
+              style={{
+                fontSize: fp(22),
+                fontFamily: FONTS.bold,
+                color: COLORS.textPrimary,
+              }}
+            >
+              약관 확인 및 동의
+            </Text>
+
+            <TouchableOpacity onPress={onClose} style={{ padding: wp(4) }}>
               <Ionicons name="close" size={wp(28)} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.description}>
-            현재 약관 문서를 확인하고 필요한 경우 선택한 약관에 대해
-            다시 동의 기록을 남길 수 있어요.
+          <Text
+            className="text-[#8E95A9]"
+            style={{
+              fontSize: fp(14),
+              fontFamily: FONTS.medium,
+              color: COLORS.textTertiary,
+              lineHeight: fp(22),
+              marginBottom: hp(18),
+            }}
+          >
+            현재 약관 문서를 확인하고 필요한 경우 선택한 약관에 대해 다시 동의 기록을
+            남길 수 있어요.
           </Text>
 
-          <TouchableOpacity style={styles.toolbar} activeOpacity={0.8} onPress={toggleAll}>
-            <Text style={styles.toolbarText}>표시된 약관 전체 선택</Text>
-            <Text style={styles.toolbarLink}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={toggleAll}
+            className="flex-row items-center justify-between bg-[#EEF2FF]"
+            style={{
+              borderRadius: RADIUS.md,
+              paddingHorizontal: wp(16),
+              paddingVertical: hp(14),
+              marginBottom: hp(12),
+            }}
+          >
+            <Text
+              className="text-[#15192A]"
+              style={{
+                fontSize: fp(14),
+                fontFamily: FONTS.semiBold,
+                color: COLORS.textPrimary,
+              }}
+            >
+              표시된 약관 전체 선택
+            </Text>
+            <Text
+              className="text-[#4D74FF]"
+              style={{
+                fontSize: fp(14),
+                fontFamily: FONTS.bold,
+                color: COLORS.primary,
+              }}
+            >
               {areAllSelected ? '전체 해제' : '전체 선택'}
             </Text>
           </TouchableOpacity>
 
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={{ gap: hp(16) }}
           >
             {isLoading ? (
-              <View style={styles.noticeBox}>
+              <View
+                className="bg-[#EEF2FF]"
+                style={{
+                  borderRadius: RADIUS.md,
+                  padding: wp(16),
+                  marginTop: hp(8),
+                }}
+              >
                 <ActivityIndicator size="small" color={COLORS.primary} />
-                <Text style={styles.noticeText}>
+                <Text
+                  className="text-[#8E95A9]"
+                  style={{
+                    fontSize: fp(13),
+                    fontFamily: FONTS.medium,
+                    color: COLORS.textTertiary,
+                    lineHeight: fp(20),
+                    marginTop: hp(10),
+                  }}
+                >
                   약관 정보를 불러오는 중입니다.
                 </Text>
               </View>
@@ -173,38 +250,73 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
               />
             ))}
 
-            <View style={styles.noticeBox}>
-              <Text style={styles.noticeText}>
-                재동의는 버전 갱신이 있거나 다시 동의 기록을 남기고 싶을 때
-                쓰는 기능이에요. 이미 같은 약관에 대한 동의 기록이 있으면
-                추가 저장하지 않아요.
+            <View
+              className="bg-[#EEF2FF]"
+              style={{
+                borderRadius: RADIUS.md,
+                padding: wp(16),
+                marginTop: hp(8),
+              }}
+            >
+              <Text
+                className="text-[#8E95A9]"
+                style={{
+                  fontSize: fp(13),
+                  fontFamily: FONTS.medium,
+                  color: COLORS.textTertiary,
+                  lineHeight: fp(20),
+                }}
+              >
+                동의는 버전 갱신 등으로 다시 동의 기록이 필요할 때 사용하는 기능이에요.
+                이미 같은 약관 버전에 대한 동의 기록이 있으면 추가 저장하지 않아요.
               </Text>
             </View>
           </ScrollView>
 
-          <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.secondaryButton} onPress={onClose}>
-              <Text style={styles.secondaryButtonText}>닫기</Text>
+          <View className="flex-row" style={{ gap: wp(12), marginTop: hp(24) }}>
+            <TouchableOpacity
+              onPress={onClose}
+              className="flex-1 items-center bg-[#F1F5F9]"
+              style={{ borderRadius: RADIUS.full, paddingVertical: hp(18) }}
+            >
+              <Text
+                className="text-[#15192A]"
+                style={{
+                  fontSize: fp(18),
+                  fontFamily: FONTS.bold,
+                  color: COLORS.textPrimary,
+                }}
+              >
+                닫기
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.confirmButton,
-                (selectedTerms.length === 0 || isSubmitting) && styles.disabledButton,
-              ]}
               disabled={selectedTerms.length === 0 || isSubmitting}
               onPress={handleAgreeTerms}
+              className="items-center bg-[#4D74FF]"
+              style={{
+                flex: 1.4,
+                borderRadius: RADIUS.full,
+                paddingVertical: hp(18),
+                backgroundColor:
+                  selectedTerms.length === 0 || isSubmitting
+                    ? COLORS.gray200
+                    : COLORS.primary,
+              }}
             >
               {isSubmitting ? (
                 <ActivityIndicator color={COLORS.white} />
               ) : (
                 <Text
-                  style={[
-                    styles.confirmButtonText,
-                    selectedTerms.length === 0 && styles.disabledButtonText,
-                  ]}
+                  style={{
+                    fontSize: fp(18),
+                    fontFamily: FONTS.bold,
+                    color:
+                      selectedTerms.length === 0 ? COLORS.textSecondary : COLORS.white,
+                  }}
                 >
-                  선택 약관 재동의
+                  선택 약관 동의
                 </Text>
               )}
             </TouchableOpacity>
@@ -231,28 +343,97 @@ function TermItem({
   onPress: () => void;
 }) {
   return (
-    <View style={styles.termItem}>
-      <TouchableOpacity style={styles.termLeft} activeOpacity={0.7} onPress={onToggle}>
+    <View
+      className="flex-row items-center justify-between"
+      style={{
+        paddingVertical: hp(16),
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.separatorBorder,
+        gap: wp(12),
+      }}
+    >
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={onToggle}
+        className="flex-1 flex-row items-center"
+        style={{ gap: wp(12) }}
+      >
         <Ionicons
           name="checkmark-circle"
           size={wp(24)}
           color={selected ? COLORS.primary : COLORS.border}
         />
-        <View style={styles.termInfo}>
-          <Text style={styles.termTitle}>{title}</Text>
-          <View style={styles.termMetaRow}>
-            <Text style={styles.termDate}>{date || '시행 정보 없음'}</Text>
+
+        <View className="flex-1" style={{ gap: hp(4) }}>
+          <Text
+            className="text-[#15192A]"
+            style={{
+              fontSize: fp(16),
+              fontFamily: FONTS.semiBold,
+              color: COLORS.textPrimary,
+            }}
+          >
+            {title}
+          </Text>
+
+          <View className="flex-row items-center" style={{ gap: wp(8) }}>
+            <Text
+              className="text-[#8E95A9]"
+              style={{
+                fontSize: fp(13),
+                fontFamily: FONTS.medium,
+                color: COLORS.textTertiary,
+              }}
+            >
+              {date || '시행 정보 없음'}
+            </Text>
+
             {required ? (
-              <View style={styles.requiredBadge}>
-                <Text style={styles.requiredBadgeText}>필수</Text>
+              <View
+                className="bg-[rgba(77,116,255,0.12)]"
+                style={{
+                  paddingHorizontal: wp(8),
+                  paddingVertical: hp(3),
+                  borderRadius: RADIUS.sm,
+                }}
+              >
+                <Text
+                  className="text-[#4D74FF]"
+                  style={{
+                    fontSize: fp(11),
+                    fontFamily: FONTS.bold,
+                    color: COLORS.primary,
+                  }}
+                >
+                  필수
+                </Text>
               </View>
             ) : null}
           </View>
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.viewBadge} activeOpacity={0.7} onPress={onPress}>
-        <Text style={styles.viewText}>보기</Text>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={onPress}
+        className="flex-row items-center bg-[#E5E7EB]"
+        style={{
+          gap: wp(4),
+          paddingHorizontal: wp(10),
+          paddingVertical: hp(6),
+          borderRadius: RADIUS.sm,
+        }}
+      >
+        <Text
+          className="text-[#6B7280]"
+          style={{
+            fontSize: fp(12),
+            fontFamily: FONTS.semiBold,
+            color: COLORS.textSecondary,
+          }}
+        >
+          보기
+        </Text>
         <Ionicons name="chevron-forward" size={wp(14)} color={COLORS.textTertiary} />
       </TouchableOpacity>
     </View>

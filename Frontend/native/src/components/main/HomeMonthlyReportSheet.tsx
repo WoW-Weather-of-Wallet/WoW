@@ -1,7 +1,8 @@
 import React from 'react';
-import BottomSheetModal from '../common/BottomSheetModal';
-import { useHomeMonthlyBudgetForm } from '../../hooks/useHomeMonthlyBudgetForm';
+
 import type { LegendListItem } from '../../constants/main/types';
+import { useHomeMonthlyBudgetForm } from '../../hooks/useHomeMonthlyBudgetForm';
+import BottomSheetModal from '../common/BottomSheetModal';
 import HomeBudgetSetupCard from './HomeBudgetSetupCard';
 import HomeMonthlyComparisonSection from './HomeMonthlyComparisonSection';
 import HomeMonthlyInsightCard from './HomeMonthlyInsightCard';
@@ -51,12 +52,12 @@ export default function HomeMonthlyReportSheet({
       visible={visible}
       onClose={onClose}
       title="이번 달 vs 지난달 비교"
-      subtitle={subtitle || '소비 흐름과 예산 상태를 함께 확인해보세요.'}
+      subtitle={subtitle || '소비 흐름과 예산 상태를 한눈에 확인해보세요.'}
     >
       {canCreateBudget ? (
         <HomeBudgetSetupCard
           title="이번 달 예산을 먼저 등록해보세요"
-          description="현재 백엔드 스펙상 예산 생성만 연결되어 있어요. 등록 후 이번 세션에서 남은 예산과 사용률을 바로 확인할 수 있습니다."
+          description="아직 예산이 연결되지 않았다면 여기서 바로 등록하고 이번 달 소비 현황을 함께 확인할 수 있어요."
           inputLabel="예산 금액 입력"
           buttonTitle={isCreatingBudget ? '예산 등록 중...' : '이번 달 예산 등록'}
           budgetAmount={budgetAmount}

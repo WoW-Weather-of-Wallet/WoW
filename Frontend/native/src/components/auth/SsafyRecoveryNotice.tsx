@@ -1,38 +1,63 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
-import { styles } from './SsafyRecoveryNotice.styles';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
 interface SsafyRecoveryNoticeProps {
   onLinkPress: () => void;
 }
 
-/**
- * SSAFY 통합 계정 사용자를 위한 안내 컴포넌트입니다.
- * 외부 링크(SSAFY 포털)로 유도하는 하이퍼링크를 포함합니다.
- */
-export default function SsafyRecoveryNotice({ onLinkPress }: SsafyRecoveryNoticeProps) {
+export default function SsafyRecoveryNotice({
+  onLinkPress,
+}: SsafyRecoveryNoticeProps) {
   return (
-    <View style={styles.container}>
-      <View style={styles.infoBox}>
-        <Ionicons 
-          name="information-circle-outline" 
-          size={wp(20)} 
-          color={COLORS.textSecondary} 
-          style={styles.infoIcon}
+    <View
+      className="mt-6"
+      style={{ paddingHorizontal: wp(4) }}
+    >
+      <View
+        className="flex-row border"
+        style={{
+          backgroundColor: COLORS.gray50,
+          padding: wp(16),
+          borderRadius: RADIUS.lg,
+          borderColor: COLORS.border,
+        }}
+      >
+        <Ionicons
+          name="information-circle-outline"
+          size={wp(20)}
+          color={COLORS.textSecondary}
+          style={{ marginRight: wp(10), marginTop: hp(2) }}
         />
-        <View style={styles.textWrapper}>
-          <Text style={styles.noticeText}>
-            SSAFY 계정으로 가입하신 분은 앱 내에서 직접 찾기를 지원하지 않습니다.
+
+        <View className="flex-1">
+          <Text
+            style={{
+              fontSize: fp(13),
+              fontFamily: FONTS.medium,
+              color: COLORS.textSecondary,
+              lineHeight: fp(19),
+              marginBottom: hp(6),
+            }}
+          >
+            SSAFY 계정은 SSAFY 포털에서만 아이디를 찾을 수 있어요.
           </Text>
+
           <TouchableOpacity onPress={onLinkPress} activeOpacity={0.6}>
-            <Text style={styles.linkText}>SSAFY 계정으로 로그인/찾기 안내 바로가기</Text>
+            <Text
+              style={{
+                fontSize: fp(13),
+                fontFamily: FONTS.bold,
+                color: COLORS.primary,
+                textDecorationLine: 'underline',
+              }}
+            >
+              SSAFY 계정 아이디 찾기 바로가기
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
     </View>
   );
 }
-
-

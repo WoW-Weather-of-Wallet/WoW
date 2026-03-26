@@ -1,8 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
-import { styles } from './FixedExpensePickerSheet.styles';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
 export interface SelectableTransactionItem {
   id: string;
@@ -28,11 +27,29 @@ export default function FixedExpensePickerRow({
   return (
     <TouchableOpacity
       activeOpacity={0.86}
-      style={[styles.row, isSelected && styles.rowSelected]}
+      className="flex-row items-center justify-between"
+      style={{
+        borderRadius: RADIUS.xl,
+        paddingHorizontal: wp(12),
+        paddingVertical: hp(14),
+        backgroundColor: isSelected
+          ? COLORS.pickerRowSelectedBackground
+          : 'transparent',
+        borderWidth: isSelected ? 1 : 0,
+        borderColor: isSelected ? COLORS.pickerRowSelectedBorder : 'transparent',
+      }}
       onPress={() => onPress(item.id)}
     >
-      <View style={styles.left}>
-        <View style={[styles.iconWrap, { backgroundColor: item.iconTone }]}>
+      <View className="flex-1 flex-row items-center" style={{ gap: wp(12) }}>
+        <View
+          className="items-center justify-center"
+          style={{
+            width: wp(40),
+            height: wp(40),
+            borderRadius: wp(16),
+            backgroundColor: item.iconTone,
+          }}
+        >
           <Ionicons
             name={item.icon as keyof typeof Ionicons.glyphMap}
             size={wp(18)}
@@ -41,14 +58,37 @@ export default function FixedExpensePickerRow({
         </View>
 
         <View>
-          <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.subtitle}>
-            {item.category} · {item.dateLabel}
+          <Text
+            style={{
+              fontSize: fp(16),
+              fontFamily: FONTS.bold,
+              color: COLORS.textPrimary,
+              marginBottom: hp(4),
+            }}
+          >
+            {item.title}
+          </Text>
+          <Text
+            style={{
+              fontSize: fp(12),
+              fontFamily: FONTS.medium,
+              color: COLORS.textSecondary,
+            }}
+          >
+            {`${item.category} / ${item.dateLabel}`}
           </Text>
         </View>
       </View>
 
-      <Text style={styles.amount}>-{item.amount.toLocaleString()}원</Text>
+      <Text
+        style={{
+          fontSize: fp(15),
+          fontFamily: FONTS.bold,
+          color: COLORS.spentRed,
+        }}
+      >
+        {`-${item.amount.toLocaleString()}\uC6D0`}
+      </Text>
     </TouchableOpacity>
   );
 }

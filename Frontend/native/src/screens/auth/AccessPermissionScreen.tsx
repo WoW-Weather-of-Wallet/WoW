@@ -1,20 +1,14 @@
 import React from 'react';
-import {
-  StatusBar,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { StatusBar, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   FadeInDown,
   FadeInRight,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import PermissionCard from '../../components/auth/PermissionCard';
 import GradientButton from '../../components/common/GradientButton';
 import SafeAreaScrollLayout from '../../components/common/SafeAreaScrollLayout';
-import { styles } from './AccessPermissionScreen.styles';
-import { COLORS, hp, wp } from '../../constants/theme';
+import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
 import { useAccessPermissionFlow } from '../../hooks';
 
 export default function AccessPermissionScreen() {
@@ -35,8 +29,14 @@ export default function AccessPermissionScreen() {
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       <SafeAreaScrollLayout
-        containerStyle={styles.container}
-        scrollContentStyle={styles.scrollContent}
+        containerStyle={{
+          flex: 1,
+          backgroundColor: COLORS.background,
+          paddingHorizontal: wp(24),
+        }}
+        scrollContentStyle={{
+          paddingBottom: hp(40),
+        }}
         scrollTopPadding={0}
         scrollBottomPadding={hp(64)}
         keyboardAware={false}
@@ -44,18 +44,62 @@ export default function AccessPermissionScreen() {
       >
         <Animated.View
           entering={FadeInDown.delay(100).duration(600).springify()}
-          style={styles.titleContainer}
+          style={{
+            marginTop: hp(40),
+            marginBottom: hp(32),
+          }}
         >
-          <Text style={styles.titleText}>편리한 서비스 이용을 위한</Text>
-          <Text style={styles.titleText}>접근 권한을 확인해주세요</Text>
-          <Text style={styles.subtitleText}>
-            더 안전하고 편리한 금융 관리를 위해{'\n'}꼭 필요한 권한만 요청드립니다.
+          <Text
+            style={{
+              fontSize: fp(26),
+              fontFamily: FONTS.bold,
+              color: COLORS.textPrimary,
+              lineHeight: fp(36),
+              letterSpacing: -0.6,
+            }}
+          >
+            서비스 이용에 필요한
+          </Text>
+          <Text
+            style={{
+              fontSize: fp(26),
+              fontFamily: FONTS.bold,
+              color: COLORS.textPrimary,
+              lineHeight: fp(36),
+              letterSpacing: -0.6,
+            }}
+          >
+            접근 권한을 확인해 주세요
+          </Text>
+          <Text
+            style={{
+              marginTop: hp(12),
+              fontSize: fp(15),
+              lineHeight: fp(22),
+              fontFamily: FONTS.medium,
+              color: COLORS.textSecondary,
+            }}
+          >
+            원활한 서비스 이용을 위해 필요한 권한을 안내드리고 있어요.
+            {'\n'}
+            각 항목을 눌러 권한 상태를 확인할 수 있어요.
           </Text>
         </Animated.View>
 
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionHeader}>필수 접근 권한</Text>
-          <View style={styles.listContainer}>
+        <View className="w-full">
+          <Text
+            style={{
+              fontSize: fp(14),
+              fontFamily: FONTS.bold,
+              color: COLORS.primary,
+              marginBottom: hp(12),
+              letterSpacing: 0.5,
+              textTransform: 'uppercase',
+            }}
+          >
+            필수 접근 권한
+          </Text>
+          <View style={{ gap: hp(12) }}>
             {mandatoryPermissionCards.map(({ item, delay, state }) => (
               <Animated.View
                 key={item.id}
@@ -73,9 +117,20 @@ export default function AccessPermissionScreen() {
           </View>
         </View>
 
-        <View style={[styles.sectionContainer, styles.marginTop24]}>
-          <Text style={styles.sectionHeader}>선택 접근 권한</Text>
-          <View style={styles.listContainer}>
+        <View className="w-full" style={{ marginTop: hp(24) }}>
+          <Text
+            style={{
+              fontSize: fp(14),
+              fontFamily: FONTS.bold,
+              color: COLORS.primary,
+              marginBottom: hp(12),
+              letterSpacing: 0.5,
+              textTransform: 'uppercase',
+            }}
+          >
+            선택 접근 권한
+          </Text>
+          <View style={{ gap: hp(12) }}>
             {optionalPermissionCards.map(({ item, delay, state }) => (
               <Animated.View
                 key={item.id}
@@ -93,32 +148,56 @@ export default function AccessPermissionScreen() {
           </View>
         </View>
 
-        <View style={styles.footer}>
+        <View style={{ marginTop: hp(40) }}>
           <TouchableOpacity
-            style={styles.refreshRow}
+            className="flex-row items-center justify-center"
+            style={{ gap: wp(6), marginBottom: hp(24) }}
             onPress={() => void refreshPermissionStates()}
             disabled={isRefreshing}
             activeOpacity={0.6}
           >
             <Animated.View style={animatedRotationStyles}>
-              <Ionicons name="refresh-outline" size={wp(16)} color={COLORS.primary} />
+              <Ionicons
+                name="refresh-outline"
+                size={wp(16)}
+                color={COLORS.primary}
+              />
             </Animated.View>
-            <Text style={styles.refreshText}>권한 상태 업데이트</Text>
+            <Text
+              style={{
+                fontSize: fp(14),
+                fontFamily: FONTS.semiBold,
+                color: COLORS.primary,
+              }}
+            >
+              권한 상태 새로고침
+            </Text>
           </TouchableOpacity>
 
-          <View style={styles.buttonGap}>
+          <View style={{ gap: hp(12) }}>
             <GradientButton
-              title="금융 서비스 시작하기"
+              title="필수 권한 확인하고 시작하기"
               onPress={handleConfirm}
             />
-            {shouldShowRequestAllButton && (
+
+            {shouldShowRequestAllButton ? (
               <TouchableOpacity
                 onPress={() => void requestAllPermissions()}
-                style={styles.retryButton}
+                className="items-center justify-center"
+                style={{ paddingVertical: hp(12) }}
               >
-                <Text style={styles.retryText}>권한 전체 허용 시도하기</Text>
+                <Text
+                  style={{
+                    fontSize: fp(14),
+                    fontFamily: FONTS.medium,
+                    color: COLORS.textTertiary,
+                    textDecorationLine: 'underline',
+                  }}
+                >
+                  권한 요청을 다시 진행하기
+                </Text>
               </TouchableOpacity>
-            )}
+            ) : null}
           </View>
         </View>
       </SafeAreaScrollLayout>

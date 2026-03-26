@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   ActivityIndicator,
+  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -9,14 +9,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS, hp, wp } from '../../constants/theme';
-import { TERM_DOCUMENT_KEYS, type TermDocumentKey } from '../../constants/terms';
+import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
+import {
+  TERM_DOCUMENT_KEYS,
+  type TermDocumentKey,
+} from '../../constants/terms';
 import { useTermDocuments } from '../../hooks/useTermDocuments';
 import type { RootNavigationProp } from '../../types';
-import { styles } from './TermsBottomSheet.styles';
 
 interface TermsBottomSheetProps {
   visible: boolean;
@@ -47,22 +49,23 @@ export default function TermsBottomSheet({
   const isRecovery = flow === 'FindId' || flow === 'FindPw';
 
   useEffect(() => {
-    if (!visible) {
-      return;
-    }
-
+    if (!visible) return;
     setAgreements(INITIAL_AGREEMENTS);
   }, [visible]);
 
   const visibleKeys = useMemo(
-    () => (isRecovery ? (['privacy', 'telecom'] as TermDocumentKey[]) : TERM_DOCUMENT_KEYS),
-    [isRecovery],
+    () =>
+      isRecovery
+        ? (['privacy', 'telecom'] as TermDocumentKey[])
+        : TERM_DOCUMENT_KEYS,
+    [isRecovery]
   );
 
   const areAllVisibleTermsAgreed = visibleKeys.every((key) => agreements[key]);
 
   const toggleAll = () => {
     const nextValue = !areAllVisibleTermsAgreed;
+
     setAgreements((prev) => ({
       ...prev,
       ...Object.fromEntries(visibleKeys.map((key) => [key, nextValue])),
@@ -78,8 +81,8 @@ export default function TermsBottomSheet({
 
     if (!document.url) {
       Alert.alert(
-        '문서 불러오기 실패',
-        '약관 문서를 아직 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
+        '약관을 불러올 수 없어요',
+        '지금은 약관 상세 페이지를 열 수 없어요. 잠시 후 다시 시도해 주세요.'
       );
       return;
     }
@@ -91,55 +94,119 @@ export default function TermsBottomSheet({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <Pressable
+        className="flex-1 justify-end"
+        style={{ backgroundColor: COLORS.modalOverlay }}
+        onPress={onClose}
+      >
         <Pressable
-          style={[styles.content, { paddingBottom: insets.bottom + hp(32) }]}
+          className="rounded-t-[24px] bg-white"
+          style={{
+            paddingHorizontal: wp(24),
+            paddingTop: hp(24),
+            paddingBottom: insets.bottom + hp(32),
+          }}
           onPress={(event) => event.stopPropagation()}
         >
-          <View style={styles.header}>
-            <Text style={styles.title}>
-              {isRecovery
-                ? '본인확인 약관 동의'
-                : '필수 약관 동의'}
+          <View
+            className="flex-row items-center justify-between"
+            style={{ marginBottom: hp(28) }}
+          >
+            <Text
+              style={{
+                fontSize: fp(20),
+                fontFamily: FONTS.bold,
+                color: COLORS.textPrimary,
+              }}
+            >
+              {isRecovery ? '필수 약관 동의' : '회원가입 약관 동의'}
             </Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={wp(28)} color={COLORS.textPrimary} />
+            <TouchableOpacity onPress={onClose} style={{ padding: wp(4) }}>
+              <Ionicons
+                name="close"
+                size={wp(28)}
+                color={COLORS.textPrimary}
+              />
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.rowText, { color: COLORS.textTertiary, marginBottom: hp(20) }]}>
+          <Text
+            style={{
+              fontSize: fp(15),
+              fontFamily: FONTS.medium,
+              color: COLORS.textTertiary,
+              marginBottom: hp(20),
+            }}
+          >
             {isRecovery
-              ? '본인확인과 계정 찾기 진행을 위해 필요한 약관에 동의해 주세요.'
-              : '인증번호 요청 전에 필수 약관 전체 동의가 필요해요.'}
+              ? '본인인증 및 계정 찾기를 위해 필요한 약관에 동의해 주세요.'
+              : '서비스 이용을 위해 필요한 약관에 동의해 주세요.'}
           </Text>
 
-          <TouchableOpacity style={styles.allAgreeContainer} onPress={toggleAll} activeOpacity={0.7}>
+          <TouchableOpacity
+            className="flex-row items-center"
+            style={{
+              backgroundColor: COLORS.gray50,
+              padding: wp(16),
+              borderRadius: wp(12),
+              marginBottom: hp(24),
+            }}
+            onPress={toggleAll}
+            activeOpacity={0.7}
+          >
             <Ionicons
               name="checkmark-circle"
               size={wp(28)}
               color={areAllVisibleTermsAgreed ? COLORS.primary : COLORS.border}
             />
-            <Text style={styles.allAgreeText}>
-              {isRecovery
-                ? '표시된 약관 전체 동의'
-                : '필수 약관 전체 동의'}
+            <Text
+              style={{
+                fontSize: fp(16),
+                fontFamily: FONTS.bold,
+                color: COLORS.textPrimary,
+                marginLeft: wp(12),
+              }}
+            >
+              {isRecovery ? '필수 약관 전체 동의' : '회원가입 약관 전체 동의'}
             </Text>
           </TouchableOpacity>
 
-          <View style={styles.divider} />
+          <View
+            style={{
+              height: 1,
+              backgroundColor: COLORS.gray200,
+              marginBottom: hp(24),
+            }}
+          />
 
           <ScrollView
-            style={styles.agreementsList}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.agreementsListContent}
+            style={{ maxHeight: hp(320), marginBottom: hp(24) }}
+            contentContainerStyle={{
+              gap: hp(20),
+              paddingBottom: hp(12),
+            }}
           >
             {isLoading ? (
-              <View style={styles.row}>
-                <View style={styles.rowLeft}>
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1 flex-row items-center">
                   <ActivityIndicator size="small" color={COLORS.primary} />
-                  <Text style={styles.rowText}>
-                    약관 정보를 불러오는 중입니다.
+                  <Text
+                    style={{
+                      flex: 1,
+                      marginLeft: wp(12),
+                      fontSize: fp(15),
+                      fontFamily: FONTS.medium,
+                      color: COLORS.gray600,
+                    }}
+                  >
+                    약관 정보를 불러오고 있어요.
                   </Text>
                 </View>
               </View>
@@ -157,9 +224,15 @@ export default function TermsBottomSheet({
             ))}
           </ScrollView>
 
-          <View style={styles.buttonContainer}>
+          <View className="w-full" style={{ marginTop: hp(10) }}>
             <TouchableOpacity
-              style={[styles.confirmButton, areAllVisibleTermsAgreed && styles.activeButton]}
+              className="items-center rounded-full"
+              style={{
+                backgroundColor: areAllVisibleTermsAgreed
+                  ? COLORS.primary
+                  : COLORS.gray200,
+                paddingVertical: hp(18),
+              }}
               disabled={!areAllVisibleTermsAgreed}
               onPress={() => {
                 onClose();
@@ -168,14 +241,17 @@ export default function TermsBottomSheet({
               activeOpacity={0.8}
             >
               <Text
-                style={[
-                  styles.confirmButtonText,
-                  areAllVisibleTermsAgreed && styles.activeButtonText,
-                ]}
+                style={{
+                  fontSize: fp(18),
+                  fontFamily: FONTS.bold,
+                  color: areAllVisibleTermsAgreed
+                    ? COLORS.white
+                    : COLORS.textTertiary,
+                }}
               >
                 {isRecovery
-                  ? '동의하고 인증 계속하기'
-                  : '필수 약관에 동의하고 인증 계속하기'}
+                  ? '동의하고 인증하기'
+                  : '동의하고 회원가입 계속하기'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -199,26 +275,59 @@ function AgreementRow({
   onViewPress: () => void;
 }) {
   return (
-    <View style={styles.row}>
-      <TouchableOpacity style={styles.rowLeft} onPress={onToggle} activeOpacity={0.7}>
+    <View className="flex-row items-center justify-between">
+      <TouchableOpacity
+        className="flex-1 flex-row items-center"
+        onPress={onToggle}
+        activeOpacity={0.7}
+      >
         <Ionicons
           name="checkmark-circle"
           size={wp(24)}
           color={checked ? COLORS.primary : COLORS.border}
-          style={styles.checkIcon}
+          style={{ marginRight: wp(12) }}
         />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.rowText}>{title}</Text>
+
+        <View className="flex-1">
+          <Text
+            style={{
+              fontSize: fp(15),
+              fontFamily: FONTS.medium,
+              color: COLORS.gray600,
+              flex: 1,
+            }}
+          >
+            {title}
+          </Text>
           {required ? (
-            <Text style={[styles.viewText, { textDecorationLine: 'none', marginTop: hp(4) }]}>
+            <Text
+              style={{
+                marginTop: hp(4),
+                fontSize: fp(14),
+                fontFamily: FONTS.medium,
+                color: COLORS.gray400,
+              }}
+            >
               필수
             </Text>
           ) : null}
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.viewButton} onPress={onViewPress}>
-        <Text style={styles.viewText}>보기</Text>
+      <TouchableOpacity
+        onPress={onViewPress}
+        style={{ padding: wp(4), paddingLeft: wp(12) }}
+      >
+        <Text
+          style={{
+            fontSize: fp(14),
+            fontFamily: FONTS.medium,
+            color: COLORS.gray400,
+            textDecorationLine: 'underline',
+          }}
+        >
+          보기
+        </Text>
       </TouchableOpacity>
     </View>
   );

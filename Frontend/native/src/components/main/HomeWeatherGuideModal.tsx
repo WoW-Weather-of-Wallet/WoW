@@ -22,9 +22,9 @@ export default function HomeWeatherGuideModal({
         onPress={onClose}
       >
         <Pressable className="w-full rounded-3xl bg-white p-6 shadow-lg">
-          <Text className="mb-2 text-xl font-bold text-gray-800">?뚮퉬 ?좎뵪 ?덈궡</Text>
+          <Text className="mb-2 text-xl font-bold text-gray-800">소비 날씨 기준</Text>
           <Text className="mb-6 text-sm font-medium leading-relaxed text-gray-500">
-            理쒓렐 ?뚮퉬 ?먮쫫??諛뷀깢?쇰줈 ?꾩옱 ?뚮퉬 ?곹깭瑜??좎뵪泥섎읆 蹂댁뿬以띾땲??
+            최근 평균과 비교해 오늘 소비가 어느 정도 강한지 날씨처럼 보여주는 기준이에요.
           </Text>
 
           <View className="space-y-4">
@@ -38,7 +38,7 @@ export default function HomeWeatherGuideModal({
             onPress={onClose}
             activeOpacity={0.8}
           >
-            <Text className="text-base font-bold text-white">?リ린</Text>
+            <Text className="text-base font-bold text-white">닫기</Text>
           </TouchableOpacity>
         </Pressable>
       </Pressable>
