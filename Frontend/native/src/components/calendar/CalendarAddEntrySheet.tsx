@@ -24,6 +24,7 @@ import {
 // 엑셀 가이드 서비스 호출 제거 (수동 호출 방식으로 변경)
 import ExcelUploadGuideModal from './ExcelUploadGuideModal';
 import CalendarCategorySelector from './CalendarCategorySelector';
+import CalendarUploadBackendSummaryCard from './CalendarUploadBackendSummaryCard';
 import type {
   CalendarUploadBackendItem,
   CalendarUploadBackendSummary,
@@ -602,67 +603,7 @@ export default function CalendarAddEntrySheet({
                 </View>
               ) : null}
 
-              {backendSummary ? (
-                <View style={styles.backendSummaryCard}>
-                  <View style={styles.backendSummaryHeader}>
-                    <Ionicons name="server-outline" size={wp(18)} color={COLORS.primary} />
-                    <Text style={styles.backendSummaryTitle}>백엔드 분류 결과</Text>
-                  </View>
-                  <Text style={styles.backendSummaryDescription}>
-                    {backendSummary.message || '분류 결과를 불러왔어요.'}
-                  </Text>
-
-                  <View style={styles.backendSummaryStatsGrid}>
-                    <SummaryStatCard label="거래 수" value={`${backendSummary.transactionCount}건`} />
-                    <SummaryStatCard
-                      label="포함 금액"
-                      value={`${backendSummary.includedAmount.toLocaleString()}원`}
-                    />
-                    <SummaryStatCard
-                      label="제외 금액"
-                      value={`${backendSummary.excludedAmount.toLocaleString()}원`}
-                    />
-                    <SummaryStatCard
-                      label="총 금액"
-                      value={`${backendSummary.totalAmount.toLocaleString()}원`}
-                    />
-                  </View>
-
-                  {backendSummary.records.length > 0 ? (
-                    <View style={styles.summaryListSection}>
-                      <Text style={styles.summarySectionLabel}>자동 분류 요약</Text>
-                      {backendSummary.records.slice(0, 5).map((record) => (
-                        <View key={`${record.category}-${record.cnt}`} style={styles.summaryListRow}>
-                          <Text style={styles.summaryListLabel}>{record.category}</Text>
-                          <Text style={styles.summaryListValue}>
-                            {record.cnt}건 · {record.amt.toLocaleString()}원
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  ) : null}
-
-                  {backendSummary.excludedRows.length > 0 ? (
-                    <View style={styles.summaryListSection}>
-                      <Text style={styles.summarySectionLabel}>제외 항목</Text>
-                      {backendSummary.excludedRows.slice(0, 4).map((row, index) => (
-                        <View
-                          key={`${row.merchantName}-${row.classificationReason}-${index}`}
-                          style={styles.summaryListRow}
-                        >
-                          <View style={styles.summaryListTextWrap}>
-                            <Text style={styles.summaryListLabel}>{row.merchantName}</Text>
-                            <Text style={styles.summaryListReason}>{row.classificationReason}</Text>
-                          </View>
-                          <Text style={styles.summaryListValue}>
-                            {row.cnt}건 · {row.amount.toLocaleString()}원
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  ) : null}
-                </View>
-              ) : null}
+              {backendSummary ? <CalendarUploadBackendSummaryCard summary={backendSummary} /> : null}
 
               {confirmErrorMessage ? (
                 <View style={styles.errorBox}>
@@ -824,16 +765,6 @@ function FieldLabel({
     </View>
   );
 }
-
-function SummaryStatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.summaryStatCard}>
-      <Text style={styles.summaryStatLabel}>{label}</Text>
-      <Text style={styles.summaryStatValue}>{value}</Text>
-    </View>
-  );
-}
-
 
 function mergeUploadGroupsWithBackendItems(
   groups: CalendarUploadPreviewGroup[],

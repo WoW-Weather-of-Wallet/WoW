@@ -7,6 +7,7 @@ export { default as CalendarHeroCard } from './CalendarHeroCard';
 export { default as CalendarMonthCard } from './CalendarMonthCard';
 export { default as CalendarTabSwitcher } from './CalendarTabSwitcher';
 export { default as CalendarTopDockContent } from './CalendarTopDockContent';
+export { default as CalendarUploadBackendSummaryCard } from './CalendarUploadBackendSummaryCard';
 export { default as FixedExpenseGroupBlock } from './FixedExpenseGroupBlock';
 export { default as FixedExpenseDetailSheet } from './FixedExpenseDetailSheet';
 export { default as FixedExpenseManageItemCard } from './FixedExpenseManageItemCard';
