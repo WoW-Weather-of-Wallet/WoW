@@ -1,8 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
-import { styles } from './calendarAddEntryUi';
+import { COLORS, FONTS, fp, wp } from '../../constants/theme';
 
 interface CalendarFieldLabelProps {
   label: string;
@@ -11,9 +10,17 @@ interface CalendarFieldLabelProps {
 
 export default function CalendarFieldLabel({ label, icon }: CalendarFieldLabelProps) {
   return (
-    <View style={styles.fieldLabelRow}>
+    <View className="flex-row items-center" style={{ gap: wp(6) }}>
       {icon ? <Ionicons name={icon} size={wp(14)} color={COLORS.primary} /> : null}
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text
+        style={{
+          fontSize: fp(15),
+          fontFamily: FONTS.bold,
+          color: COLORS.textSecondary,
+        }}
+      >
+        {label}
+      </Text>
     </View>
   );
 }
