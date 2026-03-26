@@ -33,12 +33,14 @@ const loginLayoutStyles = {
   },
   scrollContent: {
     flexGrow: 1,
+    justifyContent: 'center' as const,
     paddingHorizontal: wp(28),
-    paddingTop: hp(80),
+    paddingTop: hp(36),
+    paddingBottom: hp(24),
   },
   headerContainer: {
     alignItems: 'center' as const,
-    marginBottom: hp(32),
+    marginBottom: hp(28),
   },
   headerTitle: {
     fontSize: fp(28),
@@ -109,7 +111,7 @@ const loginLayoutStyles = {
     fontSize: fp(16),
     letterSpacing: 0.3,
   },
-};
+} as const;
 
 const buildFadeInDown = (delay: number) =>
   FadeInDown.delay(delay).duration(500).springify();
@@ -137,7 +139,7 @@ export default function LoginScreen({ navigation }: RootScreenProps<'Login'>) {
       100,
       withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }),
     );
-  }, []);
+  }, [headerOpacity, headerTranslateY]);
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
@@ -159,9 +161,9 @@ export default function LoginScreen({ navigation }: RootScreenProps<'Login'>) {
         containerStyle={loginLayoutStyles.keyboardView}
         scrollContentStyle={loginLayoutStyles.scrollContent}
         scrollTopPadding={0}
-        scrollBottomPadding={hp(40)}
-        scrollBottomMinPadding={hp(20)}
-        includeTopInset={false}
+        scrollBottomPadding={hp(32)}
+        scrollBottomMinPadding={hp(16)}
+        includeTopInset
         keyboardVerticalOffset={Platform.OS === 'ios' ? hp(20) : 0}
       >
         <Animated.View style={[loginLayoutStyles.headerContainer, headerAnimatedStyle]}>
@@ -201,14 +203,14 @@ export default function LoginScreen({ navigation }: RootScreenProps<'Login'>) {
             autoComplete="password"
           />
 
-          {loginError.length > 0 && (
+          {loginError.length > 0 ? (
             <Text
               className="font-sans-medium"
               style={loginLayoutStyles.errorText}
             >
               {loginError}
             </Text>
-          )}
+          ) : null}
 
           <View style={loginLayoutStyles.buttonRow}>
             <View className="flex-1">
@@ -227,11 +229,11 @@ export default function LoginScreen({ navigation }: RootScreenProps<'Login'>) {
             </View>
           </View>
 
-          {isSubmitting && (
+          {isSubmitting ? (
             <View className="items-center" style={loginLayoutStyles.loadingRow}>
               <ActivityIndicator color={COLORS.primary} />
             </View>
-          )}
+          ) : null}
         </Animated.View>
 
         <Animated.View entering={buildFadeInDown(350)}>
