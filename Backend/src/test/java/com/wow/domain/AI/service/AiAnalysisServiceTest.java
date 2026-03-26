@@ -106,20 +106,71 @@ class AiAnalysisServiceTest {
 
         AiAnalysisResponse response = aiAnalysisService.getAnalysis(1L, 2026, 3);
 
-        assertThat(response.getCluster().getName()).isEqualTo("사무·서적형");
+        assertThat(response.getCluster().getName()).isEqualTo("학습형");
         assertThat(response.getSummary().getTotalSavable()).isEqualTo(29258L);
+        verifyNoInteractions(aiAnalysisRepository, userRepository, transactionRepository, aiRestTemplate);
+    }
+
+    @Test
+    void getAnalysisReturnsStoredMonthlyReportWhenPresent() throws Exception {
+        AiAnalysisResponse storedResponse = createSampleResponse();
+        AiAnalysis storedAnalysis = AiAnalysis.builder()
+                .id(10L)
+                .user(createUser())
+                .spendingType(createSpendingType())
+                .year(2026)
+                .month(3)
+                .analysisType(AiAnalysisType.MONTHLY)
+                .description(objectMapper.writeValueAsString(storedResponse))
+                .build();
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(RedisKeys.AI_MONTHLY_REPORT_PREFIX + "1:2026:3")).thenReturn(null);
+        when(aiAnalysisRepository.findFirstByUser_IdAndYearAndMonthAndAnalysisTypeOrderByCreatedAtDescIdDesc(
+                1L, 2026, 3, AiAnalysisType.MONTHLY))
+                .thenReturn(Optional.of(storedAnalysis));
+
+        AiAnalysisResponse response = aiAnalysisService.getAnalysis(1L, 2026, 3);
+
+        assertThat(response.getGoal().getActionTip()).isEqualTo("커피/음료 구매 횟수를 주 3회 이내로 제한해보세요.");
+        verify(valueOperations).set(
+                eq(RedisKeys.AI_MONTHLY_REPORT_PREFIX + "1:2026:3"),
+                any(String.class),
+                eq(Duration.ofHours(6))
+        );
         verifyNoInteractions(userRepository, transactionRepository, aiRestTemplate);
     }
 
     @Test
-    void getAnalysisThrowsWhenRollingWindowHasNoTransactions() {
+    void getAnalysisThrowsWhenReportNotGeneratedAndFetchOnly() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get(RedisKeys.AI_MONTHLY_REPORT_PREFIX + "1:2026:3")).thenReturn(null);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(createUser()));
-        when(transactionRepository.existsByUser_IdAndTransactionAtBetween(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
-                .thenReturn(false);
+        when(aiAnalysisRepository.findFirstByUser_IdAndYearAndMonthAndAnalysisTypeOrderByCreatedAtDescIdDesc(
+                1L, 2026, 3, AiAnalysisType.MONTHLY))
+                .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> aiAnalysisService.getAnalysis(1L, 2026, 3))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("이번 달 AI 리포트가 아직 생성되지 않았습니다.");
+
+        verifyNoInteractions(userRepository, transactionRepository, aiRestTemplate);
+    }
+
+    @Test
+    void getAnalysisThrowsWhenGeneratingWithoutTransactions() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(RedisKeys.AI_MONTHLY_REPORT_PREFIX + "1:2026:3")).thenReturn(null);
+        when(aiAnalysisRepository.findFirstByUser_IdAndYearAndMonthAndAnalysisTypeOrderByCreatedAtDescIdDesc(
+                1L, 2026, 3, AiAnalysisType.MONTHLY))
+                .thenReturn(Optional.empty());
+        when(userRepository.findById(1L)).thenReturn(Optional.of(createUser()));
+        when(transactionRepository.existsByUser_IdAndTransactionAtBetween(
+                eq(1L),
+                any(LocalDateTime.class),
+                any(LocalDateTime.class)
+        )).thenReturn(false);
+
+        assertThatThrownBy(() -> aiAnalysisService.getAnalysis(1L, 2026, 3, true))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("최근 3개월 거래가 없어 AI 리포트를 생성할 수 없습니다.");
 
@@ -131,15 +182,24 @@ class AiAnalysisServiceTest {
     void getAnalysisThrowsFriendlyMessageWhenAiServerConnectionFails() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get(RedisKeys.AI_MONTHLY_REPORT_PREFIX + "1:2026:3")).thenReturn(null);
+        when(aiAnalysisRepository.findFirstByUser_IdAndYearAndMonthAndAnalysisTypeOrderByCreatedAtDescIdDesc(
+                1L, 2026, 3, AiAnalysisType.MONTHLY))
+                .thenReturn(Optional.empty());
         when(userRepository.findById(1L)).thenReturn(Optional.of(createUser()));
-        when(transactionRepository.existsByUser_IdAndTransactionAtBetween(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
-                .thenReturn(true);
-        when(transactionRepository.findCategoryAmountSummariesByUserIdAndRange(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
-                .thenReturn(List.of(createSummary("커피/음료", 233500, 12L)));
+        when(transactionRepository.existsByUser_IdAndTransactionAtBetween(
+                eq(1L),
+                any(LocalDateTime.class),
+                any(LocalDateTime.class)
+        )).thenReturn(true);
+        when(transactionRepository.findCategoryAmountSummariesByUserIdAndRange(
+                eq(1L),
+                any(LocalDateTime.class),
+                any(LocalDateTime.class)
+        )).thenReturn(List.of(createSummary("커피/음료", 233500, 12L)));
         when(aiRestTemplate.exchange(any(String.class), any(), any(), eq(AiAnalysisResponse.class)))
                 .thenThrow(new ResourceAccessException("timeout"));
 
-        assertThatThrownBy(() -> aiAnalysisService.getAnalysis(1L, 2026, 3))
+        assertThatThrownBy(() -> aiAnalysisService.getAnalysis(1L, 2026, 3, true))
                 .isInstanceOf(InternalServerException.class)
                 .hasMessageContaining("AI 리포트 서버 연결에 실패했습니다.");
 
@@ -147,19 +207,14 @@ class AiAnalysisServiceTest {
     }
 
     @Test
-    void getAnalysisPersistsMinimalSnapshotAndCachesFullResponse() {
+    void getAnalysisGeneratesAndPersistsImmutableMonthlyReport() {
         AiAnalysisResponse aiResponse = createSampleResponse();
         User user = createUser();
-        SpendingType spendingType = SpendingType.builder()
-                .id(1L)
-                .name("사무·서적형")
-                .iconCode("book")
-                .summary("학습 집중형")
-                .build();
+        SpendingType spendingType = createSpendingType();
         ExpenseCategory expenseCategory = ExpenseCategory.builder()
                 .id(1)
                 .categoryName("커피/음료")
-                .categoryIcon("☕")
+                .categoryIcon("cup")
                 .build();
         AiAnalysis savedAnalysis = AiAnalysis.builder()
                 .id(10L)
@@ -168,27 +223,41 @@ class AiAnalysisServiceTest {
                 .year(2026)
                 .month(3)
                 .analysisType(AiAnalysisType.MONTHLY)
-                .description("사무/교육용품과 서적/도서 비중이 높은 학습 집중형 유형입니다.")
+                .description("{}")
                 .build();
 
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get(RedisKeys.AI_MONTHLY_REPORT_PREFIX + "1:2026:3")).thenReturn(null);
+        when(aiAnalysisRepository.findFirstByUser_IdAndYearAndMonthAndAnalysisTypeOrderByCreatedAtDescIdDesc(
+                1L, 2026, 3, AiAnalysisType.MONTHLY))
+                .thenReturn(Optional.empty());
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(transactionRepository.existsByUser_IdAndTransactionAtBetween(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
-                .thenReturn(true);
-        when(transactionRepository.findCategoryAmountSummariesByUserIdAndRange(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
-                .thenReturn(List.of(createSummary("커피/음료", 233500, 12L)));
+        when(transactionRepository.existsByUser_IdAndTransactionAtBetween(
+                eq(1L),
+                any(LocalDateTime.class),
+                any(LocalDateTime.class)
+        )).thenReturn(true);
+        when(transactionRepository.findCategoryAmountSummariesByUserIdAndRange(
+                eq(1L),
+                any(LocalDateTime.class),
+                any(LocalDateTime.class)
+        )).thenReturn(List.of(createSummary("커피/음료", 233500, 12L)));
         when(aiRestTemplate.exchange(any(String.class), any(), any(), eq(AiAnalysisResponse.class)))
                 .thenReturn(ResponseEntity.ok(aiResponse));
         when(spendingTypeRepository.findById(1L)).thenReturn(Optional.of(spendingType));
         when(aiAnalysisRepository.save(any(AiAnalysis.class))).thenReturn(savedAnalysis);
         when(expenseCategoryRepository.findByCategoryName("커피/음료")).thenReturn(Optional.of(expenseCategory));
 
-        AiAnalysisResponse response = aiAnalysisService.getAnalysis(1L, 2026, 3);
+        AiAnalysisResponse response = aiAnalysisService.getAnalysis(1L, 2026, 3, true);
 
         assertThat(response.getGoal().getActionTip()).isEqualTo("커피/음료 구매 횟수를 주 3회 이내로 제한해보세요.");
-        verify(aiAnalysisRepository).deleteByUser_IdAndYearAndMonthAndAnalysisType(1L, 2026, 3, AiAnalysisType.MONTHLY);
-        verify(aiAnalysisRepository).save(any(AiAnalysis.class));
+        verify(aiAnalysisRepository).deleteByUser_IdAndYearAndMonthAndAnalysisType(
+                1L, 2026, 3, AiAnalysisType.MONTHLY
+        );
+
+        ArgumentCaptor<AiAnalysis> analysisCaptor = ArgumentCaptor.forClass(AiAnalysis.class);
+        verify(aiAnalysisRepository).save(analysisCaptor.capture());
+        assertThat(analysisCaptor.getValue().getDescription()).contains("\"goal\"");
 
         ArgumentCaptor<List<AiAnalysisCategoryResult>> categoryCaptor = ArgumentCaptor.forClass(List.class);
         verify(aiAnalysisCategoryResultRepository).saveAll(categoryCaptor.capture());
@@ -203,27 +272,34 @@ class AiAnalysisServiceTest {
     }
 
     @Test
-    void evictMonthlyAiReportCachesRemovesChangedMonthAndNextTwoMonths() {
+    void evictMonthlyAiReportCachesRemovesChangedMonthAndNextTwoMonthsFromRedisOnly() {
         aiAnalysisService.evictMonthlyAiReportCaches(
                 1L,
                 List.of(LocalDate.of(2026, 3, 15), LocalDate.of(2026, 3, 28))
         );
 
-        verify(aiAnalysisRepository).deleteByUser_IdAndYearAndMonthAndAnalysisType(1L, 2026, 3, AiAnalysisType.MONTHLY);
-        verify(aiAnalysisRepository).deleteByUser_IdAndYearAndMonthAndAnalysisType(1L, 2026, 4, AiAnalysisType.MONTHLY);
-        verify(aiAnalysisRepository).deleteByUser_IdAndYearAndMonthAndAnalysisType(1L, 2026, 5, AiAnalysisType.MONTHLY);
         verify(redisTemplate).delete(RedisKeys.AI_MONTHLY_REPORT_PREFIX + "1:2026:3");
         verify(redisTemplate).delete(RedisKeys.AI_MONTHLY_REPORT_PREFIX + "1:2026:4");
         verify(redisTemplate).delete(RedisKeys.AI_MONTHLY_REPORT_PREFIX + "1:2026:5");
+        verify(aiAnalysisRepository, never()).deleteByUser_IdAndYearAndMonthAndAnalysisType(any(), any(), any(), any());
     }
 
     private User createUser() {
         return User.builder()
                 .id(1L)
                 .userId("wowuser")
-                .name("테스터")
+                .name("테스트")
                 .gender("M")
                 .role(Role.USER)
+                .build();
+    }
+
+    private SpendingType createSpendingType() {
+        return SpendingType.builder()
+                .id(1L)
+                .name("학습형")
+                .iconCode("book")
+                .summary("학습 지출형")
                 .build();
     }
 
@@ -241,7 +317,7 @@ class AiAnalysisServiceTest {
 
             @Override
             public String getCategoryIcon() {
-                return "☕";
+                return "cup";
             }
 
             @Override
@@ -260,9 +336,9 @@ class AiAnalysisServiceTest {
         return AiAnalysisResponse.builder()
                 .cluster(AiAnalysisResponse.Cluster.builder()
                         .id(1)
-                        .name("사무·서적형")
-                        .description("사무/교육용품과 서적/도서 비중이 높은 학습 집중형 유형입니다.")
-                        .icon("📚")
+                        .name("학습형")
+                        .description("최근 소비 패턴을 기반으로 분석된 소비 유형입니다.")
+                        .icon("book")
                         .build())
                 .categories(List.of(
                         AiAnalysisResponse.Category.builder()
@@ -288,9 +364,9 @@ class AiAnalysisServiceTest {
                 .tips(List.of(
                         AiAnalysisResponse.Tip.builder()
                                 .order(1)
-                                .keyword("커피·간식")
-                                .title("커피·간식 빈도를 먼저 줄여보세요")
-                                .description("하루 1회처럼 횟수 기준을 먼저 정해두면 지출을 안정적으로 줄일 수 있습니다.")
+                                .keyword("커피와 간식")
+                                .title("커피와 간식 빈도를 먼저 줄여보세요.")
+                                .description("하루 1회 정도로 기준을 정하면 지출을 안정적으로 줄일 수 있습니다.")
                                 .build()
                 ))
                 .goal(AiAnalysisResponse.Goal.builder()

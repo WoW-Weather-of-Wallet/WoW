@@ -8,6 +8,13 @@ import java.util.Optional;
 
 public interface AiAnalysisRepository extends JpaRepository<AiAnalysis, Long> {
 
+    Optional<AiAnalysis> findFirstByUser_IdAndYearAndMonthAndAnalysisTypeOrderByCreatedAtDescIdDesc(
+            Long userId,
+            Integer year,
+            Integer month,
+            AiAnalysisType analysisType
+    );
+
     Optional<AiAnalysis> findFirstByUser_IdAndAnalysisTypeOrderByYearDescMonthDescCreatedAtDescIdDesc(
             Long userId,
             AiAnalysisType analysisType
