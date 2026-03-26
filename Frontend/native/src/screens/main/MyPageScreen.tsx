@@ -19,6 +19,8 @@ import { useAuthStore } from '../../store/authStore';
 import { useLocalSecurityStore } from '../../store/localSecurityStore';
 import { fcmService } from '../../services/fcmService';
 import SecureKeypad from '../../components/common/SecureKeypad';
+import MyPageActionButtons from '../../components/mypage/MyPageActionButtons';
+import MyPageProfileDockCard from '../../components/mypage/MyPageProfileDockCard';
 import SettingSection from '../../components/mypage/SettingSection';
 import SettingItem from '../../components/mypage/SettingItem';
 import AgreedTermsModal from '../../components/mypage/AgreedTermsModal';
@@ -38,6 +40,7 @@ import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { maskPhoneNumber } from '../../utils/phoneFormat';
 import { validatePassword } from '../../utils/validation';
+import { useMyPageSections } from '../../hooks';
 import type { MyPageStackNavigationProp } from '../../types';
 
 import { styles } from './MyPageScreen.styles';
@@ -303,36 +306,22 @@ export default function MyPageScreen() {
     });
   };
 
-  const displayName = profile?.name ?? sessionUser?.name ?? '사용자';
-  const displayBadge =
-    (profile?.loginType ?? sessionLoginType) === 'SSAFY' ? 'SSAFY 회원' : '일반 회원';
-  const displayInitial = displayName.slice(0, 1);
-  const profileDockContent = (
-    <View style={styles.profileCard}>
-      <View style={styles.profileHeaderRow}>
-        <View style={styles.avatarCircle}>
-          <Text style={styles.avatarText}>{displayInitial}</Text>
-        </View>
-        <View style={styles.profileTextBlock}>
-          <View style={styles.nameRow}>
-            <Text style={styles.profileName}>
-              <Text style={styles.profileNameHighlight}>{displayName}</Text>님
-            </Text>
-            <View style={styles.profileBadge}>
-              <Text style={styles.profileBadgeText}>{displayBadge}</Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {isLoading && (
-        <View style={styles.profileLoadingRow}>
-          <ActivityIndicator color={COLORS.primary} />
-          <Text style={styles.profileLoadingText}>정보를 불러오고 있어요...</Text>
-        </View>
-      )}
-    </View>
-  );
+  const { displayName, displayBadge, sections } = useMyPageSections({
+    profile,
+    sessionUserName: sessionUser?.name,
+    sessionLoginType,
+    securityPreferences,
+    appVersion,
+    onOpenProfile: openProfileEditor,
+    onOpenPhoneGuidance: openPhoneGuidance,
+    onOpenPassword: openPasswordEditor,
+    onOpenPinEditor: openPinEditor,
+    onToggleBiometric: (enabled: boolean) => {
+      void handleToggleBiometric(enabled);
+    },
+    onClearPinCode: handleClearPinCode,
+    onOpenTerms: () => setIsTermsModalVisible(true),
+  });
 
   return (
     <>
@@ -340,7 +329,13 @@ export default function MyPageScreen() {
         containerStyle={styles.container}
         topDockStyle={styles.profileDock}
         topDockTopPadding={hp(12)}
-        topDockContent={profileDockContent}
+        topDockContent={
+          <MyPageProfileDockCard
+            name={displayName}
+            badgeLabel={displayBadge}
+            isLoading={isLoading}
+          />
+        }
         scrollViewStyle={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
         scrollTopPadding={hp(16)}
@@ -388,63 +383,19 @@ export default function MyPageScreen() {
           </View>
         */}
 
-        {/* ── 계정 정보 섹션 ── */}
-        <SettingSection title="계정 정보">
-          <SettingItem label="아이디" value={profile?.userId || '-'} type="text" />
-          <SettingItem label="프로필 정보" value={displayName} onPress={openProfileEditor} />
-          <SettingItem label="비밀번호 변경" onPress={openPasswordEditor} />
-          <SettingItem 
-            label="휴대폰 번호" 
-            value={maskPhoneNumber(profile?.phoneNumber ?? '')} 
-            onPress={openPhoneGuidance} 
-          />
-        </SettingSection>
+        {sections.map((section) => (
+          <SettingSection key={section.key} title={section.title}>
+            {section.items.map((item, index) => (
+              <SettingItem key={`${section.key}-${item.label}-${index}`} {...item} />
+            ))}
+          </SettingSection>
+        ))}
 
-        {/* ── 알림 및 보안 설정 ── */}
-        <SettingSection title="알림 및 보안">
-          <SettingItem 
-            label="알림 상태" 
-            type="toggle"
-            isToggled={profile?.alarmEnabled || false}
-            isDisabled
+        <View style={{ marginTop: hp(8) }}>
+          <MyPageActionButtons
+            onLogout={handleLogout}
+            onDeleteAccount={handleDeleteAccount}
           />
-          <View style={{ height: hp(12) }} />
-          <SettingItem
-            label={securityPreferences.pinEnabled ? '간편비밀번호 변경' : '간편비밀번호 설정'}
-            value={securityPreferences.pinEnabled ? '설정됨' : '미설정'}
-            onPress={openPinEditor}
-          />
-          {securityPreferences.pinEnabled && (
-            <>
-              <SettingItem
-                label="생체인증 사용"
-                type="toggle"
-                isToggled={securityPreferences.biometricEnabled}
-                onToggle={handleToggleBiometric}
-              />
-              <SettingItem label="간편비밀번호 해제" isDanger onPress={handleClearPinCode} />
-            </>
-          )}
-        </SettingSection>
-
-        {/* ── 이용 안내 및 액션 ── */}
-        <SettingSection title="이용 안내">
-          <SettingItem label="동의한 약관 확인" onPress={() => setIsTermsModalVisible(true)} />
-          <SettingItem label="현재 버전" value={appVersion} type="text" />
-        </SettingSection>
-
-        <View style={{ marginTop: hp(8), gap: hp(10) }}>
-          <TouchableOpacity style={styles.readOnlyInput} onPress={handleLogout}>
-            <Text style={[styles.readOnlyLabel, { color: COLORS.textPrimary }]}>로그아웃</Text>
-            <Ionicons name="log-out-outline" size={wp(20)} color={COLORS.textSecondary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.readOnlyInput, { borderColor: COLORS.error + '30' }]}
-            onPress={handleDeleteAccount}
-          >
-            <Text style={[styles.readOnlyLabel, { color: COLORS.error }]}>회원 탈퇴</Text>
-            <Ionicons name="exit-outline" size={wp(20)} color={COLORS.error} />
-          </TouchableOpacity>
         </View>
       </BottomTabScreenLayout>
 
