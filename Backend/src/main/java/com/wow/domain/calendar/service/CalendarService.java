@@ -1,5 +1,6 @@
 package com.wow.domain.calendar.service;
 
+import com.wow.domain.AI.service.AiAnalysisService;
 import com.wow.domain.calendar.dto.*;
 import com.wow.domain.calendar.entity.*;
 import com.wow.domain.calendar.entity.Calendar;
@@ -50,6 +51,7 @@ public class CalendarService {
     private final ExpenseCategoryRepository expenseCategoryRepository;
     private final FixedExpenseRepository fixedExpenseRepository;
     private final SpendingAnalysisService spendingAnalysisService;
+    private final AiAnalysisService aiAnalysisService;
 
     @Value("${flask.url}")
     private String flaskUrl;
@@ -303,7 +305,7 @@ public class CalendarService {
         for (LocalDate date : dates) {
             recalculateDailySummary(userId, date);
         }
-        spendingAnalysisService.evictMonthlyCompareCache(userId);
+        evictAnalysisCaches(userId, dates);
         return new TransactionConfirmResponse(entities.size(), representativeDate);
     }
 
@@ -356,7 +358,7 @@ public class CalendarService {
             recalculateDailySummary(userId, date);
         }
 
-        spendingAnalysisService.evictMonthlyCompareCache(userId);
+        evictAnalysisCaches(userId, dates);
 
         List<TransactionCustomResponse.TransactionCustomItem> responseItems = entities.stream()
                 .map(TransactionCustomResponse.TransactionCustomItem::from)
@@ -534,7 +536,7 @@ public class CalendarService {
         LocalDate date = transaction.getTransactionAt().toLocalDate(); // 삭제 전에 날짜 저장
         transactionRepository.delete(transaction);
         recalculateDailySummary(userId, date); // 삭제 후 재계산
-        spendingAnalysisService.evictMonthlyCompareCache(userId);
+        evictAnalysisCaches(userId, List.of(date));
     }
 
     // 현금 처리로 인해서 삭제로직 변경
@@ -609,7 +611,7 @@ public class CalendarService {
             recalculateDailySummary(userId, date);
         }
 
-        spendingAnalysisService.evictMonthlyCompareCache(userId);
+        evictAnalysisCaches(userId, dates);
 
         List<TransactionCustomResponse.TransactionCustomItem> responseItems = entities.stream()
                 .map(TransactionCustomResponse.TransactionCustomItem::from)
@@ -679,5 +681,13 @@ public class CalendarService {
 
         calendar.updateDailySummary(totalExpense, transactions.size());
         calendar.updateDayType(dayType);
+    }
+
+    private void evictAnalysisCaches(Long userId, Collection<LocalDate> transactionDates) {
+        // Monthly compare is a lightweight current view cache, while the AI report
+        // cache/snapshot is a 3-month rolling artifact that can be stale for the
+        // edited month and the next 2 target months.
+        spendingAnalysisService.evictMonthlyCompareCache(userId);
+        aiAnalysisService.evictMonthlyAiReportCaches(userId, transactionDates);
     }
 }

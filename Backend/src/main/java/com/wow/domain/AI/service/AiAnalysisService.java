@@ -30,11 +30,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -131,6 +135,49 @@ public class AiAnalysisService {
         persistMonthlyAnalysis(user, year, month, response.getBody());
         writeMonthlyAiReportCache(cacheKey, response.getBody());
         return response.getBody();
+    }
+
+    @Transactional
+    public void evictMonthlyAiReportCaches(Long userId, Collection<LocalDate> transactionDates) {
+        if (transactionDates == null || transactionDates.isEmpty()) {
+            return;
+        }
+
+        Set<YearMonth> affectedReportMonths = new LinkedHashSet<>();
+
+        for (LocalDate transactionDate : transactionDates) {
+            if (transactionDate == null) {
+                continue;
+            }
+
+            YearMonth transactionMonth = YearMonth.from(transactionDate);
+
+            // A monthly AI report uses the target month plus the previous 2 months.
+            // If March data changes, March/April/May reports all become stale because
+            // they each include March in their 3-month rolling window.
+            affectedReportMonths.add(transactionMonth);
+            affectedReportMonths.add(transactionMonth.plusMonths(1));
+            affectedReportMonths.add(transactionMonth.plusMonths(2));
+        }
+
+        for (YearMonth affectedMonth : affectedReportMonths) {
+            aiAnalysisRepository.deleteByUser_IdAndYearAndMonthAndAnalysisType(
+                    userId,
+                    affectedMonth.getYear(),
+                    affectedMonth.getMonthValue(),
+                    AiAnalysisType.MONTHLY
+            );
+
+            try {
+                redisTemplate.delete(buildMonthlyAiReportCacheKey(
+                        userId,
+                        affectedMonth.getYear(),
+                        affectedMonth.getMonthValue()
+                ));
+            } catch (Exception ignored) {
+                // Redis invalidation should not block transaction updates.
+            }
+        }
     }
 
     private void persistMonthlyAnalysis(User user, int year, int month, AiAnalysisResponse response) {
