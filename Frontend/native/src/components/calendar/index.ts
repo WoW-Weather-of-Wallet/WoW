@@ -25,6 +25,7 @@ export { default as FixedExpenseManageSummaryCard } from './FixedExpenseManageSu
 export { default as FixedExpensePaymentDayStepper } from './FixedExpensePaymentDayStepper';
 export { default as FixedExpensePickerSheet } from './FixedExpensePickerSheet';
 export { default as FixedExpensePickerRow } from './FixedExpensePickerRow';
+export { default as FixedExpensePickerSearchInput } from './FixedExpensePickerSearchInput';
 export { default as FixedExpenseReadonlyInfoCard } from './FixedExpenseReadonlyInfoCard';
 export { default as FixedExpenseSelectedSummaryCard } from './FixedExpenseSelectedSummaryCard';
 export { default as FixedExpenseSection } from './FixedExpenseSection';

@@ -48,7 +48,7 @@ export default function FixedExpensePickerRow({
         </View>
       </View>
 
-      <Text style={styles.amount}>-₩{item.amount.toLocaleString()}</Text>
+      <Text style={styles.amount}>-{item.amount.toLocaleString()}원</Text>
     </TouchableOpacity>
   );
 }

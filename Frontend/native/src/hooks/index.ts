@@ -9,6 +9,7 @@ export * from './useCreateAccountStepFlow';
 export * from './useAccountRecoveryResult';
 export * from './useAccountRecoveryEntry';
 export * from './useFixedExpenseDetailForm';
+export * from './useFixedExpensePickerSearch';
 export * from './useFindPwFlow';
 export * from './useIdentityVerificationForm';
 export * from './useLoginFlow';
