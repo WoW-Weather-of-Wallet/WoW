@@ -6,13 +6,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import StepIndicator from '../../components/common/StepIndicator';
 import AuthActionButton from '../../components/common/AuthActionButton';
 import IdentityStepFormLayout from '../../components/common/IdentityStepFormLayout';
-import IdentityNameSection from '../../components/common/IdentityNameSection';
-import IdentitySsnSection from '../../components/common/IdentitySsnSection';
-import TelecomPhoneInputSection from '../../components/common/TelecomPhoneInputSection';
+import IdentityVerificationFields from '../../components/common/IdentityVerificationFields';
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import VerificationCodeStep from '../../components/common/VerificationCodeStep';
 import { styles } from './PhoneUpdateScreen.styles';
@@ -98,84 +95,78 @@ export default function PhoneUpdateScreen({
             />
           }
         >
-          <Animated.View
-            entering={FadeInDown.delay(100).duration(400)}
-            style={styles.inputSection}
-          >
-            <IdentityNameSection
-              value={profileName}
-              displayValue={profileName || '-'}
-              editable={false}
-              containerStyle={styles.underlineContainer}
-              valueStyle={[
+          <IdentityVerificationFields
+            nameWrapperStyle={styles.inputSection}
+            phoneWrapperStyle={styles.inputSection}
+            nameDelay={100}
+            ssnDelay={160}
+            phoneDelay={220}
+            duration={400}
+            nameSection={{
+              value: profileName,
+              displayValue: profileName || '-',
+              editable: false,
+              containerStyle: styles.underlineContainer,
+              valueStyle: [
                 styles.bareText,
                 { letterSpacing: profileName ? 2 : 0 },
-              ]}
-            />
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(160).duration(400)}>
-            <IdentitySsnSection
-              frontValue={expectedSsnFront}
-              backValue={expectedSsnBack}
-              frontEditable={false}
-              backEditable={false}
-              containerStyle={styles.ssnSection}
-              frontContainerStyle={[
+              ],
+            }}
+            ssnSection={{
+              frontValue: expectedSsnFront,
+              backValue: expectedSsnBack,
+              frontEditable: false,
+              backEditable: false,
+              containerStyle: styles.ssnSection,
+              frontContainerStyle: [
                 styles.underlineContainer,
                 { flex: 1.1, justifyContent: 'center' },
-              ]}
-              frontValueStyle={[
+              ],
+              frontValueStyle: [
                 styles.bareText,
                 {
                   textAlign: 'center',
                   letterSpacing: expectedSsnFront ? 4 : 0,
                 },
-              ]}
-              backContainerStyle={[
+              ],
+              backContainerStyle: [
                 styles.underlineContainer,
                 styles.ssnBackContainer,
-              ]}
-              backValueStyle={[styles.bareText, styles.ssnBackText]}
-              dashStyle={styles.dash}
-              maskingTextStyle={styles.ssnMasking}
-            />
-          </Animated.View>
-
-          <Animated.View
-            entering={FadeInDown.delay(220).duration(400)}
-            style={styles.inputSection}
-          >
-            <TelecomPhoneInputSection
-              telecom={telecom}
-              telecomPlaceholder={TELECOM_PLACEHOLDER}
-              phone={phone}
-              onOpenTelecomModal={() => setIsTelecomModalVisible(true)}
-              onPhoneChange={(text) => {
+              ],
+              backValueStyle: [styles.bareText, styles.ssnBackText],
+              dashStyle: styles.dash,
+              maskingTextStyle: styles.ssnMasking,
+            }}
+            phoneSection={{
+              telecom,
+              telecomPlaceholder: TELECOM_PLACEHOLDER,
+              phone,
+              onOpenTelecomModal: () => setIsTelecomModalVisible(true),
+              onPhoneChange: (text) => {
                 setPhone(text.replace(/[^0-9]/g, ''));
                 setSubmitError('');
-              }}
-              phonePlaceholder={PHONE_NUMBER_PLACEHOLDER}
-              selectorStyle={styles.telecomSelector}
-              telecomTextStyle={styles.telecomText}
-              placeholderTextStyle={styles.placeholderText}
-              phoneInputContainerStyle={[
+              },
+              phonePlaceholder: PHONE_NUMBER_PLACEHOLDER,
+              selectorStyle: styles.telecomSelector,
+              telecomTextStyle: styles.telecomText,
+              placeholderTextStyle: styles.placeholderText,
+              phoneInputContainerStyle: [
                 styles.underlineContainer,
                 { marginTop: hp(32) },
-              ]}
-              phoneInputStyle={[
+              ],
+              phoneInputStyle: [
                 styles.bareInput,
                 { letterSpacing: phone.length > 0 ? 2 : 0 },
-              ]}
-              errorTextStyle={styles.errorText}
-              errorText={submitError}
-              phoneVisible={telecom !== TELECOM_PLACEHOLDER}
-              animatePhoneInput
-              chevronIconSize={wp(24)}
-              chevronIconColor={COLORS.textPrimary}
-              placeholderTextColor={COLORS.textTertiary}
-            />
-          </Animated.View>
+              ],
+              errorTextStyle: styles.errorText,
+              errorText: submitError,
+              phoneVisible: telecom !== TELECOM_PLACEHOLDER,
+              animatePhoneInput: true,
+              chevronIconSize: wp(24),
+              chevronIconColor: COLORS.textPrimary,
+              placeholderTextColor: COLORS.textTertiary,
+            }}
+          />
         </IdentityStepFormLayout>
 
         <TelecomSelectModal

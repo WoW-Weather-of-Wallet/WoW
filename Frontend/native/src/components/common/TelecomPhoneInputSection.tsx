@@ -12,7 +12,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import AuthUnderlineInput from './AuthUnderlineInput';
 
-interface TelecomPhoneInputSectionProps {
+export interface TelecomPhoneInputSectionProps {
   telecom: string;
   telecomPlaceholder: string;
   phone: string;

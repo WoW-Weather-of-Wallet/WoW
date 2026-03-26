@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import AuthUnderlineInput from './AuthUnderlineInput';
 
-interface IdentitySsnSectionProps {
+export interface IdentitySsnSectionProps {
   frontValue: string;
   backValue: string;
   onFrontChange?: (value: string) => void;

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import AuthUnderlineInput from './AuthUnderlineInput';
 
-interface IdentityNameSectionProps {
+export interface IdentityNameSectionProps {
   value: string;
   containerStyle: StyleProp<ViewStyle>;
   valueStyle: StyleProp<TextStyle>;

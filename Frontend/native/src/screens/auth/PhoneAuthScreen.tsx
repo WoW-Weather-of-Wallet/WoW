@@ -1,13 +1,10 @@
 import React, { useRef } from 'react';
 import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import AuthStepLayout from '../../components/auth/AuthStepLayout';
 import AuthActionButton from '../../components/common/AuthActionButton';
-import IdentityNameSection from '../../components/common/IdentityNameSection';
-import IdentitySsnSection from '../../components/common/IdentitySsnSection';
-import TelecomPhoneInputSection from '../../components/common/TelecomPhoneInputSection';
+import IdentityVerificationFields from '../../components/common/IdentityVerificationFields';
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
@@ -111,113 +108,108 @@ export default function PhoneAuthScreen({
           />
         }
       >
-        <Animated.View
-          entering={FadeInDown.duration(500)}
-          style={styles.inputSection}
-        >
-          <IdentityNameSection
-            value={name}
-            containerStyle={styles.underlineContainer}
-            valueStyle={[
+        <IdentityVerificationFields
+          nameWrapperStyle={styles.inputSection}
+          phoneWrapperStyle={styles.inputSection}
+          nameSection={{
+            value: name,
+            containerStyle: styles.underlineContainer,
+            valueStyle: [
               styles.bareInput,
               { letterSpacing: name.length > 0 ? 2 : 0 },
-            ]}
-            helperText={
-              isSsafySignup
-                ? isLockedSsafyName
-                  ? 'SSAFY 계정 이름이 자동으로 입력되어 있어요.'
-                  : 'SSAFY 이름을 가져오지 못해 직접 입력할 수 있도록 열어두었어요.'
-                : undefined
-            }
-            helperTextStyle={{ color: COLORS.textTertiary, marginTop: hp(12) }}
-            placeholderTextColor={COLORS.textTertiary}
-            editable={!isLockedSsafyName}
-            onChangeText={(value) => {
+            ],
+            helperText: isSsafySignup
+              ? isLockedSsafyName
+                ? 'SSAFY 계정 이름이 자동으로 입력되어 있어요.'
+                : 'SSAFY 이름을 가져오지 못해 직접 입력할 수 있도록 열어두었어요.'
+              : undefined,
+            helperTextStyle: {
+              color: COLORS.textTertiary,
+              marginTop: hp(12),
+            },
+            placeholderTextColor: COLORS.textTertiary,
+            editable: !isLockedSsafyName,
+            onChangeText: (value) => {
               if (isLockedSsafyName) {
                 return;
               }
               setName(value);
-            }}
-            inputProps={{
+            },
+            inputProps: {
               onSubmitEditing: handleNameSubmit,
               returnKeyType: 'next',
               autoFocus: !isLockedSsafyName,
-            }}
-          />
-        </Animated.View>
-
-        {step >= 2 ? (
-          <Animated.View entering={FadeInDown.duration(500)}>
-            <IdentitySsnSection
-              frontValue={ssnFront}
-              backValue={ssnBack}
-              onFrontChange={handleSsnFrontChange}
-              onBackChange={handleSsnBackChange}
-              frontInputRef={ssnFrontRef}
-              backInputRef={ssnBackRef}
-              containerStyle={styles.ssnSection}
-              frontContainerStyle={[
-                styles.underlineContainer,
-                { flex: 1.1, justifyContent: 'center' },
-              ]}
-              frontValueStyle={[
-                styles.bareInput,
-                {
-                  textAlign: 'center',
-                  letterSpacing: ssnFront.length > 0 ? 4 : 0,
-                },
-              ]}
-              backContainerStyle={[
-                styles.underlineContainer,
-                styles.ssnBackContainer,
-              ]}
-              backValueStyle={[
-                styles.bareInput,
-                {
-                  width: CONSTANTS.ssnBackInputWidth,
-                  textAlign: 'center',
-                  letterSpacing: 4,
-                },
-              ]}
-              dashStyle={styles.dash}
-              maskingTextStyle={styles.ssnMasking}
-              placeholderTextColor={COLORS.textTertiary}
-            />
-          </Animated.View>
-        ) : null}
-
-        {step >= 3 ? (
-          <Animated.View
-            entering={FadeInDown.duration(500)}
-            style={styles.inputSection}
-          >
-            <TelecomPhoneInputSection
-              telecom={telecom}
-              telecomPlaceholder={TELECOM_PLACEHOLDER}
-              phone={phone}
-              onOpenTelecomModal={openTelecomModal}
-              onPhoneChange={handlePhoneChange}
-              phonePlaceholder={PHONE_NUMBER_PLACEHOLDER}
-              selectorStyle={styles.telecomSelector}
-              telecomTextStyle={styles.telecomText}
-              placeholderTextStyle={styles.placeholderText}
-              phoneInputContainerStyle={[
-                styles.underlineContainer,
-                { marginTop: hp(32) },
-              ]}
-              phoneInputStyle={[
-                styles.bareInput,
-                { letterSpacing: phone.length > 0 ? 2 : 0 },
-              ]}
-              errorTextStyle={styles.errorText}
-              errorText={submitError}
-              phoneInputRef={phoneRef}
-              chevronIconSize={CONSTANTS.chevronIconSize}
-              chevronIconColor={COLORS.textPrimary}
-              placeholderTextColor={COLORS.textTertiary}
-            />
-          </Animated.View>
-        ) : null}
+            },
+          }}
+          ssnSection={
+            step >= 2
+              ? {
+                  frontValue: ssnFront,
+                  backValue: ssnBack,
+                  onFrontChange: handleSsnFrontChange,
+                  onBackChange: handleSsnBackChange,
+                  frontInputRef: ssnFrontRef,
+                  backInputRef: ssnBackRef,
+                  containerStyle: styles.ssnSection,
+                  frontContainerStyle: [
+                    styles.underlineContainer,
+                    { flex: 1.1, justifyContent: 'center' },
+                  ],
+                  frontValueStyle: [
+                    styles.bareInput,
+                    {
+                      textAlign: 'center',
+                      letterSpacing: ssnFront.length > 0 ? 4 : 0,
+                    },
+                  ],
+                  backContainerStyle: [
+                    styles.underlineContainer,
+                    styles.ssnBackContainer,
+                  ],
+                  backValueStyle: [
+                    styles.bareInput,
+                    {
+                      width: CONSTANTS.ssnBackInputWidth,
+                      textAlign: 'center',
+                      letterSpacing: 4,
+                    },
+                  ],
+                  dashStyle: styles.dash,
+                  maskingTextStyle: styles.ssnMasking,
+                  placeholderTextColor: COLORS.textTertiary,
+                }
+              : undefined
+          }
+          phoneSection={
+            step >= 3
+              ? {
+                  telecom,
+                  telecomPlaceholder: TELECOM_PLACEHOLDER,
+                  phone,
+                  onOpenTelecomModal: openTelecomModal,
+                  onPhoneChange: handlePhoneChange,
+                  phonePlaceholder: PHONE_NUMBER_PLACEHOLDER,
+                  selectorStyle: styles.telecomSelector,
+                  telecomTextStyle: styles.telecomText,
+                  placeholderTextStyle: styles.placeholderText,
+                  phoneInputContainerStyle: [
+                    styles.underlineContainer,
+                    { marginTop: hp(32) },
+                  ],
+                  phoneInputStyle: [
+                    styles.bareInput,
+                    { letterSpacing: phone.length > 0 ? 2 : 0 },
+                  ],
+                  errorTextStyle: styles.errorText,
+                  errorText: submitError,
+                  phoneInputRef: phoneRef,
+                  chevronIconSize: CONSTANTS.chevronIconSize,
+                  chevronIconColor: COLORS.textPrimary,
+                  placeholderTextColor: COLORS.textTertiary,
+                }
+              : undefined
+          }
+        />
       </AuthStepLayout>
 
       <TelecomSelectModal

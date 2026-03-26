@@ -11,9 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import StepIndicator from '../../components/common/StepIndicator';
 import AuthActionButton from '../../components/common/AuthActionButton';
 import IdentityStepFormLayout from '../../components/common/IdentityStepFormLayout';
-import IdentityNameSection from '../../components/common/IdentityNameSection';
-import IdentitySsnSection from '../../components/common/IdentitySsnSection';
-import TelecomPhoneInputSection from '../../components/common/TelecomPhoneInputSection';
+import IdentityVerificationFields from '../../components/common/IdentityVerificationFields';
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import VerificationCodeStep from '../../components/common/VerificationCodeStep';
 import { styles } from './WithdrawScreen.styles';
@@ -38,8 +36,6 @@ export default function WithdrawScreen({
   const profileBirthDate: string = route.params?.birthDate ?? '';
   const profileGender: string = route.params?.gender ?? '';
   const {
-    expectedSsnFront,
-    expectedSsnBack,
     name,
     ssnFront,
     ssnBack,
@@ -114,97 +110,91 @@ export default function WithdrawScreen({
             />
           }
         >
-          <Animated.View
-            entering={FadeInDown.delay(100).duration(400)}
-            style={styles.inputSection}
-          >
-            <IdentityNameSection
-              value={name}
-              containerStyle={styles.underlineContainer}
-              valueStyle={[
+          <IdentityVerificationFields
+            nameWrapperStyle={styles.inputSection}
+            phoneWrapperStyle={styles.inputSection}
+            nameDelay={100}
+            ssnDelay={160}
+            phoneDelay={220}
+            duration={400}
+            nameSection={{
+              value: name,
+              containerStyle: styles.underlineContainer,
+              valueStyle: [
                 styles.bareInput,
                 { letterSpacing: name.length > 0 ? 2 : 0 },
-              ]}
-              placeholderTextColor={COLORS.textTertiary}
-              onChangeText={(value) => {
+              ],
+              placeholderTextColor: COLORS.textTertiary,
+              onChangeText: (value) => {
                 setName(value);
                 setSubmitError('');
-              }}
-              inputProps={{ returnKeyType: 'next' }}
-            />
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(160).duration(400)}>
-            <IdentitySsnSection
-              frontValue={ssnFront}
-              backValue={ssnBack}
-              onFrontChange={(text) => {
+              },
+              inputProps: { returnKeyType: 'next' },
+            }}
+            ssnSection={{
+              frontValue: ssnFront,
+              backValue: ssnBack,
+              onFrontChange: (text) => {
                 setSsnFront(text.replace(/[^0-9]/g, ''));
                 setSubmitError('');
-              }}
-              onBackChange={(text) => {
+              },
+              onBackChange: (text) => {
                 setSsnBack(text.replace(/[^0-9]/g, ''));
                 setSubmitError('');
-              }}
-              containerStyle={styles.ssnSection}
-              frontContainerStyle={[
+              },
+              containerStyle: styles.ssnSection,
+              frontContainerStyle: [
                 styles.underlineContainer,
                 { flex: 1.1, justifyContent: 'center' },
-              ]}
-              frontValueStyle={[
+              ],
+              frontValueStyle: [
                 styles.bareInput,
                 {
                   textAlign: 'center',
                   letterSpacing: ssnFront.length > 0 ? 4 : 0,
                 },
-              ]}
-              backContainerStyle={[
+              ],
+              backContainerStyle: [
                 styles.underlineContainer,
                 styles.ssnBackContainer,
-              ]}
-              backValueStyle={[
+              ],
+              backValueStyle: [
                 styles.bareInput,
                 styles.ssnBackInput,
                 { letterSpacing: ssnBack.length > 0 ? 4 : 0 },
-              ]}
-              dashStyle={styles.dash}
-              maskingTextStyle={styles.ssnMasking}
-              placeholderTextColor={COLORS.textTertiary}
-            />
-          </Animated.View>
-
-          <Animated.View
-            entering={FadeInDown.delay(220).duration(400)}
-            style={styles.inputSection}
-          >
-            <TelecomPhoneInputSection
-              telecom={telecom}
-              telecomPlaceholder={TELECOM_PLACEHOLDER}
-              phone={phone}
-              onOpenTelecomModal={() => setIsTelecomModalVisible(true)}
-              onPhoneChange={(text) => {
+              ],
+              dashStyle: styles.dash,
+              maskingTextStyle: styles.ssnMasking,
+              placeholderTextColor: COLORS.textTertiary,
+            }}
+            phoneSection={{
+              telecom,
+              telecomPlaceholder: TELECOM_PLACEHOLDER,
+              phone,
+              onOpenTelecomModal: () => setIsTelecomModalVisible(true),
+              onPhoneChange: (text) => {
                 setPhone(text.replace(/[^0-9]/g, ''));
                 setSubmitError('');
-              }}
-              phonePlaceholder={PHONE_NUMBER_PLACEHOLDER}
-              selectorStyle={styles.telecomSelector}
-              telecomTextStyle={styles.telecomText}
-              placeholderTextStyle={styles.placeholderText}
-              phoneInputContainerStyle={[
+              },
+              phonePlaceholder: PHONE_NUMBER_PLACEHOLDER,
+              selectorStyle: styles.telecomSelector,
+              telecomTextStyle: styles.telecomText,
+              placeholderTextStyle: styles.placeholderText,
+              phoneInputContainerStyle: [
                 styles.underlineContainer,
                 { marginTop: hp(32) },
-              ]}
-              phoneInputStyle={[
+              ],
+              phoneInputStyle: [
                 styles.bareInput,
                 { letterSpacing: phone.length > 0 ? 2 : 0 },
-              ]}
-              errorTextStyle={styles.errorText}
-              errorText={submitError}
-              chevronIconSize={wp(24)}
-              chevronIconColor={COLORS.textPrimary}
-              placeholderTextColor={COLORS.textTertiary}
-            />
-          </Animated.View>
+              ],
+              errorTextStyle: styles.errorText,
+              errorText: submitError,
+              chevronIconSize: wp(24),
+              chevronIconColor: COLORS.textPrimary,
+              placeholderTextColor: COLORS.textTertiary,
+            }}
+          />
 
           <Animated.View
             entering={FadeInDown.delay(300).duration(400)}
