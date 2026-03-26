@@ -2,12 +2,11 @@ import React from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { CalendarEntryCategoryKey } from '../../constants/calendar/addEntry';
-import { COLORS, wp } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import type {
   ManualCalendarEntryDraft,
   ManualEntryPaymentMethod,
 } from '../../types/calendar';
-import { styles } from './calendarAddEntryUi';
 import CalendarCategorySelector from './CalendarCategorySelector';
 import CalendarDraftEntryCard from './CalendarDraftEntryCard';
 import CalendarFieldLabel from './CalendarFieldLabel';
@@ -33,6 +32,31 @@ interface CalendarDirectEntrySectionProps {
   onComplete: () => void;
 }
 
+const inputShellStyle = {
+  minHeight: hp(54),
+  borderWidth: 1.5,
+  borderColor: COLORS.inputBorder,
+  borderRadius: RADIUS.lg,
+  backgroundColor: COLORS.white,
+  paddingHorizontal: wp(16),
+};
+
+const inputTextStyle = {
+  flex: 1,
+  fontSize: fp(16),
+  fontFamily: FONTS.medium,
+  color: COLORS.textPrimary,
+  paddingVertical: hp(14),
+};
+
+const errorBoxStyle = {
+  gap: wp(8),
+  borderRadius: RADIUS.lg,
+  backgroundColor: COLORS.errorBackground,
+  paddingHorizontal: wp(14),
+  paddingVertical: hp(12),
+};
+
 export default function CalendarDirectEntrySection({
   dateKey,
   selectedCategory,
@@ -52,18 +76,23 @@ export default function CalendarDirectEntrySection({
   onRemoveDraftEntry,
   onComplete,
 }: CalendarDirectEntrySectionProps) {
+  const isCompleteDisabled = draftEntries.length === 0 || isConfirmLoading;
+
   return (
     <ScrollView
       bounces={false}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.directContent}
+      contentContainerStyle={{ gap: hp(14), paddingBottom: hp(32) }}
     >
       <CalendarFieldLabel icon="calendar-outline" label="날짜" />
-      <View style={styles.inputShell}>
+      <View
+        className="flex-row items-center justify-between"
+        style={inputShellStyle}
+      >
         <TextInput
           value={dateKey}
           onChangeText={onChangeDateKey}
-          style={styles.input}
+          style={inputTextStyle}
           placeholder="YYYY-MM-DD"
           placeholderTextColor={COLORS.textTertiary}
         />
@@ -71,13 +100,9 @@ export default function CalendarDirectEntrySection({
       </View>
 
       {draftEntries.length > 0 ? (
-        <View style={styles.draftList}>
+        <View style={{ gap: hp(10) }}>
           {draftEntries.map((draft) => (
-            <CalendarDraftEntryCard
-              key={draft.id}
-              draft={draft}
-              onRemove={onRemoveDraftEntry}
-            />
+            <CalendarDraftEntryCard key={draft.id} draft={draft} onRemove={onRemoveDraftEntry} />
           ))}
         </View>
       ) : null}
@@ -95,21 +120,21 @@ export default function CalendarDirectEntrySection({
         onSelect={onSelectPaymentMethod}
       />
 
-      <View style={styles.inputShell}>
+      <View style={inputShellStyle}>
         <TextInput
           value={merchantName}
           onChangeText={onChangeMerchantName}
-          style={styles.input}
+          style={inputTextStyle}
           placeholder="가맹점명을 입력해주세요"
           placeholderTextColor={COLORS.textTertiary}
         />
       </View>
 
-      <View style={styles.inputShell}>
+      <View style={inputShellStyle}>
         <TextInput
           value={amountInput}
           onChangeText={(value) => onChangeAmountInput(value.replace(/[^0-9]/g, ''))}
-          style={styles.input}
+          style={inputTextStyle}
           placeholder="금액 (원)"
           placeholderTextColor={COLORS.textTertiary}
           keyboardType="number-pad"
@@ -117,35 +142,64 @@ export default function CalendarDirectEntrySection({
       </View>
 
       {confirmErrorMessage ? (
-        <View style={styles.errorBox}>
+        <View className="flex-row items-center" style={errorBoxStyle}>
           <Ionicons name="cloud-offline-outline" size={wp(16)} color={COLORS.spentRed} />
-          <Text style={styles.errorText}>{confirmErrorMessage}</Text>
+          <Text
+            style={{
+              flex: 1,
+              fontSize: fp(13),
+              lineHeight: fp(19),
+              fontFamily: FONTS.medium,
+              color: COLORS.spentRed,
+            }}
+          >
+            {confirmErrorMessage}
+          </Text>
         </View>
       ) : null}
 
       <TouchableOpacity
         activeOpacity={0.9}
-        style={[styles.primaryButton, !isAddEnabled && styles.primaryButtonDisabled]}
+        className="items-center justify-center"
+        style={{
+          backgroundColor: COLORS.primary,
+          borderRadius: RADIUS.lg,
+          minHeight: hp(52),
+          opacity: isAddEnabled ? 1 : 0.45,
+        }}
         disabled={!isAddEnabled}
         onPress={onAddDraftEntry}
       >
-        <Text style={styles.primaryButtonText}>+ 내역 초안 추가</Text>
+        <Text
+          style={{
+            fontSize: fp(20),
+            fontFamily: FONTS.bold,
+            color: COLORS.white,
+          }}
+        >
+          + 내역 초안 추가
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         activeOpacity={0.9}
-        style={[
-          styles.secondaryButton,
-          (draftEntries.length === 0 || isConfirmLoading) && styles.secondaryButtonDisabled,
-        ]}
-        disabled={draftEntries.length === 0 || isConfirmLoading}
+        className="items-center justify-center"
+        style={{
+          borderRadius: RADIUS.lg,
+          borderWidth: 1.5,
+          borderColor: COLORS.secondaryButtonBorder,
+          backgroundColor: isCompleteDisabled ? COLORS.secondaryButtonDisabled : COLORS.white,
+          minHeight: hp(52),
+        }}
+        disabled={isCompleteDisabled}
         onPress={onComplete}
       >
         <Text
-          style={[
-            styles.secondaryButtonText,
-            (draftEntries.length === 0 || isConfirmLoading) && styles.secondaryButtonTextDisabled,
-          ]}
+          style={{
+            fontSize: fp(18),
+            fontFamily: FONTS.bold,
+            color: isCompleteDisabled ? COLORS.textTertiary : COLORS.textSecondary,
+          }}
         >
           {isConfirmLoading ? '저장 중...' : '저장한 내역 완료'}
         </Text>
