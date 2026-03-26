@@ -1,7 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
-import { COLORS } from '../../constants/theme';
-import { styles } from '../../screens/main/MyPageScreen.styles';
+import { COLORS, FONTS, fp, hp, RADIUS, wp } from '../../constants/theme';
 
 interface MyPageProfileDockCardProps {
   name: string;
@@ -15,27 +14,96 @@ export default function MyPageProfileDockCard({
   isLoading,
 }: MyPageProfileDockCardProps) {
   return (
-    <View style={styles.profileCard}>
-      <View style={styles.profileHeaderRow}>
-        <View style={styles.avatarCircle}>
-          <Text style={styles.avatarText}>{name.slice(0, 1)}</Text>
+    <View
+      className="bg-white"
+      style={{
+        borderRadius: RADIUS.xxl,
+        padding: wp(20),
+        gap: hp(18),
+        borderWidth: 1,
+        borderColor: COLORS.surfaceBorder,
+        shadowColor: COLORS.textPrimary,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.04,
+        shadowRadius: 16,
+        elevation: 4,
+      }}
+    >
+      <View className="flex-row items-center">
+        <View
+          className="items-center justify-center bg-[#4D74FF]"
+          style={{
+            width: wp(68),
+            height: wp(68),
+            borderRadius: wp(34),
+            marginRight: wp(16),
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fp(28),
+              fontFamily: FONTS.bold,
+              color: COLORS.textInverse,
+            }}
+          >
+            {name.slice(0, 1)}
+          </Text>
         </View>
-        <View style={styles.profileTextBlock}>
-          <View style={styles.nameRow}>
-            <Text style={styles.profileName}>
-              <Text style={styles.profileNameHighlight}>{name}</Text>님
+
+        <View className="flex-1" style={{ gap: hp(6) }}>
+          <View className="flex-row items-center justify-between">
+            <Text
+              style={{
+                fontSize: fp(22),
+                fontFamily: FONTS.bold,
+                color: COLORS.textPrimary,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: FONTS.extraBold,
+                  color: COLORS.primaryDark,
+                }}
+              >
+                {name}
+              </Text>
+              님
             </Text>
-            <View style={styles.profileBadge}>
-              <Text style={styles.profileBadgeText}>{badgeLabel}</Text>
+
+            <View
+              className="bg-[rgba(77,116,255,0.12)]"
+              style={{
+                borderRadius: RADIUS.md,
+                paddingHorizontal: wp(8),
+                paddingVertical: hp(4),
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fp(11),
+                  fontFamily: FONTS.bold,
+                  color: COLORS.primary,
+                }}
+              >
+                {badgeLabel}
+              </Text>
             </View>
           </View>
         </View>
       </View>
 
       {isLoading ? (
-        <View style={styles.profileLoadingRow}>
+        <View className="flex-row items-center" style={{ gap: wp(8), marginTop: hp(10) }}>
           <ActivityIndicator color={COLORS.primary} />
-          <Text style={styles.profileLoadingText}>정보를 불러오고 있어요...</Text>
+          <Text
+            style={{
+              fontSize: fp(12),
+              fontFamily: FONTS.medium,
+              color: COLORS.textSecondary,
+            }}
+          >
+            정보를 불러오고 있어요...
+          </Text>
         </View>
       ) : null}
     </View>

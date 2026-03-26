@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Text, View } from 'react-native';
 import SecureKeypad from '../common/SecureKeypad';
-import { styles } from '../../screens/main/MyPageScreen.styles';
+import { COLORS, FONTS, fp, hp, RADIUS, wp } from '../../constants/theme';
 
 interface MyPagePinModalProps {
   visible: boolean;
@@ -24,22 +24,70 @@ export default function MyPagePinModal({
 }: MyPagePinModalProps) {
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.modalBackdrop}>
-        <View style={styles.pinModalCard}>
-          <Text style={styles.modalTitle}>{title}</Text>
-          <Text style={styles.pinModalDescription}>{description}</Text>
-          <View style={styles.pinIndicatorRow}>
-            {[...Array(6)].map((_, index) => (
+      <View
+        className="flex-1 justify-center bg-[rgba(15,23,42,0.45)]"
+        style={{ paddingHorizontal: wp(20) }}
+      >
+        <View
+          className="bg-[#F8FAFC]"
+          style={{
+            borderRadius: RADIUS.xl,
+            padding: wp(20),
+            gap: hp(14),
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fp(18),
+              fontFamily: FONTS.bold,
+              color: COLORS.textPrimary,
+              marginBottom: hp(6),
+            }}
+          >
+            {title}
+          </Text>
+
+          <Text
+            className="text-center"
+            style={{
+              fontSize: fp(13),
+              fontFamily: FONTS.medium,
+              color: COLORS.textSecondary,
+            }}
+          >
+            {description}
+          </Text>
+
+          <View
+            className="flex-row justify-center"
+            style={{ gap: wp(10), marginVertical: hp(10) }}
+          >
+            {Array.from({ length: 6 }).map((_, index) => (
               <View
                 key={`mypage-pin-dot-${index}`}
-                style={[
-                  styles.pinIndicatorDot,
-                  index < pinInput.length && styles.pinIndicatorDotFilled,
-                ]}
+                style={{
+                  width: wp(12),
+                  height: wp(12),
+                  borderRadius: wp(6),
+                  backgroundColor: index < pinInput.length ? COLORS.primary : COLORS.gray100,
+                }}
               />
             ))}
           </View>
-          {pinError ? <Text style={styles.errorMessage}>{pinError}</Text> : null}
+
+          {pinError ? (
+            <Text
+              className="text-center"
+              style={{
+                fontSize: fp(13),
+                fontFamily: FONTS.medium,
+                color: COLORS.error,
+              }}
+            >
+              {pinError}
+            </Text>
+          ) : null}
+
           <SecureKeypad onPressNumber={onPressNumber} onPressDelete={onPressDelete} />
         </View>
       </View>

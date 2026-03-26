@@ -1,8 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, hp, wp } from '../../constants/theme';
-import { styles } from '../../screens/main/MyPageScreen.styles';
+import { COLORS, FONTS, fp, hp, RADIUS, wp } from '../../constants/theme';
 
 interface MyPageActionButtonsProps {
   onLogout: () => void;
@@ -15,15 +14,50 @@ export default function MyPageActionButtons({
 }: MyPageActionButtonsProps) {
   return (
     <>
-      <TouchableOpacity style={styles.readOnlyInput} onPress={onLogout}>
-        <Text style={[styles.readOnlyLabel, { color: COLORS.textPrimary }]}>로그아웃</Text>
+      <TouchableOpacity
+        onPress={onLogout}
+        className="flex-row items-center justify-between bg-[#F8FAFC]"
+        style={{
+          borderRadius: RADIUS.md,
+          paddingHorizontal: wp(14),
+          paddingVertical: hp(12),
+          borderWidth: 1,
+          borderColor: COLORS.border,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: fp(14),
+            fontFamily: FONTS.semiBold,
+            color: COLORS.textPrimary,
+          }}
+        >
+          로그아웃
+        </Text>
         <Ionicons name="log-out-outline" size={wp(20)} color={COLORS.textSecondary} />
       </TouchableOpacity>
+
       <TouchableOpacity
-        style={[styles.readOnlyInput, { borderColor: COLORS.error + '30', marginTop: hp(10) }]}
         onPress={onDeleteAccount}
+        className="flex-row items-center justify-between bg-[#F8FAFC]"
+        style={{
+          marginTop: hp(10),
+          borderRadius: RADIUS.md,
+          paddingHorizontal: wp(14),
+          paddingVertical: hp(12),
+          borderWidth: 1,
+          borderColor: `${COLORS.error}30`,
+        }}
       >
-        <Text style={[styles.readOnlyLabel, { color: COLORS.error }]}>회원 탈퇴</Text>
+        <Text
+          style={{
+            fontSize: fp(14),
+            fontFamily: FONTS.semiBold,
+            color: COLORS.error,
+          }}
+        >
+          회원 탈퇴
+        </Text>
         <Ionicons name="exit-outline" size={wp(20)} color={COLORS.error} />
       </TouchableOpacity>
     </>

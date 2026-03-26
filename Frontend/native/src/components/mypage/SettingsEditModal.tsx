@@ -8,9 +8,8 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, FONTS, fp, hp, RADIUS, wp } from '../../constants/theme';
 import { validatePassword } from '../../utils/validation';
-import { styles } from '../../screens/mypage/SettingsScreen.styles';
 
 type EditMode = 'profile' | 'password' | null;
 
@@ -64,114 +63,129 @@ export default function SettingsEditModal({
   const passwordValidation = validatePassword(newPw, userId || undefined);
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <Pressable style={styles.modalBackdrop} onPress={onClose}>
-        <Pressable style={styles.modalCard} onPress={(event) => event.stopPropagation()}>
-          <Text style={styles.modalTitle}>
-            {editMode === 'profile' ? '프로필 정보 수정' : '비밀번호 변경'}
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable
+        className="flex-1 justify-center bg-[rgba(15,23,42,0.45)]"
+        style={{ paddingHorizontal: wp(20) }}
+        onPress={onClose}
+      >
+        <Pressable
+          className="bg-[#F8FAFC]"
+          style={{
+            borderRadius: RADIUS.xl,
+            padding: wp(20),
+            gap: hp(12),
+          }}
+          onPress={(event) => event.stopPropagation()}
+        >
+          <Text
+            style={{
+              fontSize: fp(18),
+              fontFamily: FONTS.bold,
+              color: COLORS.textPrimary,
+              marginBottom: hp(4),
+            }}
+          >
+            {editMode === 'profile' ? '프로필 정보 확인' : '비밀번호 변경'}
           </Text>
 
           {editMode === 'profile' ? (
             <>
-              <View style={styles.readOnlyInput}>
-                <Text style={styles.readOnlyLabel}>이름</Text>
-                <Text style={styles.readOnlyValue}>{name}</Text>
-              </View>
-              <View style={styles.readOnlyInput}>
-                <Text style={styles.readOnlyLabel}>성별</Text>
-                <Text style={styles.readOnlyValue}>{gender === 'M' ? '남성' : '여성'}</Text>
-              </View>
-              <View style={styles.readOnlyInput}>
-                <Text style={styles.readOnlyLabel}>생년월일</Text>
-                <Text style={styles.readOnlyValue}>{birthDate}</Text>
-              </View>
-              <Text style={styles.readOnlyHint}>
-                * 프로필 정보는 본인확인 기준 데이터라 앱에서 직접 수정할 수 없어요.
+              <InfoRow label="이름" value={name} />
+              <InfoRow label="성별" value={gender === 'M' ? '남성' : gender === 'F' ? '여성' : '-'} />
+              <InfoRow label="생년월일" value={birthDate} />
+              <Text
+                style={{
+                  fontSize: fp(12),
+                  fontFamily: FONTS.medium,
+                  color: COLORS.textTertiary,
+                  marginTop: hp(4),
+                  paddingHorizontal: wp(4),
+                }}
+              >
+                * 프로필 정보는 가입 시 본인인증 기준이라 앱에서 직접 수정할 수 없어요.
               </Text>
             </>
           ) : null}
 
           {editMode === 'password' ? (
             <>
-              <View style={styles.passwordInputContainer}>
-                <TextInput
-                  style={[styles.input, { flex: 1 }]}
-                  placeholder="현재 비밀번호"
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={currentPw}
-                  onChangeText={onChangeCurrentPw}
-                  secureTextEntry={!isCurrentPwVisible}
-                />
-                <TouchableOpacity style={styles.inputEyeIcon} onPress={onToggleCurrentPwVisible}>
-                  <Ionicons
-                    name={isCurrentPwVisible ? 'eye-outline' : 'eye-off-outline'}
-                    size={wp(22)}
-                    color={COLORS.textTertiary}
-                  />
-                </TouchableOpacity>
-              </View>
+              <PasswordField
+                value={currentPw}
+                onChangeText={onChangeCurrentPw}
+                placeholder="현재 비밀번호"
+                visible={isCurrentPwVisible}
+                onToggleVisible={onToggleCurrentPwVisible}
+              />
 
-              <View style={styles.passwordInputContainer}>
-                <TextInput
-                  style={[styles.input, { flex: 1 }]}
-                  placeholder="새 비밀번호 (8~20자, 영문/숫자/특수문자)"
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={newPw}
-                  onChangeText={onChangeNewPw}
-                  secureTextEntry={!isNewPwVisible}
-                />
-                <TouchableOpacity style={styles.inputEyeIcon} onPress={onToggleNewPwVisible}>
-                  <Ionicons
-                    name={isNewPwVisible ? 'eye-outline' : 'eye-off-outline'}
-                    size={wp(22)}
-                    color={COLORS.textTertiary}
-                  />
-                </TouchableOpacity>
-              </View>
+              <PasswordField
+                value={newPw}
+                onChangeText={onChangeNewPw}
+                placeholder="새 비밀번호 (8~20자 영문/숫자/특수문자)"
+                visible={isNewPwVisible}
+                onToggleVisible={onToggleNewPwVisible}
+              />
 
               {newPw.length > 0 ? (
                 <Text
-                  style={[
-                    styles.errorMessage,
-                    { marginTop: 0, marginBottom: hp(8), fontSize: fp(12) },
-                    passwordValidation.isValid ? { color: COLORS.success } : null,
-                  ]}
+                  style={{
+                    fontSize: fp(12),
+                    fontFamily: FONTS.medium,
+                    color: passwordValidation.isValid ? COLORS.success : COLORS.error,
+                    marginTop: 0,
+                    marginBottom: hp(8),
+                  }}
                 >
                   * {passwordValidation.message}
                 </Text>
               ) : null}
 
-              <View style={styles.passwordInputContainer}>
-                <TextInput
-                  style={[styles.input, { flex: 1 }]}
-                  placeholder="새 비밀번호 확인"
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={confirmPw}
-                  onChangeText={onChangeConfirmPw}
-                  secureTextEntry={!isConfirmPwVisible}
-                />
-                <TouchableOpacity style={styles.inputEyeIcon} onPress={onToggleConfirmPwVisible}>
-                  <Ionicons
-                    name={isConfirmPwVisible ? 'eye-outline' : 'eye-off-outline'}
-                    size={wp(22)}
-                    color={COLORS.textTertiary}
-                  />
-                </TouchableOpacity>
-              </View>
+              <PasswordField
+                value={confirmPw}
+                onChangeText={onChangeConfirmPw}
+                placeholder="새 비밀번호 확인"
+                visible={isConfirmPwVisible}
+                onToggleVisible={onToggleConfirmPwVisible}
+              />
             </>
           ) : null}
 
-          <View style={styles.modalButtonRow}>
-            <TouchableOpacity style={styles.secondaryButton} onPress={onClose}>
-              <Text style={styles.secondaryButtonText}>취소</Text>
+          <View className="flex-row justify-end" style={{ gap: wp(10), marginTop: hp(8) }}>
+            <TouchableOpacity
+              onPress={onClose}
+              className="items-center justify-center bg-[#E5E7EB]"
+              style={{
+                paddingHorizontal: wp(14),
+                paddingVertical: hp(10),
+                borderRadius: RADIUS.md,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fp(14),
+                  fontFamily: FONTS.semiBold,
+                  color: COLORS.textPrimary,
+                }}
+              >
+                취소
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.primaryButton} onPress={onSubmit}>
-              <Text style={styles.primaryButtonText}>
+            <TouchableOpacity
+              onPress={onSubmit}
+              className="items-center justify-center bg-[#4D74FF]"
+              style={{
+                paddingHorizontal: wp(14),
+                paddingVertical: hp(10),
+                borderRadius: RADIUS.md,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fp(14),
+                  fontFamily: FONTS.semiBold,
+                  color: COLORS.textInverse,
+                }}
+              >
                 {isSubmitting ? '저장 중...' : '저장'}
               </Text>
             </TouchableOpacity>
@@ -179,5 +193,88 @@ export default function SettingsEditModal({
         </Pressable>
       </Pressable>
     </Modal>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View
+      className="flex-row items-center justify-between bg-[#EEF2F7]"
+      style={{
+        borderRadius: RADIUS.md,
+        paddingHorizontal: wp(14),
+        paddingVertical: hp(12),
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        marginBottom: hp(4),
+      }}
+    >
+      <Text
+        style={{
+          fontSize: fp(14),
+          fontFamily: FONTS.semiBold,
+          color: COLORS.textTertiary,
+        }}
+      >
+        {label}
+      </Text>
+      <Text
+        style={{
+          fontSize: fp(15),
+          fontFamily: FONTS.medium,
+          color: COLORS.textPrimary,
+        }}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+function PasswordField({
+  value,
+  onChangeText,
+  placeholder,
+  visible,
+  onToggleVisible,
+}: {
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder: string;
+  visible: boolean;
+  onToggleVisible: () => void;
+}) {
+  return (
+    <View className="relative flex-row items-center">
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={COLORS.textTertiary}
+        secureTextEntry={!visible}
+        style={{
+          flex: 1,
+          borderWidth: 1,
+          borderColor: COLORS.border,
+          borderRadius: RADIUS.md,
+          paddingHorizontal: wp(14),
+          paddingVertical: hp(12),
+          fontSize: fp(15),
+          fontFamily: FONTS.medium,
+          color: COLORS.textPrimary,
+          backgroundColor: COLORS.background,
+        }}
+      />
+      <TouchableOpacity
+        onPress={onToggleVisible}
+        style={{ position: 'absolute', right: wp(12), padding: wp(4) }}
+      >
+        <Ionicons
+          name={visible ? 'eye-outline' : 'eye-off-outline'}
+          size={wp(22)}
+          color={COLORS.textTertiary}
+        />
+      </TouchableOpacity>
+    </View>
   );
 }
