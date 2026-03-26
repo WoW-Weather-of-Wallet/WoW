@@ -2,8 +2,7 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CALENDAR_TAB_OPTIONS } from '../../constants/calendar/ui';
-import { COLORS, wp } from '../../constants/theme';
-import { styles } from './CalendarTabSwitcher.styles';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
 type CalendarTabKey = (typeof CALENDAR_TAB_OPTIONS)[number]['key'];
 
@@ -17,7 +16,14 @@ export default function CalendarTabSwitcher({
   onChange,
 }: CalendarTabSwitcherProps) {
   return (
-    <View style={styles.tabSwitcher}>
+    <View
+      className="flex-row"
+      style={{
+        backgroundColor: COLORS.tabSwitcherBackground,
+        borderRadius: RADIUS.xl,
+        padding: wp(4),
+      }}
+    >
       {CALENDAR_TAB_OPTIONS.map((tab) => {
         const isActive = activeTab === tab.key;
 
@@ -25,7 +31,18 @@ export default function CalendarTabSwitcher({
           <TouchableOpacity
             key={tab.key}
             activeOpacity={0.88}
-            style={[styles.tabButton, isActive && styles.tabButtonActive]}
+            className="flex-1 flex-row items-center justify-center"
+            style={{
+              gap: wp(6),
+              paddingVertical: hp(12),
+              borderRadius: RADIUS.lg,
+              backgroundColor: isActive ? COLORS.primary : 'transparent',
+              shadowColor: isActive ? COLORS.primary : 'transparent',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isActive ? 0.16 : 0,
+              shadowRadius: isActive ? 10 : 0,
+              elevation: isActive ? 3 : 0,
+            }}
             onPress={() => onChange(tab.key)}
           >
             <Ionicons
@@ -33,7 +50,13 @@ export default function CalendarTabSwitcher({
               size={wp(15)}
               color={isActive ? COLORS.textInverse : COLORS.textSecondary}
             />
-            <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+            <Text
+              style={{
+                fontSize: fp(14),
+                fontFamily: FONTS.semiBold,
+                color: isActive ? COLORS.textInverse : COLORS.textSecondary,
+              }}
+            >
               {tab.label}
             </Text>
           </TouchableOpacity>
@@ -42,4 +65,3 @@ export default function CalendarTabSwitcher({
     </View>
   );
 }
-
