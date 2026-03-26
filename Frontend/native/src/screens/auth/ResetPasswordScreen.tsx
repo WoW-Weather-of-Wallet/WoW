@@ -1,77 +1,27 @@
-import React, { useState } from 'react';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import React from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AuthIntroBlock from '../../components/auth/AuthIntroBlock';
 import AuthScreenLayout from '../../components/auth/AuthScreenLayout';
 import CustomTextInput from '../../components/common/CustomTextInput';
-import { usePasswordPairForm } from '../../hooks';
+import { useResetPasswordFlow } from '../../hooks';
 import { hp } from '../../constants/theme';
-import { findPassword } from '../../services/auth';
-import type { ResetPasswordRouteParams } from '../../types/auth';
-import type { RootNavigationProp, RootRouteProp } from '../../types';
-import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
-import { buildIdentityProfile } from '../../utils/authIdentity';
 import { styles } from './ResetPasswordScreen.styles';
 
 export default function ResetPasswordScreen() {
-  const navigation = useNavigation<RootNavigationProp>();
-  const route = useRoute<RootRouteProp<'ResetPassword'>>();
   const insets = useSafeAreaInsets();
-  const routeParams = (route?.params ?? {}) as ResetPasswordRouteParams;
-  const { userId, name, ssnFront, ssnBack, phoneNumber } = routeParams;
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     password,
     confirmPassword,
-    passwordValidation,
-    isPasswordValid,
-    canShowMismatch,
-    isFormValid,
+    showPasswordError,
+    showMismatchError,
+    isResetDisabled,
+    passwordErrorMessage,
+    mismatchErrorMessage,
     setPassword,
     setConfirmPassword,
-  } = usePasswordPairForm({
-    identifier: userId,
-  });
-
-  const handleReset = async () => {
-    if (!isFormValid) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const identityProfile = buildIdentityProfile(ssnFront, ssnBack);
-
-      if (!identityProfile || !name || !phoneNumber || !userId) {
-        throw new Error('본인확인 정보가 올바르지 않아요.');
-      }
-
-      await findPassword({
-        userId,
-        name,
-        birthDate: identityProfile.birthDate,
-        gender: identityProfile.gender,
-        phoneNumber,
-        newPw: password,
-      });
-
-      Alert.alert(
-        '비밀번호 재설정 완료',
-        '새 비밀번호로 다시 로그인해 주세요.',
-        [{ text: '확인', onPress: () => navigation.navigate('Login') }],
-      );
-    } catch (error: any) {
-      const presentation = buildAuthErrorPresentation(error, {
-        flow: 'password-reset',
-        fallbackMessage: '비밀번호 재설정 중 문제가 발생했어요. 다시 시도해 주세요.',
-      });
-      Alert.alert(presentation.title, presentation.alertMessage);
-      setIsSubmitting(false);
-    }
-  };
+    handleReset,
+  } = useResetPasswordFlow();
 
   return (
     <AuthScreenLayout
@@ -93,9 +43,7 @@ export default function ResetPasswordScreen() {
             secureTextEntry
             placeholder="새 비밀번호 입력"
           />
-          {password.length > 0 && !isPasswordValid && (
-            <Text style={styles.errorText}>* {passwordValidation.message}</Text>
-          )}
+          {showPasswordError && <Text style={styles.errorText}>{passwordErrorMessage}</Text>}
         </View>
 
         <View style={styles.inputWrapper}>
@@ -106,22 +54,20 @@ export default function ResetPasswordScreen() {
             secureTextEntry
             placeholder="비밀번호를 다시 입력해 주세요"
           />
-          {canShowMismatch && password !== confirmPassword && (
-            <Text style={styles.errorText}>* 비밀번호가 일치하지 않아요.</Text>
-          )}
+          {showMismatchError && <Text style={styles.errorText}>{mismatchErrorMessage}</Text>}
         </View>
       </View>
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.mainButton, !isFormValid && styles.disabledButton]}
+          style={[styles.mainButton, isResetDisabled && styles.disabledButton]}
           onPress={() => void handleReset()}
-          disabled={!isFormValid || isSubmitting}
+          disabled={isResetDisabled}
         >
           <Text
             style={[
               styles.mainButtonText,
-              !isFormValid && styles.disabledButtonText,
+              isResetDisabled && styles.disabledButtonText,
             ]}
           >
             비밀번호 재설정하기
