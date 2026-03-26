@@ -1,5 +1,5 @@
 ﻿import { Alert } from 'react-native';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   type CalendarDayDetail,
   type CalendarDayItem,
@@ -107,6 +107,8 @@ export function useCalendarMockState() {
   const [headerFetchState, setHeaderFetchState] = useState<CalendarHeaderFetchState>('idle');
   const [headerErrorMessage, setHeaderErrorMessage] = useState<string | null>(null);
   const [liveHeader, setLiveHeader] = useState<CalendarHeaderResponse | null>(null);
+  const loadingCalendarDateKeysRef = useRef(new Set<string>());
+  const locallyEditedMemoDateKeysRef = useRef(new Set<string>());
 
   const sourceDaysByKey = useMemo(
     () => new Map(calendarDaySource.map((day) => [day.dateKey, day])),
@@ -209,48 +211,16 @@ export function useCalendarMockState() {
     const month = displayedMonth.getMonth() + 1;
 
     getCalendarMonthly({ year, month })
-      .then(async (monthlyResponse) => {
+      .then((monthlyResponse) => {
         if (isCancelled) {
           return;
         }
 
-        const monthDateKeys = buildMonthDateKeys(displayedMonth);
-        const dailyResponses = await Promise.all(
-          monthDateKeys.map(async (dateKey) => {
-            try {
-              return await getCalendarDaily({ date: dateKey });
-            } catch (error) {
-              console.warn('Failed to load calendar daily detail', dateKey, error);
-              return null;
-            }
-          }),
-        );
-
-        if (isCancelled) {
-          return;
-        }
-
-        const monthDetails: Record<string, CalendarDayDetail> = {};
-
-        dailyResponses.forEach((dailyResponse) => {
-          if (!dailyResponse) {
-            return;
-          }
-
-          const mappedDetail = mapDailyResponseToDetail(dailyResponse);
-          monthDetails[mappedDetail.dateKey] = mappedDetail;
-        });
-
-        const nextCalendarDaySource = mergeMonthlyAndDailyCalendarDays(
-          monthlyResponse,
-          dailyResponses,
-        );
+        // 월 진입 시에는 monthly 결과만 먼저 반영하고,
+        // 일별 상세는 사용자가 선택한 날짜만 lazy-load 합니다.
+        const nextCalendarDaySource = mapMonthlyResponseToCalendarDays(monthlyResponse);
         setCalendarDaySource((current) =>
           replaceMonthCalendarDaySource(current, displayedMonth, nextCalendarDaySource),
-        );
-
-        setCalendarDayDetails((current) =>
-          replaceMonthCalendarDayDetails(current, displayedMonth, monthDetails),
         );
       })
       .catch((error) => {
@@ -327,6 +297,45 @@ export function useCalendarMockState() {
   useEffect(() => {
     setSelectedDateKey(null);
   }, [displayedMonthOffset]);
+
+  useEffect(() => {
+    if (!accessToken || !selectedDateKey) {
+      return;
+    }
+
+    if (loadingCalendarDateKeysRef.current.has(selectedDateKey)) {
+      return;
+    }
+
+    loadingCalendarDateKeysRef.current.add(selectedDateKey);
+
+    // 상세 시트가 열리는 순간에만 해당 날짜 daily를 조회해
+    // 월 진입 시 daily 30회 preload를 방지합니다.
+    getCalendarDaily({ date: selectedDateKey })
+      .then((dailyResponse) => {
+        const mappedDetail = mapDailyResponseToDetail(dailyResponse);
+
+        setCalendarDayDetails((current) => {
+          const existingDetail = current[mappedDetail.dateKey];
+          const shouldKeepLocalMemo =
+            locallyEditedMemoDateKeysRef.current.has(mappedDetail.dateKey) && existingDetail;
+
+          return {
+            ...current,
+            [mappedDetail.dateKey]: {
+              ...mappedDetail,
+              memo: shouldKeepLocalMemo ? existingDetail.memo : mappedDetail.memo,
+            },
+          };
+        });
+      })
+      .catch((error) => {
+        console.warn('Failed to load calendar daily detail', selectedDateKey, error);
+      })
+      .finally(() => {
+        loadingCalendarDateKeysRef.current.delete(selectedDateKey);
+      });
+  }, [accessToken, selectedDateKey]);
 
   const selectedDetail = useMemo(() => {
     if (!selectedDateKey) {
@@ -431,40 +440,36 @@ export function useCalendarMockState() {
     const year = displayedMonth.getFullYear();
     const month = displayedMonth.getMonth() + 1;
     const monthlyResponse = await getCalendarMonthly({ year, month });
-    const monthDateKeys = buildMonthDateKeys(displayedMonth);
-    const dailyResponses = await Promise.all(
-      monthDateKeys.map(async (dateKey) => {
-        try {
-          return await getCalendarDaily({ date: dateKey });
-        } catch (error) {
-          console.warn('Failed to load calendar daily detail', dateKey, error);
-          return null;
-        }
-      }),
-    );
-
-    const monthDetails: Record<string, CalendarDayDetail> = {};
-
-    dailyResponses.forEach((dailyResponse) => {
-      if (!dailyResponse) {
-        return;
-      }
-
-      const mappedDetail = mapDailyResponseToDetail(dailyResponse);
-      monthDetails[mappedDetail.dateKey] = mappedDetail;
-    });
-
-    const nextCalendarDaySource = mergeMonthlyAndDailyCalendarDays(
-      monthlyResponse,
-      dailyResponses,
-    );
+    const nextCalendarDaySource = mapMonthlyResponseToCalendarDays(monthlyResponse);
 
     setCalendarDaySource((current) =>
       replaceMonthCalendarDaySource(current, displayedMonth, nextCalendarDaySource),
     );
-    setCalendarDayDetails((current) =>
-      replaceMonthCalendarDayDetails(current, displayedMonth, monthDetails),
-    );
+
+    if (selectedDateKey) {
+      loadingCalendarDateKeysRef.current.delete(selectedDateKey);
+
+      try {
+        const dailyResponse = await getCalendarDaily({ date: selectedDateKey });
+        const mappedDetail = mapDailyResponseToDetail(dailyResponse);
+
+        setCalendarDayDetails((current) => {
+          const existingDetail = current[mappedDetail.dateKey];
+          const shouldKeepLocalMemo =
+            locallyEditedMemoDateKeysRef.current.has(mappedDetail.dateKey) && existingDetail;
+
+          return {
+            ...current,
+            [mappedDetail.dateKey]: {
+              ...mappedDetail,
+              memo: shouldKeepLocalMemo ? existingDetail.memo : mappedDetail.memo,
+            },
+          };
+        });
+      } catch (error) {
+        console.warn('Failed to reload selected calendar daily detail', selectedDateKey, error);
+      }
+    }
   }
 
   async function reloadDisplayedMonthTransactionsData() {
@@ -917,6 +922,7 @@ export function useCalendarMockState() {
     // 메모 저장 API는 아직 연결하지 않았습니다.
     // 캘린더 셀 표시(UI 비교)만 먼저 확인하기 위해 현재는 로컬 상태에만 반영합니다.
     // TODO: 백엔드 메모 API가 준비되면 여기서 서버 저장을 연결합니다.
+    locallyEditedMemoDateKeysRef.current.add(selectedDateKey);
     setCalendarDayDetails((current) => {
       const currentDetail = current[selectedDateKey] ?? buildFallbackDetail(selectedDateKey);
 
@@ -1084,6 +1090,12 @@ function mapMonthlyResponseToCalendarDay(
     isToday: item.dayType === 'TODAY',
     isFuture,
   };
+}
+
+function mapMonthlyResponseToCalendarDays(monthlyResponse: CalendarMonthlyResponse[]) {
+  return monthlyResponse
+    .map((item) => mapMonthlyResponseToCalendarDay(item))
+    .sort((left, right) => (left.dateKey > right.dateKey ? 1 : -1));
 }
 
 function mapDailyResponseToDetail(response: CalendarDailyResponse): CalendarDayDetail {
@@ -1279,55 +1291,6 @@ function resolveWeatherTone(iconCode: string | null | undefined) {
   return 'cloudy' as const;
 }
 
-function mergeMonthlyAndDailyCalendarDays(
-  monthlyResponse: CalendarMonthlyResponse[],
-  dailyResponses: Array<CalendarDailyResponse | null>,
-) {
-  const dayMap = new Map<string, CalendarDayItem>();
-
-  monthlyResponse.forEach((item) => {
-    dayMap.set(item.date, mapMonthlyResponseToCalendarDay(item));
-  });
-
-  dailyResponses.forEach((response) => {
-    if (!response) {
-      return;
-    }
-
-    const spentAmount = calculateDailySpentAmount(response);
-    const existingDay = dayMap.get(response.date);
-
-    if (existingDay) {
-      if (spentAmount !== null && (existingDay.amount == null || existingDay.amount === 0)) {
-        dayMap.set(response.date, {
-          ...existingDay,
-          amount: spentAmount,
-        });
-      }
-      return;
-    }
-
-    if (spentAmount === null && response.transactions.length === 0) {
-      return;
-    }
-
-    dayMap.set(response.date, {
-      dateKey: response.date,
-      dayNumber: Number(response.date.slice(-2)),
-      amount: spentAmount ?? undefined,
-      tone: resolveCalendarToneFromAmount(spentAmount),
-      weatherTone: resolveWeatherTone(response.weather.iconCode),
-      isCurrentMonth: true,
-      isToday: false,
-      isFuture: false,
-    });
-  });
-
-  return Array.from(dayMap.values()).sort((left, right) =>
-    left.dateKey > right.dateKey ? 1 : -1,
-  );
-}
-
 function calculateDailySpentAmount(response: CalendarDailyResponse) {
   if (response.summary.totalExpense !== null) {
     return response.summary.totalExpense;
@@ -1358,17 +1321,6 @@ function resolveCalendarToneFromAmount(amount: number | null) {
   }
 
   return 'mint' as const;
-}
-
-function buildMonthDateKeys(displayedMonth: Date) {
-  const year = displayedMonth.getFullYear();
-  const month = displayedMonth.getMonth();
-  const lastDate = new Date(year, month + 1, 0).getDate();
-
-  return Array.from({ length: lastDate }, (_, index) => {
-    const day = index + 1;
-    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  });
 }
 
 function replaceMonthCalendarDaySource(
