@@ -1,12 +1,12 @@
 import React, { useRef } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import AuthStepLayout from '../../components/auth/AuthStepLayout';
 import AuthActionButton from '../../components/common/AuthActionButton';
+import IdentityNameSection from '../../components/common/IdentityNameSection';
 import IdentitySsnSection from '../../components/common/IdentitySsnSection';
-import AuthUnderlineInput from '../../components/common/AuthUnderlineInput';
 import TelecomPhoneInputSection from '../../components/common/TelecomPhoneInputSection';
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
@@ -17,7 +17,7 @@ import type { PhoneAuthRouteParams, SignupMode } from '../../types/auth';
 import { decodeUnicodeEscapes } from '../../utils/authIdentity';
 import { useIdentityVerificationForm, usePhoneAuthFlow } from '../../hooks';
 
-const TELECOM_PLACEHOLDER = '통신사를 선택해주세요';
+const TELECOM_PLACEHOLDER = '통신사를 선택해 주세요';
 
 export default function PhoneAuthScreen({
   route,
@@ -87,7 +87,7 @@ export default function PhoneAuthScreen({
       <AuthStepLayout
         currentStep={1}
         totalSteps={5}
-        title={'본인 인증으로\n회원가입을 진행해주세요'}
+        title={'본인 확인을 위해\n개인정보를 입력해 주세요'}
         description="이름, 주민등록번호, 휴대폰 번호를 순서대로 입력해 주세요."
         scrollViewRef={scrollViewRef}
         scrollContentPaddingTop={CONSTANTS.scrollContentPaddingTop}
@@ -112,39 +112,39 @@ export default function PhoneAuthScreen({
           entering={FadeInDown.duration(500)}
           style={styles.inputSection}
         >
-          <AuthUnderlineInput
+          <IdentityNameSection
+            value={name}
             containerStyle={styles.underlineContainer}
-            inputStyle={[
+            valueStyle={[
               styles.bareInput,
               { letterSpacing: name.length > 0 ? 2 : 0 },
             ]}
-            value={name}
+            helperText={
+              isSsafySignup
+                ? isLockedSsafyName
+                  ? 'SSAFY 계정 이름이 자동으로 입력되어 있어요.'
+                  : 'SSAFY 이름을 가져오지 못해 직접 입력할 수 있도록 열어두었어요.'
+                : undefined
+            }
+            helperTextStyle={{ color: COLORS.textTertiary, marginTop: hp(12) }}
+            placeholderTextColor={COLORS.textTertiary}
+            editable={!isLockedSsafyName}
             onChangeText={(value) => {
               if (isLockedSsafyName) {
                 return;
               }
               setName(value);
             }}
-            placeholder="이름"
-            placeholderTextColor={COLORS.textTertiary}
-            onSubmitEditing={handleNameSubmit}
-            returnKeyType="next"
-            autoFocus={!isLockedSsafyName}
-            editable={!isLockedSsafyName}
+            inputProps={{
+              onSubmitEditing: handleNameSubmit,
+              returnKeyType: 'next',
+              autoFocus: !isLockedSsafyName,
+            }}
           />
-          {isSsafySignup ? (
-            <Text style={{ color: COLORS.textTertiary, marginTop: hp(12) }}>
-              {isLockedSsafyName
-                ? 'SSAFY 계정 이름이 자동으로 입력되었어요.'
-                : 'SSAFY 이름을 불러오지 못해 직접 입력이 필요해요.'}
-            </Text>
-          ) : null}
         </Animated.View>
 
         {step >= 2 ? (
-          <Animated.View
-            entering={FadeInDown.duration(500)}
-            >
+          <Animated.View entering={FadeInDown.duration(500)}>
             <IdentitySsnSection
               frontValue={ssnFront}
               backValue={ssnBack}

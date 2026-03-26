@@ -10,6 +10,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import StepIndicator from '../../components/common/StepIndicator';
 import AuthActionButton from '../../components/common/AuthActionButton';
 import IdentityStepFormLayout from '../../components/common/IdentityStepFormLayout';
+import IdentityNameSection from '../../components/common/IdentityNameSection';
 import IdentitySsnSection from '../../components/common/IdentitySsnSection';
 import TelecomPhoneInputSection from '../../components/common/TelecomPhoneInputSection';
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
@@ -77,12 +78,12 @@ export default function PhoneUpdateScreen({
           titleStyle={styles.title}
           subtitleStyle={styles.formSubtitle}
           bottomContainerStyle={styles.bottomContainer}
-          title="새 휴대폰 번호를 입력해주세요."
-          subtitle="통신사 선택 후, 새로운 번호로 본인 인증을 진행합니다."
+          title="새 휴대폰 번호를 입력해 주세요."
+          subtitle="통신사를 선택한 뒤 변경할 휴대폰 번호로 인증번호를 받아 진행합니다."
           onBack={() => navigation.goBack()}
           bottomContent={
             <AuthActionButton
-              label="인증번호 발송"
+              label="인증번호 받기"
               loading={isSending}
               disabled={!isButtonActive}
               active={isButtonActive}
@@ -99,21 +100,19 @@ export default function PhoneUpdateScreen({
             entering={FadeInDown.delay(100).duration(400)}
             style={styles.inputSection}
           >
-            <View style={styles.underlineContainer}>
-              <Text
-                style={[
-                  styles.bareText,
-                  { letterSpacing: profileName ? 2 : 0 },
-                ]}
-              >
-                {profileName || '-'}
-              </Text>
-            </View>
+            <IdentityNameSection
+              value={profileName}
+              displayValue={profileName || '-'}
+              editable={false}
+              containerStyle={styles.underlineContainer}
+              valueStyle={[
+                styles.bareText,
+                { letterSpacing: profileName ? 2 : 0 },
+              ]}
+            />
           </Animated.View>
 
-          <Animated.View
-            entering={FadeInDown.delay(160).duration(400)}
-          >
+          <Animated.View entering={FadeInDown.delay(160).duration(400)}>
             <IdentitySsnSection
               frontValue={expectedSsnFront}
               backValue={expectedSsnBack}
@@ -154,11 +153,14 @@ export default function PhoneUpdateScreen({
                 setPhone(text.replace(/[^0-9]/g, ''));
                 setSubmitError('');
               }}
-              phonePlaceholder="새 휴대폰 번호 (- 없이 입력)"
+              phonePlaceholder="휴대폰 번호 (- 없이 입력)"
               selectorStyle={styles.telecomSelector}
               telecomTextStyle={styles.telecomText}
               placeholderTextStyle={styles.placeholderText}
-              phoneInputContainerStyle={[styles.underlineContainer, { marginTop: hp(32) }]}
+              phoneInputContainerStyle={[
+                styles.underlineContainer,
+                { marginTop: hp(32) },
+              ]}
               phoneInputStyle={[
                 styles.bareInput,
                 { letterSpacing: phone.length > 0 ? 2 : 0 },
@@ -224,9 +226,9 @@ export default function PhoneUpdateScreen({
       title={
         isVerified
           ? '휴대폰 번호 인증이\n완료되었어요.'
-          : '인증번호 6자리를\n입력해주세요.'
+          : '인증번호 6자리를\n입력해 주세요.'
       }
-      subtitle={`${requestedPhoneDisplay}로 전송된 인증번호를 입력해주세요.`}
+      subtitle={`${requestedPhoneDisplay} 번호로 전송된 인증번호를 입력해 주세요.`}
       code={code}
       codeLength={VERIFICATION_CODE_LENGTH}
       isVerifying={isVerifying}

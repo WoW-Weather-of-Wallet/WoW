@@ -1,18 +1,19 @@
 import React from 'react';
-import { View, Text, TextInput } from 'react-native';
+import { View, Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, hp, wp } from '../../constants/theme';
 import { TELECOM_OPTIONS } from '../../constants/auth/identityVerification';
 import { useIdentityVerificationForm } from '../../hooks';
 import AuthActionButton from '../common/AuthActionButton';
+import IdentityNameSection from '../common/IdentityNameSection';
 import IdentitySsnSection from '../common/IdentitySsnSection';
 import TelecomPhoneInputSection from '../common/TelecomPhoneInputSection';
 import TelecomSelectModal from '../common/TelecomSelectModal';
 import type { IdentityVerificationData } from '../../types/auth';
 import { styles } from './IdentityVerificationForm.styles';
 
-const TELECOM_PLACEHOLDER = '통신사를 선택해주세요';
+const TELECOM_PLACEHOLDER = '통신사를 선택해 주세요';
 
 interface IdentityVerificationFormProps {
   onComplete: (data: IdentityVerificationData) => void;
@@ -28,7 +29,7 @@ interface IdentityVerificationFormProps {
 
 export default function IdentityVerificationForm({
   onComplete,
-  submitButtonText = '인증번호 발송',
+  submitButtonText = '인증번호 받기',
   isSubmitting = false,
   errorMessage = '',
   onValuesChange,
@@ -69,25 +70,24 @@ export default function IdentityVerificationForm({
   return (
     <View style={styles.container}>
       <View style={styles.inputSection}>
-        <View style={styles.underlineContainer}>
-          <TextInput
-            style={[
-              styles.bareInput,
-              { letterSpacing: name.length > 0 ? 2 : 0 },
-            ]}
-            value={name}
-            onChangeText={setName}
-            placeholder="이름"
-            placeholderTextColor={COLORS.textTertiary}
-            onSubmitEditing={handleNameSubmit}
-            returnKeyType="next"
-            autoFocus={autoFocusName}
-            editable={nameEditable}
-          />
-        </View>
-        {nameHelperText ? (
-          <Text style={styles.errorText}>{nameHelperText}</Text>
-        ) : null}
+        <IdentityNameSection
+          value={name}
+          containerStyle={styles.underlineContainer}
+          valueStyle={[
+            styles.bareInput,
+            { letterSpacing: name.length > 0 ? 2 : 0 },
+          ]}
+          helperText={nameHelperText}
+          helperTextStyle={styles.errorText}
+          placeholderTextColor={COLORS.textTertiary}
+          editable={nameEditable}
+          onChangeText={setName}
+          inputProps={{
+            onSubmitEditing: handleNameSubmit,
+            returnKeyType: 'next',
+            autoFocus: autoFocusName,
+          }}
+        />
       </View>
 
       {step >= 2 ? (
@@ -178,7 +178,7 @@ export default function IdentityVerificationForm({
         visible={modalVisible}
         onClose={closeTelecomModal}
         onSelect={handleTelecomSelect}
-        title="통신사를 선택해주세요"
+        title="통신사를 선택해 주세요"
         options={TELECOM_OPTIONS}
         bottomInset={insets.bottom}
         overlayStyle={styles.modalOverlay}
