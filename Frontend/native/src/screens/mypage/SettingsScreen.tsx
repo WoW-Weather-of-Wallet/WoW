@@ -26,6 +26,8 @@ import ProfileEditHeader from '../../components/mypage/ProfileEditHeader';
 import SettingSection from '../../components/mypage/SettingSection';
 import SettingItem from '../../components/mypage/SettingItem';
 import SettingsDescriptionRow from '../../components/mypage/SettingsDescriptionRow';
+import SettingsEditModal from '../../components/mypage/SettingsEditModal';
+import SettingsPinModal from '../../components/mypage/SettingsPinModal';
 import AgreedTermsModal from '../../components/mypage/AgreedTermsModal';
 import {
   changePassword,
