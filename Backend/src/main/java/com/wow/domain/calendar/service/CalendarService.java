@@ -348,6 +348,14 @@ public class CalendarService {
                 .toList();
 
         transactionRepository.saveAll(entities);
+
+        Set<LocalDate> dates = entities.stream()
+                .map(t -> t.getTransactionAt().toLocalDate())
+                .collect(Collectors.toSet());
+        for (LocalDate date : dates) {
+            recalculateDailySummary(userId, date);
+        }
+
         spendingAnalysisService.evictMonthlyCompareCache(userId);
 
         List<TransactionCustomResponse.TransactionCustomItem> responseItems = entities.stream()
@@ -617,63 +625,44 @@ public class CalendarService {
         Calendar calendar = calendarRepository.findByUserIdAndDateWithWeather(userId, date)
                 .orElseThrow(() -> new NotFoundException("해당 날짜의 캘린더를 찾을 수 없습니다."));
 
-        calendar.updateMemo(memo); // Calendar 엔티티에 updateMemo() 메서드 필요
+        calendar.updateMemo(memo);
     }
 
-
-    // CalendarService.java에 추가
-//    @Transactional
-//    public void recalculateDailySummary(Long userId, LocalDate date) {
-//        LocalDateTime dayStart = date.atStartOfDay();
-//        LocalDateTime dayEnd = date.plusDays(1).atStartOfDay();
-//
-//        // 해당 날짜 거래내역 전체 조회
-//        List<Transaction> transactions =
-//                transactionRepository.findDailyByUserIdWithCategory(userId, dayStart, dayEnd);
-//
-//        // 합계 및 건수 계산
-//        BigDecimal totalExpense = transactions.stream()
-//                .map(Transaction::getAmount)
-//                .reduce(BigDecimal.ZERO, BigDecimal::add);
-//        int transactionCount = transactions.size();
-//
-//        // 캘린더가 없으면 생성, 있으면 업데이트
-//        Calendar calendar = calendarRepository
-//                .findByUserIdAndDateWithWeather(userId, date)
-//                .orElseGet(() -> {
-//                    User user = userRepository.findById(userId)
-//                            .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
-//                    return calendarRepository.save(
-//                            Calendar.builder()
-//                                    .user(user)
-//                                    .date(date)
-//                                    .build()
-//                    );
-//                });
-//
-//        calendar.updateDailySummary(totalExpense, transactionCount);
-//    }
     @Transactional
     public void recalculateDailySummary(Long userId, LocalDate date) {
         LocalDateTime dayStart = date.atStartOfDay();
         LocalDateTime dayEnd = date.plusDays(1).atStartOfDay();
 
-        // 캘린더 없으면 재계산 불필요 (spendingWeather FK 제약 때문에 새로 생성 안 함)
-        Calendar calendar = calendarRepository
-                .findByUserIdAndDateWithWeather(userId, date)
-                .orElse(null);
-
-        if (calendar == null) return;
-
+        // Upsert policy: create a calendar row only when transactions exist for the day.
         List<Transaction> transactions =
                 transactionRepository.findDailyByUserIdWithCategory(userId, dayStart, dayEnd);
+
+        Optional<Calendar> calendarOptional = calendarRepository.findByUserIdAndDateWithWeather(userId, date);
+        if (calendarOptional.isEmpty() && transactions.isEmpty()) {
+            return;
+        }
+
+        DayType dayType = resolveDayType(date, LocalDate.now());
+        Calendar calendar = calendarOptional.orElseGet(() -> {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+            LocalDateTime now = LocalDateTime.now();
+            return calendarRepository.save(
+                    Calendar.builder()
+                            .user(user)
+                            .date(date)
+                            .dayType(dayType)
+                            .createdAt(now)
+                            .updatedAt(now)
+                            .build()
+            );
+        });
 
         BigDecimal totalExpense = transactions.stream()
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         calendar.updateDailySummary(totalExpense, transactions.size());
+        calendar.updateDayType(dayType);
     }
-
-
 }

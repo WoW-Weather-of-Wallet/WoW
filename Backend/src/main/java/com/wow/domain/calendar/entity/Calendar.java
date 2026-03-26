@@ -32,7 +32,7 @@ public class Calendar {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "spending_weather_id", nullable = false)
+    @JoinColumn(name = "spending_weather_id")
     private SpendingWeather spendingWeather;
 
     @Column(nullable = false)
@@ -72,5 +72,9 @@ public class Calendar {
     public void updateDailySummary(BigDecimal dailyTotal, int transactionCount) {
         this.dailyTotal = dailyTotal != null ? dailyTotal.longValue() : null;
         this.transactionCount = transactionCount;
+    }
+
+    public void updateDayType(DayType dayType) {
+        this.dayType = dayType;
     }
 }
