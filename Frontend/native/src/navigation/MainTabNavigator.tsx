@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,16 +31,33 @@ export default function MainTabNavigator() {
           tabBarHideOnKeyboard: true,
           tabBarStyle: hideTabBar
             ? { display: 'none' }
-            : [
-                styles.tabBar,
-                {
-                  height: hp(58) + insets.bottom,
-                  paddingBottom: insets.bottom + hp(4),
-                },
-              ],
-          tabBarItemStyle: styles.tabBarItem,
-          tabBarLabelStyle: styles.tabBarLabel,
-          tabBarIconStyle: styles.tabBarIcon,
+            : {
+                position: 'absolute',
+                left: wp(16),
+                right: wp(16),
+                bottom: hp(8),
+                height: hp(58) + insets.bottom,
+                borderRadius: RADIUS.xxl,
+                backgroundColor: COLORS.background,
+                borderTopWidth: 0,
+                borderWidth: 1,
+                borderColor: COLORS.surfaceBorder,
+                paddingTop: hp(6),
+                paddingBottom: insets.bottom + hp(4),
+                paddingHorizontal: wp(10),
+                shadowColor: COLORS.textPrimary,
+                shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.08,
+                shadowRadius: 20,
+                elevation: 10,
+              },
+          tabBarItemStyle: { paddingVertical: hp(2) },
+          tabBarLabelStyle: {
+            fontFamily: FONTS.semiBold,
+            fontSize: fp(10.5),
+            marginTop: hp(2),
+          },
+          tabBarIconStyle: { marginTop: hp(1) },
           tabBarActiveTintColor: COLORS.primary,
           tabBarInactiveTintColor: COLORS.textTertiary,
           tabBarIcon: ({ focused, color, size }) => {
@@ -57,7 +74,17 @@ export default function MainTabNavigator() {
             }
 
             return (
-              <View style={focused ? styles.activeIconWrapper : styles.iconWrapper}>
+              <View
+                className="items-center justify-center"
+                style={{
+                  width: wp(34),
+                  height: wp(34),
+                  borderRadius: wp(17),
+                  backgroundColor: focused ? COLORS.primary50 : 'transparent',
+                  borderWidth: focused ? 1 : 0,
+                  borderColor: focused ? COLORS.surfaceBorder : 'transparent',
+                }}
+              >
                 <Ionicons name={iconName} size={size} color={color} />
               </View>
             );
@@ -80,48 +107,3 @@ export default function MainTabNavigator() {
     </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    position: 'absolute',
-    left: wp(16),
-    right: wp(16),
-    bottom: hp(8),
-    borderRadius: RADIUS.xxl,
-    backgroundColor: COLORS.background,
-    borderTopWidth: 0,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    paddingTop: hp(6),
-    paddingHorizontal: wp(10),
-    shadowColor: COLORS.textPrimary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  tabBarItem: { paddingVertical: hp(2) },
-  tabBarIcon: { marginTop: hp(1) },
-  tabBarLabel: {
-    fontFamily: FONTS.semiBold,
-    fontSize: fp(10.5),
-    marginTop: hp(2),
-  },
-  iconWrapper: {
-    width: wp(34),
-    height: wp(34),
-    borderRadius: wp(17),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  activeIconWrapper: {
-    width: wp(34),
-    height: wp(34),
-    borderRadius: wp(17),
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.primary50,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-  },
-});
