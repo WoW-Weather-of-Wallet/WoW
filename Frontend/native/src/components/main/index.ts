@@ -1,8 +1,11 @@
 export { default as HomeBudgetReportCard } from './HomeBudgetReportCard';
+export { default as HomeBudgetSetupCard } from './HomeBudgetSetupCard';
 export { default as HomeDashboardContent } from './HomeDashboardContent';
 export { default as HomeDashboardSheets } from './HomeDashboardSheets';
 export { default as HomeCategorySection } from './HomeCategorySection';
 export { default as HomeInsightSection } from './HomeInsightSection';
+export { default as HomeMonthlyComparisonSection } from './HomeMonthlyComparisonSection';
+export { default as HomeMonthlyInsightCard } from './HomeMonthlyInsightCard';
 export { default as HomeMonthlyReportSheet } from './HomeMonthlyReportSheet';
 export { default as HomeScheduleSection } from './HomeScheduleSection';
 export { default as HomeSpendingTypeCard } from './HomeSpendingTypeCard';
