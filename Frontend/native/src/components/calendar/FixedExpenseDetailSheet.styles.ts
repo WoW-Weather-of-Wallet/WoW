@@ -60,6 +60,9 @@ export const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     marginBottom: hp(12),
   },
+  amountInput: {
+    marginBottom: hp(18),
+  },
   stepperCard: {
     flexDirection: 'row',
     alignItems: 'center',

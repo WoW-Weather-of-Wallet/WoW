@@ -503,10 +503,15 @@ export function useCalendarMockState() {
     );
   }
 
-  async function handleRegisterFixedExpense(payload: { category: string; paymentDay: number }) {
+  async function handleRegisterFixedExpense(payload: {
+    category: string;
+    paymentDay: number;
+    amount: number;
+  }) {
     if (editingManageItem?.fixedExpenseId && accessToken) {
       try {
         await updateFixedExpense(editingManageItem.fixedExpenseId, {
+          amount: payload.amount,
           dueDay: payload.paymentDay,
         });
 
@@ -590,13 +595,14 @@ export function useCalendarMockState() {
 
     const fallbackCategoryMeta = Object.values(CATEGORY_META)[0];
     const categoryMeta = CATEGORY_META[payload.category] ?? fallbackCategoryMeta;
+    const fixedExpenseAmount = editingManageId ? payload.amount : selectedTransaction.amount;
 
     setManageItems((current) => {
       const nextItem: ManageFixedExpenseItem = {
         id: editingManageId ?? `manage-${selectedTransaction.id}`,
         title: selectedTransaction.title,
         subtitle: `매월 ${payload.paymentDay}일 · ${payload.category}`,
-        amount: selectedTransaction.amount,
+        amount: fixedExpenseAmount,
         icon: selectedTransaction.icon,
         iconTone: selectedTransaction.iconTone,
         isEnabled: true,
@@ -618,7 +624,7 @@ export function useCalendarMockState() {
             id: `fixed-${selectedTransaction.id}`,
             title: payload.category,
             subtitle: '1건',
-            amount: selectedTransaction.amount,
+            amount: fixedExpenseAmount,
             statusLabel: `D-${payload.paymentDay}`,
             statusTone: 'countdown',
             icon: categoryMeta.icon,
@@ -636,11 +642,13 @@ export function useCalendarMockState() {
         }
 
         const currentCount = Number.parseInt(item.subtitle, 10) || 1;
-        const nextCount = currentCount + 1;
+        const nextCount = editingManageId ? currentCount : currentCount + 1;
 
         return {
           ...item,
-          amount: item.amount + selectedTransaction.amount,
+          amount: editingManageId
+            ? item.amount - selectedTransaction.amount + fixedExpenseAmount
+            : item.amount + fixedExpenseAmount,
           subtitle: `${nextCount}건`,
           countLabel: `${nextCount}건`,
           statusLabel: `D-${payload.paymentDay}`,

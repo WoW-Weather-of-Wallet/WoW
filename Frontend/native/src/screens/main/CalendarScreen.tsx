@@ -220,9 +220,10 @@ export default function CalendarScreen() {
       <FixedExpenseDetailSheet
         visible={isDetailSheetVisible}
         item={selectedTransaction}
+        mode={editingManageItem ? 'edit' : 'create'}
         initialCategory={editingManageItem?.category}
         initialPaymentDay={editingManageItem?.paymentDay}
-        submitLabel={editingManageItem ? '고정지출 정보 수정하기' : '고정지출로 등록하기'}
+        submitLabel={editingManageItem ? '수정하기' : '고정지출로 등록하기'}
         onClose={() => {
           setIsDetailSheetVisible(false);
           setEditingManageId(null);
