@@ -1,7 +1,3 @@
-/**
- * WithdrawScreen
- * 회원 탈퇴 전 본인 확인을 회원가입과 동일한 폼/인증 UI로 진행합니다.
- */
 import React, { useState } from 'react';
 import {
   View,
@@ -10,15 +6,14 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
 } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import StepIndicator from '../../components/common/StepIndicator';
+import AuthActionButton from '../../components/common/AuthActionButton';
+import IdentityStepFormLayout from '../../components/common/IdentityStepFormLayout';
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import VerificationCodeStep from '../../components/common/VerificationCodeStep';
 import { styles } from './WithdrawScreen.styles';
@@ -28,15 +23,15 @@ import {
   TELECOM_PLACEHOLDER,
   VERIFICATION_CODE_LENGTH,
 } from '../../constants/auth/identityVerification';
-import {
-  deleteAccount,
-  normalizePhoneNumber,
-} from '../../services/auth';
+import { deleteAccount, normalizePhoneNumber } from '../../services/auth';
 import { clearPersistedAuthSession } from '../../services/sessionStorage';
 import { useAuthStore } from '../../store/authStore';
 import { fcmService } from '../../services/fcmService';
 import { extractApiErrorMessage } from '../../utils/error';
-import { buildIdentityBackFromProfile, buildIdentityFrontFromBirthDate } from '../../utils/profileIdentity';
+import {
+  buildIdentityBackFromProfile,
+  buildIdentityFrontFromBirthDate,
+} from '../../utils/profileIdentity';
 import { validateName, validatePhone } from '../../utils/validation';
 import { useSmsVerification } from '../../hooks';
 import type { MyPageStackScreenProps } from '../../types';
@@ -56,7 +51,10 @@ export default function WithdrawScreen({
   const profileGender: string = route.params?.gender ?? '';
 
   const expectedSsnFront = buildIdentityFrontFromBirthDate(profileBirthDate);
-  const expectedSsnBack = buildIdentityBackFromProfile(profileGender, profileBirthDate);
+  const expectedSsnBack = buildIdentityBackFromProfile(
+    profileGender,
+    profileBirthDate,
+  );
 
   const [name, setName] = useState('');
   const [ssnFront, setSsnFront] = useState('');
@@ -80,14 +78,18 @@ export default function WithdrawScreen({
     resendCode,
     backToForm,
   } = useSmsVerification({
-    sendFallbackMessage: '인증번호를 보내지 못했어요. 다시 시도해주세요.',
-    resendFallbackMessage: '인증번호 재발송에 실패했어요. 잠시 후 다시 시도해주세요.',
-    verifyFallbackMessage: '인증번호가 올바르지 않아요. 다시 확인해주세요.',
+    sendFallbackMessage:
+      '인증번호를 보내지 못했어요. 잠시 후 다시 시도해주세요.',
+    resendFallbackMessage:
+      '인증번호 재전송에 실패했어요. 잠시 후 다시 시도해주세요.',
+    verifyFallbackMessage:
+      '인증번호 확인 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.',
   });
 
   const validateAgainstProfile = () => {
     const normalizedPhoneNumber = normalizePhoneNumber(phone);
     const nameValidation = validateName(name);
+
     if (!nameValidation.isValid) {
       return nameValidation.message;
     }
@@ -98,11 +100,11 @@ export default function WithdrawScreen({
     }
 
     if (ssnFront.length !== 6) {
-      return '생년월일 앞 6자리를 입력해주세요.';
+      return '주민등록번호 앞자리를 6자리로 입력해주세요.';
     }
 
     if (ssnBack.length !== 1) {
-      return '주민번호 뒷자리 첫 번째 숫자를 입력해주세요.';
+      return '주민등록번호 뒷자리 첫 번째 숫자를 입력해주세요.';
     }
 
     if (telecom === TELECOM_PLACEHOLDER) {
@@ -110,15 +112,15 @@ export default function WithdrawScreen({
     }
 
     if (normalizeName(name) !== normalizeName(profileName)) {
-      return '등록된 이름과 일치하지 않습니다.';
+      return '입력한 이름이 회원 정보와 일치하지 않아요.';
     }
 
     if (ssnFront !== expectedSsnFront || ssnBack !== expectedSsnBack) {
-      return '등록된 생년월일 또는 성별 정보와 일치하지 않습니다.';
+      return '입력한 주민등록번호가 회원 정보와 일치하지 않아요.';
     }
 
     if (normalizedPhoneNumber !== normalizePhoneNumber(rawPhone)) {
-      return '등록된 휴대폰 번호와 일치하지 않습니다.';
+      return '입력한 휴대폰 번호가 회원 정보와 일치하지 않아요.';
     }
 
     return null;
@@ -157,7 +159,7 @@ export default function WithdrawScreen({
       try {
         await fcmService.unregisterFcmToken();
       } catch (fcmError) {
-        console.warn('[Withdraw] FCM 토큰 해제 실패:', fcmError);
+        console.warn('[Withdraw] FCM 토큰 제거 실패:', fcmError);
       }
 
       await deleteAccount();
@@ -172,9 +174,9 @@ export default function WithdrawScreen({
     } catch (error) {
       const message = extractApiErrorMessage(
         error,
-        '회원 탈퇴를 처리하지 못했어요. 다시 시도해주세요.',
+        '회원 탈퇴 처리 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.',
       );
-      Alert.alert('회원 탈퇴 실패', message);
+      Alert.alert('회원 탈퇴 오류', message);
     } finally {
       setIsDeleting(false);
     }
@@ -190,37 +192,51 @@ export default function WithdrawScreen({
       !isSending;
 
     return (
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingTop: insets.top + hp(28), paddingBottom: insets.bottom + hp(28) },
-          ]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+      <>
+        <IdentityStepFormLayout
+          containerStyle={styles.container}
+          scrollContentStyle={styles.scrollContent}
+          backButtonStyle={styles.backButton}
+          stepIndicatorContainerStyle={{ marginTop: 0, marginBottom: hp(12) }}
+          titleStyle={styles.title}
+          subtitleStyle={styles.formSubtitle}
+          bottomContainerStyle={styles.bottomContainer}
+          title={
+            <>
+              회원 탈퇴 전{'\n'}본인 인증을 진행해주세요.
+            </>
+          }
+          subtitle={
+            <>
+              회원 정보를 다시 확인한 뒤{'\n'}인증번호를 발송해드릴게요.
+            </>
+          }
+          onBack={() => navigation.goBack()}
+          bottomContent={
+            <AuthActionButton
+              label="인증번호 발송"
+              loading={isSending}
+              disabled={!isButtonActive}
+              active={isButtonActive}
+              onPress={() => void handleSendCode()}
+              containerStyle={styles.confirmButton}
+              activeContainerStyle={styles.activeButton}
+              textStyle={styles.confirmButtonText}
+              activeTextStyle={styles.activeButtonText}
+              loadingColor={COLORS.textInverse}
+            />
+          }
         >
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-
-          <View style={{ marginTop: 0, marginBottom: hp(12) }}>
-            <StepIndicator currentStep={1} totalSteps={2} compact />
-          </View>
-
-          <Animated.View entering={FadeInDown.duration(400)}>
-            <Text style={styles.title}>탈퇴 전{'\n'}본인 확인이 필요해요.</Text>
-            <Text style={styles.formSubtitle}>
-              회원가입 때 입력한 정보를 다시 입력하면{'\n'}인증번호를 발송해 드려요.
-            </Text>
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.inputSection}>
+          <Animated.View
+            entering={FadeInDown.delay(100).duration(400)}
+            style={styles.inputSection}
+          >
             <View style={styles.underlineContainer}>
               <TextInput
-                style={[styles.bareInput, { letterSpacing: name.length > 0 ? 2 : 0 }]}
+                style={[
+                  styles.bareInput,
+                  { letterSpacing: name.length > 0 ? 2 : 0 },
+                ]}
                 value={name}
                 onChangeText={(value) => {
                   setName(value);
@@ -233,12 +249,23 @@ export default function WithdrawScreen({
             </View>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(160).duration(400)} style={styles.ssnSection}>
-            <View style={[styles.underlineContainer, { flex: 1.1, justifyContent: 'center' }]}>
+          <Animated.View
+            entering={FadeInDown.delay(160).duration(400)}
+            style={styles.ssnSection}
+          >
+            <View
+              style={[
+                styles.underlineContainer,
+                { flex: 1.1, justifyContent: 'center' },
+              ]}
+            >
               <TextInput
                 style={[
                   styles.bareInput,
-                  { textAlign: 'center', letterSpacing: ssnFront.length > 0 ? 4 : 0 },
+                  {
+                    textAlign: 'center',
+                    letterSpacing: ssnFront.length > 0 ? 4 : 0,
+                  },
                 ]}
                 value={ssnFront}
                 onChangeText={(text) => {
@@ -271,7 +298,10 @@ export default function WithdrawScreen({
             </View>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(220).duration(400)} style={styles.inputSection}>
+          <Animated.View
+            entering={FadeInDown.delay(220).duration(400)}
+            style={styles.inputSection}
+          >
             <TouchableOpacity
               style={styles.telecomSelector}
               onPress={() => setIsTelecomModalVisible(true)}
@@ -284,12 +314,19 @@ export default function WithdrawScreen({
               >
                 {telecom}
               </Text>
-              <Ionicons name="chevron-down" size={wp(24)} color={COLORS.textPrimary} />
+              <Ionicons
+                name="chevron-down"
+                size={wp(24)}
+                color={COLORS.textPrimary}
+              />
             </TouchableOpacity>
 
             <View style={[styles.underlineContainer, { marginTop: hp(32) }]}>
               <TextInput
-                style={[styles.bareInput, { letterSpacing: phone.length > 0 ? 2 : 0 }]}
+                style={[
+                  styles.bareInput,
+                  { letterSpacing: phone.length > 0 ? 2 : 0 },
+                ]}
                 value={phone}
                 onChangeText={(text) => {
                   setPhone(text.replace(/[^0-9]/g, ''));
@@ -302,32 +339,25 @@ export default function WithdrawScreen({
               />
             </View>
 
-            {submitError.length > 0 && <Text style={styles.errorText}>{submitError}</Text>}
+            {submitError.length > 0 ? (
+              <Text style={styles.errorText}>{submitError}</Text>
+            ) : null}
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.warningBox}>
-            <Ionicons name="warning-outline" size={wp(18)} color={COLORS.error} />
+          <Animated.View
+            entering={FadeInDown.delay(300).duration(400)}
+            style={styles.warningBox}
+          >
+            <Ionicons
+              name="warning-outline"
+              size={wp(18)}
+              color={COLORS.error}
+            />
             <Text style={styles.warningText}>
-              탈퇴 시 거래 내역과 설정이 즉시 삭제되며 복구할 수 없습니다.
+              탈퇴 후 계정 정보와 서비스 이용 내역은 복구되지 않습니다.
             </Text>
           </Animated.View>
-        </ScrollView>
-
-        <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
-          <TouchableOpacity
-            style={[styles.confirmButton, isButtonActive && styles.activeButton]}
-            disabled={!isButtonActive}
-            onPress={() => void handleSendCode()}
-          >
-            {isSending ? (
-              <ActivityIndicator color={COLORS.textInverse} />
-            ) : (
-              <Text style={[styles.confirmButtonText, isButtonActive && styles.activeButtonText]}>
-                인증번호 발송
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
+        </IdentityStepFormLayout>
 
         <TelecomSelectModal
           visible={isTelecomModalVisible}
@@ -342,7 +372,7 @@ export default function WithdrawScreen({
           itemStyle={styles.modalItem}
           itemTextStyle={styles.modalItemText}
         />
-      </KeyboardAvoidingView>
+      </>
     );
   }
 
@@ -362,7 +392,10 @@ export default function WithdrawScreen({
       successTextStyle={styles.successText}
       resendRowStyle={styles.resendRow}
       resendTextStyle={styles.resendText}
-      keypadWrapperStyle={[styles.keypadWrapper, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}
+      keypadWrapperStyle={[
+        styles.keypadWrapper,
+        { paddingBottom: Math.max(insets.bottom, hp(24)) },
+      ]}
       onBack={backToForm}
       backIconSize={wp(24)}
       backIconColor={COLORS.textPrimary}
@@ -373,21 +406,30 @@ export default function WithdrawScreen({
           <StepIndicator currentStep={2} totalSteps={2} compact />
         </View>
       }
-      title={isVerified ? '본인 확인이\n완료되었어요.' : '인증번호 6자리를\n입력해 주세요.'}
-      subtitle={`${requestedPhoneDisplay}으로 전송된 인증번호를 입력해 주세요.`}
+      title={
+        isVerified
+          ? '본인 인증이\n완료되었어요.'
+          : '인증번호 6자리를\n입력해주세요.'
+      }
+      subtitle={`${requestedPhoneDisplay}로 전송된 인증번호를 입력해주세요.`}
       code={code}
       codeLength={VERIFICATION_CODE_LENGTH}
       isVerifying={isVerifying}
       loadingText="인증번호를 확인하고 있어요."
       verifyError={verifyError}
       isVerified={isVerified}
-      successMessage="본인 확인 완료! 탈퇴 버튼을 눌러주세요."
+      successMessage="본인 인증 완료! 탈퇴를 진행할 수 있어요."
       isSending={isSending}
       onResend={() => void resendCode()}
       onPressNumber={handlePressNumber}
       onPressDelete={handlePressDelete}
       bottomAction={
-        <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, hp(24)) }]}>
+        <View
+          style={[
+            styles.bottomContainer,
+            { paddingBottom: Math.max(insets.bottom, hp(24)) },
+          ]}
+        >
           <TouchableOpacity
             style={[styles.withdrawButton, isDeleting && styles.disabledButton]}
             disabled={isDeleting}
