@@ -6,6 +6,7 @@ export { default as CalendarGuideModal } from './CalendarGuideModal';
 export { default as CalendarDayCell } from './CalendarDayCell';
 export { default as CalendarHeroCard } from './CalendarHeroCard';
 export { default as CalendarMonthCard } from './CalendarMonthCard';
+export { default as CalendarPaymentMethodSelector } from './CalendarPaymentMethodSelector';
 export { default as CalendarTabSwitcher } from './CalendarTabSwitcher';
 export { default as CalendarTopDockContent } from './CalendarTopDockContent';
 export { default as CalendarUploadBackendSummaryCard } from './CalendarUploadBackendSummaryCard';

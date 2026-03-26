@@ -33,6 +33,7 @@ import ExcelUploadGuideModal from './ExcelUploadGuideModal';
 import CalendarCategorySelector from './CalendarCategorySelector';
 import CalendarUploadBackendSummaryCard from './CalendarUploadBackendSummaryCard';
 import CalendarFieldLabel from './CalendarFieldLabel';
+import CalendarPaymentMethodSelector from './CalendarPaymentMethodSelector';
 import CalendarUploadResultItemRow from './CalendarUploadResultItemRow';
 import type {
   CalendarUploadBackendItem,
@@ -447,34 +448,10 @@ export default function CalendarAddEntrySheet({
                 백엔드 DTO에는 아직 결제수단 필드가 없어서,
                 현재 단계에서는 프론트 입력/미리보기 흐름에서만 필수 선택으로 관리합니다.
               */}
-              <View style={styles.paymentMethodGrid}>
-                {PAYMENT_METHOD_OPTIONS.map((method) => {
-                  const isActive = selectedPaymentMethod === method.key;
-
-                  return (
-                    <TouchableOpacity
-                      key={method.key}
-                      activeOpacity={0.88}
-                      style={[styles.paymentMethodChip, isActive && styles.paymentMethodChipActive]}
-                      onPress={() => setSelectedPaymentMethod(method.key)}
-                    >
-                      <Ionicons
-                        name={method.icon}
-                        size={wp(15)}
-                        color={isActive ? COLORS.white : COLORS.textSecondary}
-                      />
-                      <Text
-                        style={[
-                          styles.paymentMethodChipText,
-                          isActive && styles.paymentMethodChipTextActive,
-                        ]}
-                      >
-                        {method.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+              <CalendarPaymentMethodSelector
+                selectedPaymentMethod={selectedPaymentMethod}
+                onSelect={setSelectedPaymentMethod}
+              />
 
               <View style={styles.inputShell}>
                 <TextInput
