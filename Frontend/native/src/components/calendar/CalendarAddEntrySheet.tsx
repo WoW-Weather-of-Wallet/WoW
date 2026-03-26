@@ -32,6 +32,7 @@ import {
 import ExcelUploadGuideModal from './ExcelUploadGuideModal';
 import CalendarCategorySelector from './CalendarCategorySelector';
 import CalendarUploadBackendSummaryCard from './CalendarUploadBackendSummaryCard';
+import CalendarFieldLabel from './CalendarFieldLabel';
 import CalendarUploadResultItemRow from './CalendarUploadResultItemRow';
 import type {
   CalendarUploadBackendItem,
@@ -733,12 +734,7 @@ function FieldLabel({
   label: string;
   icon?: keyof typeof Ionicons.glyphMap;
 }) {
-  return (
-    <View style={styles.fieldLabelRow}>
-      {icon ? <Ionicons name={icon} size={wp(14)} color={COLORS.primary} /> : null}
-      <Text style={styles.fieldLabel}>{label}</Text>
-    </View>
-  );
+  return <CalendarFieldLabel label={label} icon={icon} />;
 }
 
 function mergeUploadGroupsWithBackendItems(
