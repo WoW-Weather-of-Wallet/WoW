@@ -83,12 +83,10 @@ export interface CalendarDailyParams {
 }
 
 export interface CalendarDailyTransactionItem {
-  transactionId: number;
   merchantName: string;
   category: string;
   categoryIcon: string | null;
   amount: number;
-  isFixedExpense: boolean;
 }
 
 export interface CalendarDailyResponse {

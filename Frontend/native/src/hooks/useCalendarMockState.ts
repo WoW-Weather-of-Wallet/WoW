@@ -1121,6 +1121,8 @@ function mapDailyResponseToDetail(response: CalendarDailyResponse): CalendarDayD
     spentAmount: derivedSpentAmount,
     transactionCount: derivedTransactionCount,
     memo: response.memo ?? '',
+    // daily 조회는 상세 시트 표시 전용으로만 사용합니다.
+    // transactionId / isFixedExpense 같은 조작용 정보는 history 전용 API에서 관리합니다.
     items: response.transactions.map((transaction, index) =>
       mapDailyTransactionItem(response.date, transaction, index),
     ),
@@ -1246,14 +1248,12 @@ function mapDailyTransactionItem(
   const categoryMeta = CATEGORY_META[transaction.category] ?? CATEGORY_META[DEFAULT_CALENDAR_CATEGORY];
 
   return {
-    id: `${dateKey}-transaction-${transaction.transactionId ?? index}`,
-    backendTransactionId: transaction.transactionId,
+    id: `${dateKey}-detail-${index}`,
     title: transaction.merchantName,
     category: transaction.category,
     amount: transaction.amount,
-    icon: categoryMeta.icon,
+    icon: transaction.categoryIcon ?? categoryMeta.icon,
     iconTone: categoryMeta.iconTone,
-    isFixedExpense: transaction.isFixedExpense,
   };
 }
 
