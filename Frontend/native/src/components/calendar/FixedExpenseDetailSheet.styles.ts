@@ -54,6 +54,36 @@ export const styles = StyleSheet.create({
     color: COLORS.aiHintText,
     lineHeight: fp(18),
   },
+  readonlyInfoCard: {
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.backgroundSecondary,
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(6),
+    marginBottom: hp(18),
+  },
+  readonlyInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: hp(10),
+    gap: wp(12),
+  },
+  readonlyDivider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+  },
+  readonlyLabel: {
+    fontSize: fp(13),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textSecondary,
+  },
+  readonlyValue: {
+    flex: 1,
+    textAlign: 'right',
+    fontSize: fp(14),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
   sectionTitle: {
     fontSize: fp(16),
     fontFamily: FONTS.bold,
@@ -61,7 +91,14 @@ export const styles = StyleSheet.create({
     marginBottom: hp(12),
   },
   amountInput: {
+    marginBottom: hp(8),
+  },
+  amountPreview: {
     marginBottom: hp(18),
+    textAlign: 'right',
+    fontSize: fp(13),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textSecondary,
   },
   stepperCard: {
     flexDirection: 'row',

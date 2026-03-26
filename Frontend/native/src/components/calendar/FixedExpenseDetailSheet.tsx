@@ -66,7 +66,7 @@ export default function FixedExpenseDetailSheet({
       title={isEditMode ? '고정지출 수정' : '세부 설정'}
       subtitle={
         isEditMode
-          ? `"${item.title}" 항목의 납부일을 변경할 수 있어요.`
+          ? `"${item.title}" 항목의 금액과 납부일을 변경할 수 있어요.`
           : `"${item.title}"를 고정지출로 연결하는 단계입니다.`
       }
     >
@@ -100,6 +100,18 @@ export default function FixedExpenseDetailSheet({
 
       {isEditMode ? (
         <>
+          <View style={styles.readonlyInfoCard}>
+            <View style={styles.readonlyInfoRow}>
+              <Text style={styles.readonlyLabel}>거래명</Text>
+              <Text style={styles.readonlyValue}>{item.title}</Text>
+            </View>
+            <View style={styles.readonlyDivider} />
+            <View style={styles.readonlyInfoRow}>
+              <Text style={styles.readonlyLabel}>카테고리</Text>
+              <Text style={styles.readonlyValue}>{initialCategory ?? item.category}</Text>
+            </View>
+          </View>
+
           <Text style={styles.sectionTitle}>금액</Text>
           <CustomTextInput
             label="고정지출 금액을 입력해주세요"
@@ -108,6 +120,9 @@ export default function FixedExpenseDetailSheet({
             keyboardType="number-pad"
             containerStyle={styles.amountInput}
           />
+          <Text style={styles.amountPreview}>
+            {`₩${Number(amountInput || 0).toLocaleString()}`}
+          </Text>
         </>
       ) : null}
 
