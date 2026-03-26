@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,110 +12,16 @@ import { Ionicons } from '@expo/vector-icons';
 import StepIndicator from '../../components/common/StepIndicator';
 import { styles } from './WelcomeScreen.styles';
 import { COLORS, wp, hp } from '../../constants/theme';
-import { useAuthSessionLogin } from '../../hooks/useAuthSessionLogin';
-import { login, registerSsafy } from '../../services/auth';
+import { useWelcomeFlow } from '../../hooks';
 import type { RootScreenProps } from '../../types';
-import type { SignupMode, WelcomeRouteParams } from '../../types/auth';
-import { extractApiErrorMessage } from '../../utils/error';
-import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
+import type { WelcomeRouteParams } from '../../types/auth';
 
 export default function WelcomeScreen({
   route,
-  navigation,
 }: RootScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
-  const { completeAuthSession } = useAuthSessionLogin();
   const routeParams = (route?.params ?? {}) as WelcomeRouteParams;
-  const signupMode: SignupMode =
-    routeParams.signupMode === 'ssafy' ? 'ssafy' : 'normal';
-  const isSsafySignup = signupMode === 'ssafy';
-  const [isConfirming, setIsConfirming] = useState(false);
-
-  const handleConfirm = async () => {
-    if (isConfirming) {
-      return;
-    }
-
-    if (isSsafySignup) {
-      if (!routeParams.pendingToken || !routeParams.birthDate || !routeParams.gender || !routeParams.phoneNumber) {
-        Alert.alert('회원가입 정보 오류', 'SSAFY 회원가입 정보를 다시 확인해 주세요.');
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Login' }],
-        });
-        return;
-      }
-
-      setIsConfirming(true);
-      try {
-        const registerResponse = await registerSsafy({
-          pendingToken: routeParams.pendingToken,
-          phoneNumber: routeParams.phoneNumber,
-          birthDate: routeParams.birthDate,
-          gender: routeParams.gender,
-          termsAgreed: routeParams.termsAgreed === true,
-          alarmEnabled: routeParams.alarmEnabled !== false,
-        });
-        await completeAuthSession({
-          response: registerResponse,
-          loginType: 'SSAFY',
-          source: 'ssafy',
-        });
-
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'MainTabs' }],
-        });
-      } catch (error: any) {
-        const presentation = buildAuthErrorPresentation(error, {
-          flow: 'signup',
-          fallbackMessage: 'SSAFY 회원가입 완료 중 문제가 발생했습니다. 다시 시도해 주세요.',
-        });
-        Alert.alert(presentation.title, presentation.alertMessage);
-      } finally {
-        setIsConfirming(false);
-      }
-      return;
-    }
-
-    if (!routeParams.userId || !routeParams.pw) {
-      Alert.alert('자동 로그인 실패', '로그인 정보가 없어 다시 로그인해 주세요.');
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      });
-      return;
-    }
-
-    setIsConfirming(true);
-    try {
-      const loginResponse = await login({
-        userId: routeParams.userId,
-        pw: routeParams.pw,
-      });
-      await completeAuthSession({
-        response: loginResponse,
-        loginType: 'NORMAL',
-      });
-
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainTabs' }],
-      });
-    } catch (error: any) {
-      const message = extractApiErrorMessage(
-        error,
-        '회원가입은 완료되었지만 자동 로그인에 실패했어요. 다시 로그인해 주세요.',
-      );
-      Alert.alert('자동 로그인 실패', message);
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      });
-    } finally {
-      setIsConfirming(false);
-    }
-  };
+  const { isConfirming, isSsafySignup, handleConfirm } = useWelcomeFlow(routeParams);
 
   return (
     <View style={styles.container}>
@@ -138,9 +43,9 @@ export default function WelcomeScreen({
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(180).duration(500)} style={styles.titleBlock}>
-              <Text style={styles.title}>회원가입이 거의 끝났어요</Text>
+              <Text style={styles.title}>회원가입이 완료되었어요</Text>
               <Text style={styles.subtitle}>
-                {routeParams.name ? `${routeParams.name}님의 정보를 확인해 주세요.` : '가입 정보를 확인해 주세요.'}
+                {routeParams.name ? `${routeParams.name}님, 반가워요.` : '가입 정보를 확인해 주세요.'}
               </Text>
             </Animated.View>
           </View>
@@ -154,9 +59,9 @@ export default function WelcomeScreen({
                 label="성별"
                 value={routeParams.gender === 'M' ? '남성' : routeParams.gender === 'F' ? '여성' : '-'}
               />
-              <InfoRow label="휴대폰" value={routeParams.phoneNumber ?? '-'} />
-              <InfoRow label="약관 동의" value={routeParams.termsAgreed ? '완료' : '미완료'} />
-              <InfoRow label="알림" value={routeParams.alarmEnabled ? '사용' : '미사용'} />
+              <InfoRow label="휴대폰 번호" value={routeParams.phoneNumber ?? '-'} />
+              <InfoRow label="약관 동의" value={routeParams.termsAgreed ? '동의' : '미동의'} />
+              <InfoRow label="알림 수신" value={routeParams.alarmEnabled ? '사용' : '미사용'} />
             </View>
           </Animated.View>
         </ScrollView>
@@ -173,7 +78,7 @@ export default function WelcomeScreen({
             {isConfirming ? (
               <ActivityIndicator color={COLORS.textInverse} />
             ) : (
-              <Text style={styles.confirmButtonText}>확인</Text>
+              <Text style={styles.confirmButtonText}>시작하기</Text>
             )}
           </TouchableOpacity>
         </Animated.View>

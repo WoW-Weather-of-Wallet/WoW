@@ -6,8 +6,54 @@ import {
 } from './sessionStorage';
 import { decodeUnicodeEscapes } from '../utils/authIdentity';
 
-export const BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL || 'https://j14d106.p.ssafy.io';
+const DEFAULT_BASE_URL = 'https://j14d106.p.ssafy.io';
+
+const normalizeBaseUrl = (rawBaseUrl?: string) => {
+  const trimmedBaseUrl = rawBaseUrl?.trim();
+
+  if (!trimmedBaseUrl) {
+    return DEFAULT_BASE_URL;
+  }
+
+  const hasProtocol = /^[a-z][a-z\d+.-]*:\/\//i.test(trimmedBaseUrl);
+  const normalizedBaseUrl = hasProtocol
+    ? trimmedBaseUrl
+    : `http://${trimmedBaseUrl}`;
+
+  return normalizedBaseUrl.replace(/\/+$/, '');
+};
+
+export const BASE_URL = normalizeBaseUrl(process.env.EXPO_PUBLIC_API_BASE_URL);
+
+const SENSITIVE_LOG_KEYS = new Set([
+  'accessToken',
+  'authorization',
+  'code',
+  'currentPw',
+  'newPw',
+  'password',
+  'pendingToken',
+  'pw',
+  'refreshToken',
+  'token',
+]);
+
+const sanitizeForLog = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map(sanitizeForLog);
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, nestedValue]) => [
+        key,
+        SENSITIVE_LOG_KEYS.has(key) ? '***' : sanitizeForLog(nestedValue),
+      ]),
+    );
+  }
+
+  return value;
+};
 
 export interface NativeSignupRequest {
   userId?: string;
@@ -232,9 +278,9 @@ nativeApi.interceptors.request.use((config) => {
 
   console.log('[API request]', config.method?.toUpperCase(), `${config.baseURL}${config.url}`);
   if (config.method?.toUpperCase() === 'GET' && config.params) {
-    console.log('[API request params]', config.params);
+    console.log('[API request params]', sanitizeForLog(config.params));
   } else {
-    console.log('[API request payload]', config.data);
+    console.log('[API request payload]', sanitizeForLog(config.data));
   }
   return config;
 });

@@ -1,11 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,33 +17,16 @@ import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import { TELECOM_OPTIONS } from '../../constants/auth/identityVerification';
 import type {
-  IdentityVerificationData,
   PhoneAuthRouteParams,
   SignupMode,
 } from '../../types/auth';
 import type { RootScreenProps } from '../../types';
-import {
-  buildIdentityProfile,
-  decodeUnicodeEscapes,
-} from '../../utils/authIdentity';
-import {
-  checkSignupIdentity,
-  checkSsafySignup,
-  sendSmsCode,
-} from '../../services/auth';
-import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
-import { useIdentityVerificationForm } from '../../hooks';
-import { validateName, validatePhone } from '../../utils/validation';
+import { decodeUnicodeEscapes } from '../../utils/authIdentity';
+import { useIdentityVerificationForm, usePhoneAuthFlow } from '../../hooks';
 
 const TELECOM_PLACEHOLDER = '통신사를 선택해 주세요';
-const INVALID_IDENTITY_MESSAGE = '주민등록번호를 다시 확인해 주세요.';
-const SSAFY_TOKEN_EXPIRED_MESSAGE =
-  'SSAFY 인증 정보가 만료되었습니다. 다시 로그인해 주세요.';
-const SEND_CODE_FALLBACK =
-  '인증번호 전송에 실패했어요. 입력한 정보를 다시 확인해 주세요.';
 
 export default function PhoneAuthScreen({
-  navigation,
   route,
 }: RootScreenProps<'PhoneAuth'>) {
   const insets = useSafeAreaInsets();
@@ -57,14 +39,18 @@ export default function PhoneAuthScreen({
       ? (decodeUnicodeEscapes(routeParams.name) ?? '').trim()
       : '';
 
-  const [termsVisible, setTermsVisible] = useState(false);
-  const [pendingIdentityData, setPendingIdentityData] =
-    useState<IdentityVerificationData | null>(null);
-  // 현재 회원가입 API는 boolean 하나만 받기 때문에
-  // 바텀시트 결과를 "필수 약관 전체 동의 여부"로 합쳐서 전달합니다.
-  const [termsAgreed, setTermsAgreed] = useState(false);
-  const [isSendingCode, setIsSendingCode] = useState(false);
-  const [submitError, setSubmitError] = useState('');
+  const {
+    termsVisible,
+    isSendingCode,
+    submitError,
+    handleIdentityComplete,
+    handleTermsClose,
+    handleTermsConfirm,
+    clearSubmitError,
+  } = usePhoneAuthFlow({
+    routeParams,
+    signupMode,
+  });
 
   const scrollViewRef = useRef<ScrollView>(null);
   const {
@@ -92,104 +78,15 @@ export default function PhoneAuthScreen({
     initialValues: { name: initialSsafyName },
     telecomPlaceholder: TELECOM_PLACEHOLDER,
     onComplete: (data) => {
-      setPendingIdentityData(data);
       scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-      setTermsVisible(true);
+      handleIdentityComplete(data);
     },
     onValuesChange: () => {
       if (submitError) {
-        setSubmitError('');
+        clearSubmitError();
       }
     },
   });
-
-  const handleSendCode = async (
-    agreedTerms = termsAgreed,
-    identityData = pendingIdentityData,
-  ) => {
-    if (isSendingCode || !identityData) {
-      return;
-    }
-
-    setIsSendingCode(true);
-    setSubmitError('');
-
-    const nameValidation = validateName(identityData.name);
-    if (!nameValidation.isValid) {
-      setSubmitError(nameValidation.message);
-      setIsSendingCode(false);
-      return;
-    }
-
-    const phoneValidation = validatePhone(identityData.phone);
-    if (!phoneValidation.isValid) {
-      setSubmitError(phoneValidation.message);
-      setIsSendingCode(false);
-      return;
-    }
-
-    const identityProfile = buildIdentityProfile(
-      identityData.ssnFront,
-      identityData.ssnBack,
-    );
-
-    if (!identityProfile) {
-      setSubmitError(INVALID_IDENTITY_MESSAGE);
-      setIsSendingCode(false);
-      return;
-    }
-
-    const normalizedPhoneNumber = identityData.phone.replace(/[^0-9]/g, '');
-
-    try {
-      if (isSsafySignup) {
-        if (!routeParams.pendingToken) {
-          throw new Error(SSAFY_TOKEN_EXPIRED_MESSAGE);
-        }
-
-        await checkSsafySignup({
-          pendingToken: routeParams.pendingToken,
-          gender: identityProfile.gender,
-          birthDate: identityProfile.birthDate,
-          phoneNumber: normalizedPhoneNumber,
-        });
-      } else {
-        await checkSignupIdentity({
-          name: identityData.name.trim(),
-          gender: identityProfile.gender,
-          birthDate: identityProfile.birthDate,
-          phoneNumber: normalizedPhoneNumber,
-        });
-      }
-
-      await sendSmsCode({ phoneNumber: normalizedPhoneNumber });
-
-      navigation.navigate('VerifyCode', {
-        ...routeParams,
-        signupMode,
-        name: identityData.name.trim(),
-        ssnFront: identityData.ssnFront,
-        ssnBack: identityData.ssnBack,
-        telecom: identityData.telecom,
-        phone: normalizedPhoneNumber,
-        // 다음 화면들도 기존 boolean 계약을 그대로 사용하므로
-        // 여기서는 "필수 약관 전체 동의" 의미로 넘깁니다.
-        termsAgreed: agreedTerms,
-      });
-    } catch (error: any) {
-      const presentation = buildAuthErrorPresentation(error, {
-        flow: 'sms-send',
-        fallbackMessage: SEND_CODE_FALLBACK,
-      });
-      setSubmitError(presentation.inlineMessage);
-      Alert.alert(
-        isSsafySignup ? 'SSAFY 회원가입 안내' : presentation.title,
-        presentation.alertMessage,
-      );
-    } finally {
-      setIsSendingCode(false);
-    }
-  };
 
   return (
     <>
@@ -363,11 +260,9 @@ export default function PhoneAuthScreen({
       <TermsBottomSheet
         visible={termsVisible}
         flow={routeParams.flow}
-        onClose={() => setTermsVisible(false)}
+        onClose={handleTermsClose}
         onConfirm={(agreed) => {
-          setTermsAgreed(agreed);
-          setTermsVisible(false);
-          void handleSendCode(agreed, pendingIdentityData);
+          void handleTermsConfirm(agreed);
         }}
       />
     </>
