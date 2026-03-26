@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -13,6 +11,7 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, wp, hp } from '../../constants/theme';
 import { styles } from './AiFeedbackHomeScreen.styles';
+import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import GradientButton from '../../components/common/GradientButton';
 import { useAiStore } from '../../store/aiStore';
 import { NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
@@ -118,8 +117,6 @@ const CAROUSEL_DATA = [
 export default function AiFeedbackHomeScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiFeedbackHome'>) {
-  const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
   const { status, startAnalysis, simulateAnalysis } = useAiStore();
   const [activeIndex, setActiveIndex] = React.useState(0);
   const scrollRef = React.useRef<ScrollView>(null);
@@ -138,18 +135,13 @@ export default function AiFeedbackHomeScreen({
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={[
-          styles.scrollContent, 
-          { 
-            paddingTop: insets.top + hp(20), 
-            // 플로팅 탭 바 높이를 실제 값으로 반영해 마지막 CTA가 가려지지 않게 맞춥니다.
-            paddingBottom: tabBarHeight + hp(24),
-          }
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
+    <BottomTabScreenLayout
+      containerStyle={styles.container}
+      contentContainerStyle={styles.scrollContent}
+      scrollTopPadding={hp(20)}
+      scrollBottomPadding={hp(24)}
+      backgroundColor={COLORS.background}
+    >
         {false && <DataSourceNotice
           type="mock"
           description="현재 AI 기능 소개와 예시 화면은 시뮬레이션용 mock 데이터와 예시 문구를 사용합니다."
@@ -213,7 +205,6 @@ export default function AiFeedbackHomeScreen({
             }}
           />
         </View>
-      </ScrollView>
-    </View>
+    </BottomTabScreenLayout>
   );
 }

@@ -1,33 +1,29 @@
 import React from 'react';
-import { ScrollView, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from './AiResultScreen.styles';
 import GradientButton from '../../components/common/GradientButton';
 import { COLORS, hp, wp } from '../../constants/theme';
+import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import { useAiStore } from '../../store/aiStore';
 import type { AiFeedbackStackScreenProps } from '../../types';
 
 export default function AiResultScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiResult'>) {
-  const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
   const { reset, resultData } = useAiStore();
   const userName = '-';
   const completedAt = resultData?.completedAt ?? '-';
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingTop: insets.top + 20, paddingBottom: tabBarHeight + hp(40) },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
+    <BottomTabScreenLayout
+      containerStyle={styles.container}
+      contentContainerStyle={styles.scrollContent}
+      scrollTopPadding={20}
+      scrollBottomPadding={hp(40)}
+      backgroundColor={COLORS.background}
+    >
         <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
           <Text style={styles.userName}>
             <Text style={styles.userNameHighlight}>{userName}</Text>
@@ -75,7 +71,6 @@ export default function AiResultScreen({
             }}
           />
         </Animated.View>
-      </ScrollView>
-    </View>
+    </BottomTabScreenLayout>
   );
 }
