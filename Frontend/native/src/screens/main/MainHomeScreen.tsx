@@ -4,14 +4,7 @@ import { styles } from './MainHomeScreen.styles';
 import { useModalState } from '../../hooks/useModalState';
 import { useMainHomeFlow } from '../../hooks/useMainHomeFlow';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
-import {
-  HomeBudgetReportCard,
-  HomeMonthlyReportSheet,
-  HomeScheduleSection,
-  HomeSpendingTypeCard,
-  HomeSpendingTypeSheet,
-  HomeTodayWeatherCard,
-} from '../../components/main';
+import { HomeDashboardContent, HomeDashboardSheets } from '../../components/main';
 
 export default function MainHomeScreen() {
   const reportModal = useModalState();
@@ -22,7 +15,6 @@ export default function MainHomeScreen() {
     spendingTypeDescription,
     spendingTypeIconName,
     spendingTypeSheetDescription,
-    spendingHalfYearly,
     currentMonthLabel,
     lastMonthLabel,
     currentMonthTotalAmount,
@@ -52,19 +44,14 @@ export default function MainHomeScreen() {
         scrollTopPadding={hp(12)}
         scrollBottomPadding={hp(30)}
       >
-        <HomeTodayWeatherCard
+        <HomeDashboardContent
           weatherName={liveHeader?.weatherName}
-          description={liveHeader?.description}
-          iconCode={liveHeader?.iconCode}
-          isLoading={isWeatherLoading}
-        />
-        <HomeSpendingTypeCard
-          onPress={spendingTypeModal.open}
-          title={spendingTypeTitle}
-          description={spendingTypeDescription}
-          iconName={spendingTypeIconName}
-        />
-        <HomeBudgetReportCard
+          weatherDescription={liveHeader?.description}
+          weatherIconCode={liveHeader?.iconCode}
+          isWeatherLoading={isWeatherLoading}
+          spendingTypeTitle={spendingTypeTitle}
+          spendingTypeDescription={spendingTypeDescription}
+          spendingTypeIconName={spendingTypeIconName}
           monthLabel={currentMonthLabel}
           userName={displayUserName}
           remainingBudget={remainingBudget}
@@ -72,32 +59,29 @@ export default function MainHomeScreen() {
           spentAmount={spentAmount}
           totalBudget={totalBudget}
           forecastText={forecastText}
-          onPress={reportModal.open}
+          onPressSpendingType={spendingTypeModal.open}
+          onPressBudgetReport={reportModal.open}
         />
-        <HomeScheduleSection items={[]} />
       </BottomTabScreenLayout>
 
-      <HomeSpendingTypeSheet
-        visible={spendingTypeModal.visible}
-        onClose={spendingTypeModal.close}
-        title={spendingTypeTitle}
-        iconName={spendingTypeIconName}
-        description={spendingTypeSheetDescription}
-        metrics={spendingMetrics}
-        reasons={spendingReasons}
-      />
-      <HomeMonthlyReportSheet
-        visible={reportModal.visible}
-        onClose={reportModal.close}
-        subtitle="이번 달과 지난달 소비를 비교하고 예산 상태를 함께 볼 수 있어요."
+      <HomeDashboardSheets
+        isSpendingTypeVisible={spendingTypeModal.visible}
+        isReportVisible={reportModal.visible}
+        spendingTypeTitle={spendingTypeTitle}
+        spendingTypeIconName={spendingTypeIconName}
+        spendingTypeDescription={spendingTypeSheetDescription}
+        spendingMetrics={spendingMetrics}
+        spendingReasons={spendingReasons}
         currentMonthLabel={currentMonthLabel}
-        currentTotalAmount={currentMonthTotalAmount}
+        currentMonthTotalAmount={currentMonthTotalAmount}
         lastMonthLabel={lastMonthLabel}
-        lastTotalAmount={lastMonthTotalAmount}
+        lastMonthTotalAmount={lastMonthTotalAmount}
         comparisonLegend={comparisonLegend}
-        insightText={monthlyInsight}
+        monthlyInsight={monthlyInsight}
         canCreateBudget={totalBudget == null}
-        isCreatingBudget={isBudgetSubmitting}
+        isBudgetSubmitting={isBudgetSubmitting}
+        onCloseSpendingType={spendingTypeModal.close}
+        onCloseReport={reportModal.close}
         onCreateBudget={handleCreateBudget}
       />
     </>
