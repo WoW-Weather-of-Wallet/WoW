@@ -35,6 +35,7 @@ import CalendarEntryModeToggle from './CalendarEntryModeToggle';
 import CalendarUploadBackendSummaryCard from './CalendarUploadBackendSummaryCard';
 import CalendarFieldLabel from './CalendarFieldLabel';
 import CalendarPaymentMethodSelector from './CalendarPaymentMethodSelector';
+import CalendarUploadCategorySheet from './CalendarUploadCategorySheet';
 import CalendarUploadResultItemRow from './CalendarUploadResultItemRow';
 import type {
   CalendarUploadBackendItem,
@@ -649,34 +650,11 @@ export default function CalendarAddEntrySheet({
         </View>
       </BottomSheetModal>
 
-      <BottomSheetModal
-        visible={selectedUploadItem !== null}
+      <CalendarUploadCategorySheet
+        selectedItem={selectedUploadItem}
         onClose={() => setSelectedUploadItemId(null)}
-        title="카테고리 선택"
-        subtitle={
-          selectedUploadItem
-            ? `${selectedUploadItem.merchantName} · ${selectedUploadItem.amount.toLocaleString()}원`
-            : ''
-        }
-        scrollable={false}
-      >
-        <View style={styles.categorySelectWrap}>
-          <View style={styles.recommendBadge}>
-            <Ionicons name="sparkles-outline" size={wp(12)} color={COLORS.warningOrange} />
-            <Text style={styles.recommendBadgeText}>자동 분류가 애매한 항목은 직접 고를 수 있어요.</Text>
-          </View>
-
-          <ScrollView
-            style={styles.categorySelectScroll}
-            contentContainerStyle={styles.categorySelectContent}
-            bounces={false}
-            nestedScrollEnabled
-            showsVerticalScrollIndicator={false}
-          >
-            <CalendarCategorySelector variant="chip" onSelect={handleSelectUploadCategory} />
-          </ScrollView>
-        </View>
-      </BottomSheetModal>
+        onSelectCategory={handleSelectUploadCategory}
+      />
     </>
   );
 }

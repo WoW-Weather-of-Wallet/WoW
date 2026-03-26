@@ -11,6 +11,7 @@ export { default as CalendarPaymentMethodSelector } from './CalendarPaymentMetho
 export { default as CalendarTabSwitcher } from './CalendarTabSwitcher';
 export { default as CalendarTopDockContent } from './CalendarTopDockContent';
 export { default as CalendarUploadBackendSummaryCard } from './CalendarUploadBackendSummaryCard';
+export { default as CalendarUploadCategorySheet } from './CalendarUploadCategorySheet';
 export { default as CalendarUploadResultItemRow } from './CalendarUploadResultItemRow';
 export { default as FixedExpenseGroupBlock } from './FixedExpenseGroupBlock';
 export { default as FixedExpenseDetailSheet } from './FixedExpenseDetailSheet';
