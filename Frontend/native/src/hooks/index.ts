@@ -23,6 +23,7 @@ export * from './useRecoverySmsFlow';
 export * from './useResetPasswordFlow';
 export * from './useSmsVerification';
 export * from './useSplashBootstrap';
+export * from './useSettingsScreenSections';
 export * from './useVerificationCodeInput';
 export * from './useVerifyCodeFlow';
 export * from './useWelcomeFlow';

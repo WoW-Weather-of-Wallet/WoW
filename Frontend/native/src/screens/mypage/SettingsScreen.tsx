@@ -25,6 +25,7 @@ import SecureKeypad from '../../components/common/SecureKeypad';
 import ProfileEditHeader from '../../components/mypage/ProfileEditHeader';
 import SettingSection from '../../components/mypage/SettingSection';
 import SettingItem from '../../components/mypage/SettingItem';
+import SettingsDescriptionRow from '../../components/mypage/SettingsDescriptionRow';
 import AgreedTermsModal from '../../components/mypage/AgreedTermsModal';
 import {
   changePassword,
@@ -45,6 +46,7 @@ import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { maskPhoneNumber } from '../../utils/phoneFormat';
 import { validatePassword } from '../../utils/validation';
+import { useSettingsScreenSections } from '../../hooks';
 import type { MyPageStackNavigationProp } from '../../types';
 
 type EditMode = 'profile' | 'password' | null;
@@ -536,6 +538,30 @@ export default function SettingsScreen() {
   const pinDescription = securityPreferences.pinEnabled ? '설정됨' : '미설정';
   const canShowBiometricSetting =
     securityPreferences.pinEnabled && Platform.OS !== 'ios';
+  const { profileDisplayName, loadingMessage, sections } = useSettingsScreenSections({
+    profile,
+    sessionLoginType,
+    securityPreferences,
+    notificationEnabled,
+    isLoading,
+    isNotificationSubmitting,
+    appVersion,
+    onEditProfile: openProfileEditor,
+    onEditPassword: openPasswordEditor,
+    onEditPhone: openPhoneEditor,
+    onToggleNotifications: (enabled: boolean) => {
+      void handleToggleNotifications(enabled);
+    },
+    onOpenPinEditor: openPinEditor,
+    onToggleBiometric: (enabled: boolean) => {
+      void handleToggleBiometric(enabled);
+    },
+    onClearPinCode: handleClearPinCode,
+    onOpenTerms: () => setIsTermsModalVisible(true),
+    onLogout: handleLogout,
+    onDeleteAccount: handleDeleteAccount,
+  });
+
   const headerContent = (
     <View style={styles.header}>
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>

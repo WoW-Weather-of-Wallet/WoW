@@ -3,7 +3,7 @@ import { Text, TouchableOpacity, View, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, fp, hp, wp } from '../../constants/theme';
 
-interface SettingItemProps {
+export interface SettingItemProps {
   label: string;
   value?: string;
   type?: 'link' | 'toggle' | 'text';
