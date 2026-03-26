@@ -20,7 +20,9 @@ export { default as HomeSpendingTypeCardDescription } from './HomeSpendingTypeCa
 export { default as HomeSpendingTypeCardHeader } from './HomeSpendingTypeCardHeader';
 export { default as HomeSpendingTypeReasonsSection } from './HomeSpendingTypeReasonsSection';
 export { default as HomeSpendingTypeCard } from './HomeSpendingTypeCard';
+export { default as HomeSpendingTypeSectionTitle } from './HomeSpendingTypeSectionTitle';
 export { default as HomeSpendingTypeSheet } from './HomeSpendingTypeSheet';
+export { default as HomeSpendingTypeStyleMapContent } from './HomeSpendingTypeStyleMapContent';
 export { default as HomeSpendingTypeStyleMapSection } from './HomeSpendingTypeStyleMapSection';
 export { default as HomeTodayWeatherCard } from './HomeTodayWeatherCard';
 export { default as HomeTodayWeatherHeader } from './HomeTodayWeatherHeader';

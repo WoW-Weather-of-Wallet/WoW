@@ -1,8 +1,7 @@
 import React from 'react';
-import { Text } from 'react-native';
 import type { HomeSpendingTypeReason } from '../../hooks/useHomeSpendingTypeSummary';
 import ReasonHighlightCard from './ReasonHighlightCard';
-import { styles } from './HomeSpendingTypeSheet.styles';
+import HomeSpendingTypeSectionTitle from './HomeSpendingTypeSectionTitle';
 
 interface HomeSpendingTypeReasonsSectionProps {
   title: string;
@@ -15,7 +14,7 @@ export default function HomeSpendingTypeReasonsSection({
 }: HomeSpendingTypeReasonsSectionProps) {
   return (
     <>
-      <Text style={styles.sheetSectionTitle}>{title}</Text>
+      <HomeSpendingTypeSectionTitle title={title} />
       {reasons.map((reason, index) => (
         <ReasonHighlightCard
           key={`${reason.title}-${index}`}

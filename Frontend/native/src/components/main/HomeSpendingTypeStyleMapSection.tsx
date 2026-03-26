@@ -1,8 +1,8 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import type { SpendingStyleMetric } from '../../constants/main/types';
-import LegendList from './LegendList';
-import SpendingStyleRadarChart from './SpendingStyleRadarChart';
+import HomeSpendingTypeSectionTitle from './HomeSpendingTypeSectionTitle';
+import HomeSpendingTypeStyleMapContent from './HomeSpendingTypeStyleMapContent';
 import { styles } from './HomeSpendingTypeSheet.styles';
 
 interface HomeSpendingTypeStyleMapSectionProps {
@@ -20,19 +20,14 @@ export default function HomeSpendingTypeStyleMapSection({
 }: HomeSpendingTypeStyleMapSectionProps) {
   return (
     <>
-      <Text style={styles.sheetSectionTitle}>{title}</Text>
-      <View style={styles.styleMapCard}>
-        {hasMetrics ? (
-          <>
-            <SpendingStyleRadarChart metrics={metrics} />
-            <View style={styles.styleLegend}>
-              <LegendList items={metrics} />
-            </View>
-          </>
-        ) : (
+      <HomeSpendingTypeSectionTitle title={title} />
+      {hasMetrics ? (
+        <HomeSpendingTypeStyleMapContent metrics={metrics} />
+      ) : (
+        <View style={styles.styleMapCard}>
           <Text style={styles.introText}>{emptyMessage}</Text>
-        )}
-      </View>
+        </View>
+      )}
     </>
   );
 }
