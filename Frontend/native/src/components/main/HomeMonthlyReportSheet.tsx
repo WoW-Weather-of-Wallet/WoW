@@ -5,6 +5,7 @@ import BottomSheetModal from '../common/BottomSheetModal';
 import CustomTextInput from '../common/CustomTextInput';
 import GradientButton from '../common/GradientButton';
 import { COLORS, wp } from '../../constants/theme';
+import { useHomeMonthlyBudgetForm } from '../../hooks/useHomeMonthlyBudgetForm';
 import LegendList from './LegendList';
 import { styles } from './HomeMonthlyReportSheet.styles';
 import type { LegendListItem } from '../../constants/main/types';
@@ -38,25 +39,16 @@ export default function HomeMonthlyReportSheet({
   isCreatingBudget = false,
   onCreateBudget,
 }: HomeMonthlyReportSheetProps) {
-  const [budgetAmount, setBudgetAmount] = React.useState('');
-
-  React.useEffect(() => {
-    if (!visible) {
-      setBudgetAmount('');
-    }
-  }, [visible]);
-
-  const parsedBudgetAmount = Number(budgetAmount.replace(/[^0-9]/g, ''));
-  const isBudgetAmountValid = Number.isFinite(parsedBudgetAmount) && parsedBudgetAmount > 0;
-
-  const handleCreateBudget = async () => {
-    if (!onCreateBudget || !isBudgetAmountValid || isCreatingBudget) {
-      return;
-    }
-
-    await onCreateBudget(parsedBudgetAmount);
-    setBudgetAmount('');
-  };
+  const {
+    budgetAmount,
+    isBudgetAmountValid,
+    handleBudgetAmountChange,
+    handleCreateBudget,
+  } = useHomeMonthlyBudgetForm({
+    visible,
+    isCreatingBudget,
+    onCreateBudget,
+  });
 
   return (
     <BottomSheetModal
@@ -74,7 +66,7 @@ export default function HomeMonthlyReportSheet({
           <CustomTextInput
             label="예산 금액 입력"
             value={budgetAmount}
-            onChangeText={(text) => setBudgetAmount(text.replace(/[^0-9]/g, ''))}
+            onChangeText={handleBudgetAmountChange}
             keyboardType="numeric"
           />
           <GradientButton
