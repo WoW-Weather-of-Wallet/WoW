@@ -11,10 +11,9 @@ import { Ionicons } from '@expo/vector-icons';
 import AuthStepLayout from '../../components/auth/AuthStepLayout';
 import { styles, CONSTANTS } from './CreateAccountScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
-import { useCreateAccountFlow } from '../../hooks';
+import { useCreateAccountFlow, usePasswordPairForm } from '../../hooks';
 import type { CreateAccountRouteParams } from '../../types/auth';
 import type { RootScreenProps } from '../../types';
-import { validatePassword } from '../../utils/validation';
 
 export default function CreateAccountScreen({
   route,
@@ -23,11 +22,6 @@ export default function CreateAccountScreen({
 
   const [step, setStep] = useState(1);
   const [id, setId] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isPwVisible, setIsPwVisible] = useState(false);
-  const [isConfirmPwVisible, setIsConfirmPwVisible] = useState(false);
-
   const {
     isCheckingId,
     isIdAvailable,
@@ -38,6 +32,23 @@ export default function CreateAccountScreen({
     handleCheckId: submitIdCheck,
     handleCreateAccount: submitCreateAccount,
   } = useCreateAccountFlow(routeParams);
+  const {
+    password,
+    confirmPassword,
+    isPasswordVisible,
+    isConfirmPasswordVisible,
+    passwordValidation,
+    isPasswordValid,
+    isPasswordMatch,
+    canShowMismatch,
+    isFormValid: isPasswordFormValid,
+    setPassword,
+    setConfirmPassword,
+    togglePasswordVisibility,
+    toggleConfirmPasswordVisibility,
+  } = usePasswordPairForm({
+    identifier: id,
+  });
 
   const idRef = useRef<TextInput>(null);
   const pwRef = useRef<TextInput>(null);
@@ -54,21 +65,8 @@ export default function CreateAccountScreen({
     }
   };
 
-  const handlePasswordChange = (text: string) => {
-    const filteredText = text.replace(/[^A-Za-z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/g, '');
-    setPassword(filteredText);
-  };
-
-  const handleConfirmPasswordChange = (text: string) => {
-    const filteredText = text.replace(/[^A-Za-z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/g, '');
-    setConfirmPassword(filteredText);
-  };
-
-  const passwordValidation = validatePassword(password, id);
-  const isPasswordValid = passwordValidation.isValid;
-  const isPasswordMatch = isPasswordValid && password === confirmPassword;
   const hasSignupIdentifier = Boolean(isIdAvailable);
-  const isFormValid = hasSignupIdentifier && isPasswordMatch && !isSubmitting;
+  const isFormValid = hasSignupIdentifier && isPasswordFormValid && !isSubmitting;
 
   const handleNextStep = () => {
     if (step === 2 && isPasswordValid) {
@@ -98,7 +96,11 @@ export default function CreateAccountScreen({
 
   const getButtonState = () => {
     if (step === 1) {
-      return { text: '다음', isActive: false, onPress: undefined as (() => void) | undefined };
+      return {
+        text: '다음',
+        isActive: false,
+        onPress: undefined as (() => void) | undefined,
+      };
     }
 
     if (step === 2) {
@@ -129,7 +131,7 @@ export default function CreateAccountScreen({
             ? '비밀번호를\n입력해 주세요.'
             : '비밀번호를\n한 번 더 입력해 주세요.'
       }
-      description="입력한 정보는 안전하게 보호되며 가입 완료 후 본인 계정으로 사용할 수 있어요."
+      description="입력한 정보는 안전하게 보호되며 회원가입 계정으로 사용할 수 있어요."
       scrollContentPaddingTop={CONSTANTS.scrollContentPaddingTop}
       scrollContentPaddingBottom={CONSTANTS.scrollContentPaddingBottom}
       bottomMinPadding={CONSTANTS.bottomContainerPaddingBottom}
@@ -213,25 +215,25 @@ export default function CreateAccountScreen({
               ref={pwRef}
               style={[styles.bareInput, styles.passwordInput, password.length > 0 && styles.bareInputLetterSpacing]}
               value={password}
-              onChangeText={handlePasswordChange}
+              onChangeText={setPassword}
               placeholder="비밀번호 (8자 이상)"
               placeholderTextColor={COLORS.textTertiary}
               autoCapitalize="none"
               autoCorrect={false}
-              secureTextEntry={!isPwVisible}
+              secureTextEntry={!isPasswordVisible}
               returnKeyType="next"
               onSubmitEditing={handleNextStep}
               editable={!isSubmitting}
             />
             <TouchableOpacity
-              onPress={() => setIsPwVisible(!isPwVisible)}
+              onPress={togglePasswordVisibility}
               style={styles.eyeIcon}
               activeOpacity={0.7}
             >
               <Ionicons
-                name={isPwVisible ? 'eye-outline' : 'eye-off-outline'}
+                name={isPasswordVisible ? 'eye-outline' : 'eye-off-outline'}
                 size={CONSTANTS.eyeIconSize}
-                color={isPwVisible ? COLORS.primary : COLORS.textTertiary}
+                color={isPasswordVisible ? COLORS.primary : COLORS.textTertiary}
               />
             </TouchableOpacity>
           </View>
@@ -250,29 +252,29 @@ export default function CreateAccountScreen({
                 confirmPassword.length > 0 && styles.bareInputLetterSpacing,
               ]}
               value={confirmPassword}
-              onChangeText={handleConfirmPasswordChange}
+              onChangeText={setConfirmPassword}
               placeholder="비밀번호 확인"
               placeholderTextColor={COLORS.textTertiary}
               autoCapitalize="none"
               autoCorrect={false}
-              secureTextEntry={!isConfirmPwVisible}
+              secureTextEntry={!isConfirmPasswordVisible}
               returnKeyType="done"
               onSubmitEditing={() => void handleCreateAccount()}
               editable={!isSubmitting}
             />
             <TouchableOpacity
-              onPress={() => setIsConfirmPwVisible(!isConfirmPwVisible)}
+              onPress={toggleConfirmPasswordVisibility}
               style={styles.eyeIcon}
               activeOpacity={0.7}
             >
               <Ionicons
-                name={isConfirmPwVisible ? 'eye-outline' : 'eye-off-outline'}
+                name={isConfirmPasswordVisible ? 'eye-outline' : 'eye-off-outline'}
                 size={CONSTANTS.eyeIconSize}
-                color={isConfirmPwVisible ? COLORS.primary : COLORS.textTertiary}
+                color={isConfirmPasswordVisible ? COLORS.primary : COLORS.textTertiary}
               />
             </TouchableOpacity>
           </View>
-          {confirmPassword.length > 0 && !isPasswordMatch && password.length >= 8 && (
+          {canShowMismatch && !isPasswordMatch && (
             <Text style={styles.errorMessage}>비밀번호가 일치하지 않아요.</Text>
           )}
           {isPasswordMatch && (
