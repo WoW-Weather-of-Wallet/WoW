@@ -1,7 +1,8 @@
 import React from 'react';
+
+import type { HomeScheduleItem } from '../../mock/dashboard';
 import SectionHeader from '../common/SectionHeader';
 import SurfaceCard from '../common/SurfaceCard';
-import type { HomeScheduleItem } from '../../mock/dashboard';
 import HomeScheduleEmptyState from './HomeScheduleEmptyState';
 import HomeScheduleItemCard from './HomeScheduleItemCard';
 
@@ -16,7 +17,11 @@ export default function HomeScheduleSection({
 
   return (
     <SurfaceCard>
-      <SectionHeader title="결제 일정" actionLabel={hasItems ? `${items.length}건 예정` : '예정 없음'} />
+      <SectionHeader
+        title="결제 일정"
+        actionLabel={hasItems ? `${items.length}건 예정` : '일정 없음'}
+      />
+
       {!hasItems ? (
         <HomeScheduleEmptyState
           title="등록된 결제 일정이 아직 없어요"
