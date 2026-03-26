@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,14 +21,7 @@ import {
   TELECOM_PLACEHOLDER,
   VERIFICATION_CODE_LENGTH,
 } from '../../constants/auth/identityVerification';
-import { updatePhone, normalizePhoneNumber } from '../../services/auth';
-import { extractApiErrorMessage } from '../../utils/error';
-import {
-  buildIdentityBackFromProfile,
-  buildIdentityFrontFromBirthDate,
-} from '../../utils/profileIdentity';
-import { validatePhone } from '../../utils/validation';
-import { useSmsVerification } from '../../hooks';
+import { usePhoneUpdateFlow } from '../../hooks';
 import type { MyPageStackScreenProps } from '../../types';
 
 export default function PhoneUpdateScreen({
@@ -37,120 +29,44 @@ export default function PhoneUpdateScreen({
   route,
 }: MyPageStackScreenProps<'PhoneUpdate'>) {
   const insets = useSafeAreaInsets();
-
   const rawPhone: string = route.params?.phoneNumber ?? '';
   const profileName: string = route.params?.name ?? '';
   const profileBirthDate: string = route.params?.birthDate ?? '';
   const profileGender: string = route.params?.gender ?? '';
-  const expectedSsnFront = buildIdentityFrontFromBirthDate(profileBirthDate);
-  const expectedSsnBack = buildIdentityBackFromProfile(
-    profileGender,
-    profileBirthDate,
-  );
-
-  const [telecom, setTelecom] = useState(TELECOM_PLACEHOLDER);
-  const [phone, setPhone] = useState('');
-  const [submitError, setSubmitError] = useState('');
-  const [isTelecomModalVisible, setIsTelecomModalVisible] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
   const {
+    expectedSsnFront,
+    expectedSsnBack,
+    telecom,
+    phone,
+    submitError,
+    isTelecomModalVisible,
+    isUpdating,
+    isButtonActive,
     phase,
     code,
     verifyError,
-    requestedPhoneNumber,
     requestedPhoneDisplay,
     isSending,
     isVerifying,
     isVerified,
-    startVerification,
     handlePressNumber,
     handlePressDelete,
     resendCode,
     backToForm,
-  } = useSmsVerification({
-    sendFallbackMessage:
-      '인증번호를 보내지 못했어요. 잠시 후 다시 시도해주세요.',
-    resendFallbackMessage:
-      '인증번호 재전송에 실패했어요. 잠시 후 다시 시도해주세요.',
-    verifyFallbackMessage:
-      '인증번호 확인 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.',
+    setPhone,
+    setSubmitError,
+    setIsTelecomModalVisible,
+    handleSelectTelecom,
+    handleSendCode,
+    handleUpdatePhone,
+  } = usePhoneUpdateFlow({
+    navigation,
+    rawPhone,
+    profileBirthDate,
+    profileGender,
   });
 
-  const validateForm = () => {
-    const normalizedPhoneNumber = normalizePhoneNumber(phone);
-    const phoneValidation = validatePhone(normalizedPhoneNumber);
-
-    if (telecom === TELECOM_PLACEHOLDER) {
-      return '통신사를 선택해주세요.';
-    }
-
-    if (!phoneValidation.isValid) {
-      return phoneValidation.message;
-    }
-
-    if (normalizedPhoneNumber === normalizePhoneNumber(rawPhone)) {
-      return '현재 번호와 다른 휴대폰 번호를 입력해주세요.';
-    }
-
-    return null;
-  };
-
-  const handleSelectTelecom = (value: string) => {
-    setTelecom(value);
-    setIsTelecomModalVisible(false);
-    setSubmitError('');
-  };
-
-  const handleSendCode = async () => {
-    if (isSending) {
-      return;
-    }
-
-    const validationMessage = validateForm();
-    if (validationMessage) {
-      setSubmitError(validationMessage);
-      return;
-    }
-
-    const normalizedPhoneNumber = normalizePhoneNumber(phone);
-    setSubmitError('');
-    await startVerification(normalizedPhoneNumber);
-  };
-
-  const handleUpdatePhone = async () => {
-    if (!isVerified || isUpdating) {
-      return;
-    }
-
-    setIsUpdating(true);
-
-    try {
-      await updatePhone({ phoneNumber: requestedPhoneNumber });
-      Alert.alert(
-        '변경 완료',
-        '휴대폰 번호가 정상적으로 변경되었어요.',
-        [
-          {
-            text: '확인',
-            onPress: () => navigation.goBack(),
-          },
-        ],
-      );
-    } catch (error) {
-      const message = extractApiErrorMessage(
-        error,
-        '휴대폰 번호 변경 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.',
-      );
-      Alert.alert('휴대폰 번호 변경 오류', message);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   if (phase === 'form') {
-    const isButtonActive =
-      telecom !== TELECOM_PLACEHOLDER && phone.length >= 10 && !isSending;
-
     return (
       <>
         <IdentityStepFormLayout
@@ -184,7 +100,12 @@ export default function PhoneUpdateScreen({
             style={styles.inputSection}
           >
             <View style={styles.underlineContainer}>
-              <Text style={[styles.bareText, { letterSpacing: profileName ? 2 : 0 }]}>
+              <Text
+                style={[
+                  styles.bareText,
+                  { letterSpacing: profileName ? 2 : 0 },
+                ]}
+              >
                 {profileName || '-'}
               </Text>
             </View>
