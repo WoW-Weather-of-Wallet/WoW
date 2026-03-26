@@ -1,7 +1,8 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { styles } from './LegendList.styles';
 import type { LegendListItem } from '../../constants/main/types';
+import LegendListRow from './LegendListRow';
 
 interface LegendListProps {
   items: LegendListItem[];
@@ -15,14 +16,8 @@ export default function LegendList({
 }: LegendListProps) {
   return (
     <View style={[styles.container, variant === 'divider' && styles.dividerContainer]}>
-      {items.map((item) => (
-        <View key={item.id} style={styles.row}>
-          <View style={styles.left}>
-            <View style={[styles.dot, { backgroundColor: item.color }]} />
-            <Text style={styles.label}>{item.label}</Text>
-          </View>
-          <Text style={[styles.value, { color: item.color }]}>{item.value}</Text>
-        </View>
+      {items.map(item => (
+        <LegendListRow key={item.id} item={item} />
       ))}
     </View>
   );

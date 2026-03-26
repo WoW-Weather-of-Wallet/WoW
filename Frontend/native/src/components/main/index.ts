@@ -28,6 +28,7 @@ export { default as HomeWeatherGuideItemRow } from './HomeWeatherGuideItemRow';
 export { default as HomeWeeklyPreviewDayColumn } from './HomeWeeklyPreviewDayColumn';
 export { default as HomeWeeklyPreviewCard } from './HomeWeeklyPreviewCard';
 export { default as LegendList } from './LegendList';
+export { default as LegendListRow } from './LegendListRow';
 export { default as ReasonHighlightCard } from './ReasonHighlightCard';
 export { default as SheetIconHeader } from './SheetIconHeader';
 export { default as SpendingStyleGuideHeader } from './SpendingStyleGuideHeader';
