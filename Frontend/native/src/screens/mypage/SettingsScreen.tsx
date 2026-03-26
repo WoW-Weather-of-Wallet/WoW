@@ -3,12 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
-  Modal,
-  Platform,
-  Pressable,
-  Switch,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -16,12 +11,11 @@ import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { styles } from './SettingsScreen.styles';
-import { COLORS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, hp, wp } from '../../constants/theme';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import { useAuthStore } from '../../store/authStore';
 import { useLocalSecurityStore } from '../../store/localSecurityStore';
 import { fcmService } from '../../services/fcmService';
-import SecureKeypad from '../../components/common/SecureKeypad';
 import ProfileEditHeader from '../../components/mypage/ProfileEditHeader';
 import SettingSection from '../../components/mypage/SettingSection';
 import SettingItem from '../../components/mypage/SettingItem';
@@ -46,7 +40,6 @@ import {
 } from '../../services/localSecurity';
 import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
-import { maskPhoneNumber } from '../../utils/phoneFormat';
 import { validatePassword } from '../../utils/validation';
 import { useSettingsScreenSections } from '../../hooks';
 import type { MyPageStackNavigationProp } from '../../types';
@@ -531,15 +524,6 @@ export default function SettingsScreen() {
     });
   };
 
-
-  const pushToggleDescription = isPushEnabled ? '켜짐' : '꺼짐';
-  const userIdentifier =
-    profile?.userId ?? (profile?.loginType === 'SSAFY' ? 'SSAFY 로그인' : '-');
-  const phoneDisplay = maskPhoneNumber(profile?.phoneNumber ?? '');
-  const biometricDescription = securityPreferences.biometricEnabled ? '사용 중' : '꺼짐';
-  const pinDescription = securityPreferences.pinEnabled ? '설정됨' : '미설정';
-  const canShowBiometricSetting =
-    securityPreferences.pinEnabled && Platform.OS !== 'ios';
   const { profileDisplayName, loadingMessage, sections } = useSettingsScreenSections({
     profile,
     sessionLoginType,
@@ -584,265 +568,76 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <ProfileEditHeader
-          name={profile?.name ?? '사용자'}
+          name={profileDisplayName}
           onEditPress={handleEditProfilePhoto}
         />
 
         {isLoading ? (
           <View style={styles.loadingCard}>
             <ActivityIndicator color={COLORS.primary} />
-            <Text style={styles.loadingText}>설정 정보를 불러오는 중입니다.</Text>
+            <Text style={styles.loadingText}>{loadingMessage}</Text>
           </View>
         ) : null}
 
-        <SettingSection title="계정 정보">
-          <SettingItem label="아이디" value={userIdentifier} type="text" />
-          <SettingItem
-            label="프로필 정보 수정"
-            value={profile?.name ?? '-'}
-            onPress={openProfileEditor}
-          />
-          <SettingItem label="비밀번호 변경" onPress={openPasswordEditor} />
-          <SettingItem label="휴대폰 번호" value={phoneDisplay} onPress={openPhoneEditor} />
-        </SettingSection>
-
-        <SettingSection title="서비스 설정">
-          <SettingItem label="알림 상태" value={pushToggleDescription} type="text" />
-          <View style={styles.toggleRow}>
-            <Text style={styles.toggleDescription}>
-              앱 푸시 알림 수신 여부를 바로 변경할 수 있습니다.
-            </Text>
-            <Switch
-              value={isPushEnabled}
-              disabled={isLoading || isNotificationSubmitting}
-              onValueChange={(enabled) => {
-                void handleToggleNotifications(enabled);
-              }}
-              thumbColor={COLORS.textInverse}
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
-            />
-          </View>
-        </SettingSection>
-
-        <SettingSection title="보안 설정">
-          <SettingItem
-            label={securityPreferences.pinEnabled ? '간편비밀번호 변경' : '간편비밀번호 설정'}
-            value={pinDescription}
-            onPress={openPinEditor}
-          />
-          <View style={styles.toggleRow}>
-            <Text style={styles.toggleDescription}>
-              계정 로그인은 유지하고, 앱을 다시 열 때만 간편로그인으로 본인 확인을 진행합니다.
-            </Text>
-          </View>
-          {canShowBiometricSetting ? (
-            <>
-              <SettingItem
-                label="생체인증 사용"
-                value={biometricDescription}
-                type="toggle"
-                isToggled={securityPreferences.biometricEnabled}
-                onToggle={(enabled) => {
-                  void handleToggleBiometric(enabled);
-                }}
-              />
-              <View style={styles.toggleRow}>
-                <Text style={styles.toggleDescription}>
-                  생체인증은 간편비밀번호가 등록된 경우에만 보조 수단으로 사용할 수 있어요.
-                </Text>
-              </View>
-            </>
-          ) : null}
-          {securityPreferences.pinEnabled ? (
-            <SettingItem label="간편비밀번호 해제" isDanger onPress={handleClearPinCode} />
-          ) : null}
-        </SettingSection>
-
-        <SettingSection title="이용 안내">
-          <SettingItem
-            label="동의한 약관 확인"
-            onPress={() => setIsTermsModalVisible(true)}
-          />
-          <SettingItem label="현재 버전" value={appVersion} type="text" />
-        </SettingSection>
-
-
-        <SettingSection>
-          <SettingItem label="로그아웃" onPress={handleLogout} />
-          <SettingItem label="회원 탈퇴" isDanger onPress={handleDeleteAccount} />
-        </SettingSection>
+        {sections.map((section) => (
+          <SettingSection key={section.key} title={section.title}>
+            {section.rows.map((row) =>
+              row.kind === 'item' ? (
+                <SettingItem key={row.key} {...row.props} />
+              ) : (
+                <SettingsDescriptionRow
+                  key={row.key}
+                  description={row.description}
+                  switchValue={row.switchValue}
+                  onToggle={row.onToggle}
+                  disabled={row.disabled}
+                />
+              ),
+            )}
+          </SettingSection>
+        ))}
 
         <View style={{ height: hp(40) }} />
       </BottomTabScreenLayout>
 
-      <Modal
+      <SettingsEditModal
         visible={editMode !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={closeEditor}
-      >
-        <Pressable style={styles.modalBackdrop} onPress={closeEditor}>
-          <Pressable style={styles.modalCard} onPress={(event) => event.stopPropagation()}>
-            <Text style={styles.modalTitle}>
-              {editMode === 'profile'
-                ? '프로필 정보 수정'
-                : '비밀번호 변경'}
-            </Text>
+        editMode={editMode}
+        isSubmitting={isSubmitting}
+        name={name}
+        gender={gender}
+        birthDate={birthDate}
+        currentPw={currentPw}
+        newPw={newPw}
+        confirmPw={confirmPw}
+        userId={profile?.userId ?? null}
+        isCurrentPwVisible={isCurrentPwVisible}
+        isNewPwVisible={isNewPwVisible}
+        isConfirmPwVisible={isConfirmPwVisible}
+        onClose={closeEditor}
+        onSubmit={() => {
+          void handleSubmit();
+        }}
+        onChangeCurrentPw={setCurrentPw}
+        onChangeNewPw={setNewPw}
+        onChangeConfirmPw={setConfirmPw}
+        onToggleCurrentPwVisible={() => setIsCurrentPwVisible((prev) => !prev)}
+        onToggleNewPwVisible={() => setIsNewPwVisible((prev) => !prev)}
+        onToggleConfirmPwVisible={() => setIsConfirmPwVisible((prev) => !prev)}
+      />
 
-            {editMode === 'profile' ? (
-              <>
-                {/**
-                 * [Defense-Log] 백엔드 감사 결과(P1, P3)에 따르면 SSAFY 회원도 프로필 수정이 가능할 수 있음.
-                 * 하지만 기획상 이름/성별/생년월일은 본인인증 데이터이므로 수정을 막는 것이 안전합니다.
-                 * (백엔드는 열려있어도 프론트 UI에서 선제적 방어)
-                 */}
-                <View style={styles.readOnlyInput}>
-                  <Text style={styles.readOnlyLabel}>이름</Text>
-                  <Text style={styles.readOnlyValue}>{name}</Text>
-                </View>
-                <View style={styles.readOnlyInput}>
-                  <Text style={styles.readOnlyLabel}>성별</Text>
-                  <Text style={styles.readOnlyValue}>{gender === 'M' ? '남성' : '여성'}</Text>
-                </View>
-                <View style={styles.readOnlyInput}>
-                  <Text style={styles.readOnlyLabel}>생년월일</Text>
-                  <Text style={styles.readOnlyValue}>{birthDate}</Text>
-                </View>
-                <Text style={styles.readOnlyHint}>* 기본 정보는 본인인증을 통해 확인된 정보라 직접 수정할 수 없어요.</Text>
-              </>
-            ) : null}
-
-            {editMode === 'password' ? (
-              <>
-                <View style={styles.passwordInputContainer}>
-                  <TextInput
-                    style={[styles.input, { flex: 1 }]}
-                    placeholder="현재 비밀번호"
-                    placeholderTextColor={COLORS.textTertiary}
-                    value={currentPw}
-                    onChangeText={setCurrentPw}
-                    secureTextEntry={!isCurrentPwVisible}
-                  />
-                  <TouchableOpacity 
-                    style={styles.inputEyeIcon} 
-                    onPress={() => setIsCurrentPwVisible(!isCurrentPwVisible)}
-                  >
-                    <Ionicons 
-                      name={isCurrentPwVisible ? "eye-outline" : "eye-off-outline"} 
-                      size={wp(22)} 
-                      color={COLORS.textTertiary} 
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.passwordInputContainer}>
-                  <TextInput
-                    style={[styles.input, { flex: 1 }]}
-                    placeholder="새 비밀번호 (8~20자, 조합 필수)"
-                    placeholderTextColor={COLORS.textTertiary}
-                    value={newPw}
-                    onChangeText={setNewPw}
-                    secureTextEntry={!isNewPwVisible}
-                  />
-                  <TouchableOpacity 
-                    style={styles.inputEyeIcon} 
-                    onPress={() => setIsNewPwVisible(!isNewPwVisible)}
-                  >
-                    <Ionicons 
-                      name={isNewPwVisible ? "eye-outline" : "eye-off-outline"} 
-                      size={wp(22)} 
-                      color={COLORS.textTertiary} 
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                {newPw.length > 0 && (
-                  <Text style={[
-                    styles.errorMessage, 
-                    { marginTop: 0, marginBottom: hp(8), fontSize: fp(12) },
-                    validatePassword(newPw, profile?.userId || undefined).isValid && { color: COLORS.success }
-                  ]}>
-                    * {validatePassword(newPw, profile?.userId || undefined).message}
-                  </Text>
-                )}
-
-                <View style={styles.passwordInputContainer}>
-                  <TextInput
-                    style={[styles.input, { flex: 1 }]}
-                    placeholder="새 비밀번호 확인"
-                    placeholderTextColor={COLORS.textTertiary}
-                    value={confirmPw}
-                    onChangeText={setConfirmPw}
-                    secureTextEntry={!isConfirmPwVisible}
-                  />
-                  <TouchableOpacity
-                    style={styles.inputEyeIcon}
-                    onPress={() => setIsConfirmPwVisible(!isConfirmPwVisible)}
-                  >
-                    <Ionicons
-                      name={isConfirmPwVisible ? "eye-outline" : "eye-off-outline"}
-                      size={wp(22)}
-                      color={COLORS.textTertiary}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </>
-            ) : null}
-
-            <View style={styles.modalButtonRow}>
-              <TouchableOpacity style={styles.secondaryButton} onPress={closeEditor}>
-                <Text style={styles.secondaryButtonText}>취소</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.primaryButton} onPress={() => void handleSubmit()}>
-                <Text style={styles.primaryButtonText}>
-                  {isSubmitting ? '저장 중...' : '저장'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      <Modal
+      <SettingsPinModal
         visible={isPinModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={closePinModal}
-      >
-        <Pressable style={styles.modalBackdrop} onPress={closePinModal}>
-          <Pressable style={styles.pinModalCard} onPress={(event) => event.stopPropagation()}>
-            <Text style={styles.modalTitle}>{getPinModalTitle()}</Text>
-            <Text style={styles.pinModalDescription}>{getPinModalDescription()}</Text>
-
-            <View style={styles.pinIndicatorRow}>
-              {Array.from({ length: 6 }).map((_, index) => (
-                <View
-                  key={`settings-pin-dot-${index}`}
-                  style={[
-                    styles.pinIndicatorDot,
-                    index < pinInput.length && styles.pinIndicatorDotFilled,
-                  ]}
-                />
-              ))}
-            </View>
-
-            {pinError ? <Text style={styles.errorMessage}>{pinError}</Text> : null}
-
-            <SecureKeypad
-              onPressNumber={(digit) => {
-                void handleAppendPinDigit(digit);
-              }}
-              onPressDelete={handleDeletePinDigit}
-            />
-
-            <View style={styles.modalButtonRow}>
-              <TouchableOpacity style={styles.secondaryButton} onPress={closePinModal}>
-                <Text style={styles.secondaryButtonText}>취소</Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        title={getPinModalTitle()}
+        description={getPinModalDescription()}
+        pinInput={pinInput}
+        pinError={pinError}
+        onClose={closePinModal}
+        onPressNumber={(digit) => {
+          void handleAppendPinDigit(digit);
+        }}
+        onPressDelete={handleDeletePinDigit}
+      />
 
       <AgreedTermsModal
         visible={isTermsModalVisible}
