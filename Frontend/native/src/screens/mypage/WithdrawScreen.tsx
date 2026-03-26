@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import StepIndicator from '../../components/common/StepIndicator';
 import AuthActionButton from '../../components/common/AuthActionButton';
 import IdentityStepFormLayout from '../../components/common/IdentityStepFormLayout';
+import TelecomPhoneInputSection from '../../components/common/TelecomPhoneInputSection';
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import VerificationCodeStep from '../../components/common/VerificationCodeStep';
 import { styles } from './WithdrawScreen.styles';
@@ -185,46 +186,30 @@ export default function WithdrawScreen({
             entering={FadeInDown.delay(220).duration(400)}
             style={styles.inputSection}
           >
-            <TouchableOpacity
-              style={styles.telecomSelector}
-              onPress={() => setIsTelecomModalVisible(true)}
-            >
-              <Text
-                style={[
-                  styles.telecomText,
-                  telecom === TELECOM_PLACEHOLDER && styles.placeholderText,
-                ]}
-              >
-                {telecom}
-              </Text>
-              <Ionicons
-                name="chevron-down"
-                size={wp(24)}
-                color={COLORS.textPrimary}
-              />
-            </TouchableOpacity>
-
-            <View style={[styles.underlineContainer, { marginTop: hp(32) }]}>
-              <TextInput
-                style={[
-                  styles.bareInput,
-                  { letterSpacing: phone.length > 0 ? 2 : 0 },
-                ]}
-                value={phone}
-                onChangeText={(text) => {
-                  setPhone(text.replace(/[^0-9]/g, ''));
-                  setSubmitError('');
-                }}
-                placeholder="휴대폰 번호 (- 없이 입력)"
-                placeholderTextColor={COLORS.textTertiary}
-                keyboardType="number-pad"
-                maxLength={11}
-              />
-            </View>
-
-            {submitError.length > 0 ? (
-              <Text style={styles.errorText}>{submitError}</Text>
-            ) : null}
+            <TelecomPhoneInputSection
+              telecom={telecom}
+              telecomPlaceholder={TELECOM_PLACEHOLDER}
+              phone={phone}
+              onOpenTelecomModal={() => setIsTelecomModalVisible(true)}
+              onPhoneChange={(text) => {
+                setPhone(text.replace(/[^0-9]/g, ''));
+                setSubmitError('');
+              }}
+              phonePlaceholder="휴대폰 번호 (- 없이 입력)"
+              selectorStyle={styles.telecomSelector}
+              telecomTextStyle={styles.telecomText}
+              placeholderTextStyle={styles.placeholderText}
+              phoneInputContainerStyle={[styles.underlineContainer, { marginTop: hp(32) }]}
+              phoneInputStyle={[
+                styles.bareInput,
+                { letterSpacing: phone.length > 0 ? 2 : 0 },
+              ]}
+              errorTextStyle={styles.errorText}
+              errorText={submitError}
+              chevronIconSize={wp(24)}
+              chevronIconColor={COLORS.textPrimary}
+              placeholderTextColor={COLORS.textTertiary}
+            />
           </Animated.View>
 
           <Animated.View
