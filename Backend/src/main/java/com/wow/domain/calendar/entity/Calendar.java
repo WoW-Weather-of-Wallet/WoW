@@ -1,17 +1,7 @@
 package com.wow.domain.calendar.entity;
 
 import com.wow.domain.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -71,4 +62,15 @@ public class Calendar {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    // Calendar.java 엔티티에 추가
+    public void updateMemo(String memo) {
+        this.memo = memo;
+    }
+
+    // Calendar.java 엔티티에 추가
+    public void updateDailySummary(BigDecimal dailyTotal, int transactionCount) {
+        this.dailyTotal = dailyTotal != null ? dailyTotal.longValue() : null;
+        this.transactionCount = transactionCount;
+    }
 }

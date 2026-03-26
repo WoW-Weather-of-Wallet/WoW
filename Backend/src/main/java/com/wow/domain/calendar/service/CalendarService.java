@@ -298,6 +298,11 @@ public class CalendarService {
                 .toList();
 
         transactionRepository.saveAll(entities);
+
+// Set<LocalDate> 제거하고 그냥 재사용
+        for (LocalDate date : dates) {
+            recalculateDailySummary(userId, date);
+        }
         spendingAnalysisService.evictMonthlyCompareCache(userId);
         return new TransactionConfirmResponse(entities.size(), representativeDate);
     }
@@ -496,9 +501,21 @@ public class CalendarService {
     }
 
     // 직접거래내역삭제
+//    @Transactional
+//    public void deleteTransaction(Long userId, Long transactionId) {
+//
+//        Transaction transaction = transactionRepository.findById(transactionId)
+//                .orElseThrow(() -> new NotFoundException("거래내역을 찾을 수 없습니다."));
+//
+//        if (!transaction.getUser().getId().equals(userId)) {
+//            throw new ForbiddenException("삭제 권한이 없습니다.");
+//        }
+//
+//        transactionRepository.delete(transaction);
+//        spendingAnalysisService.evictMonthlyCompareCache(userId);
+//    }
     @Transactional
     public void deleteTransaction(Long userId, Long transactionId) {
-
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new NotFoundException("거래내역을 찾을 수 없습니다."));
 
@@ -506,7 +523,9 @@ public class CalendarService {
             throw new ForbiddenException("삭제 권한이 없습니다.");
         }
 
+        LocalDate date = transaction.getTransactionAt().toLocalDate(); // 삭제 전에 날짜 저장
         transactionRepository.delete(transaction);
+        recalculateDailySummary(userId, date); // 삭제 후 재계산
         spendingAnalysisService.evictMonthlyCompareCache(userId);
     }
 
@@ -571,13 +590,90 @@ public class CalendarService {
                 })
                 .toList();
 
+        // createCashTransaction() 마지막에 추가
         transactionRepository.saveAll(entities);
+
+// 날짜별로 summary 재계산
+        Set<LocalDate> dates = entities.stream()
+                .map(t -> t.getTransactionAt().toLocalDate())
+                .collect(Collectors.toSet());
+        for (LocalDate date : dates) {
+            recalculateDailySummary(userId, date);
+        }
+
         spendingAnalysisService.evictMonthlyCompareCache(userId);
 
         List<TransactionCustomResponse.TransactionCustomItem> responseItems = entities.stream()
                 .map(TransactionCustomResponse.TransactionCustomItem::from)
                 .toList();
 
+
         return new TransactionCustomResponse(entities.size(), responseItems);
     }
+
+    // CalendarService.java에 추가
+    @Transactional
+    public void updateMemo(Long userId, LocalDate date, String memo) {
+        Calendar calendar = calendarRepository.findByUserIdAndDateWithWeather(userId, date)
+                .orElseThrow(() -> new NotFoundException("해당 날짜의 캘린더를 찾을 수 없습니다."));
+
+        calendar.updateMemo(memo); // Calendar 엔티티에 updateMemo() 메서드 필요
+    }
+
+
+    // CalendarService.java에 추가
+//    @Transactional
+//    public void recalculateDailySummary(Long userId, LocalDate date) {
+//        LocalDateTime dayStart = date.atStartOfDay();
+//        LocalDateTime dayEnd = date.plusDays(1).atStartOfDay();
+//
+//        // 해당 날짜 거래내역 전체 조회
+//        List<Transaction> transactions =
+//                transactionRepository.findDailyByUserIdWithCategory(userId, dayStart, dayEnd);
+//
+//        // 합계 및 건수 계산
+//        BigDecimal totalExpense = transactions.stream()
+//                .map(Transaction::getAmount)
+//                .reduce(BigDecimal.ZERO, BigDecimal::add);
+//        int transactionCount = transactions.size();
+//
+//        // 캘린더가 없으면 생성, 있으면 업데이트
+//        Calendar calendar = calendarRepository
+//                .findByUserIdAndDateWithWeather(userId, date)
+//                .orElseGet(() -> {
+//                    User user = userRepository.findById(userId)
+//                            .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+//                    return calendarRepository.save(
+//                            Calendar.builder()
+//                                    .user(user)
+//                                    .date(date)
+//                                    .build()
+//                    );
+//                });
+//
+//        calendar.updateDailySummary(totalExpense, transactionCount);
+//    }
+    @Transactional
+    public void recalculateDailySummary(Long userId, LocalDate date) {
+        LocalDateTime dayStart = date.atStartOfDay();
+        LocalDateTime dayEnd = date.plusDays(1).atStartOfDay();
+
+        // 캘린더 없으면 재계산 불필요 (spendingWeather FK 제약 때문에 새로 생성 안 함)
+        Calendar calendar = calendarRepository
+                .findByUserIdAndDateWithWeather(userId, date)
+                .orElse(null);
+
+        if (calendar == null) return;
+
+        List<Transaction> transactions =
+                transactionRepository.findDailyByUserIdWithCategory(userId, dayStart, dayEnd);
+
+        BigDecimal totalExpense = transactions.stream()
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        calendar.updateDailySummary(totalExpense, transactions.size());
+    }
+
+
 }
