@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.wow.validation.RequestValidationTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-03-26T20:08:43.565Z" hostname="DESKTOP-6OO0P6F" time="0.096">
+<testsuite name="com.wow.validation.RequestValidationTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-03-26T20:15:21.248Z" hostname="DESKTOP-6OO0P6F" time="0.111">
   <properties/>
-  <testcase name="ssafyCheckRequestRejectsInvalidPhoneNumberFormat()" classname="com.wow.validation.RequestValidationTest" time="0.032"/>
+  <testcase name="ssafyCheckRequestRejectsInvalidPhoneNumberFormat()" classname="com.wow.validation.RequestValidationTest" time="0.021"/>
   <testcase name="ssafyCheckRequestRejectsBlankPendingToken()" classname="com.wow.validation.RequestValidationTest" time="0.003"/>
-  <testcase name="tokenRefreshRequestRejectsBlankRefreshToken()" classname="com.wow.validation.RequestValidationTest" time="0.005"/>
-  <testcase name="smsVerifyRequestRejectsNonSixDigitCode()" classname="com.wow.validation.RequestValidationTest" time="0.003"/>
-  <testcase name="findIdRequestRejectsNullGender()" classname="com.wow.validation.RequestValidationTest" time="0.003"/>
-  <testcase name="smsSendRequestRejectsInvalidPhoneNumberFormat()" classname="com.wow.validation.RequestValidationTest" time="0.003"/>
-  <testcase name="userCreateRequestRejectsEmailStyleUserId()" classname="com.wow.validation.RequestValidationTest" time="0.006"/>
-  <testcase name="findIdRequestRejectsInvalidGender()" classname="com.wow.validation.RequestValidationTest" time="0.005"/>
-  <testcase name="findPasswordRequestRejectsNullGender()" classname="com.wow.validation.RequestValidationTest" time="0.006"/>
-  <testcase name="updateProfileRequestAllowsNullNameForPartialUpdate()" classname="com.wow.validation.RequestValidationTest" time="0.003"/>
-  <testcase name="updatePhoneRequestRejectsInvalidPhoneNumberFormat()" classname="com.wow.validation.RequestValidationTest" time="0.002"/>
-  <testcase name="updateProfileRequestRejectsBlankOnlyName()" classname="com.wow.validation.RequestValidationTest" time="0.002"/>
+  <testcase name="tokenRefreshRequestRejectsBlankRefreshToken()" classname="com.wow.validation.RequestValidationTest" time="0.003"/>
+  <testcase name="smsVerifyRequestRejectsNonSixDigitCode()" classname="com.wow.validation.RequestValidationTest" time="0.006"/>
+  <testcase name="findIdRequestRejectsNullGender()" classname="com.wow.validation.RequestValidationTest" time="0.006"/>
+  <testcase name="smsSendRequestRejectsInvalidPhoneNumberFormat()" classname="com.wow.validation.RequestValidationTest" time="0.004"/>
+  <testcase name="userCreateRequestRejectsEmailStyleUserId()" classname="com.wow.validation.RequestValidationTest" time="0.008"/>
+  <testcase name="findIdRequestRejectsInvalidGender()" classname="com.wow.validation.RequestValidationTest" time="0.003"/>
+  <testcase name="findPasswordRequestRejectsNullGender()" classname="com.wow.validation.RequestValidationTest" time="0.005"/>
+  <testcase name="updateProfileRequestAllowsNullNameForPartialUpdate()" classname="com.wow.validation.RequestValidationTest" time="0.005"/>
+  <testcase name="updatePhoneRequestRejectsInvalidPhoneNumberFormat()" classname="com.wow.validation.RequestValidationTest" time="0.004"/>
+  <testcase name="updateProfileRequestRejectsBlankOnlyName()" classname="com.wow.validation.RequestValidationTest" time="0.004"/>
   <testcase name="userCreateRequestRejectsNullUserId()" classname="com.wow.validation.RequestValidationTest" time="0.003"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>

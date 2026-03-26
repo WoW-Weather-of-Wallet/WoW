@@ -12,4 +12,11 @@ public interface AiAnalysisRepository extends JpaRepository<AiAnalysis, Long> {
             Long userId,
             AiAnalysisType analysisType
     );
+
+    void deleteByUser_IdAndYearAndMonthAndAnalysisType(
+            Long userId,
+            Integer year,
+            Integer month,
+            AiAnalysisType analysisType
+    );
 }

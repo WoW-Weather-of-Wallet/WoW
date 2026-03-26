@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.wow.domain.user.service.UserServiceTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-03-26T20:08:42.912Z" hostname="DESKTOP-6OO0P6F" time="0.236">
+<testsuite name="com.wow.domain.user.service.UserServiceTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-03-26T20:15:20.728Z" hostname="DESKTOP-6OO0P6F" time="0.207">
   <properties/>
-  <testcase name="deleteUserDeletesRefreshTokenAndUserOnly()" classname="com.wow.domain.user.service.UserServiceTest" time="0.088"/>
-  <testcase name="updatePhoneFailsWhenUpdateThrows()" classname="com.wow.domain.user.service.UserServiceTest" time="0.132"/>
-  <testcase name="updateProfileTrimsNameBeforeSaving()" classname="com.wow.domain.user.service.UserServiceTest" time="0.005"/>
-  <testcase name="updatePhoneRejectsCurrentPhoneNumberEvenWhenFormatDiffers()" classname="com.wow.domain.user.service.UserServiceTest" time="0.005"/>
+  <testcase name="deleteUserDeletesRefreshTokenAndUserOnly()" classname="com.wow.domain.user.service.UserServiceTest" time="0.082"/>
+  <testcase name="updatePhoneFailsWhenUpdateThrows()" classname="com.wow.domain.user.service.UserServiceTest" time="0.112"/>
+  <testcase name="updateProfileTrimsNameBeforeSaving()" classname="com.wow.domain.user.service.UserServiceTest" time="0.004"/>
+  <testcase name="updatePhoneRejectsCurrentPhoneNumberEvenWhenFormatDiffers()" classname="com.wow.domain.user.service.UserServiceTest" time="0.004"/>
   <testcase name="updatePhoneUsesNormalizedPhoneNumberWhenChangingToNewNumber()" classname="com.wow.domain.user.service.UserServiceTest" time="0.003"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
