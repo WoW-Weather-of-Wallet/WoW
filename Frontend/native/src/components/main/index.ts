@@ -1,4 +1,7 @@
 export { default as HomeBudgetReportCard } from './HomeBudgetReportCard';
+export { default as HomeBudgetReportHeader } from './HomeBudgetReportHeader';
+export { default as HomeBudgetReportStatus } from './HomeBudgetReportStatus';
+export { default as HomeBudgetReportTexts } from './HomeBudgetReportTexts';
 export { default as HomeBudgetSetupCard } from './HomeBudgetSetupCard';
 export { default as HomeDashboardContent } from './HomeDashboardContent';
 export { default as HomeDashboardSheets } from './HomeDashboardSheets';

@@ -1,9 +1,11 @@
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, wp } from '../../constants/theme';
+import { COLORS } from '../../constants/theme';
 import { useHomeBudgetReportSummary } from '../../hooks/useHomeBudgetReportSummary';
+import HomeBudgetReportHeader from './HomeBudgetReportHeader';
+import HomeBudgetReportStatus from './HomeBudgetReportStatus';
+import HomeBudgetReportTexts from './HomeBudgetReportTexts';
 import { styles } from './HomeBudgetReportCard.styles';
 
 interface HomeBudgetReportCardProps {
@@ -50,47 +52,17 @@ export default function HomeBudgetReportCard({
         colors={[COLORS.budgetGradientStart, COLORS.budgetGradientEnd]}
         style={styles.heroCard}
       >
-        <View style={[styles.rowBetween, styles.heroTop]}>
-          <View style={styles.flex1}>
-            <Text style={styles.eyebrow}>{monthLabel}</Text>
-            <Text style={styles.heroTitle}>
-              {trimmedUserName ? (
-                <>
-                  <Text style={styles.heroTitleHighlight}>{trimmedUserName}</Text>님의 예산 현황
-                </>
-              ) : (
-                '이번 달 예산 리포트'
-              )}
-            </Text>
-          </View>
-          <View style={styles.aiBadge}>
-            <Ionicons
-              name="sparkles-outline"
-              size={wp(14)}
-              color={COLORS.primary}
-            />
-            <Text style={styles.aiBadgeText}>AI</Text>
-          </View>
-        </View>
-
-        <View style={styles.rowBetween}>
-          <View>
-            <Text style={styles.amountLabel}>{hasBudgetData ? '남은 예산' : '리포트 준비 중'}</Text>
-            <Text style={styles.amountValue}>{remainingValue}</Text>
-          </View>
-          <View style={styles.usageChip}>
-            <Text style={styles.usageChipText}>{usageLabel}</Text>
-          </View>
-        </View>
-
-        <View style={styles.progressTrack}>
-          <View
-            style={[styles.progressFill, { width: `${usageRate}%` }]}
-          />
-        </View>
-
-        <Text style={styles.helperText}>{helperMessage}</Text>
-        <Text style={styles.forecastText}>{forecastMessage}</Text>
+        <HomeBudgetReportHeader monthLabel={monthLabel} userName={trimmedUserName} />
+        <HomeBudgetReportStatus
+          hasBudgetData={hasBudgetData}
+          remainingValue={remainingValue}
+          usageLabel={usageLabel}
+          usageRate={usageRate}
+        />
+        <HomeBudgetReportTexts
+          helperMessage={helperMessage}
+          forecastMessage={forecastMessage}
+        />
       </LinearGradient>
     </TouchableOpacity>
   );
