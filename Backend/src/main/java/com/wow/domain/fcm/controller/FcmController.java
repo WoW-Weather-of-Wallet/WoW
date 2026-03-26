@@ -43,7 +43,7 @@ public class FcmController {
     public ResponseEntity<Void> sendTest(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody FcmSendRequest request) {
-        fcmService.sendToUser(userDetails.getUsername(), request.getTitle(), request.getBody());
+        fcmService.sendToUser(userDetails.getUsername(), request.getTitle(), request.getBody(), "add_record");
         return ResponseEntity.ok().build();
     }
 
