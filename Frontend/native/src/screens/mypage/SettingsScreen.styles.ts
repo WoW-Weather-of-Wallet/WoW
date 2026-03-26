@@ -14,15 +14,17 @@ export const styles = StyleSheet.create({
   },
 
   /* ── 헤더 ── */
+  headerDock: {
+    backgroundColor: COLORS.background,
+    borderBottomWidth: 1,
+    borderColor: COLORS.gray100,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: wp(16),
-    height: hp(56) + 20,
-    backgroundColor: COLORS.background,
-    borderBottomWidth: 1,
-    borderColor: COLORS.gray100,
+    height: hp(56),
   },
   backButton: {
     padding: wp(4),

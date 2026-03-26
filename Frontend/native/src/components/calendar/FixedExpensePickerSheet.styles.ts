@@ -18,6 +18,26 @@ export const styles = StyleSheet.create({
     gap: hp(4),
     marginBottom: hp(18),
   },
+  emptyBox: {
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.background,
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(18),
+    alignItems: 'center',
+  },
+  emptyTitle: {
+    fontSize: fp(15),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: hp(6),
+  },
+  emptyDescription: {
+    fontSize: fp(13),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: fp(19),
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

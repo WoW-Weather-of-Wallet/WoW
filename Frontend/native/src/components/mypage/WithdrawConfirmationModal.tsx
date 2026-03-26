@@ -16,6 +16,7 @@ import { COLORS, wp } from '../../constants/theme';
 import { styles } from './WithdrawConfirmationModal.styles';
 import { sendSmsCode, verifySmsCode, normalizePhoneNumber } from '../../services/auth';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
+import { maskPhoneNumber } from '../../utils/phoneFormat';
 
 // ─────────────────────────────────────────────
 // Props
@@ -29,19 +30,6 @@ interface WithdrawConfirmationModalProps {
   /** 인증번호를 발송할 등록된 휴대폰 번호 (raw) */
   phoneNumber: string;
 }
-
-// ─────────────────────────────────────────────
-// 유틸: 휴대폰 번호 마스킹 (01012345678 → 010-****-5678)
-// ─────────────────────────────────────────────
-
-const maskPhoneNumber = (phone: string): string => {
-  // 번호가 없으면 빈 문자열로 안전하게 처리 (프로필 로딩 전 undefined 방어)
-  if (!phone) return '';
-  const cleaned = phone.replace(/[^0-9]/g, '');
-  if (cleaned.length === 11) return `${cleaned.slice(0, 3)}-****-${cleaned.slice(7)}`;
-  if (cleaned.length === 10) return `${cleaned.slice(0, 3)}-***-${cleaned.slice(6)}`;
-  return phone;
-};
 
 // ─────────────────────────────────────────────
 // 컴포넌트

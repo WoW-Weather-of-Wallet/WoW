@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { styles } from './SettingSection.styles';
+import { COLORS, fp, hp, wp } from '../../constants/theme';
 
 interface SettingSectionProps {
   title?: string;
@@ -12,9 +12,16 @@ interface SettingSectionProps {
  */
 export default function SettingSection({ title, children }: SettingSectionProps) {
   return (
-    <View style={styles.container}>
-      {title && <Text style={styles.sectionTitle}>{title}</Text>}
-      <View style={styles.content}>
+    <View style={{ marginTop: hp(4) }}>
+      {title ? (
+        <Text
+          className="font-sans-bold uppercase text-text-tertiary"
+          style={{ fontSize: fp(15), marginLeft: wp(18), marginBottom: hp(10) }}
+        >
+          {title}
+        </Text>
+      ) : null}
+      <View style={{ borderTopWidth: 1, borderBottomWidth: 1, borderColor: COLORS.separatorBorder }}>
         {children}
       </View>
     </View>

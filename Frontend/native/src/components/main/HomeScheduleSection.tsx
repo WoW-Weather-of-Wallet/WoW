@@ -1,9 +1,9 @@
 import React from 'react';
-import { Text, View } from 'react-native';
 import SectionHeader from '../common/SectionHeader';
 import SurfaceCard from '../common/SurfaceCard';
-import { styles } from './HomeScheduleSection.styles';
 import type { HomeScheduleItem } from '../../mock/dashboard';
+import HomeScheduleEmptyState from './HomeScheduleEmptyState';
+import HomeScheduleItemCard from './HomeScheduleItemCard';
 
 interface HomeScheduleSectionProps {
   items: HomeScheduleItem[];
@@ -12,36 +12,19 @@ interface HomeScheduleSectionProps {
 export default function HomeScheduleSection({
   items,
 }: HomeScheduleSectionProps) {
-  const displayItems =
-    items.length > 0
-      ? items
-      : [
-          {
-            id: 'empty-schedule',
-            title: '-',
-            dueLabel: '-',
-            amount: '-',
-            status: 'upcoming' as const,
-          },
-        ];
+  const hasItems = items.length > 0;
 
   return (
     <SurfaceCard>
-      <SectionHeader title="일정" actionLabel="-" />
-      {displayItems.map((item) => (
-        <View key={item.id} style={styles.scheduleCard}>
-          <View style={styles.flex1}>
-            <Text style={styles.scheduleTitle}>{item.title}</Text>
-            <Text style={styles.scheduleSubtitle}>{item.dueLabel}</Text>
-          </View>
-          <View style={styles.scheduleRight}>
-            <Text style={styles.scheduleAmount}>{item.amount}</Text>
-            <Text style={styles.scheduleStatus}>
-              {items.length === 0 ? '-' : item.status === 'paid' ? '완료' : '예정'}
-            </Text>
-          </View>
-        </View>
-      ))}
+      <SectionHeader title="결제 일정" actionLabel={hasItems ? `${items.length}건 예정` : '예정 없음'} />
+      {!hasItems ? (
+        <HomeScheduleEmptyState
+          title="등록된 결제 일정이 아직 없어요"
+          description="고정 지출이나 결제 예정 내역이 생기면 이곳에서 한눈에 확인할 수 있어요."
+        />
+      ) : (
+        items.map((item) => <HomeScheduleItemCard key={item.id} item={item} />)
+      )}
     </SurfaceCard>
   );
 }

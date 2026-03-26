@@ -10,8 +10,9 @@ import AiFeedbackStackNavigator from './AiFeedbackStackNavigator';
 import MyPageStackNavigator from './MyPageStackNavigator';
 import { styles } from './MainTabNavigator.styles';
 import { COLORS, hp } from '../constants/theme';
+import type { MainTabParamList } from '../types';
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
 /**
  * MainTabNavigator
@@ -20,7 +21,8 @@ const Tab = createBottomTabNavigator();
  */
 export default function MainTabNavigator() {
   const insets = useSafeAreaInsets();
-  const shouldHideTabBarForRoute = (routeName?: string) => routeName === 'Withdraw';
+  const shouldHideTabBarForRoute = (routeName?: string) =>
+    routeName === 'Withdraw' || routeName === 'PhoneUpdate';
 
   return (
     <>

@@ -15,6 +15,7 @@ import { COLORS, wp } from '../../constants/theme';
 import { TERM_DOCUMENT_KEYS, type TermDocumentKey } from '../../constants/terms';
 import { useTermDocuments } from '../../hooks/useTermDocuments';
 import { agreeTerms } from '../../services/terms';
+import type { RootNavigationProp } from '../../types';
 import { extractApiErrorMessage } from '../../utils/error';
 import { styles } from './AgreedTermsModal.styles';
 
@@ -32,7 +33,7 @@ const INITIAL_SELECTION: SelectionState = {
 };
 
 export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalProps) {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<RootNavigationProp>();
   const { termList, isLoading } = useTermDocuments(visible);
   const [selectedKeys, setSelectedKeys] = useState<SelectionState>(INITIAL_SELECTION);
   const [isSubmitting, setIsSubmitting] = useState(false);

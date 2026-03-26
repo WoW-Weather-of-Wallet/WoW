@@ -1,8 +1,13 @@
 import React from 'react';
 import { View } from 'react-native';
 import Svg, { Circle, Line, Polygon } from 'react-native-svg';
+
 import { COLORS } from '../../constants/theme';
 import type { SpendingStyleMetric } from '../../constants/main/types';
+import {
+  buildRadarChartGeometry,
+  toSvgPointString,
+} from '../../utils/spendingStyleRadar';
 import { styles, DEFAULT_SIZE } from './SpendingStyleRadarChart.styles';
 
 interface SpendingStyleRadarChartProps {
@@ -10,47 +15,12 @@ interface SpendingStyleRadarChartProps {
   size?: number;
 }
 
-const GRID_LEVELS = 4;
-const START_ANGLE = -Math.PI / 2;
-
-function getPoints(count: number, radius: number, center: number) {
-  return Array.from({ length: count }, (_, index) => {
-    const angle = START_ANGLE + (Math.PI * 2 * index) / count;
-    return {
-      x: center + radius * Math.cos(angle),
-      y: center + radius * Math.sin(angle),
-    };
-  });
-}
-
-function toPointString(points: Array<{ x: number; y: number }>) {
-  return points.map((point) => `${point.x},${point.y}`).join(' ');
-}
-
-// 소비 스타일맵은 8개 축 데이터를 같은 규칙으로 그려서 범례 수치와 모양이 함께 변하도록 둡니다.
 export default function SpendingStyleRadarChart({
   metrics,
   size = DEFAULT_SIZE,
 }: SpendingStyleRadarChartProps) {
-  const center = size / 2;
-  const outerRadius = size * 0.36;
-  const axisPoints = getPoints(metrics.length, outerRadius, center);
-
-  const gridPolygons = Array.from({ length: GRID_LEVELS }, (_, index) => {
-    const ratio = (index + 1) / GRID_LEVELS;
-    return getPoints(metrics.length, outerRadius * ratio, center);
-  });
-
-  const dataPoints = metrics.map((metric, index) => {
-    const ratio = Math.max(0, Math.min(metric.score, 100)) / 100;
-    const basePoint = axisPoints[index];
-
-    return {
-      x: center + (basePoint.x - center) * ratio,
-      y: center + (basePoint.y - center) * ratio,
-      color: metric.color,
-    };
-  });
+  const { center, axisPoints, gridPolygons, dataPoints, gridLevels } =
+    buildRadarChartGeometry(metrics, size);
 
   return (
     <View style={styles.container}>
@@ -58,9 +28,9 @@ export default function SpendingStyleRadarChart({
         {gridPolygons.map((polygon, index) => (
           <Polygon
             key={`grid-${index}`}
-            points={toPointString(polygon)}
+            points={toSvgPointString(polygon)}
             fill="none"
-            stroke={index === GRID_LEVELS - 1 ? COLORS.radarGridOuter : COLORS.radarGridInner}
+            stroke={index === gridLevels - 1 ? COLORS.radarGridOuter : COLORS.radarGridInner}
             strokeWidth={1}
           />
         ))}
@@ -78,7 +48,7 @@ export default function SpendingStyleRadarChart({
         ))}
 
         <Polygon
-          points={toPointString(dataPoints)}
+          points={toSvgPointString(dataPoints)}
           fill={COLORS.radarFill}
           stroke={COLORS.primary}
           strokeWidth={3}
@@ -97,4 +67,3 @@ export default function SpendingStyleRadarChart({
     </View>
   );
 }
-

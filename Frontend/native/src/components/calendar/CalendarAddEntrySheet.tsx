@@ -1,40 +1,38 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
+import { View } from 'react-native';
 import BottomSheetModal from '../common/BottomSheetModal';
-import {
-  CALENDAR_EXCEL_BANKS,
-  type CalendarEntryCategoryKey,
-} from '../../constants/calendar/addEntry';
+import type { CalendarEntryCategoryKey } from '../../constants/calendar/addEntry';
 import {
   isCsvFile,
   isSpreadsheetFile,
   parseCsvToUploadGroups,
   parseSpreadsheetToUploadGroups,
 } from '../../constants/calendar/excel';
-import { COLORS, wp } from '../../constants/theme';
 import { useCalendarAddEntryForm } from '../../hooks/useCalendarAddEntryForm';
 import {
   getCalendarApiErrorMessage,
   saveCalendarOverrides,
   uploadCalendarTransactions,
 } from '../../services/calendar';
-// 엑셀 가이드 서비스 호출 제거 (수동 호출 방식으로 변경)
+import {
+  buildOverrideRows as buildCalendarOverrideRows,
+  buildUploadRequest as buildCalendarUploadRequest,
+  mergeUploadGroupsWithBackendItems as mergeCalendarUploadGroupsWithBackendItems,
+} from '../../utils/calendarAddEntry';
 import ExcelUploadGuideModal from './ExcelUploadGuideModal';
-import CalendarCategorySelector from './CalendarCategorySelector';
+import CalendarDirectEntrySection from './CalendarDirectEntrySection';
+import CalendarEntryModeToggle from './CalendarEntryModeToggle';
+import CalendarExcelUploadSection from './CalendarExcelUploadSection';
+import CalendarUploadCategorySheet from './CalendarUploadCategorySheet';
 import type {
-  CalendarUploadBackendItem,
   CalendarUploadBackendSummary,
   CalendarUploadFile,
   CalendarUploadPreviewGroup,
-  CalendarOverrideRow,
   ManualCalendarEntryDraft,
-  ManualEntryPaymentMethod,
 } from '../../types/calendar';
 import { styles } from './CalendarAddEntrySheet.styles';
-
 
 interface CalendarAddEntrySheetProps {
   visible: boolean;
@@ -43,26 +41,6 @@ interface CalendarAddEntrySheetProps {
   onCompleteManualEntries: (entries: ManualCalendarEntryDraft[]) => Promise<void> | void;
   onCompleteExcelEntries: (entries: ManualCalendarEntryDraft[]) => Promise<void> | void;
 }
-
-type EntryMode = 'direct' | 'excel';
-
-const ENTRY_MODES: Array<{
-  key: EntryMode;
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}> = [
-  { key: 'direct', label: '직접 입력', icon: 'create-outline' },
-  { key: 'excel', label: '파일 업로드', icon: 'folder-open-outline' },
-];
-
-const PAYMENT_METHOD_OPTIONS: Array<{
-  key: ManualEntryPaymentMethod;
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}> = [
-  { key: 'card', label: '카드', icon: 'card-outline' },
-  { key: 'cash', label: '현금', icon: 'cash-outline' },
-];
 
 const INITIAL_UPLOAD_GROUPS: CalendarUploadPreviewGroup[] = [];
 
@@ -105,13 +83,8 @@ export default function CalendarAddEntrySheet({
   const [isBackendSummaryLoading, setIsBackendSummaryLoading] = useState(false);
   const [confirmErrorMessage, setConfirmErrorMessage] = useState<string | null>(null);
   const [isConfirmLoading, setIsConfirmLoading] = useState(false);
-
-  // 엑셀 업로드 가이드 모달 표시 여부
   const [isExcelGuideVisible, setIsExcelGuideVisible] = useState(false);
 
-  /**
-   * 가이드 수동 호출을 처리합니다.
-   */
   const handleOpenExcelGuide = useCallback(() => {
     setIsExcelGuideVisible(true);
   }, []);
@@ -168,7 +141,7 @@ export default function CalendarAddEntrySheet({
     } catch (error) {
       console.warn('Failed to confirm manual calendar entries', error);
       setConfirmErrorMessage(
-        getCalendarApiErrorMessage(error, '소비 내역을 저장하지 못했어요. 잠시 후 다시 시도해주세요.'),
+        getCalendarApiErrorMessage(error, '직접 입력 내역을 저장하지 못했습니다. 다시 시도해주세요.'),
       );
     } finally {
       setIsConfirmLoading(false);
@@ -207,6 +180,7 @@ export default function CalendarAddEntrySheet({
     setBackendSummaryError(null);
     setConfirmErrorMessage(null);
     setIsBackendSummaryLoading(true);
+
     let nextGroups: CalendarUploadPreviewGroup[] = [];
 
     try {
@@ -221,44 +195,38 @@ export default function CalendarAddEntrySheet({
         });
         nextGroups = parseSpreadsheetToUploadGroups(base64);
       } else {
-        setUploadErrorMessage('csv, xls, xlsx 파일만 업로드할 수 있어요.');
+        setUploadErrorMessage('csv, xls, xlsx 형식의 파일만 업로드할 수 있습니다.');
         return;
       }
 
       setUploadGroups(nextGroups);
 
       if (nextGroups.length === 0) {
-        setUploadErrorMessage('파일에서 읽을 수 있는 소비 내역을 찾지 못했어요.');
+        setUploadErrorMessage('파일에서 불러올 거래 내역을 찾지 못했습니다.');
       }
     } catch (error) {
       console.warn('Failed to parse upload file locally', error);
       setUploadGroups([]);
-      setUploadErrorMessage('파일 내용을 읽지 못했어요. 다른 형식의 파일인지 확인해주세요.');
+      setUploadErrorMessage('파일을 읽지 못했습니다. 다른 파일을 선택한 뒤 다시 시도해주세요.');
     }
 
     try {
-      // Native currently selects one file at a time, so we infer whether it is
-      // a bank or card export from the filename before calling the backend.
-      const summary = await uploadCalendarTransactions(buildUploadRequest(nextFile));
+      const summary = await uploadCalendarTransactions(buildCalendarUploadRequest(nextFile));
       setBackendSummary(summary);
 
-      // 수정 전 코드:
-      // - 백엔드 item-level classification 결과로 업로드 리스트를 통째로 덮어썼습니다.
-      //
-      // 변경 이유:
-      // - 현재 기획은 "분류는 프론트에서 관리"이므로, 화면에 보이는 category/status는
-      //   로컬 분류 결과를 유지해야 합니다.
-      // - 백엔드 응답은 요약 통계와 설명 보조 정보만 덧붙이는 용도로 사용합니다.
       if (summary.items.length > 0) {
         setUploadGroups((current) =>
-          mergeUploadGroupsWithBackendItems(current.length > 0 ? current : nextGroups, summary.items),
+          mergeCalendarUploadGroupsWithBackendItems(
+            current.length > 0 ? current : nextGroups,
+            summary.items,
+          ),
         );
         setUploadErrorMessage(null);
       }
     } catch (error) {
       console.warn('Failed to upload calendar file to backend', error);
       setBackendSummaryError(
-        getCalendarApiErrorMessage(error, '업로드한 파일을 분석하지 못했어요. 잠시 후 다시 시도해주세요.'),
+        getCalendarApiErrorMessage(error, '업로드 파일 분석에 실패했습니다. 다시 시도해주세요.'),
       );
     } finally {
       setIsBackendSummaryLoading(false);
@@ -295,7 +263,6 @@ export default function CalendarAddEntrySheet({
         merchantName: item.merchantName,
         category: item.categoryLabel,
         amount: item.amount,
-        // 업로드 데이터는 현재 기획 기준상 카드 소비로 취급합니다.
         paymentMethod: 'card',
         categoryId: item.categoryId,
       })),
@@ -305,7 +272,7 @@ export default function CalendarAddEntrySheet({
     setIsConfirmLoading(true);
 
     try {
-      const overrideRows = buildOverrideRows(uploadGroups, backendSummary?.items ?? []);
+      const overrideRows = buildCalendarOverrideRows(uploadGroups, backendSummary?.items ?? []);
       if (overrideRows.length > 0) {
         await saveCalendarOverrides(overrideRows);
       }
@@ -314,7 +281,7 @@ export default function CalendarAddEntrySheet({
     } catch (error) {
       console.warn('Failed to confirm uploaded calendar entries', error);
       setConfirmErrorMessage(
-        getCalendarApiErrorMessage(error, '업로드한 소비 내역을 저장하지 못했어요. 잠시 후 다시 시도해주세요.'),
+        getCalendarApiErrorMessage(error, '업로드 내역을 저장하지 못했습니다. 다시 시도해주세요.'),
       );
     } finally {
       setIsConfirmLoading(false);
@@ -323,11 +290,7 @@ export default function CalendarAddEntrySheet({
 
   return (
     <>
-      {/* 엑셀 업로드 가이드 모달 - 파일 업로드 탭 최초 진입 시 표시 */}
-      <ExcelUploadGuideModal
-        visible={isExcelGuideVisible}
-        onClose={handleExcelGuideClose}
-      />
+      <ExcelUploadGuideModal visible={isExcelGuideVisible} onClose={handleExcelGuideClose} />
 
       <BottomSheetModal
         visible={visible}
@@ -337,602 +300,54 @@ export default function CalendarAddEntrySheet({
         subtitle=""
       >
         <View style={styles.container}>
-          <View style={styles.modeRow}>
-            {ENTRY_MODES.map((mode) => {
-              const isActive = activeMode === mode.key;
-
-              return (
-                <TouchableOpacity
-                  key={mode.key}
-                  activeOpacity={0.88}
-                  style={[styles.modeButton, isActive && styles.modeButtonActive]}
-                  onPress={() => {
-                    setActiveMode(mode.key);
-                  }}
-                >
-                  <Ionicons
-                    name={mode.icon}
-                    size={wp(16)}
-                    color={isActive ? COLORS.primary : COLORS.textTertiary}
-                  />
-                  <Text style={[styles.modeText, isActive && styles.modeTextActive]}>
-                    {mode.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          <CalendarEntryModeToggle activeMode={activeMode} onChangeMode={setActiveMode} />
 
           {activeMode === 'direct' ? (
-            <ScrollView
-              bounces={false}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.directContent}
-            >
-              <FieldLabel icon="calendar-outline" label="날짜" />
-              <View style={styles.inputShell}>
-                <TextInput
-                  value={dateKey}
-                  onChangeText={setDateKey}
-                  style={styles.input}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={COLORS.textTertiary}
-                />
-                <Ionicons name="calendar-outline" size={wp(20)} color={COLORS.textSecondary} />
-              </View>
-
-              {draftEntries.length > 0 ? (
-                <View style={styles.draftList}>
-                  {draftEntries.map((draft) => (
-                    <View key={draft.id} style={styles.draftCard}>
-                      <View style={styles.draftHeaderRow}>
-                        <Text style={styles.draftDateText}>{formatDateLabel(draft.dateKey)}</Text>
-                        <Text style={styles.draftAmountText}>-{draft.amount.toLocaleString()}원</Text>
-                      </View>
-
-                      <View style={styles.draftBodyRow}>
-                        <View style={styles.draftMetaWrap}>
-                          <Text style={styles.draftMerchantText}>{draft.merchantName}</Text>
-                          <View style={styles.draftBadge}>
-                            <Text style={styles.draftBadgeText}>{draft.category}</Text>
-                          </View>
-                          <View style={styles.paymentBadge}>
-                            <Ionicons
-                              name={draft.paymentMethod === 'cash' ? 'cash-outline' : 'card-outline'}
-                              size={wp(12)}
-                              color={COLORS.primary}
-                            />
-                            <Text style={styles.paymentBadgeText}>
-                              {draft.paymentMethod === 'cash' ? '현금' : '카드'}
-                            </Text>
-                          </View>
-                        </View>
-
-                        <TouchableOpacity
-                          activeOpacity={0.8}
-                          onPress={() => removeDraftEntry(draft.id)}
-                        >
-                          <Ionicons name="close" size={wp(16)} color={COLORS.textTertiary} />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              ) : null}
-
-              <FieldLabel label="카테고리" />
-              <CalendarCategorySelector
-                variant="chip"
-                selectedCategory={selectedCategory}
-                onSelect={setSelectedCategory}
-              />
-
-              <FieldLabel label="결제수단" />
-              {/*
-                백엔드 DTO에는 아직 결제수단 필드가 없어서,
-                현재 단계에서는 프론트 입력/미리보기 흐름에서만 필수 선택으로 관리합니다.
-              */}
-              <View style={styles.paymentMethodGrid}>
-                {PAYMENT_METHOD_OPTIONS.map((method) => {
-                  const isActive = selectedPaymentMethod === method.key;
-
-                  return (
-                    <TouchableOpacity
-                      key={method.key}
-                      activeOpacity={0.88}
-                      style={[styles.paymentMethodChip, isActive && styles.paymentMethodChipActive]}
-                      onPress={() => setSelectedPaymentMethod(method.key)}
-                    >
-                      <Ionicons
-                        name={method.icon}
-                        size={wp(15)}
-                        color={isActive ? COLORS.white : COLORS.textSecondary}
-                      />
-                      <Text
-                        style={[
-                          styles.paymentMethodChipText,
-                          isActive && styles.paymentMethodChipTextActive,
-                        ]}
-                      >
-                        {method.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              <View style={styles.inputShell}>
-                <TextInput
-                  value={merchantName}
-                  onChangeText={setMerchantName}
-                  style={styles.input}
-                  placeholder="가맹점 이름을 입력해주세요"
-                  placeholderTextColor={COLORS.textTertiary}
-                />
-              </View>
-
-              <View style={styles.inputShell}>
-                <TextInput
-                  value={amountInput}
-                  onChangeText={(value) => setAmountInput(value.replace(/[^0-9]/g, ''))}
-                  style={styles.input}
-                  placeholder="금액 (원)"
-                  placeholderTextColor={COLORS.textTertiary}
-                  keyboardType="number-pad"
-                />
-              </View>
-
-              {confirmErrorMessage ? (
-                <View style={styles.errorBox}>
-                  <Ionicons name="cloud-offline-outline" size={wp(16)} color={COLORS.spentRed} />
-                  <Text style={styles.errorText}>{confirmErrorMessage}</Text>
-                </View>
-              ) : null}
-
-              <TouchableOpacity
-                activeOpacity={0.9}
-                style={[styles.primaryButton, !isAddEnabled && styles.primaryButtonDisabled]}
-                disabled={!isAddEnabled}
-                onPress={addDraftEntry}
-              >
-                <Text style={styles.primaryButtonText}>+ 내역 추가</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                activeOpacity={0.9}
-                style={[
-                  styles.secondaryButton,
-                  (draftEntries.length === 0 || isConfirmLoading) && styles.secondaryButtonDisabled,
-                ]}
-                disabled={draftEntries.length === 0 || isConfirmLoading}
-                onPress={handleCompleteManualEntries}
-              >
-                <Text
-                  style={[
-                    styles.secondaryButtonText,
-                    (draftEntries.length === 0 || isConfirmLoading) && styles.secondaryButtonTextDisabled,
-                  ]}
-                >
-                  {isConfirmLoading ? '저장 중...' : '캘린더에 저장'}
-                </Text>
-              </TouchableOpacity>
-            </ScrollView>
+            <CalendarDirectEntrySection
+              dateKey={dateKey}
+              selectedCategory={selectedCategory}
+              selectedPaymentMethod={selectedPaymentMethod}
+              merchantName={merchantName}
+              amountInput={amountInput}
+              draftEntries={draftEntries}
+              confirmErrorMessage={confirmErrorMessage}
+              isAddEnabled={isAddEnabled}
+              isConfirmLoading={isConfirmLoading}
+              onChangeDateKey={setDateKey}
+              onSelectCategory={setSelectedCategory}
+              onSelectPaymentMethod={setSelectedPaymentMethod}
+              onChangeMerchantName={setMerchantName}
+              onChangeAmountInput={setAmountInput}
+              onAddDraftEntry={addDraftEntry}
+              onRemoveDraftEntry={removeDraftEntry}
+              onComplete={handleCompleteManualEntries}
+            />
           ) : (
-            <ScrollView
-              bounces={false}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.excelContent}
-            >
-              <View style={styles.excelInfoCard}>
-                <View style={styles.excelIconWrap}>
-                  <Ionicons name="document-text-outline" size={wp(24)} color={COLORS.excelIconGold} />
-                </View>
-                <View style={styles.excelTextWrap}>
-                  <View style={styles.excelHeaderRow}>
-                    <Text style={styles.excelTitle}>엑셀 파일 업로드</Text>
-                    <TouchableOpacity activeOpacity={0.7} onPress={handleOpenExcelGuide} style={styles.excelInfoButton}>
-                      <Ionicons name="information-circle-outline" size={wp(16)} color={COLORS.textSecondary} />
-                    </TouchableOpacity>
-                  </View>
-                  <Text style={styles.excelDescription}>
-                    은행 또는 카드 내역 CSV, 엑셀 파일을 올리면 미리보기와 백엔드 분류 결과를 함께 확인할 수 있어요.
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.bankRow}>
-                <Text style={styles.bankLabel}>지원 포맷</Text>
-                <View style={styles.bankChipWrap}>
-                  {CALENDAR_EXCEL_BANKS.map((bank) => (
-                    <View key={bank} style={styles.bankChip}>
-                      <Text style={styles.bankChipText}>{bank}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-
-              <TouchableOpacity
-                activeOpacity={0.88}
-                style={styles.uploadBox}
-                onPress={handlePickExcelFile}
-              >
-                <Ionicons name="folder-open" size={wp(40)} color="#E2C35A" />
-                <Text style={styles.uploadTitle}>
-                  {selectedExcelFile ? selectedExcelFile.name : '업로드할 파일을 선택해주세요'}
-                </Text>
-                <Text style={styles.uploadHint}>
-                  {selectedExcelFile ? buildFileSummary(selectedExcelFile) : '.xlsx, .csv, .xls 지원'}
-                </Text>
-              </TouchableOpacity>
-
-              <View style={styles.noticeBox}>
-                <Ionicons name="bulb-outline" size={wp(14)} color="#D2A645" />
-                <Text style={styles.noticeText}>
-                  자동 분류가 애매한 항목은 아래에서 직접 카테고리를 선택한 뒤 저장할 수 있어요.
-                </Text>
-              </View>
-
-              {selectedExcelFile ? (
-                <View style={styles.fileInfoCard}>
-                  <View style={styles.fileInfoHeader}>
-                    <Ionicons name="checkmark-circle" size={wp(18)} color={COLORS.successGreen} />
-                    <Text style={styles.fileInfoTitle}>선택한 파일</Text>
-                  </View>
-                  <Text style={styles.fileInfoName}>{selectedExcelFile.name}</Text>
-                  <Text style={styles.fileInfoMeta}>{buildFileSummary(selectedExcelFile)}</Text>
-                </View>
-              ) : null}
-
-              {isBackendSummaryLoading ? (
-                <View style={styles.backendSummaryCard}>
-                  <View style={styles.backendSummaryHeader}>
-                    <Ionicons name="sync-outline" size={wp(18)} color={COLORS.primary} />
-                    <Text style={styles.backendSummaryTitle}>분석 중</Text>
-                  </View>
-                  <Text style={styles.backendSummaryDescription}>
-                    파일을 읽고 자동 분류 결과를 준비하고 있어요.
-                  </Text>
-                </View>
-              ) : null}
-
-              {backendSummaryError ? (
-                <View style={styles.errorBox}>
-                  <Ionicons name="cloud-offline-outline" size={wp(16)} color={COLORS.spentRed} />
-                  <Text style={styles.errorText}>{backendSummaryError}</Text>
-                </View>
-              ) : null}
-
-              {backendSummary ? (
-                <View style={styles.backendSummaryCard}>
-                  <View style={styles.backendSummaryHeader}>
-                    <Ionicons name="server-outline" size={wp(18)} color={COLORS.primary} />
-                    <Text style={styles.backendSummaryTitle}>백엔드 분류 결과</Text>
-                  </View>
-                  <Text style={styles.backendSummaryDescription}>
-                    {backendSummary.message || '분류 결과를 불러왔어요.'}
-                  </Text>
-
-                  <View style={styles.backendSummaryStatsGrid}>
-                    <SummaryStatCard label="거래 수" value={`${backendSummary.transactionCount}건`} />
-                    <SummaryStatCard
-                      label="포함 금액"
-                      value={`${backendSummary.includedAmount.toLocaleString()}원`}
-                    />
-                    <SummaryStatCard
-                      label="제외 금액"
-                      value={`${backendSummary.excludedAmount.toLocaleString()}원`}
-                    />
-                    <SummaryStatCard
-                      label="총 금액"
-                      value={`${backendSummary.totalAmount.toLocaleString()}원`}
-                    />
-                  </View>
-
-                  {backendSummary.records.length > 0 ? (
-                    <View style={styles.summaryListSection}>
-                      <Text style={styles.summarySectionLabel}>자동 분류 요약</Text>
-                      {backendSummary.records.slice(0, 5).map((record) => (
-                        <View key={`${record.category}-${record.cnt}`} style={styles.summaryListRow}>
-                          <Text style={styles.summaryListLabel}>{record.category}</Text>
-                          <Text style={styles.summaryListValue}>
-                            {record.cnt}건 · {record.amt.toLocaleString()}원
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  ) : null}
-
-                  {backendSummary.excludedRows.length > 0 ? (
-                    <View style={styles.summaryListSection}>
-                      <Text style={styles.summarySectionLabel}>제외 항목</Text>
-                      {backendSummary.excludedRows.slice(0, 4).map((row, index) => (
-                        <View
-                          key={`${row.merchantName}-${row.classificationReason}-${index}`}
-                          style={styles.summaryListRow}
-                        >
-                          <View style={styles.summaryListTextWrap}>
-                            <Text style={styles.summaryListLabel}>{row.merchantName}</Text>
-                            <Text style={styles.summaryListReason}>{row.classificationReason}</Text>
-                          </View>
-                          <Text style={styles.summaryListValue}>
-                            {row.cnt}건 · {row.amount.toLocaleString()}원
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  ) : null}
-                </View>
-              ) : null}
-
-              {confirmErrorMessage ? (
-                <View style={styles.errorBox}>
-                  <Ionicons name="cloud-offline-outline" size={wp(16)} color={COLORS.spentRed} />
-                  <Text style={styles.errorText}>{confirmErrorMessage}</Text>
-                </View>
-              ) : null}
-
-              {uploadErrorMessage ? (
-                <View style={styles.errorBox}>
-                  <Ionicons name="alert-circle-outline" size={wp(16)} color={COLORS.spentRed} />
-                  <Text style={styles.errorText}>{uploadErrorMessage}</Text>
-                </View>
-              ) : null}
-
-              {uploadGroups.map((group) => {
-                const needsCategoryCount = group.items.filter(
-                  (item) => item.status === 'needs-category',
-                ).length;
-
-                return (
-                  <View key={group.dateKey} style={styles.uploadResultSection}>
-                    <View style={styles.uploadResultHeader}>
-                      <Text style={styles.uploadResultDate}>{group.dateKey}</Text>
-                      <Text style={styles.uploadResultSummary}>
-                        {group.totalCount}건
-                        <Text style={styles.uploadResultNeedsCategory}>
-                          {' '}
-                          · 분류 필요 {needsCategoryCount}건
-                        </Text>
-                      </Text>
-                    </View>
-
-                    <View style={styles.uploadResultList}>
-                      {group.items.map((item, index) => (
-                        <TouchableOpacity
-                          key={item.id}
-                          activeOpacity={0.88}
-                          style={[
-                            styles.uploadResultItem,
-                            index < group.items.length - 1 && styles.uploadResultDivider,
-                          ]}
-                          onPress={() => setSelectedUploadItemId(item.id)}
-                        >
-                          <View style={styles.uploadResultLeft}>
-                            <View style={styles.uploadResultIcon}>
-                              <Ionicons
-                                name="document-text-outline"
-                                size={wp(16)}
-                                color={COLORS.textTertiary}
-                              />
-                            </View>
-                            <View style={styles.uploadResultTextWrap}>
-                              <Text style={styles.uploadResultMerchant}>{item.merchantName}</Text>
-                              {item.description ? (
-                                <Text style={styles.uploadResultDescription}>{item.description}</Text>
-                              ) : null}
-                            </View>
-                          </View>
-
-                          <View style={styles.uploadResultRight}>
-                            <Text style={styles.uploadResultAmount}>-{item.amount.toLocaleString()}원</Text>
-                            <View
-                              style={[
-                                styles.uploadResultBadge,
-                                item.status === 'needs-category'
-                                  ? styles.uploadResultBadgeWarning
-                                  : styles.uploadResultBadgeDefault,
-                              ]}
-                            >
-                              <Text
-                                style={[
-                                  styles.uploadResultBadgeText,
-                                  item.status === 'needs-category'
-                                    ? styles.uploadResultBadgeTextWarning
-                                    : styles.uploadResultBadgeTextDefault,
-                                ]}
-                              >
-                                {item.categoryLabel}
-                              </Text>
-                            </View>
-                          </View>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
-                );
-              })}
-
-              {selectedExcelFile ? (
-                <TouchableOpacity
-                  activeOpacity={0.9}
-                  style={[
-                    styles.primaryButton,
-                    (hasPendingCategories || !hasUploadEntries || isConfirmLoading) && styles.primaryButtonDisabled,
-                  ]}
-                  disabled={hasPendingCategories || !hasUploadEntries || isConfirmLoading}
-                  onPress={handleCompleteExcelUpload}
-                >
-                  <Text style={styles.primaryButtonText}>
-                    {isConfirmLoading
-                      ? '저장 중...'
-                      : hasPendingCategories
-                        ? '카테고리를 모두 선택해주세요'
-                        : hasUploadEntries
-                          ? '캘린더에 저장'
-                          : '업로드 후 저장할 수 있어요'}
-                  </Text>
-                </TouchableOpacity>
-              ) : null}
-            </ScrollView>
+            <CalendarExcelUploadSection
+              selectedExcelFile={selectedExcelFile}
+              backendSummary={backendSummary}
+              backendSummaryError={backendSummaryError}
+              uploadErrorMessage={uploadErrorMessage}
+              confirmErrorMessage={confirmErrorMessage}
+              uploadGroups={uploadGroups}
+              isBackendSummaryLoading={isBackendSummaryLoading}
+              isConfirmLoading={isConfirmLoading}
+              hasPendingCategories={hasPendingCategories}
+              hasUploadEntries={hasUploadEntries}
+              onOpenGuide={handleOpenExcelGuide}
+              onPickFile={handlePickExcelFile}
+              onPressItem={setSelectedUploadItemId}
+              onComplete={handleCompleteExcelUpload}
+            />
           )}
         </View>
       </BottomSheetModal>
 
-      <BottomSheetModal
-        visible={selectedUploadItem !== null}
+      <CalendarUploadCategorySheet
+        selectedItem={selectedUploadItem}
         onClose={() => setSelectedUploadItemId(null)}
-        title="카테고리 선택"
-        subtitle={
-          selectedUploadItem
-            ? `${selectedUploadItem.merchantName} · ${selectedUploadItem.amount.toLocaleString()}원`
-            : ''
-        }
-        scrollable={false}
-      >
-        <View style={styles.categorySelectWrap}>
-          <View style={styles.recommendBadge}>
-            <Ionicons name="sparkles-outline" size={wp(12)} color={COLORS.warningOrange} />
-            <Text style={styles.recommendBadgeText}>자동 분류가 애매한 항목은 직접 고를 수 있어요.</Text>
-          </View>
-
-          <ScrollView
-            style={styles.categorySelectScroll}
-            contentContainerStyle={styles.categorySelectContent}
-            bounces={false}
-            nestedScrollEnabled
-            showsVerticalScrollIndicator={false}
-          >
-            <CalendarCategorySelector variant="chip" onSelect={handleSelectUploadCategory} />
-          </ScrollView>
-        </View>
-      </BottomSheetModal>
+        onSelectCategory={handleSelectUploadCategory}
+      />
     </>
   );
-}
-
-function FieldLabel({
-  label,
-  icon,
-}: {
-  label: string;
-  icon?: keyof typeof Ionicons.glyphMap;
-}) {
-  return (
-    <View style={styles.fieldLabelRow}>
-      {icon ? <Ionicons name={icon} size={wp(14)} color={COLORS.primary} /> : null}
-      <Text style={styles.fieldLabel}>{label}</Text>
-    </View>
-  );
-}
-
-function SummaryStatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.summaryStatCard}>
-      <Text style={styles.summaryStatLabel}>{label}</Text>
-      <Text style={styles.summaryStatValue}>{value}</Text>
-    </View>
-  );
-}
-
-
-function mergeUploadGroupsWithBackendItems(
-  groups: CalendarUploadPreviewGroup[],
-  backendItems: CalendarUploadBackendItem[],
-) {
-  const backendItemByKey = new Map<string, CalendarUploadBackendItem>();
-
-  backendItems.forEach((item) => {
-    if (!item.transactionDate) {
-      return;
-    }
-
-    const lookupKey = `${item.transactionDate}::${item.merchantName}::${item.amount}`;
-    backendItemByKey.set(lookupKey, item);
-  });
-
-  return groups.map((group) => ({
-    ...group,
-    items: group.items.map((item) => {
-      const lookupKey = `${group.dateKey}::${item.merchantName}::${item.amount}`;
-      const matchedBackendItem = backendItemByKey.get(lookupKey);
-
-      if (!matchedBackendItem) {
-        return item;
-      }
-
-      // 프론트 분류(categoryLabel / status)는 유지하고,
-      // 백엔드는 거래 설명과 분류 사유를 보강하는 정보원으로만 사용합니다.
-      return {
-        ...item,
-        description:
-          matchedBackendItem.transactionDetail ||
-          matchedBackendItem.classificationReason ||
-          item.description,
-      };
-    }),
-  }));
-}
-
-function buildOverrideRows(
-  groups: CalendarUploadPreviewGroup[],
-  backendItems: CalendarUploadBackendItem[],
-): CalendarOverrideRow[] {
-  const backendItemByKey = new Map<string, CalendarUploadBackendItem>();
-
-  backendItems.forEach((item) => {
-    if (!item.transactionDate) {
-      return;
-    }
-
-    backendItemByKey.set(`${item.transactionDate}::${item.merchantName}::${item.amount}`, item);
-  });
-
-  return groups.flatMap((group) =>
-    group.items.flatMap((item) => {
-      const lookupKey = `${group.dateKey}::${item.merchantName}::${item.amount}`;
-      const matchedBackendItem = backendItemByKey.get(lookupKey);
-
-      if (!matchedBackendItem || matchedBackendItem.status !== 'needs-category') {
-        return [];
-      }
-
-      return [
-        {
-          merchant_name: item.merchantName,
-          category: String(item.categoryLabel),
-          reason:
-            matchedBackendItem.classificationReason ||
-            matchedBackendItem.transactionDetail ||
-            '프론트에서 재분류한 항목입니다.',
-        },
-      ];
-    }),
-  );
-}
-
-function formatDateLabel(dateKey: string) {
-  const [year, month, day] = dateKey.split('-').map(Number);
-  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-  const weekday = weekdays[new Date(year, month - 1, day).getDay()];
-  return `${month}월 ${day}일 (${weekday})`;
-}
-
-function buildFileSummary(file: CalendarUploadFile) {
-  if (!file.size) {
-    return file.mimeType ?? '파일 정보 없음';
-  }
-
-  const fileSizeKb = Math.max(1, Math.round(file.size / 1024));
-  return `${fileSizeKb}KB${file.mimeType ? ` · ${file.mimeType}` : ''}`;
-}
-
-function buildUploadRequest(file: CalendarUploadFile) {
-  const lowerName = file.name.toLowerCase();
-  const isCsvFile = lowerName.endsWith('.csv');
-  const isCardFile = isCsvFile || lowerName.includes('card') || lowerName.includes('카드');
-
-  return {
-    bankFile: isCardFile ? null : file,
-    cardFile: isCardFile ? file : null,
-  };
 }

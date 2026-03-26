@@ -6,6 +6,9 @@ import { COLORS, wp } from '../../constants/theme';
 import { styles } from './CalendarHeroCard.styles';
 import type { CalendarOverview } from '../../mock/calendar';
 import type { CalendarHeaderFetchState } from '../../types/calendar';
+import CalendarHeroHeader from './CalendarHeroHeader';
+import CalendarHeroSummaryRow from './CalendarHeroSummaryRow';
+import CalendarHeroWeatherCard from './CalendarHeroWeatherCard';
 
 interface CalendarHeroCardProps {
   overview: CalendarOverview;
@@ -43,17 +46,12 @@ export default function CalendarHeroCard({
       end={{ x: 1, y: 1 }}
       style={styles.heroCard}
     >
-      <View style={styles.headerRow}>
-        <View style={styles.titleWrap}>
-          <Text style={styles.screenTitle}>캘린더</Text>
-          <TouchableOpacity activeOpacity={0.7} style={styles.infoButton} onPress={onPressInfo}>
-            <Ionicons name="information-circle-outline" size={wp(18)} color={COLORS.white} />
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity activeOpacity={0.9} style={styles.addButton} onPress={onPressAdd}>
-          <Text style={styles.addButtonText}>+ 내역 추가</Text>
-        </TouchableOpacity>
-      </View>
+      <CalendarHeroHeader
+        title="캘린더"
+        addLabel="+ 내역 추가"
+        onPressAdd={onPressAdd}
+        onPressInfo={onPressInfo}
+      />
 
       <View style={styles.monthRow}>
         <TouchableOpacity activeOpacity={0.85} style={styles.monthArrow} onPress={onPressPrevMonth}>
@@ -65,27 +63,17 @@ export default function CalendarHeroCard({
         </TouchableOpacity>
       </View>
 
-      <View style={styles.weatherCard}>
-        <View style={styles.weatherIconWrap}>
-          <Ionicons name={weatherIconName} size={wp(25)} color={COLORS.weatherSun} />
-        </View>
-        <View style={styles.weatherTextBlock}>
-          <Text style={styles.weatherTitle}>{weatherTitle}</Text>
-          <Text style={styles.weatherHint}>{weatherHint}</Text>
-        </View>
-      </View>
+      <CalendarHeroWeatherCard
+        weatherIconName={weatherIconName}
+        title={weatherTitle}
+        hint={weatherHint}
+      />
 
-      <View style={styles.summaryRow}>
-        <View>
-          <Text style={styles.summaryLabel}>이번 달 절약 금액</Text>
-          <Text style={styles.summaryAmount}>{savingsAmountText}</Text>
-        </View>
-
-        <View style={styles.goalBadge}>
-          <Ionicons name="bulb-outline" size={wp(13)} color={COLORS.primary} />
-          <Text style={styles.goalBadgeText}>{goalLabel}</Text>
-        </View>
-      </View>
+      <CalendarHeroSummaryRow
+        label="이번 달 절약 가능 금액"
+        amountText={savingsAmountText}
+        goalLabel={goalLabel}
+      />
 
       <Text style={styles.statusText}>
         {buildStatusMessage(headerFetchState, headerErrorMessage)}
@@ -96,11 +84,11 @@ export default function CalendarHeroCard({
 
 function buildStatusMessage(state: CalendarHeaderFetchState, errorMessage: string | null) {
   if (state === 'loading') {
-    return '캘린더 정보를 불러오는 중입니다.';
+    return '캘린더 요약 정보를 불러오는 중입니다.';
   }
 
   if (state === 'live') {
-    return '최신 정보를 불러왔습니다.';
+    return '최신 데이터를 기준으로 요약했습니다.';
   }
 
   if (state === 'fallback') {

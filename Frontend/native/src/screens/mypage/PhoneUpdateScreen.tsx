@@ -1,0 +1,222 @@
+import React from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import IdentityVerificationFormStage from '../../components/common/IdentityVerificationFormStage';
+import IdentityVerificationCodeStage from '../../components/common/IdentityVerificationCodeStage';
+import { styles } from './PhoneUpdateScreen.styles';
+import { COLORS, hp, wp } from '../../constants/theme';
+import {
+  PHONE_NUMBER_PLACEHOLDER,
+  SEND_CODE_LABEL,
+  TELECOM_OPTIONS,
+  TELECOM_PLACEHOLDER,
+  VERIFICATION_CODE_LENGTH,
+} from '../../constants/auth/identityVerification';
+import { usePhoneUpdateFlow } from '../../hooks';
+import type { MyPageStackScreenProps } from '../../types';
+
+export default function PhoneUpdateScreen({
+  navigation,
+  route,
+}: MyPageStackScreenProps<'PhoneUpdate'>) {
+  const insets = useSafeAreaInsets();
+  const rawPhone: string = route.params?.phoneNumber ?? '';
+  const profileName: string = route.params?.name ?? '';
+  const profileBirthDate: string = route.params?.birthDate ?? '';
+  const profileGender: string = route.params?.gender ?? '';
+  const {
+    expectedSsnFront,
+    expectedSsnBack,
+    telecom,
+    phone,
+    submitError,
+    isTelecomModalVisible,
+    isUpdating,
+    isButtonActive,
+    phase,
+    code,
+    verifyError,
+    requestedPhoneDisplay,
+    isSending,
+    isVerifying,
+    isVerified,
+    handlePressNumber,
+    handlePressDelete,
+    resendCode,
+    backToForm,
+    setPhone,
+    setSubmitError,
+    setIsTelecomModalVisible,
+    handleSelectTelecom,
+    handleSendCode,
+    handleUpdatePhone,
+  } = usePhoneUpdateFlow({
+    navigation,
+    rawPhone,
+    profileBirthDate,
+    profileGender,
+  });
+
+  if (phase === 'form') {
+    return (
+      <IdentityVerificationFormStage
+        containerStyle={styles.container}
+        scrollContentStyle={styles.scrollContent}
+        backButtonStyle={styles.backButton}
+        stepIndicatorContainerStyle={{ marginTop: 0, marginBottom: hp(12) }}
+        titleStyle={styles.title}
+        subtitleStyle={styles.formSubtitle}
+        bottomContainerStyle={styles.bottomContainer}
+        title="새 휴대폰 번호를 입력해 주세요."
+        subtitle="통신사를 선택한 뒤 변경할 휴대폰 번호로 인증번호를 받아 진행합니다."
+        onBack={() => navigation.goBack()}
+        actionLabel={SEND_CODE_LABEL}
+        actionLoading={isSending}
+        actionDisabled={!isButtonActive}
+        actionActive={isButtonActive}
+        onActionPress={() => void handleSendCode()}
+        actionContainerStyle={styles.confirmButton}
+        actionActiveContainerStyle={styles.activeButton}
+        actionTextStyle={styles.confirmButtonText}
+        actionActiveTextStyle={styles.activeButtonText}
+        actionLoadingColor={COLORS.textInverse}
+        fields={{
+          nameWrapperStyle: styles.inputSection,
+          phoneWrapperStyle: styles.inputSection,
+          nameDelay: 100,
+          ssnDelay: 160,
+          phoneDelay: 220,
+          duration: 400,
+          nameSection: {
+            value: profileName,
+            displayValue: profileName || '-',
+            editable: false,
+            containerStyle: styles.underlineContainer,
+            valueStyle: [
+              styles.bareText,
+              { letterSpacing: profileName ? 2 : 0 },
+            ],
+          },
+          ssnSection: {
+            frontValue: expectedSsnFront,
+            backValue: expectedSsnBack,
+            frontEditable: false,
+            backEditable: false,
+            containerStyle: styles.ssnSection,
+            frontContainerStyle: [
+              styles.underlineContainer,
+              { flex: 1.1, justifyContent: 'center' },
+            ],
+            frontValueStyle: [
+              styles.bareText,
+              {
+                textAlign: 'center',
+                letterSpacing: expectedSsnFront ? 4 : 0,
+              },
+            ],
+            backContainerStyle: [
+              styles.underlineContainer,
+              styles.ssnBackContainer,
+            ],
+            backValueStyle: [styles.bareText, styles.ssnBackText],
+            dashStyle: styles.dash,
+            maskingTextStyle: styles.ssnMasking,
+          },
+          phoneSection: {
+            telecom,
+            telecomPlaceholder: TELECOM_PLACEHOLDER,
+            phone,
+            onOpenTelecomModal: () => setIsTelecomModalVisible(true),
+            onPhoneChange: (text) => {
+              setPhone(text.replace(/[^0-9]/g, ''));
+              setSubmitError('');
+            },
+            phonePlaceholder: PHONE_NUMBER_PLACEHOLDER,
+            selectorStyle: styles.telecomSelector,
+            telecomTextStyle: styles.telecomText,
+            placeholderTextStyle: styles.placeholderText,
+            phoneInputContainerStyle: [
+              styles.underlineContainer,
+              { marginTop: hp(32) },
+            ],
+            phoneInputStyle: [
+              styles.bareInput,
+              { letterSpacing: phone.length > 0 ? 2 : 0 },
+            ],
+            errorTextStyle: styles.errorText,
+            errorText: submitError,
+            phoneVisible: telecom !== TELECOM_PLACEHOLDER,
+            animatePhoneInput: true,
+            chevronIconSize: wp(24),
+            chevronIconColor: COLORS.textPrimary,
+            placeholderTextColor: COLORS.textTertiary,
+          },
+        }}
+        telecomModalVisible={isTelecomModalVisible}
+        onCloseTelecomModal={() => setIsTelecomModalVisible(false)}
+        onSelectTelecom={handleSelectTelecom}
+        telecomOptions={TELECOM_OPTIONS}
+        telecomBottomInset={insets.bottom}
+        telecomModalOverlayStyle={styles.modalOverlay}
+        telecomModalContentStyle={styles.modalContent}
+        telecomModalHeaderStyle={styles.modalHeader}
+        telecomModalTitleStyle={styles.modalTitle}
+        telecomModalItemStyle={styles.modalItem}
+        telecomModalItemTextStyle={styles.modalItemText}
+      />
+    );
+  }
+
+  return (
+    <IdentityVerificationCodeStage
+      containerStyle={styles.container}
+      contentBaseStyle={styles.verifyContent}
+      backButtonStyle={styles.backButton}
+      titleStyle={styles.title}
+      subtitleStyle={styles.subtitle}
+      dotsContainerStyle={styles.dotsContainer}
+      dotStyle={styles.dot}
+      dotFilledStyle={styles.dotFilled}
+      feedbackRowStyle={styles.feedbackRow}
+      loadingTextStyle={styles.loadingText}
+      errorTextStyle={styles.errorText}
+      successTextStyle={styles.successText}
+      resendRowStyle={styles.resendRow}
+      resendTextStyle={styles.resendText}
+      keypadWrapperBaseStyle={styles.keypadWrapper}
+      bottomContainerStyle={styles.bottomContainer}
+      stepIndicatorContainerStyle={{ marginTop: 0, marginBottom: hp(12) }}
+      topPadding={hp(28)}
+      bottomMinPadding={hp(24)}
+      onBack={backToForm}
+      backIconSize={wp(24)}
+      backIconColor={COLORS.textPrimary}
+      loadingIndicatorColor={COLORS.primary}
+      successIconColor={COLORS.success}
+    title={
+            isVerified
+              ? '휴대폰 번호 인증이\n완료되었어요.'
+              : '인증번호 6자리를\n입력해 주세요.'
+          }
+    subtitle={`${requestedPhoneDisplay} 번호로 전송된 인증번호를 입력해 주세요.`}
+      code={code}
+      codeLength={VERIFICATION_CODE_LENGTH}
+      isVerifying={isVerifying}
+    loadingText="인증번호를 확인하고 있어요."
+      verifyError={verifyError}
+      isVerified={isVerified}
+    successMessage="인증 완료! 휴대폰 번호를 변경할 수 있어요."
+      isSending={isSending}
+      onResend={() => void resendCode()}
+      onPressNumber={handlePressNumber}
+      onPressDelete={handlePressDelete}
+      actionLabel="휴대폰 번호 변경"
+      actionLoading={isUpdating}
+      actionDisabled={isUpdating}
+      onActionPress={() => void handleUpdatePhone()}
+      actionContainerStyle={styles.updateButton}
+      actionDisabledContainerStyle={styles.disabledButton}
+      actionTextStyle={styles.updateButtonText}
+      actionLoadingColor={COLORS.white}
+    />
+  );
+}

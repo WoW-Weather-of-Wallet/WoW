@@ -1,13 +1,10 @@
 import React from 'react';
-import { Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import BottomSheetModal from '../common/BottomSheetModal';
-import CustomTextInput from '../common/CustomTextInput';
-import GradientButton from '../common/GradientButton';
-import { COLORS, wp } from '../../constants/theme';
-import LegendList from './LegendList';
-import { styles } from './HomeMonthlyReportSheet.styles';
+import { useHomeMonthlyBudgetForm } from '../../hooks/useHomeMonthlyBudgetForm';
 import type { LegendListItem } from '../../constants/main/types';
+import HomeBudgetSetupCard from './HomeBudgetSetupCard';
+import HomeMonthlyComparisonSection from './HomeMonthlyComparisonSection';
+import HomeMonthlyInsightCard from './HomeMonthlyInsightCard';
 
 interface HomeMonthlyReportSheetProps {
   visible: boolean;
@@ -38,25 +35,16 @@ export default function HomeMonthlyReportSheet({
   isCreatingBudget = false,
   onCreateBudget,
 }: HomeMonthlyReportSheetProps) {
-  const [budgetAmount, setBudgetAmount] = React.useState('');
-
-  React.useEffect(() => {
-    if (!visible) {
-      setBudgetAmount('');
-    }
-  }, [visible]);
-
-  const parsedBudgetAmount = Number(budgetAmount.replace(/[^0-9]/g, ''));
-  const isBudgetAmountValid = Number.isFinite(parsedBudgetAmount) && parsedBudgetAmount > 0;
-
-  const handleCreateBudget = async () => {
-    if (!onCreateBudget || !isBudgetAmountValid || isCreatingBudget) {
-      return;
-    }
-
-    await onCreateBudget(parsedBudgetAmount);
-    setBudgetAmount('');
-  };
+  const {
+    budgetAmount,
+    isBudgetAmountValid,
+    handleBudgetAmountChange,
+    handleCreateBudget,
+  } = useHomeMonthlyBudgetForm({
+    visible,
+    isCreatingBudget,
+    onCreateBudget,
+  });
 
   return (
     <BottomSheetModal
@@ -66,73 +54,33 @@ export default function HomeMonthlyReportSheet({
       subtitle={subtitle || '소비 흐름과 예산 상태를 함께 확인해보세요.'}
     >
       {canCreateBudget ? (
-        <View style={styles.budgetFormCard}>
-          <Text style={styles.budgetFormTitle}>이번 달 예산을 먼저 등록해보세요</Text>
-          <Text style={styles.budgetFormDescription}>
-            현재 백엔드 스펙상 예산 생성만 연결되어 있어요. 등록 후 이번 세션에서 남은 예산과 사용률을 바로 확인할 수 있습니다.
-          </Text>
-          <CustomTextInput
-            label="예산 금액 입력"
-            value={budgetAmount}
-            onChangeText={(text) => setBudgetAmount(text.replace(/[^0-9]/g, ''))}
-            keyboardType="numeric"
-          />
-          <GradientButton
-            title={isCreatingBudget ? '예산 등록 중...' : '이번 달 예산 등록'}
-            onPress={() => {
-              void handleCreateBudget();
-            }}
-            disabled={!isBudgetAmountValid || isCreatingBudget}
-            style={(!isBudgetAmountValid || isCreatingBudget) ? styles.disabledBudgetButton : undefined}
-          />
-        </View>
+        <HomeBudgetSetupCard
+          title="이번 달 예산을 먼저 등록해보세요"
+          description="현재 백엔드 스펙상 예산 생성만 연결되어 있어요. 등록 후 이번 세션에서 남은 예산과 사용률을 바로 확인할 수 있습니다."
+          inputLabel="예산 금액 입력"
+          buttonTitle={isCreatingBudget ? '예산 등록 중...' : '이번 달 예산 등록'}
+          budgetAmount={budgetAmount}
+          isDisabled={!isBudgetAmountValid || isCreatingBudget}
+          onBudgetAmountChange={handleBudgetAmountChange}
+          onSubmit={() => {
+            void handleCreateBudget();
+          }}
+        />
       ) : null}
 
-      <View style={styles.compareRow}>
-        <View style={styles.compareColumn}>
-          <View style={styles.compareChipPrimary}>
-            <Text style={styles.compareChipPrimaryText}>{currentMonthLabel || '-'}</Text>
-          </View>
-          <View style={styles.reportRing}>
-            <View style={styles.reportRingCenter}>
-              <Text style={styles.reportRingAmount}>
-                {currentTotalAmount == null ? '-' : `${currentTotalAmount.toLocaleString()}원`}
-              </Text>
-              <Text style={styles.reportRingLabel}>총 소비</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.compareColumn}>
-          <View style={styles.compareChipMuted}>
-            <Text style={styles.compareChipMutedText}>{lastMonthLabel || '-'}</Text>
-          </View>
-          <View style={[styles.reportRing, styles.reportRingMuted]}>
-            <View style={styles.reportRingCenter}>
-              <Text style={styles.reportRingAmount}>
-                {lastTotalAmount == null ? '-' : `${lastTotalAmount.toLocaleString()}원`}
-              </Text>
-              <Text style={styles.reportRingLabel}>총 소비</Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      <LegendList
-        items={
-          comparisonLegend.length > 0
-            ? comparisonLegend
-            : [{ id: 'empty', label: '분석 데이터 없음', value: '-', color: COLORS.textTertiary }]
-        }
-        variant="divider"
+      <HomeMonthlyComparisonSection
+        currentMonthLabel={currentMonthLabel}
+        currentTotalAmount={currentTotalAmount}
+        lastMonthLabel={lastMonthLabel}
+        lastTotalAmount={lastTotalAmount}
+        amountLabel="총 소비"
+        comparisonLegend={comparisonLegend}
+        emptyLegendLabel="분석 데이터 없음"
       />
 
-      <View style={styles.insightCard}>
-        <Ionicons name="bar-chart-outline" size={wp(22)} color={COLORS.primary} />
-        <Text style={styles.insightText}>
-          {insightText || '이번 달과 지난달 소비 비교 데이터가 아직 충분하지 않아요.'}
-        </Text>
-      </View>
+      <HomeMonthlyInsightCard
+        text={insightText || '이번 달과 지난달 소비 비교 데이터가 아직 충분하지 않아요.'}
+      />
     </BottomSheetModal>
   );
 }

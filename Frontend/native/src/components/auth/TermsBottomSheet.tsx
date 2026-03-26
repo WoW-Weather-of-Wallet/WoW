@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, hp, wp } from '../../constants/theme';
 import { TERM_DOCUMENT_KEYS, type TermDocumentKey } from '../../constants/terms';
 import { useTermDocuments } from '../../hooks/useTermDocuments';
+import type { RootNavigationProp } from '../../types';
 import { styles } from './TermsBottomSheet.styles';
 
 interface TermsBottomSheetProps {
@@ -39,7 +40,7 @@ export default function TermsBottomSheet({
   flow,
 }: TermsBottomSheetProps) {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<RootNavigationProp>();
   const { documents, isLoading } = useTermDocuments(visible);
   const [agreements, setAgreements] = useState<AgreementsState>(INITIAL_AGREEMENTS);
 

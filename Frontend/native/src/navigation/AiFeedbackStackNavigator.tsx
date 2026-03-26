@@ -3,8 +3,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AiFeedbackHomeScreen from '../screens/ai/AiFeedbackHomeScreen';
 import AiLoadingScreen from '../screens/ai/AiLoadingScreen';
 import AiResultScreen from '../screens/ai/AiResultScreen';
+import type { AiFeedbackStackParamList } from '../types';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<AiFeedbackStackParamList>();
 
 /**
  * AI 피드백 탭 내부의 네비게이션 스택을 관리합니다.

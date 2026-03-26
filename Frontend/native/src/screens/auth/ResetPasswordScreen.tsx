@@ -1,174 +1,81 @@
-import React, { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  StatusBar,
-  Text,
-  TouchableOpacity,
-  View,
-  Alert,
-  ScrollView,
-} from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import React from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { styles } from './ResetPasswordScreen.styles';
-import { COLORS, wp, hp } from '../../constants/theme';
+import AuthIntroBlock from '../../components/auth/AuthIntroBlock';
+import AuthScreenLayout from '../../components/auth/AuthScreenLayout';
 import CustomTextInput from '../../components/common/CustomTextInput';
-import { findPassword } from '../../services/auth';
-import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
-import { validatePassword } from '../../utils/validation';
+import { useResetPasswordFlow } from '../../hooks';
+import { hp } from '../../constants/theme';
+import { styles } from './ResetPasswordScreen.styles';
 
 export default function ResetPasswordScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<any>();
   const insets = useSafeAreaInsets();
-  const { userId, name, ssnFront, ssnBack, phoneNumber } = route.params || {};
-
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const passwordValidation = validatePassword(password, userId);
-  const isPasswordValid = passwordValidation.isValid;
-  const isFormValid =
-    isPasswordValid &&
-    confirmPassword.length >= 8 &&
-    password === confirmPassword;
-
-  // Rebuild birthDate from the verified identity payload before calling the backend.
-  const getBirthDateFromIdentity = () => {
-    if (!ssnFront || !ssnBack || ssnFront.length !== 6) {
-      return null;
-    }
-
-    const centuryCode = ssnBack[0];
-    const century =
-      centuryCode === '1' || centuryCode === '2' || centuryCode === '5' || centuryCode === '6'
-        ? '19'
-        : '20';
-
-    return `${century}${ssnFront.slice(0, 2)}-${ssnFront.slice(2, 4)}-${ssnFront.slice(4, 6)}`;
-  };
-
-  const getGenderFromIdentity = () => {
-    if (!ssnBack || ssnBack.length === 0) {
-      return null;
-    }
-
-    return parseInt(ssnBack[0], 10) % 2 !== 0 ? 'M' : 'F';
-  };
-
-  const handleReset = async () => {
-    if (!isFormValid) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const birthDate = getBirthDateFromIdentity();
-      const gender = getGenderFromIdentity();
-
-      if (!birthDate || !gender || !name || !phoneNumber) {
-        throw new Error('본인 확인 정보가 누락되었어요.');
-      }
-
-      // Password reset is submitted only after the SMS verification step is complete.
-      await findPassword({
-        userId,
-        name,
-        birthDate,
-        gender,
-        phoneNumber,
-        newPw: password,
-      });
-
-      Alert.alert(
-        '비밀번호 변경 완료',
-        '새 비밀번호가 저장되었어요. 다시 로그인해 주세요.',
-        [{ text: '확인', onPress: () => navigation.navigate('Login') }],
-      );
-    } catch (error: any) {
-      const presentation = buildAuthErrorPresentation(error, {
-        flow: 'password-reset',
-        fallbackMessage: '비밀번호 변경에 실패했어요. 다시 시도해 주세요.',
-      });
-      Alert.alert(presentation.title, presentation.alertMessage);
-      setIsSubmitting(false);
-    }
-  };
+  const {
+    password,
+    confirmPassword,
+    showPasswordError,
+    showMismatchError,
+    isResetDisabled,
+    passwordErrorMessage,
+    mismatchErrorMessage,
+    setPassword,
+    setConfirmPassword,
+    handleReset,
+  } = useResetPasswordFlow();
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+    <AuthScreenLayout
+      title="비밀번호 재설정"
+      scrollContentStyle={{ paddingBottom: hp(24) }}
+    >
+      <AuthIntroBlock
+        title="새 비밀번호를 입력해 주세요."
+        description="영문, 숫자, 특수문자를 포함한 8자 이상 비밀번호를 설정해 주세요."
+        marginBottom={hp(40)}
+      />
 
-      <View style={[styles.header, { paddingTop: insets.top, height: hp(56) + insets.top }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>비밀번호 재설정</Text>
-        <View style={styles.headerRight} />
+      <View style={styles.formContainer}>
+        <View style={styles.inputWrapper}>
+          <CustomTextInput
+            label="새 비밀번호"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholder="새 비밀번호 입력"
+          />
+          {showPasswordError && <Text style={styles.errorText}>{passwordErrorMessage}</Text>}
+        </View>
+
+        <View style={styles.inputWrapper}>
+          <CustomTextInput
+            label="비밀번호 확인"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+            placeholder="비밀번호를 다시 입력해 주세요"
+          />
+          {showMismatchError && <Text style={styles.errorText}>{mismatchErrorMessage}</Text>}
+        </View>
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.content}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? hp(20) : 0}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[styles.mainButton, isResetDisabled && styles.disabledButton]}
+          onPress={() => void handleReset()}
+          disabled={isResetDisabled}
         >
-          <View style={styles.introContainer}>
-            <Text style={styles.introTitle}>새 비밀번호를 입력해주세요.</Text>
-            <Text style={styles.introSub}>영문, 숫자, 특수문자를 포함한 8~20자로 설정해 주세요.</Text>
-          </View>
+          <Text
+            style={[
+              styles.mainButtonText,
+              isResetDisabled && styles.disabledButtonText,
+            ]}
+          >
+            비밀번호 재설정하기
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-          <View style={styles.formContainer}>
-            <View style={styles.inputWrapper}>
-              <CustomTextInput
-                label="새 비밀번호"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                placeholder="새 비밀번호 입력"
-              />
-              {password.length > 0 && !isPasswordValid && (
-                <Text style={styles.errorText}>* {passwordValidation.message}</Text>
-              )}
-            </View>
-
-            <View style={styles.inputWrapper}>
-              <CustomTextInput
-                label="비밀번호 확인"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-                placeholder="비밀번호를 다시 입력해주세요"
-              />
-              {confirmPassword.length > 0 && password !== confirmPassword && (
-                <Text style={styles.errorText}>* 비밀번호가 일치하지 않아요.</Text>
-              )}
-            </View>
-          </View>
-
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={[styles.mainButton, !isFormValid && styles.disabledButton]}
-              onPress={() => void handleReset()}
-              disabled={!isFormValid || isSubmitting}
-            >
-              <Text style={[styles.mainButtonText, !isFormValid && styles.disabledButtonText]}>
-                비밀번호 변경하기
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* [Premium-UI] 네비게이션 바와의 겹침 방지를 위해 동적 여백 추가 */}
-          <View style={{ height: Math.max(insets.bottom, hp(20)) }} />
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+      <View style={{ height: Math.max(insets.bottom, hp(20)) }} />
+    </AuthScreenLayout>
   );
 }

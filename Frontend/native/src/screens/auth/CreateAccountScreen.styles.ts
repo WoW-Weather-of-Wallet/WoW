@@ -18,21 +18,6 @@ export const CONSTANTS = {
  * 테마(theme.ts)의 디자인 토큰을 참조하여 일관된 유아이를 유지합니다.
  */
 export const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrollContent: {
-    paddingHorizontal: wp(28),
-  },
-  title: {
-    fontSize: fp(28),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    lineHeight: fp(40),
-    marginBottom: hp(40),
-    letterSpacing: -0.5,
-  },
   inputSection: {
     marginBottom: hp(32),
   },
@@ -141,11 +126,6 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: COLORS.error,
     marginTop: hp(4),
-  },
-  bottomContainer: {
-    paddingHorizontal: wp(28),
-    backgroundColor: COLORS.background,
-    paddingTop: hp(12),
   },
   confirmButton: {
     backgroundColor: COLORS.border,

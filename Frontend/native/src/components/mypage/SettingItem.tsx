@@ -1,10 +1,9 @@
 import React from 'react';
 import { Text, TouchableOpacity, View, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
-import { styles } from './SettingItem.styles';
+import { COLORS, fp, hp, wp } from '../../constants/theme';
 
-interface SettingItemProps {
+export interface SettingItemProps {
   label: string;
   value?: string;
   type?: 'link' | 'toggle' | 'text';
@@ -12,6 +11,7 @@ interface SettingItemProps {
   onPress?: () => void;
   onToggle?: (val: boolean) => void;
   isDanger?: boolean;
+  isDisabled?: boolean;
 }
 
 /**
@@ -26,20 +26,36 @@ export default function SettingItem({
   onPress,
   onToggle,
   isDanger = false,
+  isDisabled = false,
 }: SettingItemProps) {
   const content = (
-    <View style={styles.container}>
-      <Text style={[styles.label, isDanger && styles.dangerLabel]}>{label}</Text>
-      
-      <View style={styles.rightContent}>
-        {value && <Text style={styles.valueText}>{value}</Text>}
+    <View
+      className="flex-row items-center justify-between bg-surface"
+      style={{ paddingVertical: hp(16), paddingHorizontal: wp(20) }}
+    >
+      <Text
+        className="font-sans-medium text-text"
+        style={[{ fontSize: fp(16) }, isDanger ? { color: COLORS.limitRed } : null]}
+      >
+        {label}
+      </Text>
+
+      <View className="flex-row items-center">
+        {value ? (
+          <Text
+            className="font-sans-medium text-text-tertiary"
+            style={{ fontSize: fp(14), marginRight: wp(4) }}
+          >
+            {value}
+          </Text>
+        ) : null}
         
         {type === 'link' && (
           <Ionicons 
             name="chevron-forward" 
             size={wp(18)} 
             color={COLORS.textTertiary} 
-            style={styles.chevron}
+            style={{ marginLeft: wp(4) }}
           />
         )}
         
@@ -47,6 +63,7 @@ export default function SettingItem({
           <Switch
             value={isToggled}
             onValueChange={onToggle}
+            disabled={isDisabled}
             trackColor={{ false: COLORS.switchTrackFalse, true: COLORS.primary }}
             thumbColor={COLORS.white}
           />
@@ -63,7 +80,7 @@ export default function SettingItem({
     <TouchableOpacity 
       activeOpacity={0.6} 
       onPress={onPress}
-      disabled={!onPress}
+      disabled={!onPress || isDisabled}
     >
       {content}
     </TouchableOpacity>

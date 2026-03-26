@@ -1,19 +1,10 @@
 import React from 'react';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Text, TouchableOpacity, View } from 'react-native';
 import BottomSheetModal from '../common/BottomSheetModal';
-import { COLORS, wp } from '../../constants/theme';
+import { useFixedExpensePickerSearch } from '../../hooks/useFixedExpensePickerSearch';
+import FixedExpensePickerRow, { type SelectableTransactionItem } from './FixedExpensePickerRow';
+import FixedExpensePickerSearchInput from './FixedExpensePickerSearchInput';
 import { styles } from './FixedExpensePickerSheet.styles';
-
-interface SelectableTransactionItem {
-  id: string;
-  dateLabel: string;
-  title: string;
-  category: string;
-  amount: number;
-  icon: string;
-  iconTone: string;
-}
 
 interface FixedExpensePickerSheetProps {
   visible: boolean;
@@ -24,9 +15,6 @@ interface FixedExpensePickerSheetProps {
   onClose: () => void;
 }
 
-/**
- * 전체내역에서 고정지출 후보 거래를 하나 고르는 단계입니다.
- */
 export default function FixedExpensePickerSheet({
   visible,
   items,
@@ -35,57 +23,44 @@ export default function FixedExpensePickerSheet({
   onConfirm,
   onClose,
 }: FixedExpensePickerSheetProps) {
+  const { query, setQuery, filteredItems, hasQuery } = useFixedExpensePickerSearch(items);
+
   return (
     <BottomSheetModal
       visible={visible}
       onClose={onClose}
-      title="전체내역에서 선택"
-      subtitle="고정지출로 등록할 항목을 선택하세요."
+      title="고정지출로 등록할 거래 선택"
+      subtitle="고정지출로 관리할 거래를 선택한 뒤 다음 단계로 이동하세요."
     >
-      <TextInput
-        placeholder="검색..."
-        placeholderTextColor={COLORS.textTertiary}
-        style={styles.searchInput}
-      />
+      <FixedExpensePickerSearchInput value={query} onChangeText={setQuery} />
 
       <View style={styles.list}>
-        {items.map((item) => {
-          const isSelected = selectedId === item.id;
+        {filteredItems.map((item) => (
+          <FixedExpensePickerRow
+            key={item.id}
+            item={item}
+            isSelected={selectedId === item.id}
+            onPress={onSelect}
+          />
+        ))}
 
-          return (
-            <TouchableOpacity
-              key={item.id}
-              activeOpacity={0.86}
-              style={[styles.row, isSelected && styles.rowSelected]}
-              onPress={() => onSelect(item.id)}
-            >
-              <View style={styles.left}>
-                <View style={[styles.iconWrap, { backgroundColor: item.iconTone }]}>
-                  <Ionicons
-                    name={item.icon as keyof typeof Ionicons.glyphMap}
-                    size={wp(18)}
-                    color={COLORS.textPrimary}
-                  />
-                </View>
-
-                <View>
-                  <Text style={styles.title}>{item.title}</Text>
-                  <Text style={styles.subtitle}>
-                    {item.category} · {item.dateLabel}
-                  </Text>
-                </View>
-              </View>
-
-              <Text style={styles.amount}>-₩{item.amount.toLocaleString()}</Text>
-            </TouchableOpacity>
-          );
-        })}
+        {filteredItems.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyTitle}>
+              {hasQuery ? '검색 결과가 없습니다' : '선택할 거래가 없습니다'}
+            </Text>
+            <Text style={styles.emptyDescription}>
+              {hasQuery
+                ? '검색어를 바꾸거나 초기화한 뒤 다시 확인해주세요.'
+                : '먼저 캘린더 거래 내역을 불러온 뒤 다시 시도해주세요.'}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       <TouchableOpacity activeOpacity={0.88} style={styles.confirmButton} onPress={onConfirm}>
-        <Text style={styles.confirmButtonText}>선택한 항목으로 다음</Text>
+        <Text style={styles.confirmButtonText}>선택한 거래로 이동</Text>
       </TouchableOpacity>
     </BottomSheetModal>
   );
 }
-

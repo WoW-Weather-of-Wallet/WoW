@@ -2,17 +2,19 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   Modal,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  ScrollView,
+  Text,
+  View,
 } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
+
 import { SPENDING_STYLES } from '../../constants/main/spendingStyle';
+import { wp } from '../../constants/theme';
 import { styles } from './SpendingStyleGuideModal.styles';
+import SpendingStyleGuideHeader from './SpendingStyleGuideHeader';
+import SpendingStyleGuidePagination from './SpendingStyleGuidePagination';
+import SpendingStyleGuideSlide from './SpendingStyleGuideSlide';
 
 interface SpendingStyleGuideModalProps {
   visible: boolean;
@@ -20,9 +22,7 @@ interface SpendingStyleGuideModalProps {
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - wp(40); // 너비를 약간 넓혀서 여유 공간 확보
-
-const INTRO_TEXT = '평소 자주 지출하는 #태그를 바탕으로 AI가 정의한 8가지 소비 유형 가이드입니다. 당신의 지출 패턴이 어떤 유형에 해당하는지 한눈에 살펴보세요.';
+const CARD_WIDTH = SCREEN_WIDTH - wp(40);
 
 export default function SpendingStyleGuideModal({
   visible,
@@ -51,29 +51,25 @@ export default function SpendingStyleGuideModal({
     <Modal
       visible={visible}
       animationType="fade"
-      transparent={true}
+      transparent
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
         <View style={styles.container}>
-          {/* Unified Magazine Header */}
-          <View style={styles.modalHeader}>
-            <View style={styles.titleRow}>
-              <Text style={styles.modalTitle}>소비 유형 가이드</Text>
-              <TouchableOpacity
-                activeOpacity={0.86}
-                style={styles.closeButton}
-                onPress={onClose}
-              >
-                <Ionicons name="close" size={wp(22)} color={COLORS.textPrimary} />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.modalSubTitle}>
-              평소 자주 지출하는 <Text style={styles.emphasizedText}>#태그</Text>를 바탕으로 AI가 정의한 8가지 소비 유형 가이드입니다. 당신의 지출 패턴이 어떤 유형에 해당하는지 한눈에 살펴보세요.
-            </Text>
-          </View>
+          <SpendingStyleGuideHeader
+            title="?ëš®í‰¬ ?ì¢ì‚Ž åª›Â€?ëŒ€ë±¶"
+            subtitle={
+              <>
+                ?ë±ëƒ¼ ?ë¨¯ï¼œ ï§žÂ€ç•°ì’—ë¸¯??
+                <Text style={styles.emphasizedText}>#?ì’“ë ‡</Text>
+                ç‘œ?è«›ë·€ê¹¢?ì‡°ì¤ˆ AIåª›Â€ ?ëº¤ì“½??8åª›Â€ï§žÂ€
+                ?ëš®í‰¬ ?ì¢ì‚Ž åª›Â€?ëŒ€ë±¶?ë‚…ë•²?? ?ë±€ë–Š??ï§žÂ€ç•°??â‘¦ê½©???
+                ëŒ€ë¼¡ ?ì¢ì‚Ž???ëŒ€ë–¦?ì„Žë’—ï§žÂ€ ?ì’•ëŠ¿???ëŒ„ë £è¹‚ëŒê½­??
+              </>
+            }
+            onClose={onClose}
+          />
 
-          {/* Content (Horizontal Scroll) */}
           <ScrollView
             ref={scrollRef}
             horizontal
@@ -85,58 +81,16 @@ export default function SpendingStyleGuideModal({
             snapToInterval={CARD_WIDTH}
             snapToAlignment="center"
           >
-            {SPENDING_STYLES.map((style) => (
-              <View key={style.id} style={styles.slide}>
-                <View style={[styles.iconContainer, { backgroundColor: style.color + '15' }]}>
-                  {style.iconType === 'MaterialCommunityIcons' ? (
-                    <MaterialCommunityIcons name={style.iconName as any} size={wp(64)} color={style.color} />
-                  ) : (
-                    <Ionicons name={style.iconName as any} size={wp(64)} color={style.color} />
-                  )}
-                </View>
-                <Text style={styles.styleTitle}>{style.title}</Text>
-                
-                {style.id === 7 ? (
-                  <Text style={styles.styleDescription}>
-                    어느 한 카테고리에 치우치지 않고 <Text style={styles.emphasizedText}>모든 분야에서</Text> 균형 있게 소비하는 안정적인 스타일이에요.
-                  </Text>
-                ) : style.description ? (
-                  <Text style={styles.styleDescription}>{style.description}</Text>
-                ) : (
-                  <View style={styles.tagContainer}>
-                    <View style={styles.tagRow}>
-                      {style.hashtags?.slice(0, 2).map((tag, idx) => (
-                        <View key={idx} style={styles.tagBadge}>
-                          <Text style={[styles.tagText, { color: style.color }]}>{tag}</Text>
-                        </View>
-                      ))}
-                    </View>
-                    <View style={styles.tagRow}>
-                      {style.hashtags?.slice(2, 3).map((tag, idx) => (
-                        <View key={idx} style={styles.tagBadge}>
-                          <Text style={[styles.tagText, { color: style.color }]}>{tag}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                )}
-              </View>
+            {SPENDING_STYLES.map(styleItem => (
+              <SpendingStyleGuideSlide key={styleItem.id} styleItem={styleItem} />
             ))}
           </ScrollView>
 
-          {/* Footer (Pagination) */}
           <View style={styles.footer}>
-            <View style={styles.pagination}>
-              {SPENDING_STYLES.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.dot,
-                    currentIndex === index && styles.activeDot,
-                  ]}
-                />
-              ))}
-            </View>
+            <SpendingStyleGuidePagination
+              totalCount={SPENDING_STYLES.length}
+              currentIndex={currentIndex}
+            />
           </View>
         </View>
       </View>

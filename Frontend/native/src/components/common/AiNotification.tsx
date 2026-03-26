@@ -1,32 +1,54 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
-import Animated, { 
-  FadeInUp, 
-  FadeOutUp, 
-  Layout 
+import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  type NavigationState,
+  type PartialState,
+  useNavigation,
+} from '@react-navigation/native';
+import Animated, {
+  FadeInUp,
+  FadeOutUp,
+  Layout,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { COLORS, FONTS, wp, hp, RADIUS } from '../../constants/theme';
+import { COLORS, FONTS, hp, RADIUS, wp } from '../../constants/theme';
 import { useAiStore } from '../../store/aiStore';
+import type { RootNavigationProp } from '../../types';
+
+const getActiveRouteName = (
+  state?: NavigationState | PartialState<NavigationState>,
+): string | undefined => {
+  if (!state) {
+    return undefined;
+  }
+
+  const currentRoute = state.routes[state.index ?? 0];
+
+  if ('state' in currentRoute && currentRoute.state) {
+    return getActiveRouteName(
+      currentRoute.state as NavigationState | PartialState<NavigationState>,
+    );
+  }
+
+  return currentRoute.name;
+};
 
 /**
  * AiNotification
- * 전역적으로 표시되는 프리미엄 알림 토스트입니다.
- * 사용자가 로딩 화면을 벗어났을 때 분석 완료 소식을 세련되게 알려줍니다.
+ * 전역으로 표시되는 프리미엄 알림 토스트입니다.
+ * 사용자가 로딩 화면을 벗어났을 때 분석 완료 소식을 부드럽게 알려줍니다.
  */
 const AiNotification = () => {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<RootNavigationProp>();
   const { showToast, hideToast } = useAiStore();
 
-  // [Logic] 로딩 화면에 있을 때는 알림을 띄우지 않습니다. (중복 방지)
-  const navState = navigation.getState();
-  const currentRoute = navState?.routes[navState?.index]?.name;
+  // 현재 가장 안쪽에 열린 화면을 기준으로 토스트 노출 여부를 판단합니다.
+  const currentRoute = getActiveRouteName(navigation.getState());
   const isStayingInLoading = currentRoute === 'AiLoading';
 
-  // 5초 뒤 자동 숨김
+  // 5초 뒤 자동으로 닫힙니다.
   useEffect(() => {
     if (showToast && !isStayingInLoading) {
       const timer = setTimeout(() => {
@@ -34,9 +56,11 @@ const AiNotification = () => {
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [showToast, isStayingInLoading]);
+  }, [showToast, isStayingInLoading, hideToast]);
 
-  if (!showToast || isStayingInLoading) return null;
+  if (!showToast || isStayingInLoading) {
+    return null;
+  }
 
   const handlePress = () => {
     hideToast();
@@ -47,37 +71,27 @@ const AiNotification = () => {
   };
 
   return (
-    <Animated.View 
+    <Animated.View
       entering={FadeInUp.duration(600)}
       exiting={FadeOutUp.duration(400)}
       layout={Layout.springify()}
-      style={[
-        styles.container, 
-        { top: insets.top + hp(12) }
-      ]}
+      style={[styles.container, { top: insets.top + hp(12) }]}
     >
       <Pressable style={styles.content} onPress={handlePress}>
         <View style={styles.iconWrapper}>
           <Ionicons name="sparkles" size={wp(20)} color={COLORS.white} />
         </View>
-        
+
         <View style={styles.textWrapper}>
           <Text style={styles.title}>AI 소비 분석 결과 도착!</Text>
           <Text style={styles.subtitle}>지금 바로 리포트를 확인해보세요.</Text>
         </View>
 
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={handlePress}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.button} onPress={handlePress} activeOpacity={0.7}>
           <Text style={styles.buttonText}>보기</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.closeButton} 
-          onPress={hideToast}
-        >
+        <TouchableOpacity style={styles.closeButton} onPress={hideToast}>
           <Ionicons name="close" size={wp(18)} color={COLORS.gray400} />
         </TouchableOpacity>
       </Pressable>

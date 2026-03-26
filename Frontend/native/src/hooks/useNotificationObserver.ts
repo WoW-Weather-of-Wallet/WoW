@@ -1,13 +1,14 @@
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import { useNavigation } from '@react-navigation/native';
+import type { RootNavigationProp } from '../types';
 
 /**
  * useNotificationObserver
  * 앱 실행 중 알림 클릭을 감지하고 해당 페이지로 이동시킵니다.
  */
 export const useNotificationObserver = () => {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<RootNavigationProp>();
 
   useEffect(() => {
     // 1. 앱이 꺼져 있을 때 알림을 눌러서 실행된 경우 처리
