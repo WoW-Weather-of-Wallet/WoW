@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.wow.domain.auth.service.SsafyOAuthServiceTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-03-26T20:08:36.132Z" hostname="DESKTOP-6OO0P6F" time="0.205">
+  <properties/>
+  <testcase name="registerThrowsWhenRequiredTermIsMissing()" classname="com.wow.domain.auth.service.SsafyOAuthServiceTest" time="0.144"/>
+  <testcase name="registerSavesUserTermsWithCurrentRequiredTerms()" classname="com.wow.domain.auth.service.SsafyOAuthServiceTest" time="0.031"/>
+  <testcase name="registerStopsBeforeSaveWhenSmsVerificationFails()" classname="com.wow.domain.auth.service.SsafyOAuthServiceTest" time="0.009"/>
+  <testcase name="registerFailsWhenUserSaveFails()" classname="com.wow.domain.auth.service.SsafyOAuthServiceTest" time="0.009"/>
+  <testcase name="registerThrowsWhenSsafyOauthIdConflictsWithExistingGeneralUserId()" classname="com.wow.domain.auth.service.SsafyOAuthServiceTest" time="0.009"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

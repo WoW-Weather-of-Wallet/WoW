@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.wow.domain.auth.controller.AuthControllerMockMvcTest" tests="17" skipped="0" failures="0" errors="0" timestamp="2026-03-26T20:08:29.826Z" hostname="DESKTOP-6OO0P6F" time="3.631">
+  <properties/>
+  <testcase name="signupReturnsBadRequestErrorResponseWhenJsonIsMalformed()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="2.182"/>
+  <testcase name="refreshReturnsUnauthorizedErrorResponseWhenServiceRejectsToken()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.422"/>
+  <testcase name="refreshReturnsBadRequestErrorResponseWhenRefreshTokenIsBlank()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.138"/>
+  <testcase name="returnsMethodNotAllowedErrorResponseWhenHttpMethodIsInvalid()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.063"/>
+  <testcase name="findPasswordReturnsNoContentWhenRequestIsValid()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.147"/>
+  <testcase name="checkUserIdReturnsBadRequestErrorResponseWhenServiceRejectsInvalidFormat()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.047"/>
+  <testcase name="sendSmsReturnsOkWhenRequestIsValid()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.045"/>
+  <testcase name="signupReturnsBadRequestErrorResponseWhenValidationFails()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.064"/>
+  <testcase name="findIdReturnsBadRequestErrorResponseWhenValidationFails()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.05"/>
+  <testcase name="findPasswordReturnsBadRequestErrorResponseWhenValidationFails()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.05"/>
+  <testcase name="verifySmsReturnsBadRequestErrorResponseWhenCodeValidationFails()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.052"/>
+  <testcase name="returnsNotFoundErrorResponseWhenEndpointDoesNotExist()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.039"/>
+  <testcase name="sendSmsReturnsBadRequestErrorResponseWhenPhoneNumberValidationFails()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.06"/>
+  <testcase name="verifySmsReturnsOkWhenRequestIsValid()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.052"/>
+  <testcase name="signupReturnsSuccessResponseWhenRequestIsValid()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.1"/>
+  <testcase name="findIdReturnsSuccessResponseWhenRequestIsValid()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.051"/>
+  <testcase name="refreshReturnsSuccessResponseWhenRequestIsValid()" classname="com.wow.domain.auth.controller.AuthControllerMockMvcTest" time="0.051"/>
+  <system-out><![CDATA[2026-03-27T05:08:30.657+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:30.659+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:30.660+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-03-27T05:08:32.070+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:32.071+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:32.071+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-03-27T05:08:32.479+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:32.480+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:32.480+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-03-27T05:08:32.619+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:32.620+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:32.620+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-03-27T05:08:32.681+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:32.681+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:32.682+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-03-27T05:08:32.824+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:32.824+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:32.825+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-03-27T05:08:32.865+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:32.865+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:32.866+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-03-27T05:08:32.917+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:32.918+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:32.918+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-03-27T05:08:32.982+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:32.982+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:32.982+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-03-27T05:08:33.032+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:33.032+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:33.032+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-03-27T05:08:33.087+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:33.087+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:33.087+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-03-27T05:08:33.128+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:33.130+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:33.130+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-03-27T05:08:33.132+09:00  WARN 56856 --- [backend] [    Test worker] o.s.web.servlet.PageNotFound             : No mapping for POST /api/v1/auth/missing
+2026-03-27T05:08:33.182+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:33.183+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:33.183+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-03-27T05:08:33.242+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:33.242+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:33.243+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-03-27T05:08:33.295+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:33.295+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:33.296+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-03-27T05:08:33.391+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:33.391+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:33.392+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-03-27T05:08:33.438+09:00  INFO 56856 --- [backend] [    Test worker] o.s.mock.web.MockServletContext          : Initializing Spring TestDispatcherServlet ''
+2026-03-27T05:08:33.439+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-27T05:08:33.439+09:00  INFO 56856 --- [backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
