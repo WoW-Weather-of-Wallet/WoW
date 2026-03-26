@@ -5,7 +5,10 @@ import {
   ScrollView,
   Text,
   View,
+  type StyleProp,
   type ScrollView as ScrollViewType,
+  type TextStyle,
+  type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import StepIndicator from '../../components/common/StepIndicator';
@@ -17,11 +20,17 @@ interface AuthStepLayoutProps {
   title: React.ReactNode;
   description?: React.ReactNode;
   children: React.ReactNode;
+  headerContent?: React.ReactNode;
   scrollViewRef?: React.RefObject<ScrollViewType | null>;
   scrollContentPaddingTop: number;
   scrollContentPaddingBottom: number;
   bottomMinPadding?: number;
   bottomContent?: React.ReactNode;
+  stepIndicatorContainerStyle?: StyleProp<ViewStyle>;
+  titleSectionStyle?: StyleProp<ViewStyle>;
+  titleStyle?: StyleProp<TextStyle>;
+  descriptionStyle?: StyleProp<TextStyle>;
+  bottomContainerStyle?: StyleProp<ViewStyle>;
 }
 
 const layoutStyles = {
@@ -32,12 +41,15 @@ const layoutStyles = {
   scrollContent: {
     paddingHorizontal: wp(28),
   },
+  stepIndicatorContainer: {},
+  titleSection: {
+    marginBottom: hp(40),
+  },
   title: {
     fontSize: fp(28),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
     lineHeight: fp(40),
-    marginBottom: hp(40),
     letterSpacing: -0.5,
   },
   description: {
@@ -58,11 +70,17 @@ export default function AuthStepLayout({
   title,
   description,
   children,
+  headerContent,
   scrollViewRef,
   scrollContentPaddingTop,
   scrollContentPaddingBottom,
   bottomMinPadding = hp(20),
   bottomContent,
+  stepIndicatorContainerStyle,
+  titleSectionStyle,
+  titleStyle,
+  descriptionStyle,
+  bottomContainerStyle,
 }: AuthStepLayoutProps) {
   const insets = useSafeAreaInsets();
 
@@ -83,11 +101,20 @@ export default function AuthStepLayout({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <StepIndicator currentStep={currentStep} totalSteps={totalSteps} />
+        <View style={[layoutStyles.stepIndicatorContainer, stepIndicatorContainerStyle]}>
+          <StepIndicator currentStep={currentStep} totalSteps={totalSteps} />
+        </View>
 
-        <Text style={layoutStyles.title}>{title}</Text>
+        {headerContent}
 
-        {description ? <Text style={layoutStyles.description}>{description}</Text> : null}
+        <View style={[layoutStyles.titleSection, titleSectionStyle]}>
+          <Text style={[layoutStyles.title, titleStyle]}>{title}</Text>
+          {description ? (
+            <Text style={[layoutStyles.description, descriptionStyle]}>
+              {description}
+            </Text>
+          ) : null}
+        </View>
 
         {children}
       </ScrollView>
@@ -96,6 +123,7 @@ export default function AuthStepLayout({
         <View
           style={[
             layoutStyles.bottomContainer,
+            bottomContainerStyle,
             { paddingBottom: Math.max(insets.bottom, bottomMinPadding) },
           ]}
         >
