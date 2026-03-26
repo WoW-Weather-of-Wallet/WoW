@@ -4,7 +4,7 @@ import Animated from 'react-native-reanimated';
 import { COLORS, hp, wp } from '../../constants/theme';
 import { styles } from './AiLoadingScreen.styles';
 import BottomTabOverlayLayout from '../../components/common/BottomTabOverlayLayout';
-import AiLoadingStage from '../../components/ai/AiLoadingStage';
+import { AiLoadingStage } from '../../components/ai';
 import { useAiLoadingFlow } from '../../hooks';
 import type { AiFeedbackStackScreenProps } from '../../types';
 

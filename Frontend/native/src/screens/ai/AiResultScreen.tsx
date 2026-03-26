@@ -5,7 +5,7 @@ import { styles } from './AiResultScreen.styles';
 import GradientButton from '../../components/common/GradientButton';
 import { COLORS, hp } from '../../constants/theme';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
-import AiResultSummaryCard from '../../components/ai/AiResultSummaryCard';
+import { AiResultSummaryCard } from '../../components/ai';
 import { useAiResultSummary } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import type { AiFeedbackStackScreenProps } from '../../types';

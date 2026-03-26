@@ -4,7 +4,7 @@ import {
   AiAnalysisPreview,
   AiGoalPreview,
   AiNotificationPreview,
-} from '../components/ai/AiFeaturePreviewSet';
+} from '../components/ai';
 
 export interface AiFeatureCardData {
   id: number;

@@ -4,7 +4,7 @@ import { COLORS, hp, wp } from '../../constants/theme';
 import { styles } from './AiFeedbackHomeScreen.styles';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import GradientButton from '../../components/common/GradientButton';
-import AiFeatureCarouselCard from '../../components/ai/AiFeatureCarouselCard';
+import { AiFeatureCarouselCard } from '../../components/ai';
 import { useAiFeatureCards, useAiFeatureCarousel } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import type { AiFeedbackStackScreenProps } from '../../types';
