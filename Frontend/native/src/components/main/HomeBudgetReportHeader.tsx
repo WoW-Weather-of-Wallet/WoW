@@ -58,7 +58,8 @@ export default function HomeBudgetReportHeader({
         <Text style={titleStyle}>
           {userName ? (
             <>
-              <Text style={titleHighlightStyle}>{userName}</Text>님의 예산 현황
+              <Text style={titleHighlightStyle}>{userName}</Text>
+              님의 예산 현황
             </>
           ) : (
             '이번 달 예산 리포트'

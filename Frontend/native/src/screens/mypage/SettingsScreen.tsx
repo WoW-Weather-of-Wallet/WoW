@@ -355,11 +355,18 @@ export default function SettingsScreen() {
     setIsNotificationSubmitting(true);
 
     try {
-      if (enabled) {
-        await fcmService.registerFcmToken();
+      const updated = await updateNotificationSettings({ alarmEnabled: enabled });
+
+      try {
+        if (updated.alarmEnabled) {
+          await fcmService.registerFcmToken();
+        } else {
+          await fcmService.unregisterFcmToken();
+        }
+      } catch (fcmError) {
+        console.warn('[Settings] failed to sync notification token', fcmError);
       }
 
-      const updated = await updateNotificationSettings({ alarmEnabled: enabled });
       setNotificationEnabled(updated.alarmEnabled);
       setProfile((prev) => (prev ? { ...prev, alarmEnabled: updated.alarmEnabled } : prev));
     } catch (error) {

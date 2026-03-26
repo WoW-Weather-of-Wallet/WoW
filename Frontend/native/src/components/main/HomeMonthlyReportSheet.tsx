@@ -52,12 +52,12 @@ export default function HomeMonthlyReportSheet({
       visible={visible}
       onClose={onClose}
       title="이번 달 vs 지난달 비교"
-      subtitle={subtitle || '소비 흐름과 예산 상태를 한눈에 확인해보세요.'}
+      subtitle={subtitle || '소비 흐름과 예산 상태를 한눈에 확인해 보세요.'}
     >
       {canCreateBudget ? (
         <HomeBudgetSetupCard
-          title="이번 달 예산을 먼저 등록해보세요"
-          description="아직 예산이 연결되지 않았다면 여기서 바로 등록하고 이번 달 소비 현황을 함께 확인할 수 있어요."
+          title="이번 달 예산을 먼저 등록해 보세요"
+          description="아직 예산을 설정하지 않았다면 여기서 바로 등록하고 이번 달 소비 현황을 함께 확인할 수 있어요."
           inputLabel="예산 금액 입력"
           buttonTitle={isCreatingBudget ? '예산 등록 중...' : '이번 달 예산 등록'}
           budgetAmount={budgetAmount}

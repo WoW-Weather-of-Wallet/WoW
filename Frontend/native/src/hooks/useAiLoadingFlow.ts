@@ -48,7 +48,7 @@ export function useAiLoadingFlow({ navigation }: UseAiLoadingFlowOptions) {
   const { hideToast, status } = useAiStore();
 
   useEffect(() => {
-    if (isFocused && status === 'success') {
+    if (isFocused && (status === 'success' || status === 'error')) {
       hideToast();
       navigation.replace('AiResult');
     }

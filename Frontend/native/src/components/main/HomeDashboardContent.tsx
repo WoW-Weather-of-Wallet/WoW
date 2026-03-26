@@ -6,7 +6,6 @@ import type {
   HomeDashboardWeatherCardData,
 } from './types';
 import HomeBudgetReportCard from './HomeBudgetReportCard';
-import HomeScheduleSection from './HomeScheduleSection';
 import HomeSpendingTypeCard from './HomeSpendingTypeCard';
 import HomeTodayWeatherCard from './HomeTodayWeatherCard';
 
@@ -49,7 +48,6 @@ export default function HomeDashboardContent({
         forecastText={budgetReportCard.forecastText}
         onPress={onPressBudgetReport}
       />
-      <HomeScheduleSection items={[]} />
     </>
   );
 }

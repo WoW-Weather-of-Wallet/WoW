@@ -1,95 +1,443 @@
 import { create } from 'zustand';
 
+import {
+  getAiAnalysis,
+  isAiAnalysisApiError,
+  type AiAnalysisApiError,
+  type AiAnalysisReport,
+  type GetAiAnalysisParams,
+} from '../services/ai';
+import {
+  clearPersistedAiReport,
+  loadPersistedAiReport,
+  savePersistedAiReport,
+  type PersistedAiReportData,
+} from '../services/aiReportStorage';
+import { matchesAiReportPeriod, resolveAiReportPeriod } from '../utils/aiReportPeriod';
+import { useAuthStore } from './authStore';
+
 export type AiStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export interface AiResultData {
   completedAt?: string;
   fromPush?: boolean;
+  report?: AiAnalysisReport | null;
+  fetchedAt?: string;
+  cacheExpiresAt?: string;
+  reportYear?: number;
+  reportMonth?: number;
+  ownerUserId?: string | null;
   [key: string]: unknown;
+}
+
+export interface AiErrorState {
+  kind: AiAnalysisApiError['kind'];
+  message: string;
+  statusCode?: number;
+  canRetry: boolean;
+}
+
+interface RefreshAiResultOptions extends GetAiAnalysisParams {
+  fromPush?: boolean;
+  force?: boolean;
 }
 
 interface AiState {
   status: AiStatus;
   resultData: AiResultData | null;
   showToast: boolean;
-  
-  // Actions
-  startAnalysis: () => void;
-  simulateAnalysis: () => void;
+  errorInfo: AiErrorState | null;
+  isRefreshing: boolean;
+
+  startAnalysis: (params?: GetAiAnalysisParams) => void;
+  simulateAnalysis: (params?: GetAiAnalysisParams) => void;
+  runAnalysis: (params?: GetAiAnalysisParams) => Promise<AiResultData | null>;
+  refreshLatestAnalysis: (params?: RefreshAiResultOptions) => Promise<AiAnalysisReport | null>;
   setSuccess: (data: AiResultData) => void;
-  setError: () => void;
+  setError: (error?: AiErrorState | null) => void;
   hideToast: () => void;
   reset: () => void;
 }
 
-/**
- * useAiStore
- * AI 분석 상태와 결과 데이터를 전역적으로 관리합니다.
- * 사용자가 로딩 화면을 벗어나더라도 배경에서 상태를 유지하고 알림을 띄울 수 있게 합니다.
- */
+const ANALYSIS_MINIMUM_LOADING_MS = 8500;
+
+let analysisRequestToken = 0;
 let analysisTimer: NodeJS.Timeout | null = null;
+
+const nextAnalysisRequestToken = () => {
+  analysisRequestToken += 1;
+  return analysisRequestToken;
+};
+
+const getCurrentAuthUserId = () => useAuthStore.getState().user?.userId ?? null;
+
+const resolveTargetPeriod = (params: GetAiAnalysisParams = {}) => resolveAiReportPeriod(params);
+
+const waitMinimumLoadingTime = (durationMs: number) =>
+  new Promise<void>((resolve) => {
+    if (analysisTimer) {
+      clearTimeout(analysisTimer);
+    }
+
+    analysisTimer = setTimeout(() => {
+      analysisTimer = null;
+      resolve();
+    }, durationMs);
+  });
+
+const toAiErrorState = (error: unknown): AiErrorState => {
+  if (isAiAnalysisApiError(error)) {
+    return {
+      kind: error.kind,
+      message: error.message,
+      statusCode: error.statusCode,
+      canRetry: error.canRetry,
+    };
+  }
+
+  return {
+    kind: 'unknown',
+    message: 'AI 피드백을 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
+    canRetry: true,
+  };
+};
+
+const toPersistedResultData = (data: AiResultData): PersistedAiReportData => ({
+  completedAt: data.completedAt,
+  fromPush: data.fromPush,
+  report: data.report ?? null,
+  fetchedAt: data.fetchedAt,
+  cacheExpiresAt: data.cacheExpiresAt,
+  reportYear: data.reportYear,
+  reportMonth: data.reportMonth,
+  ownerUserId: data.ownerUserId ?? null,
+});
+
+const toAiResultData = (data: PersistedAiReportData | null): AiResultData | null =>
+  data
+    ? {
+        completedAt: data.completedAt,
+        fromPush: data.fromPush,
+        report: data.report ?? null,
+        fetchedAt: data.fetchedAt,
+        cacheExpiresAt: data.cacheExpiresAt,
+        reportYear: data.reportYear,
+        reportMonth: data.reportMonth,
+        ownerUserId: data.ownerUserId ?? null,
+      }
+    : null;
+
+const buildStoredResultData = (
+  report: AiAnalysisReport,
+  params: GetAiAnalysisParams,
+  previousData: AiResultData | null,
+  fromPush = false,
+): AiResultData => {
+  const now = new Date();
+  const target = resolveTargetPeriod(params);
+  const previousForSamePeriod = matchesAiReportPeriod(previousData, target, getCurrentAuthUserId())
+    ? previousData
+    : null;
+
+  return {
+    ...(previousForSamePeriod ?? {}),
+    completedAt: previousForSamePeriod?.completedAt ?? now.toISOString(),
+    fromPush: fromPush || previousForSamePeriod?.fromPush || false,
+    report,
+    fetchedAt: now.toISOString(),
+    cacheExpiresAt: now.toISOString(),
+    reportYear: target.year,
+    reportMonth: target.month,
+    ownerUserId: getCurrentAuthUserId(),
+  };
+};
+
+const getCurrentPeriodResult = (
+  resultData: AiResultData | null,
+  params: GetAiAnalysisParams = {},
+) => {
+  const target = resolveTargetPeriod(params);
+  const ownerUserId = getCurrentAuthUserId();
+
+  if (!matchesAiReportPeriod(resultData, target, ownerUserId) || !resultData?.report) {
+    return null;
+  }
+
+  return resultData;
+};
+
+const loadPersistedResultForCurrentUser = async (params: GetAiAnalysisParams = {}) => {
+  const persisted = await loadPersistedAiReport();
+  const aiResultData = toAiResultData(persisted);
+  const target = resolveTargetPeriod(params);
+  const ownerUserId = getCurrentAuthUserId();
+
+  if (!matchesAiReportPeriod(aiResultData, target, ownerUserId) || !aiResultData?.report) {
+    return null;
+  }
+
+  return aiResultData;
+};
+
+const persistAiResultData = async (data: AiResultData | null) => {
+  if (!data?.report) {
+    await clearPersistedAiReport();
+    return;
+  }
+
+  await savePersistedAiReport(toPersistedResultData(data));
+};
+
+const presentAnalysisReadyNotification = async () => {
+  try {
+    const { fcmService } = require('../services/fcmService');
+    await fcmService.presentLocalNotification(
+      'AI 소비 분석 결과가 도착했어요',
+      '지금 바로 리포트를 확인해보세요.',
+      { action: 'ai_feedback' },
+    );
+  } catch (error) {
+    console.warn('Failed to present AI notification', error);
+  }
+};
 
 export const useAiStore = create<AiState>((set, get) => ({
   status: 'idle',
   resultData: null,
   showToast: false,
+  errorInfo: null,
+  isRefreshing: false,
 
-  startAnalysis: () => {
-    // 기존 타이머가 있다면 정리 (안전 장치)
+  startAnalysis: (params = {}) => {
+    const currentPeriodResult = getCurrentPeriodResult(get().resultData, params);
+
     if (analysisTimer) {
       clearTimeout(analysisTimer);
       analysisTimer = null;
     }
-    set({ status: 'loading', showToast: false, resultData: null });
-  },
 
-  simulateAnalysis: () => {
-    // 이미 실행 중인 타이머가 있다면 무시하거나 재설정 (여기서는 혹시 모를 중복 방지를 위해 정리 후 시작)
-    if (analysisTimer) {
-      clearTimeout(analysisTimer);
-    }
-
-    // 8.5초 후 분석 완료 시뮬레이션
-    analysisTimer = setTimeout(() => {
-      const state = get();
-      // 반드시 로딩 상태일 때만 성공으로 변경
-      if (state.status === 'loading') {
-        set({
-          status: 'success',
-          resultData: { completedAt: new Date().toISOString() },
-          showToast: true
-        });
-        
-        // [Item 5] 시뮬레이션 완료 시에도 시스템 알림(상단 바)을 강제 발생시켜 사용자 인지 유도
-        const { fcmService } = require('../services/fcmService');
-        void fcmService.presentLocalNotification(
-          'AI 소비 분석 결과 도착!',
-          '지금 바로 리포트를 확인해보세요.',
-          { action: 'ai_feedback' }
-        );
-      }
-      analysisTimer = null;
-    }, 8500);
-  },
-
-  setSuccess: (data: AiResultData) => {
-    if (analysisTimer) {
-      clearTimeout(analysisTimer);
-      analysisTimer = null;
-    }
-    set({ 
-      status: 'success', 
-      resultData: data, 
-      showToast: true 
+    set({
+      status: 'loading',
+      showToast: false,
+      resultData: currentPeriodResult,
+      errorInfo: null,
+      isRefreshing: false,
     });
   },
 
-  setError: () => {
-    if (analysisTimer) {
-      clearTimeout(analysisTimer);
-      analysisTimer = null;
+  simulateAnalysis: (params = {}) => {
+    const requestToken = nextAnalysisRequestToken();
+    const currentState = get();
+    const delayPromise = waitMinimumLoadingTime(ANALYSIS_MINIMUM_LOADING_MS);
+
+    void (async () => {
+      try {
+        const report = await getAiAnalysis({
+          ...resolveTargetPeriod(params),
+          generateIfAbsent: true,
+        });
+        await delayPromise;
+
+        if (requestToken !== analysisRequestToken) {
+          return;
+        }
+
+        const nextResultData = buildStoredResultData(
+          report,
+          params,
+          currentState.resultData,
+          false,
+        );
+
+        set({
+          status: 'success',
+          resultData: nextResultData,
+          showToast: true,
+          errorInfo: null,
+          isRefreshing: false,
+        });
+
+        await persistAiResultData(nextResultData);
+        void presentAnalysisReadyNotification();
+      } catch (error) {
+        await delayPromise;
+
+        if (requestToken !== analysisRequestToken) {
+          return;
+        }
+
+        set({
+          status: 'error',
+          showToast: false,
+          resultData: null,
+          errorInfo: toAiErrorState(error),
+          isRefreshing: false,
+        });
+      }
+    })();
+  },
+
+  runAnalysis: async (params = {}) => {
+    const requestToken = nextAnalysisRequestToken();
+
+    set({
+      status: 'loading',
+      showToast: false,
+      resultData: getCurrentPeriodResult(get().resultData, params),
+      errorInfo: null,
+      isRefreshing: false,
+    });
+
+    try {
+      const report = await getAiAnalysis({
+        ...resolveTargetPeriod(params),
+        generateIfAbsent: true,
+      });
+      if (requestToken !== analysisRequestToken) {
+        return null;
+      }
+
+      const nextResultData = buildStoredResultData(report, params, get().resultData, false);
+
+      set({
+        status: 'success',
+        resultData: nextResultData,
+        showToast: true,
+        errorInfo: null,
+        isRefreshing: false,
+      });
+
+      await persistAiResultData(nextResultData);
+      void presentAnalysisReadyNotification();
+      return nextResultData;
+    } catch (error) {
+      if (requestToken !== analysisRequestToken) {
+        return null;
+      }
+
+      set({
+        status: 'error',
+        resultData: null,
+        showToast: false,
+        errorInfo: toAiErrorState(error),
+        isRefreshing: false,
+      });
+
+      return null;
     }
-    set({ status: 'error', showToast: false });
+  },
+
+  refreshLatestAnalysis: async (params = {}) => {
+    const target = resolveTargetPeriod(params);
+    const currentPeriodResult = getCurrentPeriodResult(get().resultData, params);
+
+    if (currentPeriodResult && !params.force) {
+      set({
+        status: 'success',
+        resultData: currentPeriodResult,
+        errorInfo: null,
+        isRefreshing: false,
+      });
+      return currentPeriodResult.report ?? null;
+    }
+
+    if (!params.force) {
+      const persistedResult = await loadPersistedResultForCurrentUser(params);
+      if (persistedResult) {
+        set({
+          status: 'success',
+          resultData: persistedResult,
+          errorInfo: null,
+          isRefreshing: false,
+        });
+        return persistedResult.report ?? null;
+      }
+    }
+
+    const requestToken = nextAnalysisRequestToken();
+
+    set({
+      isRefreshing: true,
+      errorInfo: null,
+      status: currentPeriodResult?.report ? 'success' : 'idle',
+      resultData: currentPeriodResult,
+    });
+
+    try {
+      const report = await getAiAnalysis({
+        year: target.year,
+        month: target.month,
+        generateIfAbsent: false,
+      });
+
+      if (requestToken !== analysisRequestToken) {
+        return null;
+      }
+
+      const nextResultData = buildStoredResultData(
+        report,
+        { year: target.year, month: target.month },
+        get().resultData,
+        params.fromPush ?? false,
+      );
+
+      set({
+        status: 'success',
+        resultData: nextResultData,
+        errorInfo: null,
+        isRefreshing: false,
+      });
+
+      await persistAiResultData(nextResultData);
+      return report;
+    } catch (error) {
+      if (requestToken !== analysisRequestToken) {
+        return null;
+      }
+
+      const errorInfo = toAiErrorState(error);
+      const nextResultData = currentPeriodResult ?? null;
+
+      set({
+        status: nextResultData?.report ? 'success' : 'error',
+        resultData: nextResultData,
+        errorInfo,
+        isRefreshing: false,
+      });
+
+      if (!nextResultData) {
+        await clearPersistedAiReport();
+      }
+
+      return null;
+    }
+  },
+
+  setSuccess: (data) => {
+    const nextResultData: AiResultData = {
+      ...get().resultData,
+      ...data,
+      ownerUserId: data.ownerUserId ?? getCurrentAuthUserId(),
+    };
+
+    set({
+      status: 'success',
+      resultData: nextResultData,
+      showToast: true,
+      errorInfo: null,
+      isRefreshing: false,
+    });
+
+    void persistAiResultData(nextResultData);
+  },
+
+  setError: (error) => {
+    set({
+      status: 'error',
+      showToast: false,
+      errorInfo: error ?? null,
+      isRefreshing: false,
+    });
   },
 
   hideToast: () => {
@@ -97,10 +445,20 @@ export const useAiStore = create<AiState>((set, get) => ({
   },
 
   reset: () => {
+    nextAnalysisRequestToken();
     if (analysisTimer) {
       clearTimeout(analysisTimer);
       analysisTimer = null;
     }
-    set({ status: 'idle', resultData: null, showToast: false });
+
+    const currentResult = getCurrentPeriodResult(get().resultData);
+
+    set({
+      status: currentResult?.report ? 'success' : 'idle',
+      resultData: currentResult,
+      showToast: false,
+      errorInfo: null,
+      isRefreshing: false,
+    });
   },
 }));

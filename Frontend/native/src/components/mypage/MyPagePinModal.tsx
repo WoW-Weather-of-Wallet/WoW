@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Text, View } from 'react-native';
+import { Modal, Pressable, Text, View } from 'react-native';
 import SecureKeypad from '../common/SecureKeypad';
 import { COLORS, FONTS, fp, hp, RADIUS, wp } from '../../constants/theme';
 
@@ -9,6 +9,7 @@ interface MyPagePinModalProps {
   description: string;
   pinInput: string;
   pinError: string;
+  onClose: () => void;
   onPressNumber: (digit: string) => void;
   onPressDelete: () => void;
 }
@@ -19,22 +20,25 @@ export default function MyPagePinModal({
   description,
   pinInput,
   pinError,
+  onClose,
   onPressNumber,
   onPressDelete,
 }: MyPagePinModalProps) {
   return (
-    <Modal visible={visible} transparent animationType="slide">
-      <View
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable
         className="flex-1 justify-center bg-[rgba(15,23,42,0.45)]"
         style={{ paddingHorizontal: wp(20) }}
+        onPress={onClose}
       >
-        <View
+        <Pressable
           className="bg-[#F8FAFC]"
           style={{
             borderRadius: RADIUS.xl,
             padding: wp(20),
             gap: hp(14),
           }}
+          onPress={(event) => event.stopPropagation()}
         >
           <Text
             style={{
@@ -89,8 +93,8 @@ export default function MyPagePinModal({
           ) : null}
 
           <SecureKeypad onPressNumber={onPressNumber} onPressDelete={onPressDelete} />
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }

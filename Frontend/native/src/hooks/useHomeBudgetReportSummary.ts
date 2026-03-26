@@ -23,19 +23,23 @@ export function useHomeBudgetReportSummary({
       (value) => value != null,
     );
     const trimmedUserName = userName?.trim();
+
     const helperMessage = hasBudgetData
       ? `이번 달 소비 ${spentAmount == null ? '-' : `${spentAmount.toLocaleString()}원`} / 총 예산 ${
           totalBudget == null ? '-' : `${totalBudget.toLocaleString()}원`
         }`
-      : '지출 데이터가 쌓이면 이번 달 예산 흐름을 정확하게 안내해드릴게요.';
+      : '지출 데이터가 쌓이면 이번 달 예산 흐름을 더 정확하게 안내해 드릴게요.';
+
     const resolvedForecastText =
       forecastText?.trim() ||
       (hasBudgetData
-        ? '월말 예측 문구를 곧 보여드릴게요.'
-        : '월간 리포트를 열어 소비 패턴과 절약 팁을 먼저 확인해보세요.');
+        ? '소비 흐름을 바탕으로 다음 예산 흐름도 함께 보여드릴게요.'
+        : '월간 리포트를 통해 소비 흐름과 예산 상태를 먼저 확인해 보세요.');
+
     const remainingValue =
       remainingBudget == null ? '준비 중' : `${remainingBudget.toLocaleString()}원`;
-    const usageLabel = budgetUsageRate == null ? '예산 분석 대기' : `${budgetUsageRate}% 사용`;
+    const usageLabel =
+      budgetUsageRate == null ? '예산 분석 대기' : `${budgetUsageRate}% 사용`;
 
     return {
       usageRate,

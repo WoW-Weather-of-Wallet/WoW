@@ -91,7 +91,8 @@ export default function QuickLoginGate({
         </View>
         <Text style={styles.title}>간편로그인</Text>
         <Text style={styles.description}>
-          계정 로그인은 유지되어 있어요. 계속하려면 등록된 간편수단으로 확인해주세요.
+          계정 로그인은 유지되어 있어요.{'\n'}
+          계속하려면 등록된 간편수단으로 확인해 주세요.
         </Text>
       </View>
 
@@ -107,7 +108,7 @@ export default function QuickLoginGate({
             />
           ))}
         </View>
-        <Text style={styles.pinHint}>간편비밀번호 6자리를 입력해주세요.</Text>
+        <Text style={styles.pinHint}>간편비밀번호 6자리를 입력해 주세요.</Text>
 
         {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
@@ -165,7 +166,7 @@ export default function QuickLoginGate({
         activeOpacity={0.7}
         onPress={onPressDifferentAccount}
       >
-        <Text style={styles.secondaryActionText}>다른 계정으로 로그인</Text>
+        <Text style={styles.secondaryActionText}>로그아웃</Text>
       </TouchableOpacity>
       {logoutNotice ? <Text style={styles.secondaryActionHint}>{logoutNotice}</Text> : null}
     </View>
@@ -284,16 +285,16 @@ const styles = {
     paddingVertical: hp(12),
   },
   secondaryActionText: {
-    fontSize: fp(14),
+    fontSize: fp(16),
     fontFamily: FONTS.semiBold,
     color: COLORS.textTertiary,
   },
   secondaryActionHint: {
-    marginTop: hp(8),
+    marginTop: hp(12),
     textAlign: 'center' as const,
     fontSize: fp(12),
     lineHeight: fp(18),
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
   },
-};
+} as const;

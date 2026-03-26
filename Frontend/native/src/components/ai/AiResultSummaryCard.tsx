@@ -9,6 +9,7 @@ export interface AiResultSummaryCardProps {
   headline?: string;
   iconName?: React.ComponentProps<typeof Ionicons>['name'];
   iconText?: string;
+  items?: string[];
 }
 
 export default function AiResultSummaryCard({
@@ -17,6 +18,7 @@ export default function AiResultSummaryCard({
   headline,
   iconName,
   iconText,
+  items,
 }: AiResultSummaryCardProps) {
   return (
     <View
@@ -83,6 +85,39 @@ export default function AiResultSummaryCard({
       >
         {description}
       </Text>
+
+      {items?.length ? (
+        <View style={{ marginTop: hp(14), gap: hp(10) }}>
+          {items.map((item, index) => (
+            <View
+              key={`${title}-${index}`}
+              style={{ flexDirection: 'row', alignItems: 'flex-start' }}
+            >
+              <View
+                style={{
+                  width: wp(6),
+                  height: wp(6),
+                  borderRadius: wp(3),
+                  backgroundColor: COLORS.primary,
+                  marginTop: hp(7),
+                  marginRight: wp(10),
+                }}
+              />
+              <Text
+                style={{
+                  flex: 1,
+                  fontSize: fp(13),
+                  fontFamily: FONTS.medium,
+                  color: COLORS.textPrimary,
+                  lineHeight: fp(20),
+                }}
+              >
+                {item}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
