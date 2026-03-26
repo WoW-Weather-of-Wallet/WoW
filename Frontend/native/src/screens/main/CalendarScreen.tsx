@@ -1,5 +1,4 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
 import { hp, COLORS, RADIUS, wp } from '../../constants/theme';
 import { useCalendarScreenFlow } from '../../hooks';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
@@ -182,7 +181,7 @@ export default function CalendarScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   container: {
     flex: 1,
     backgroundColor: COLORS.backgroundSecondary,
@@ -209,4 +208,4 @@ const styles = StyleSheet.create({
     padding: wp(8),
     marginTop: hp(6),
   },
-});
+} as const;

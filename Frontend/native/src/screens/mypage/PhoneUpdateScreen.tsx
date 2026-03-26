@@ -1,5 +1,4 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import IdentityVerificationFormStage from '../../components/common/IdentityVerificationFormStage';
 import IdentityVerificationCodeStage from '../../components/common/IdentityVerificationCodeStage';
@@ -221,7 +220,7 @@ export default function PhoneUpdateScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -450,4 +449,4 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     textAlign: 'center',
   },
-});
+} as const;

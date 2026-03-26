@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -256,7 +256,7 @@ export default function WithdrawScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -496,4 +496,4 @@ const styles = StyleSheet.create({
     color: COLORS.textTertiary,
     textDecorationLine: 'underline',
   },
-});
+} as const;

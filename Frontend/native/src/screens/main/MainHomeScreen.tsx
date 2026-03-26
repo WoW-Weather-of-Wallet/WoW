@@ -1,5 +1,4 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
 
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import { HomeDashboardContent, HomeDashboardSheets } from '../../components/main';
@@ -49,7 +48,7 @@ export default function MainHomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   container: {
     flex: 1,
     backgroundColor: COLORS.backgroundSecondary,
@@ -58,4 +57,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(20),
     gap: hp(18),
   },
-});
+} as const;
