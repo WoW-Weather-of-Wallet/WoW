@@ -1,15 +1,13 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
+import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
+import { PermissionMeta } from '../../constants/auth/permissionConfig';
 import {
   PermissionKey,
   PermissionState,
 } from '../../hooks/useAppPermissions';
-import { PermissionMeta } from '../../constants/auth/permissionConfig';
-import { styles } from './PermissionCard.styles';
 
-// 권한 카드의 시각 표현을 공통 컴포넌트로 분리해 다른 화면에서도 재사용할 수 있게 둡니다.
 type PermissionCardProps = {
   item: PermissionMeta;
   state: PermissionState;
@@ -27,15 +25,30 @@ export default function PermissionCard({
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      style={[
-        styles.permissionCard,
-        isGranted && styles.grantedCard,
-        isUnsupported && styles.unsupportedCard,
-      ]}
+      className="flex-row items-center rounded-[20px] border bg-white"
+      style={{
+        paddingHorizontal: wp(16),
+        paddingVertical: hp(16),
+        borderColor: isGranted ? COLORS.primary50 : COLORS.border,
+        backgroundColor: isGranted
+          ? COLORS.primary50
+          : isUnsupported
+            ? COLORS.backgroundSecondary
+            : COLORS.white,
+        opacity: isUnsupported ? 0.5 : 1,
+      }}
       onPress={() => onPress(item.id)}
       disabled={isUnsupported}
     >
-      <View style={styles.iconCircle}>
+      <View
+        className="items-center justify-center rounded-full"
+        style={{
+          width: wp(42),
+          height: wp(42),
+          marginRight: wp(16),
+          backgroundColor: COLORS.backgroundSecondary,
+        }}
+      >
         <Ionicons
           name={item.icon as keyof typeof Ionicons.glyphMap}
           size={wp(20)}
@@ -43,18 +56,38 @@ export default function PermissionCard({
         />
       </View>
 
-      <View style={styles.permissionCopy}>
-        <Text style={[styles.permissionTitle, isGranted && styles.grantedText]}>
+      <View className="flex-1" style={{ paddingRight: wp(8) }}>
+        <Text
+          style={{
+            fontSize: fp(16),
+            fontFamily: FONTS.bold,
+            color: isGranted ? COLORS.primary : COLORS.textPrimary,
+            marginBottom: hp(2),
+          }}
+        >
           {item.title}
         </Text>
-        <Text style={styles.permissionDescription}>{item.description}</Text>
+        <Text
+          style={{
+            fontSize: fp(12),
+            lineHeight: fp(17),
+            fontFamily: FONTS.medium,
+            color: COLORS.textSecondary,
+          }}
+        >
+          {item.description}
+        </Text>
       </View>
 
       <View
-        style={[
-          styles.checkCircle,
-          isGranted ? styles.checkCircleGranted : styles.checkCircleEmpty,
-        ]}
+        className="items-center justify-center rounded-full border"
+        style={{
+          width: wp(24),
+          height: wp(24),
+          borderWidth: 1.5,
+          borderColor: isGranted ? COLORS.primary : COLORS.border,
+          backgroundColor: isGranted ? COLORS.primary : 'transparent',
+        }}
       >
         <Ionicons
           name="checkmark-sharp"
@@ -65,4 +98,3 @@ export default function PermissionCard({
     </TouchableOpacity>
   );
 }
-
