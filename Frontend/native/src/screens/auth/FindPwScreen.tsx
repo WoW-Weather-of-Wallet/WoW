@@ -3,7 +3,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -13,6 +12,7 @@ import AuthScreenLayout from '../../components/auth/AuthScreenLayout';
 import AuthIntroBlock from '../../components/auth/AuthIntroBlock';
 import IdentityVerificationForm from '../../components/auth/IdentityVerificationForm';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
+import AuthUnderlineInput from '../../components/common/AuthUnderlineInput';
 import { useFindPwFlow } from '../../hooks';
 
 export default function FindPwScreen() {
@@ -41,20 +41,19 @@ export default function FindPwScreen() {
         />
         <View style={styles.inputSection}>
           <Text style={styles.inputLabel}>아이디</Text>
-          <View style={styles.underlineContainer}>
-            <TextInput
-              style={[styles.bareInput, { letterSpacing: userId.length > 0 ? 1 : 0 }]}
-              value={userId}
-              onChangeText={handleUserIdChange}
-              placeholder="로그인 아이디를 입력해 주세요"
-              placeholderTextColor={COLORS.textTertiary}
-              onSubmitEditing={handleIdSubmit}
-              returnKeyType="next"
-              autoFocus={!showVerification}
-              editable={!showVerification}
-              autoCapitalize="none"
-            />
-          </View>
+          <AuthUnderlineInput
+            containerStyle={styles.underlineContainer}
+            inputStyle={[styles.bareInput, { letterSpacing: userId.length > 0 ? 1 : 0 }]}
+            value={userId}
+            onChangeText={handleUserIdChange}
+            placeholder="로그인 아이디를 입력해 주세요"
+            placeholderTextColor={COLORS.textTertiary}
+            onSubmitEditing={handleIdSubmit}
+            returnKeyType="next"
+            autoFocus={!showVerification}
+            editable={!showVerification}
+            autoCapitalize="none"
+          />
           {!showVerification && (
             <>
               <Text style={styles.helperText}>{helperText}</Text>

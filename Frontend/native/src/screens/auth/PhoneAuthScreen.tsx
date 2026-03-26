@@ -2,7 +2,6 @@ import React, { useRef } from 'react';
 import {
   View,
   Text,
-  TextInput,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
@@ -12,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import AuthStepLayout from '../../components/auth/AuthStepLayout';
 import AuthActionButton from '../../components/common/AuthActionButton';
+import AuthUnderlineInput from '../../components/common/AuthUnderlineInput';
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
@@ -116,27 +116,26 @@ export default function PhoneAuthScreen({
         }
       >
         <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
-          <View style={styles.underlineContainer}>
-            <TextInput
-              style={[
-                styles.bareInput,
-                { letterSpacing: name.length > 0 ? 2 : 0 },
-              ]}
-              value={name}
-              onChangeText={(value) => {
-                if (isLockedSsafyName) {
-                  return;
-                }
-                setName(value);
-              }}
-              placeholder="이름"
-              placeholderTextColor={COLORS.textTertiary}
-              onSubmitEditing={handleNameSubmit}
-              returnKeyType="next"
-              autoFocus={!isLockedSsafyName}
-              editable={!isLockedSsafyName}
-            />
-          </View>
+          <AuthUnderlineInput
+            containerStyle={styles.underlineContainer}
+            inputStyle={[
+              styles.bareInput,
+              { letterSpacing: name.length > 0 ? 2 : 0 },
+            ]}
+            value={name}
+            onChangeText={(value) => {
+              if (isLockedSsafyName) {
+                return;
+              }
+              setName(value);
+            }}
+            placeholder="이름"
+            placeholderTextColor={COLORS.textTertiary}
+            onSubmitEditing={handleNameSubmit}
+            returnKeyType="next"
+            autoFocus={!isLockedSsafyName}
+            editable={!isLockedSsafyName}
+          />
           {isSsafySignup && (
             <Text style={{ color: COLORS.textTertiary, marginTop: hp(12) }}>
               {isLockedSsafyName
@@ -148,48 +147,44 @@ export default function PhoneAuthScreen({
 
         {step >= 2 && (
           <Animated.View entering={FadeInDown.duration(500)} style={styles.ssnSection}>
-            <View
-              style={[
+            <AuthUnderlineInput
+              ref={ssnFrontRef}
+              containerStyle={[
                 styles.underlineContainer,
                 { flex: 1.1, justifyContent: 'center' },
               ]}
-            >
-              <TextInput
-                ref={ssnFrontRef}
-                style={[
-                  styles.bareInput,
-                  {
-                    textAlign: 'center',
-                    letterSpacing: ssnFront.length > 0 ? 4 : 0,
-                  },
-                ]}
-                value={ssnFront}
-                onChangeText={handleSsnFrontChange}
-                placeholder="YYMMDD"
-                placeholderTextColor={COLORS.textTertiary}
-                keyboardType="number-pad"
-                maxLength={6}
-              />
-            </View>
+              inputStyle={[
+                styles.bareInput,
+                {
+                  textAlign: 'center',
+                  letterSpacing: ssnFront.length > 0 ? 4 : 0,
+                },
+              ]}
+              value={ssnFront}
+              onChangeText={handleSsnFrontChange}
+              placeholder="YYMMDD"
+              placeholderTextColor={COLORS.textTertiary}
+              keyboardType="number-pad"
+              maxLength={6}
+            />
             <Text style={styles.dash}>-</Text>
-            <View style={[styles.underlineContainer, styles.ssnBackContainer]}>
-              <TextInput
-                ref={ssnBackRef}
-                style={[
-                  styles.bareInput,
-                  {
-                    width: CONSTANTS.ssnBackInputWidth,
-                    textAlign: 'center',
-                    letterSpacing: 4,
-                  },
-                ]}
-                value={ssnBack}
-                onChangeText={handleSsnBackChange}
-                keyboardType="number-pad"
-                maxLength={1}
-              />
-              <Text style={styles.ssnMasking}>******</Text>
-            </View>
+            <AuthUnderlineInput
+              ref={ssnBackRef}
+              containerStyle={[styles.underlineContainer, styles.ssnBackContainer]}
+              inputStyle={[
+                styles.bareInput,
+                {
+                  width: CONSTANTS.ssnBackInputWidth,
+                  textAlign: 'center',
+                  letterSpacing: 4,
+                },
+              ]}
+              value={ssnBack}
+              onChangeText={handleSsnBackChange}
+              keyboardType="number-pad"
+              maxLength={1}
+              rightAccessory={<Text style={styles.ssnMasking}>******</Text>}
+            />
           </Animated.View>
         )}
 
@@ -214,21 +209,20 @@ export default function PhoneAuthScreen({
               />
             </TouchableOpacity>
 
-            <View style={[styles.underlineContainer, { marginTop: hp(32) }]}>
-              <TextInput
-                ref={phoneRef}
-                style={[
-                  styles.bareInput,
-                  { letterSpacing: phone.length > 0 ? 2 : 0 },
-                ]}
-                value={phone}
-                onChangeText={handlePhoneChange}
-                placeholder="휴대폰 번호 (- 없이 입력)"
-                placeholderTextColor={COLORS.textTertiary}
-                keyboardType="number-pad"
-                maxLength={11}
-              />
-            </View>
+            <AuthUnderlineInput
+              ref={phoneRef}
+              containerStyle={[styles.underlineContainer, { marginTop: hp(32) }]}
+              inputStyle={[
+                styles.bareInput,
+                { letterSpacing: phone.length > 0 ? 2 : 0 },
+              ]}
+              value={phone}
+              onChangeText={handlePhoneChange}
+              placeholder="휴대폰 번호 (- 없이 입력)"
+              placeholderTextColor={COLORS.textTertiary}
+              keyboardType="number-pad"
+              maxLength={11}
+            />
 
             {submitError.length > 0 && (
               <Text style={styles.errorText}>{submitError}</Text>
