@@ -7,7 +7,7 @@ import type {
   ManualCalendarEntryDraft,
   ManualEntryPaymentMethod,
 } from '../../types/calendar';
-import { styles } from './CalendarAddEntrySheet.styles';
+import { styles } from './calendarAddEntryUi';
 import CalendarCategorySelector from './CalendarCategorySelector';
 import CalendarDraftEntryCard from './CalendarDraftEntryCard';
 import CalendarFieldLabel from './CalendarFieldLabel';

@@ -3,7 +3,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, wp } from '../../constants/theme';
 import type { ManualEntryPaymentMethod } from '../../types/calendar';
-import { styles } from './CalendarAddEntrySheet.styles';
+import { styles } from './calendarAddEntryUi';
 
 const PAYMENT_METHOD_OPTIONS: Array<{
   key: ManualEntryPaymentMethod;

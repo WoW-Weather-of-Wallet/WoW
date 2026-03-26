@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
 import type { CalendarUploadPreviewGroup } from '../../types/calendar';
-import { styles } from './CalendarAddEntrySheet.styles';
+import { styles } from './calendarAddEntryUi';
 import CalendarUploadResultItemRow from './CalendarUploadResultItemRow';
 
 interface CalendarUploadResultSectionProps {

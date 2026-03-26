@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, wp } from '../../constants/theme';
 import type { ManualCalendarEntryDraft } from '../../types/calendar';
 import { formatDateLabel as formatCalendarDateLabel } from '../../utils/calendarAddEntry';
-import { styles } from './CalendarAddEntrySheet.styles';
+import { styles } from './calendarAddEntryUi';
 
 interface CalendarDraftEntryCardProps {
   draft: ManualCalendarEntryDraft;

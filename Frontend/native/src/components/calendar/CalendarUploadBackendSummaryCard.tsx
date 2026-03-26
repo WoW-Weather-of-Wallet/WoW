@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import type { CalendarUploadBackendSummary } from '../../types/calendar';
-import { styles } from './CalendarAddEntrySheet.styles';
+import { styles } from './calendarAddEntryUi';
 
 interface CalendarUploadBackendSummaryCardProps {
   summary: CalendarUploadBackendSummary;

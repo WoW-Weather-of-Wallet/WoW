@@ -3,7 +3,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, wp } from '../../constants/theme';
 import type { CalendarUploadPreviewItem } from '../../types/calendar';
-import { styles } from './CalendarAddEntrySheet.styles';
+import { styles } from './calendarAddEntryUi';
 
 interface CalendarUploadResultItemRowProps {
   item: CalendarUploadPreviewItem;

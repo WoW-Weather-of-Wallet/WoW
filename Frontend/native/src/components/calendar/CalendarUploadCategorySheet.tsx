@@ -5,7 +5,7 @@ import BottomSheetModal from '../common/BottomSheetModal';
 import type { CalendarEntryCategoryKey } from '../../constants/calendar/addEntry';
 import { COLORS, wp } from '../../constants/theme';
 import type { CalendarUploadPreviewItem } from '../../types/calendar';
-import { styles } from './CalendarAddEntrySheet.styles';
+import { styles } from './calendarAddEntryUi';
 import CalendarCategorySelector from './CalendarCategorySelector';
 
 interface CalendarUploadCategorySheetProps {

@@ -32,7 +32,7 @@ import type {
   CalendarUploadPreviewGroup,
   ManualCalendarEntryDraft,
 } from '../../types/calendar';
-import { styles } from './CalendarAddEntrySheet.styles';
+import { styles } from './calendarAddEntryUi';
 
 interface CalendarAddEntrySheetProps {
   visible: boolean;

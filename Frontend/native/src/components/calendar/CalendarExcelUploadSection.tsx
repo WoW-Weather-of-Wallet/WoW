@@ -9,7 +9,7 @@ import type {
   CalendarUploadPreviewGroup,
 } from '../../types/calendar';
 import { buildFileSummary as buildCalendarFileSummary } from '../../utils/calendarAddEntry';
-import { styles } from './CalendarAddEntrySheet.styles';
+import { styles } from './calendarAddEntryUi';
 import CalendarUploadBackendSummaryCard from './CalendarUploadBackendSummaryCard';
 import CalendarUploadResultSection from './CalendarUploadResultSection';
 
