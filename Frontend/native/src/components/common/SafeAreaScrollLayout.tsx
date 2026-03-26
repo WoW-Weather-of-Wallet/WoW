@@ -19,8 +19,13 @@ interface SafeAreaScrollLayoutProps {
   scrollViewRef?: RefObject<ScrollViewType | null>;
   scrollTopPadding: number;
   scrollBottomPadding: number;
-  bottomMinPadding: number;
+  scrollBottomMinPadding?: number;
+  bottomMinPadding?: number;
   keyboardVerticalOffset?: number;
+  keyboardAware?: boolean;
+  bounces?: boolean;
+  includeTopInset?: boolean;
+  includeBottomInset?: boolean;
 }
 
 export default function SafeAreaScrollLayout({
@@ -32,10 +37,53 @@ export default function SafeAreaScrollLayout({
   scrollViewRef,
   scrollTopPadding,
   scrollBottomPadding,
-  bottomMinPadding,
+  scrollBottomMinPadding = 0,
+  bottomMinPadding = 0,
   keyboardVerticalOffset,
+  keyboardAware = true,
+  bounces = true,
+  includeTopInset = true,
+  includeBottomInset = true,
 }: SafeAreaScrollLayoutProps) {
   const insets = useSafeAreaInsets();
+  const topInset = includeTopInset ? insets.top : 0;
+  const bottomInset = includeBottomInset ? insets.bottom : 0;
+
+  const scrollView = (
+    <ScrollView
+      ref={scrollViewRef}
+      contentContainerStyle={[
+        scrollContentStyle,
+        {
+          paddingTop: topInset + scrollTopPadding,
+          paddingBottom: scrollBottomPadding + Math.max(bottomInset, scrollBottomMinPadding),
+        },
+      ]}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      bounces={bounces}
+    >
+      {children}
+    </ScrollView>
+  );
+
+  if (!keyboardAware) {
+    return (
+      <View style={containerStyle}>
+        {scrollView}
+        {bottomContent ? (
+          <View
+            style={[
+              bottomContainerStyle,
+              { paddingBottom: Math.max(bottomInset, bottomMinPadding) },
+            ]}
+          >
+            {bottomContent}
+          </View>
+        ) : null}
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -43,26 +91,13 @@ export default function SafeAreaScrollLayout({
       style={containerStyle}
       keyboardVerticalOffset={keyboardVerticalOffset}
     >
-      <ScrollView
-        ref={scrollViewRef}
-        contentContainerStyle={[
-          scrollContentStyle,
-          {
-            paddingTop: insets.top + scrollTopPadding,
-            paddingBottom: insets.bottom + scrollBottomPadding,
-          },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {children}
-      </ScrollView>
+      {scrollView}
 
       {bottomContent ? (
         <View
           style={[
             bottomContainerStyle,
-            { paddingBottom: Math.max(insets.bottom, bottomMinPadding) },
+            { paddingBottom: Math.max(bottomInset, bottomMinPadding) },
           ]}
         >
           {bottomContent}

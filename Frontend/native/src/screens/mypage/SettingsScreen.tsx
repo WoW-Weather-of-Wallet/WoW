@@ -6,8 +6,6 @@ import {
   Modal,
   Platform,
   Pressable,
-  ScrollView,
-  StatusBar,
   Switch,
   Text,
   TextInput,
@@ -15,12 +13,11 @@ import {
   View,
 } from 'react-native';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './SettingsScreen.styles';
 import { COLORS, fp, hp, wp } from '../../constants/theme';
+import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import { useAuthStore } from '../../store/authStore';
 import { useLocalSecurityStore } from '../../store/localSecurityStore';
 import { fcmService } from '../../services/fcmService';
@@ -55,8 +52,6 @@ type PinModalStep = 'create' | 'confirm' | 'verify-current' | 'new' | 'confirm-n
 type PinModalMode = 'setup' | 'change' | 'disable';
 
 export default function SettingsScreen() {
-  const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
   const navigation = useNavigation<MyPageStackNavigationProp<'Settings'>>();
   const logout = useAuthStore((state) => state.logout);
   const sessionUser = useAuthStore((state) => state.user);
@@ -541,22 +536,24 @@ export default function SettingsScreen() {
   const pinDescription = securityPreferences.pinEnabled ? '설정됨' : '미설정';
   const canShowBiometricSetting =
     securityPreferences.pinEnabled && Platform.OS !== 'ios';
+  const headerContent = (
+    <View style={styles.header}>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>사용자 설정</Text>
+      <View style={styles.headerRight} />
+    </View>
+  );
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-
-      <View style={[styles.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>사용자 설정</Text>
-        <View style={styles.headerRight} />
-      </View>
-
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + hp(20) }]}
+    <>
+      <BottomTabScreenLayout
+        containerStyle={styles.container}
+        topDockStyle={styles.headerDock}
+        topDockContent={headerContent}
+        scrollBottomPadding={hp(20)}
+        contentContainerStyle={styles.scrollContent}
       >
         <ProfileEditHeader
           name={profile?.name ?? '사용자'}
@@ -648,7 +645,7 @@ export default function SettingsScreen() {
         </SettingSection>
 
         <View style={{ height: hp(40) }} />
-      </ScrollView>
+      </BottomTabScreenLayout>
 
       <Modal
         visible={editMode !== null}
@@ -825,7 +822,7 @@ export default function SettingsScreen() {
       />
 
       {/* 회원 탈퇴는 WithdrawScreen(별도 화면)에서 SMS 인증 후 처리됩니다 */}
-    </View>
+    </>
 
   );
 }

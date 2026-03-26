@@ -11,14 +11,17 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  headerDock: {
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray100,
+    backgroundColor: COLORS.background,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: wp(12),
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray100,
-    backgroundColor: COLORS.background,
+    height: hp(56),
   },
   iconButton: {
     width: wp(36),

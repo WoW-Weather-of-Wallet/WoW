@@ -8,17 +8,16 @@ import {
   View,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { styles } from './TermsPdfScreen.styles';
-import { COLORS, hp, wp } from '../../constants/theme';
+import SafeAreaHeaderLayout from '../../components/common/SafeAreaHeaderLayout';
+import { COLORS, wp } from '../../constants/theme';
 import type { RootNavigationProp, RootRouteProp } from '../../types';
 
 export default function TermsPdfScreen() {
   const navigation = useNavigation<RootNavigationProp>();
   const route = useRoute<RootRouteProp<'TermsPdf'>>();
-  const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(true);
 
   const { title, url } = route.params;
@@ -36,8 +35,11 @@ export default function TermsPdfScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top, height: hp(56) + insets.top }]}>
+    <SafeAreaHeaderLayout
+      containerStyle={styles.container}
+      headerDockStyle={styles.headerDock}
+      headerContent={
+        <View style={styles.header}>
         <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
         </TouchableOpacity>
@@ -49,7 +51,9 @@ export default function TermsPdfScreen() {
         <TouchableOpacity style={styles.iconButton} onPress={() => void handleOpenExternally()}>
           <Ionicons name="open-outline" size={wp(22)} color={COLORS.textPrimary} />
         </TouchableOpacity>
-      </View>
+        </View>
+      }
+    >
 
       <View style={styles.content}>
         <WebView
@@ -79,7 +83,7 @@ export default function TermsPdfScreen() {
           </View>
         ) : null}
       </View>
-    </View>
+    </SafeAreaHeaderLayout>
   );
 }
 

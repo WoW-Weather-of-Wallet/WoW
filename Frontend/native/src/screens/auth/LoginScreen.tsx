@@ -3,13 +3,10 @@ import {
   View,
   Text,
   TouchableOpacity,
-  KeyboardAvoidingView,
   Platform,
-  ScrollView,
   StatusBar,
   ActivityIndicator,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -21,6 +18,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import CustomTextInput from '../../components/common/CustomTextInput';
 import GradientButton from '../../components/common/GradientButton';
+import SafeAreaScrollLayout from '../../components/common/SafeAreaScrollLayout';
 import { COLORS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import { useLoginFlow } from '../../hooks';
 import type { RootScreenProps } from '../../types';
@@ -37,7 +35,6 @@ const loginLayoutStyles = {
     flexGrow: 1,
     paddingHorizontal: wp(28),
     paddingTop: hp(80),
-    paddingBottom: hp(40),
   },
   headerContainer: {
     alignItems: 'center' as const,
@@ -117,12 +114,7 @@ const loginLayoutStyles = {
 const buildFadeInDown = (delay: number) =>
   FadeInDown.delay(delay).duration(500).springify();
 
-const createBottomSpacerStyle = (bottomInset: number) => ({
-  height: Math.max(bottomInset, hp(20)),
-});
-
 export default function LoginScreen({ navigation }: RootScreenProps<'Login'>) {
-  const insets = useSafeAreaInsets();
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const {
@@ -163,139 +155,136 @@ export default function LoginScreen({ navigation }: RootScreenProps<'Login'>) {
   return (
     <View className="flex-1" style={loginLayoutStyles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={loginLayoutStyles.keyboardView}
+      <SafeAreaScrollLayout
+        containerStyle={loginLayoutStyles.keyboardView}
+        scrollContentStyle={loginLayoutStyles.scrollContent}
+        scrollTopPadding={0}
+        scrollBottomPadding={hp(40)}
+        scrollBottomMinPadding={hp(20)}
+        includeTopInset={false}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? hp(20) : 0}
       >
-        <ScrollView
-          contentContainerStyle={loginLayoutStyles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <Animated.View style={[loginLayoutStyles.headerContainer, headerAnimatedStyle]}>
+          <Text
+            className="font-sans-bold text-text"
+            style={loginLayoutStyles.headerTitle}
+          >
+            로그인
+          </Text>
+          <View style={loginLayoutStyles.headerLine} />
+        </Animated.View>
+
+        <Animated.View
+          entering={buildFadeInDown(200)}
+          style={loginLayoutStyles.formContainer}
         >
-          <Animated.View style={[loginLayoutStyles.headerContainer, headerAnimatedStyle]}>
+          <CustomTextInput
+            label="아이디"
+            value={userId}
+            onChangeText={(value) => {
+              setUserId(value);
+              clearLoginError();
+            }}
+            containerStyle={loginLayoutStyles.inputSpacing}
+            autoComplete="username"
+          />
+
+          <CustomTextInput
+            label="비밀번호"
+            value={password}
+            onChangeText={(value) => {
+              setPassword(value);
+              clearLoginError();
+            }}
+            secureTextEntry
+            containerStyle={loginLayoutStyles.inputSpacing}
+            autoComplete="password"
+          />
+
+          {loginError.length > 0 && (
             <Text
-              className="font-sans-bold text-text"
-              style={loginLayoutStyles.headerTitle}
+              className="font-sans-medium"
+              style={loginLayoutStyles.errorText}
             >
-              로그인
+              {loginError}
             </Text>
-            <View style={loginLayoutStyles.headerLine} />
-          </Animated.View>
+          )}
 
-          <Animated.View
-            entering={buildFadeInDown(200)}
-            style={loginLayoutStyles.formContainer}
-          >
-            <CustomTextInput
-              label="아이디"
-              value={userId}
-              onChangeText={(value) => {
-                setUserId(value);
-                clearLoginError();
-              }}
-              containerStyle={loginLayoutStyles.inputSpacing}
-              autoComplete="username"
-            />
-
-            <CustomTextInput
-              label="비밀번호"
-              value={password}
-              onChangeText={(value) => {
-                setPassword(value);
-                clearLoginError();
-              }}
-              secureTextEntry
-              containerStyle={loginLayoutStyles.inputSpacing}
-              autoComplete="password"
-            />
-
-            {loginError.length > 0 && (
-              <Text
-                className="font-sans-medium"
-                style={loginLayoutStyles.errorText}
-              >
-                {loginError}
-              </Text>
-            )}
-
-            <View style={loginLayoutStyles.buttonRow}>
-              <View className="flex-1">
-                <GradientButton
-                  title="회원가입"
-                  onPress={handleSignup}
-                  variant="outline"
-                />
-              </View>
-              <View style={loginLayoutStyles.buttonGap} />
-              <View className="flex-1">
-                <GradientButton
-                  title={isSubmitting ? '로그인 중...' : '로그인'}
-                  onPress={() => void handleLogin({ userId, password })}
-                />
-              </View>
+          <View style={loginLayoutStyles.buttonRow}>
+            <View className="flex-1">
+              <GradientButton
+                title="회원가입"
+                onPress={handleSignup}
+                variant="outline"
+              />
             </View>
+            <View style={loginLayoutStyles.buttonGap} />
+            <View className="flex-1">
+              <GradientButton
+                title={isSubmitting ? '로그인 중...' : '로그인'}
+                onPress={() => void handleLogin({ userId, password })}
+              />
+            </View>
+          </View>
 
-            {isSubmitting && (
-              <View className="items-center" style={loginLayoutStyles.loadingRow}>
-                <ActivityIndicator color={COLORS.primary} />
-              </View>
-            )}
-          </Animated.View>
+          {isSubmitting && (
+            <View className="items-center" style={loginLayoutStyles.loadingRow}>
+              <ActivityIndicator color={COLORS.primary} />
+            </View>
+          )}
+        </Animated.View>
 
-          <Animated.View entering={buildFadeInDown(350)}>
-            <TouchableOpacity
-              onPress={handleFindAccount}
-              style={loginLayoutStyles.findAccountButton}
-              activeOpacity={0.6}
+        <Animated.View entering={buildFadeInDown(350)}>
+          <TouchableOpacity
+            onPress={handleFindAccount}
+            style={loginLayoutStyles.findAccountButton}
+            activeOpacity={0.6}
+          >
+            <Text
+              className="font-sans-medium text-text-secondary"
+              style={loginLayoutStyles.findAccountText}
+            >
+              아이디 / 비밀번호 찾기
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+        <Animated.View
+          entering={buildFadeInDown(450)}
+          style={loginLayoutStyles.dividerContainer}
+        >
+          <View style={loginLayoutStyles.dividerLine} />
+          <Text
+            className="font-sans text-text-tertiary"
+            style={loginLayoutStyles.dividerText}
+          >
+            또는
+          </Text>
+          <View style={loginLayoutStyles.dividerLine} />
+        </Animated.View>
+
+        <Animated.View entering={buildFadeInDown(550)}>
+          <TouchableOpacity
+            onPress={() => void handleSsafyLoginPress()}
+            style={loginLayoutStyles.ssafyButton}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={[COLORS.blue500, COLORS.blue600]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={loginLayoutStyles.ssafyGradient}
             >
               <Text
-                className="font-sans-medium text-text-secondary"
-                style={loginLayoutStyles.findAccountText}
+                className="font-sans-semibold text-text-inverse"
+                style={loginLayoutStyles.ssafyButtonText}
               >
-                아이디 / 비밀번호 찾기
+                SSAFY 계정으로 로그인
               </Text>
-            </TouchableOpacity>
-          </Animated.View>
-
-          <Animated.View
-            entering={buildFadeInDown(450)}
-            style={loginLayoutStyles.dividerContainer}
-          >
-            <View style={loginLayoutStyles.dividerLine} />
-            <Text
-              className="font-sans text-text-tertiary"
-              style={loginLayoutStyles.dividerText}
-            >
-              또는
-            </Text>
-            <View style={loginLayoutStyles.dividerLine} />
-          </Animated.View>
-
-          <Animated.View entering={buildFadeInDown(550)}>
-            <TouchableOpacity
-              onPress={() => void handleSsafyLoginPress()}
-              style={loginLayoutStyles.ssafyButton}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={[COLORS.blue500, COLORS.blue600]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={loginLayoutStyles.ssafyGradient}
-              >
-                <Text
-                  className="font-sans-semibold text-text-inverse"
-                  style={loginLayoutStyles.ssafyButtonText}
-                >
-                  SSAFY 계정으로 로그인
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </Animated.View>
-
-          <View style={createBottomSpacerStyle(insets.bottom)} />
-        </ScrollView>
-      </KeyboardAvoidingView>
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
+      </SafeAreaScrollLayout>
     </View>
   );
 }

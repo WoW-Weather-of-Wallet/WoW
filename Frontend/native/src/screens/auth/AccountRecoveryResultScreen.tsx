@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  StatusBar,
   Text,
   TouchableOpacity,
   View,
@@ -10,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 import { styles } from './AccountRecoveryResultScreen.styles';
 import { COLORS, wp, hp } from '../../constants/theme';
+import SafeAreaHeaderLayout from '../../components/common/SafeAreaHeaderLayout';
 import { useAccountRecoveryResult } from '../../hooks';
 
 export default function AccountRecoveryResultScreen() {
@@ -30,15 +30,17 @@ export default function AccountRecoveryResultScreen() {
   } = useAccountRecoveryResult();
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-
-      <View style={[styles.header, { paddingTop: insets.top, height: hp(56) + insets.top }]}>
-        <TouchableOpacity style={styles.backButton} onPress={handleClose}>
-          <Ionicons name="close" size={wp(28)} color={COLORS.textPrimary} />
-        </TouchableOpacity>
-      </View>
-
+    <SafeAreaHeaderLayout
+      containerStyle={styles.container}
+      backgroundColor={COLORS.background}
+      headerContent={
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleClose}>
+            <Ionicons name="close" size={wp(28)} color={COLORS.textPrimary} />
+          </TouchableOpacity>
+        </View>
+      }
+    >
       <View style={styles.content}>
         <Animated.View entering={FadeInUp.duration(600)} style={styles.iconWrapper}>
           <View style={[styles.iconCircle, (isNone || isFail) && styles.iconCircleNone]}>
@@ -111,6 +113,6 @@ export default function AccountRecoveryResultScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </SafeAreaHeaderLayout>
   );
 }
