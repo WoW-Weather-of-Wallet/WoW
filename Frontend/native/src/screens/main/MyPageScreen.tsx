@@ -446,6 +446,7 @@ export default function MyPageScreen() {
 
       <MyPagePinModal
         visible={isPinModalVisible}
+        onClose={closePinModal}
         title={
           pinModalStep === 'create'
             ? '간편비밀번호 설정'
