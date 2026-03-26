@@ -1,18 +1,13 @@
 import React from 'react';
-import {
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { styles } from './FindPwScreen.styles';
-import { COLORS, hp } from '../../constants/theme';
-import AuthScreenLayout from '../../components/auth/AuthScreenLayout';
 import AuthIntroBlock from '../../components/auth/AuthIntroBlock';
+import AuthScreenLayout from '../../components/auth/AuthScreenLayout';
 import IdentityVerificationForm from '../../components/auth/IdentityVerificationForm';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import AuthUnderlineInput from '../../components/common/AuthUnderlineInput';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import { useFindPwFlow } from '../../hooks';
 
 export default function FindPwScreen() {
@@ -36,17 +31,44 @@ export default function FindPwScreen() {
     <>
       <AuthScreenLayout title="비밀번호 찾기">
         <AuthIntroBlock
-          title="비밀번호를 찾기 위해 로그인 아이디를 먼저 입력해 주세요."
+          title="비밀번호를 찾을 아이디를 먼저 입력해 주세요"
           description={introDescription}
         />
-        <View style={styles.inputSection}>
-          <Text style={styles.inputLabel}>아이디</Text>
+
+        <View style={{ marginBottom: hp(24) }}>
+          <Text
+            style={{
+              fontSize: fp(14),
+              fontFamily: FONTS.medium,
+              color: COLORS.textTertiary,
+              marginBottom: hp(10),
+              marginLeft: wp(4),
+            }}
+          >
+            아이디
+          </Text>
+
           <AuthUnderlineInput
-            containerStyle={styles.underlineContainer}
-            inputStyle={[styles.bareInput, { letterSpacing: userId.length > 0 ? 1 : 0 }]}
+            containerStyle={{
+              borderBottomWidth: 1.5,
+              borderBottomColor: COLORS.textPrimary,
+              paddingVertical: hp(8),
+              minHeight: hp(50),
+              justifyContent: 'center',
+            }}
+            inputStyle={[
+              {
+                fontSize: fp(24),
+                fontFamily: FONTS.bold,
+                color: COLORS.textPrimary,
+                padding: 0,
+                margin: 0,
+              },
+              { letterSpacing: userId.length > 0 ? 1 : 0 },
+            ]}
             value={userId}
             onChangeText={handleUserIdChange}
-            placeholder="로그인 아이디를 입력해 주세요"
+            placeholder="아이디를 입력해 주세요"
             placeholderTextColor={COLORS.textTertiary}
             onSubmitEditing={handleIdSubmit}
             returnKeyType="next"
@@ -54,22 +76,43 @@ export default function FindPwScreen() {
             editable={!showVerification}
             autoCapitalize="none"
           />
-          {!showVerification && (
+
+          {!showVerification ? (
             <>
-              <Text style={styles.helperText}>{helperText}</Text>
+              <Text
+                style={{
+                  fontSize: fp(12),
+                  color: COLORS.textTertiary,
+                  marginTop: hp(6),
+                  marginLeft: wp(4),
+                }}
+              >
+                {helperText}
+              </Text>
+
               <TouchableOpacity
-                style={[
-                  styles.idNextButton,
-                  isNextEnabled && styles.activeIdNextButton,
-                ]}
+                className="items-center"
+                style={{
+                  marginTop: hp(16),
+                  backgroundColor: isNextEnabled
+                    ? COLORS.primary50
+                    : COLORS.gray100,
+                  paddingVertical: hp(14),
+                  borderRadius: RADIUS.xl,
+                  borderWidth: isNextEnabled ? 1 : 0,
+                  borderColor: isNextEnabled
+                    ? COLORS.primarySoft
+                    : 'transparent',
+                }}
                 onPress={handleIdSubmit}
                 disabled={!isNextEnabled}
               >
                 <Text
-                  style={[
-                    styles.idNextButtonText,
-                    isNextEnabled && styles.activeIdNextButtonText,
-                  ]}
+                  style={{
+                    fontSize: fp(14),
+                    fontFamily: FONTS.bold,
+                    color: isNextEnabled ? COLORS.primary : COLORS.textTertiary,
+                  }}
                 >
                   다음
                 </Text>
@@ -77,18 +120,28 @@ export default function FindPwScreen() {
 
               <View style={{ height: Math.max(insets.bottom, hp(20)) }} />
             </>
-          )}
+          ) : null}
         </View>
 
-        {showVerification && (
-          <Animated.View entering={FadeInDown.duration(500)} style={styles.formWrapper}>
-            <View style={styles.divider} />
+        {showVerification ? (
+          <Animated.View
+            entering={FadeInDown.duration(500)}
+            style={{ flex: 1 }}
+          >
+            <View
+              style={{
+                height: 1,
+                backgroundColor: COLORS.gray100,
+                marginVertical: hp(24),
+              }}
+            />
+
             <IdentityVerificationForm
               onComplete={handleIdentityComplete}
               isSubmitting={isSubmitting}
             />
           </Animated.View>
-        )}
+        ) : null}
       </AuthScreenLayout>
 
       <TermsBottomSheet
