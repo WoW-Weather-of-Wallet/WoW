@@ -5,6 +5,7 @@ export { default as HomeBudgetReportTexts } from './HomeBudgetReportTexts';
 export { default as HomeBudgetSetupCard } from './HomeBudgetSetupCard';
 export { default as HomeDashboardContent } from './HomeDashboardContent';
 export { default as HomeDashboardSheets } from './HomeDashboardSheets';
+export { default as HomeCategoryItemRow } from './HomeCategoryItemRow';
 export { default as HomeCategorySection } from './HomeCategorySection';
 export { default as HomeInsightSection } from './HomeInsightSection';
 export { default as HomeMonthlyComparisonSection } from './HomeMonthlyComparisonSection';

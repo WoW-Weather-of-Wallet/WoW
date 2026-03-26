@@ -1,5 +1,7 @@
 import type { LegendListItem, SpendingStyleMetric } from '../constants/main/types';
 import type { CalendarDayItem } from '../mock/calendar';
+import type { HomeSpendingCategory } from '../mock/dashboard';
+import { COLORS } from '../constants/theme';
 import type {
   SpendingHalfYearlyResponse,
   SpendingMonthlyCompareResponse,
@@ -130,3 +132,19 @@ export const buildWeeklyPreviewItems = (items: CalendarDayItem[]): CalendarDayIt
         isToday: false,
         isFuture: false,
       }));
+
+export const buildHomeCategoryDisplayItems = (
+  items: HomeSpendingCategory[],
+): HomeSpendingCategory[] =>
+  items.length > 0
+    ? items
+    : [
+        {
+          id: 'empty-category',
+          label: '-',
+          amount: 0,
+          ratio: 0,
+          icon: 'remove-outline',
+          color: COLORS.gray300,
+        },
+      ];

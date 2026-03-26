@@ -1,10 +1,10 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+
+import type { HomeSpendingCategory } from '../../mock/dashboard';
+import { buildHomeCategoryDisplayItems } from '../../utils/mainHomePresentation';
 import SectionHeader from '../common/SectionHeader';
 import SurfaceCard from '../common/SurfaceCard';
-import { COLORS } from '../../constants/theme';
-import { styles } from './HomeCategorySection.styles';
-import type { HomeSpendingCategory } from '../../mock/dashboard';
+import HomeCategoryItemRow from './HomeCategoryItemRow';
 
 interface HomeCategorySectionProps {
   items: HomeSpendingCategory[];
@@ -13,42 +13,17 @@ interface HomeCategorySectionProps {
 export default function HomeCategorySection({
   items,
 }: HomeCategorySectionProps) {
-  const displayItems =
-    items.length > 0
-      ? items
-      : [
-          {
-            id: 'empty-category',
-            label: '-',
-            amount: 0,
-            ratio: 0,
-            color: COLORS.gray300,
-          },
-        ];
+  const displayItems = buildHomeCategoryDisplayItems(items);
 
   return (
     <SurfaceCard>
-      <SectionHeader title="카테고리별 소비" actionLabel="-" />
-      {displayItems.map((category) => (
-        <View key={category.id} style={styles.categoryBlock}>
-          <View style={styles.rowBetween}>
-            <Text style={styles.categoryTitle}>{category.label}</Text>
-            <Text style={styles.categoryAmount}>
-              {items.length > 0 ? `${category.amount.toLocaleString()}원` : '-'}
-            </Text>
-          </View>
-          <View style={styles.categoryBarTrack}>
-            <View
-              style={[
-                styles.categoryBarFill,
-                {
-                  width: `${Math.round(category.ratio * 100)}%`,
-                  backgroundColor: category.color,
-                },
-              ]}
-            />
-          </View>
-        </View>
+      <SectionHeader title="移댄뀒怨좊━蹂??뚮퉬" actionLabel="-" />
+      {displayItems.map(category => (
+        <HomeCategoryItemRow
+          key={category.id}
+          category={category}
+          showAmount={items.length > 0}
+        />
       ))}
     </SurfaceCard>
   );
