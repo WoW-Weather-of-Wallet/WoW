@@ -23,7 +23,7 @@ export function useSplashBootstrap() {
     let isActive = true;
 
     const bootstrapSession = async () => {
-      let nextRoute: 'Permission' | 'MainTabs' = 'Permission';
+      let nextRoute: 'Login' | 'MainTabs' = 'Login';
       const startedAt = Date.now();
 
       try {

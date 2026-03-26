@@ -11,7 +11,6 @@ import {
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SplashScreen from '../screens/auth/SplashScreen';
-import AccessPermissionScreen from '../screens/auth/AccessPermissionScreen';
 import PhoneAuthScreen from '../screens/auth/PhoneAuthScreen';
 import VerifyCodeScreen from '../screens/auth/VerifyCodeScreen';
 import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
@@ -311,12 +310,6 @@ function NavigationWrapper() {
         <Stack.Screen
           name="Splash"
           component={SplashScreen}
-          options={{ gestureEnabled: false }}
-        />
-
-        <Stack.Screen
-          name="Permission"
-          component={AccessPermissionScreen}
           options={{ gestureEnabled: false }}
         />
 
