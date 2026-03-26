@@ -7,13 +7,21 @@ import { styles } from './HomeSpendingTypeCard.styles';
 
 interface HomeSpendingTypeCardProps {
   onPress: () => void;
+  title?: string | null;
+  description?: string | null;
+  iconName?: React.ComponentProps<typeof Ionicons>['name'];
 }
 
 /**
  * 메인 홈 상단의 AI 소비 유형 요약 카드입니다.
  * 사용자가 카드를 누르면 상세 분석 바텀시트가 열립니다.
  */
-export default function HomeSpendingTypeCard({ onPress }: HomeSpendingTypeCardProps) {
+export default function HomeSpendingTypeCard({
+  onPress,
+  title,
+  description,
+  iconName = 'sparkles-outline',
+}: HomeSpendingTypeCardProps) {
   return (
     <TouchableOpacity activeOpacity={0.94} onPress={onPress}>
       <SurfaceCard>
@@ -23,12 +31,12 @@ export default function HomeSpendingTypeCard({ onPress }: HomeSpendingTypeCardPr
             <View style={styles.titleRow}>
               <View style={styles.iconBadge}>
                 <Ionicons
-                  name="restaurant-outline"
+                  name={iconName}
                   size={wp(18)}
                   color={COLORS.primary}
                 />
               </View>
-              <Text style={styles.mainTitle}>미식 탐험가형</Text>
+              <Text style={styles.mainTitle}>{title || '분석 전'}</Text>
             </View>
           </View>
           <View style={styles.aiBadge}>
@@ -42,16 +50,7 @@ export default function HomeSpendingTypeCard({ onPress }: HomeSpendingTypeCardPr
         </View>
 
         <Text style={styles.description}>
-          {/*
-            이전 문구:
-            - "식비"처럼 프론트 내부 표현을 그대로 사용하고 있었습니다.
-
-            변경 이유:
-            - 소비 유형 설명에서도 백엔드 expense_category 명칭과 동일한 표현을
-              우선 보여줘야 화면 전체 분류 기준이 흔들리지 않습니다.
-          */}
-          외식과 커피/음료 비중이 높고 새로운 맛과 경험에 적극적으로 투자하는
-          소비 패턴이에요.
+          {description || '아직 소비 유형 분석 결과가 없어요. 거래 데이터를 더 쌓아보세요.'}
         </Text>
       </SurfaceCard>
     </TouchableOpacity>
