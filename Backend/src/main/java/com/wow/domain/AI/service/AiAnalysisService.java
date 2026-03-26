@@ -132,6 +132,9 @@ public class AiAnalysisService {
             throw new NotFoundException("AI 리포트 응답을 받지 못했습니다.");
         }
 
+        // Persist only the schema-safe monthly snapshot fields that already fit
+        // the current DB model. The full report remains in Redis so we can ship
+        // the complete JSON without requiring a DB migration.
         persistMonthlyAnalysis(user, year, month, response.getBody());
         writeMonthlyAiReportCache(cacheKey, response.getBody());
         return response.getBody();

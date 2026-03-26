@@ -7,6 +7,7 @@ import com.wow.global.common.ApiResponse;
 import com.wow.global.exception.BadRequestException;
 import com.wow.global.exception.InvalidTokenException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,7 +29,9 @@ public class AiAnalysisController {
     @GetMapping("/analysis")
     public ResponseEntity<ApiResponse<AiAnalysisResponse>> getAnalysis(
             @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "Report target year. Defaults to the current server year.")
             @RequestParam(required = false) Integer year,
+            @Parameter(description = "Report target month. Defaults to the current server month.")
             @RequestParam(required = false) Integer month
     ) {
         if (userDetails == null) {
