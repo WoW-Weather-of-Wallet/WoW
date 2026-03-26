@@ -8,6 +8,8 @@ export * from './useIdentityVerificationForm';
 export * from './useLoginFlow';
 export * from './usePasswordPairForm';
 export * from './usePhoneAuthFlow';
+export * from './useRecoverySmsFlow';
 export * from './useSmsVerification';
 export * from './useVerifyCodeFlow';
 export * from './useWelcomeFlow';
+export * from './useWelcomeSummary';

@@ -4,7 +4,7 @@ import AuthScreenLayout from '../../components/auth/AuthScreenLayout';
 import AuthIntroBlock from '../../components/auth/AuthIntroBlock';
 import IdentityVerificationForm from '../../components/auth/IdentityVerificationForm';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
-import { useRecoverySmsFlow } from '../../hooks/useRecoverySmsFlow';
+import { useRecoverySmsFlow } from '../../hooks';
 
 export default function FindIdScreen() {
   const {
