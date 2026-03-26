@@ -1,32 +1,14 @@
 import React from 'react';
 
+import type {
+  HomeDashboardBudgetReportCardData,
+  HomeDashboardSpendingTypeCardData,
+  HomeDashboardWeatherCardData,
+} from './types';
 import HomeBudgetReportCard from './HomeBudgetReportCard';
 import HomeScheduleSection from './HomeScheduleSection';
 import HomeSpendingTypeCard from './HomeSpendingTypeCard';
 import HomeTodayWeatherCard from './HomeTodayWeatherCard';
-
-export interface HomeDashboardWeatherCardData {
-  weatherName?: string | null;
-  weatherDescription?: string | null;
-  weatherIconCode?: string | null;
-  isWeatherLoading: boolean;
-}
-
-export interface HomeDashboardSpendingTypeCardData {
-  spendingTypeTitle?: string | null;
-  spendingTypeDescription?: string | null;
-  spendingTypeIconName?: React.ComponentProps<typeof HomeSpendingTypeCard>['iconName'];
-}
-
-export interface HomeDashboardBudgetReportCardData {
-  monthLabel: string;
-  userName?: string | null;
-  remainingBudget?: number | null;
-  budgetUsageRate?: number | null;
-  spentAmount?: number | null;
-  totalBudget?: number | null;
-  forecastText?: string | null;
-}
 
 interface HomeDashboardContentProps {
   weatherCard: HomeDashboardWeatherCardData;

@@ -1,15 +1,11 @@
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, wp } from '../../constants/theme';
 import { styles } from './SheetIconHeader.styles';
-
-interface SheetIconHeaderProps {
-  iconName: React.ComponentProps<typeof Ionicons>['name'];
-  eyebrow: string;
-  title: string;
-  onPressInfo?: () => void;
-}
+import SheetInfoButton from './SheetInfoButton';
+import type { SheetIconHeaderProps } from './types';
 
 /**
  * 메인 홈 바텀시트 상단에서 공통으로 쓰는 아이콘 헤더.
@@ -29,11 +25,7 @@ export default function SheetIconHeader({
       <View style={styles.textBlock}>
         <View style={styles.eyebrowRow}>
           <Text style={styles.eyebrow}>{eyebrow}</Text>
-          {onPressInfo && (
-            <TouchableOpacity activeOpacity={0.7} style={styles.infoButton} onPress={onPressInfo}>
-              <Ionicons name="information-circle-outline" size={wp(16)} color={COLORS.textSecondary} />
-            </TouchableOpacity>
-          )}
+          {onPressInfo && <SheetInfoButton onPress={onPressInfo} size={wp(16)} />}
         </View>
         <Text style={styles.title}>{title}</Text>
       </View>

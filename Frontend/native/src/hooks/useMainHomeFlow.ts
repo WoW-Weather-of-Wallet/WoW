@@ -4,13 +4,11 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import type {
   HomeDashboardBudgetReportCardData,
-  HomeDashboardSpendingTypeCardData,
-  HomeDashboardWeatherCardData,
-} from '../components/main/HomeDashboardContent';
-import type {
   HomeDashboardMonthlyReportSheetData,
+  HomeDashboardSpendingTypeCardData,
   HomeDashboardSpendingTypeSheetData,
-} from '../components/main/HomeDashboardSheets';
+  HomeDashboardWeatherCardData,
+} from '../components/main/types';
 import { getCalendarHeader } from '../services/calendar';
 import {
   createBudget,

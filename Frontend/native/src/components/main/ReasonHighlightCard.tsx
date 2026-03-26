@@ -1,14 +1,8 @@
 import React from 'react';
 import { Text, View } from 'react-native';
+
 import { styles, toneStyles } from './ReasonHighlightCard.styles';
-
-type ReasonTone = 'red' | 'purple' | 'green';
-
-interface ReasonHighlightCardProps {
-  title: string;
-  description: string;
-  tone: ReasonTone;
-}
+import type { ReasonHighlightCardProps } from './types';
 
 /**
  * AI 분석 사유를 색상별 카드로 보여주는 공통 블록.
