@@ -10,6 +10,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import StepIndicator from '../../components/common/StepIndicator';
 import AuthActionButton from '../../components/common/AuthActionButton';
 import IdentityStepFormLayout from '../../components/common/IdentityStepFormLayout';
+import IdentitySsnSection from '../../components/common/IdentitySsnSection';
 import TelecomPhoneInputSection from '../../components/common/TelecomPhoneInputSection';
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import VerificationCodeStep from '../../components/common/VerificationCodeStep';
@@ -112,33 +113,32 @@ export default function PhoneUpdateScreen({
 
           <Animated.View
             entering={FadeInDown.delay(160).duration(400)}
-            style={styles.ssnSection}
           >
-            <View
-              style={[
+            <IdentitySsnSection
+              frontValue={expectedSsnFront}
+              backValue={expectedSsnBack}
+              frontEditable={false}
+              backEditable={false}
+              containerStyle={styles.ssnSection}
+              frontContainerStyle={[
                 styles.underlineContainer,
                 { flex: 1.1, justifyContent: 'center' },
               ]}
-            >
-              <Text
-                style={[
-                  styles.bareText,
-                  {
-                    textAlign: 'center',
-                    letterSpacing: expectedSsnFront ? 4 : 0,
-                  },
-                ]}
-              >
-                {expectedSsnFront || 'YYMMDD'}
-              </Text>
-            </View>
-            <Text style={styles.dash}>-</Text>
-            <View style={[styles.underlineContainer, styles.ssnBackContainer]}>
-              <Text style={[styles.bareText, styles.ssnBackText]}>
-                {expectedSsnBack || '0'}
-              </Text>
-              <Text style={styles.ssnMasking}>******</Text>
-            </View>
+              frontValueStyle={[
+                styles.bareText,
+                {
+                  textAlign: 'center',
+                  letterSpacing: expectedSsnFront ? 4 : 0,
+                },
+              ]}
+              backContainerStyle={[
+                styles.underlineContainer,
+                styles.ssnBackContainer,
+              ]}
+              backValueStyle={[styles.bareText, styles.ssnBackText]}
+              dashStyle={styles.dash}
+              maskingTextStyle={styles.ssnMasking}
+            />
           </Animated.View>
 
           <Animated.View

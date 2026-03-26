@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import StepIndicator from '../../components/common/StepIndicator';
 import AuthActionButton from '../../components/common/AuthActionButton';
 import IdentityStepFormLayout from '../../components/common/IdentityStepFormLayout';
+import IdentitySsnSection from '../../components/common/IdentitySsnSection';
 import TelecomPhoneInputSection from '../../components/common/TelecomPhoneInputSection';
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import VerificationCodeStep from '../../components/common/VerificationCodeStep';
@@ -135,51 +136,43 @@ export default function WithdrawScreen({
 
           <Animated.View
             entering={FadeInDown.delay(160).duration(400)}
-            style={styles.ssnSection}
           >
-            <View
-              style={[
+            <IdentitySsnSection
+              frontValue={ssnFront}
+              backValue={ssnBack}
+              onFrontChange={(text) => {
+                setSsnFront(text.replace(/[^0-9]/g, ''));
+                setSubmitError('');
+              }}
+              onBackChange={(text) => {
+                setSsnBack(text.replace(/[^0-9]/g, ''));
+                setSubmitError('');
+              }}
+              containerStyle={styles.ssnSection}
+              frontContainerStyle={[
                 styles.underlineContainer,
                 { flex: 1.1, justifyContent: 'center' },
               ]}
-            >
-              <TextInput
-                style={[
-                  styles.bareInput,
-                  {
-                    textAlign: 'center',
-                    letterSpacing: ssnFront.length > 0 ? 4 : 0,
-                  },
-                ]}
-                value={ssnFront}
-                onChangeText={(text) => {
-                  setSsnFront(text.replace(/[^0-9]/g, ''));
-                  setSubmitError('');
-                }}
-                placeholder="YYMMDD"
-                placeholderTextColor={COLORS.textTertiary}
-                keyboardType="number-pad"
-                maxLength={6}
-              />
-            </View>
-            <Text style={styles.dash}>-</Text>
-            <View style={[styles.underlineContainer, styles.ssnBackContainer]}>
-              <TextInput
-                style={[
-                  styles.bareInput,
-                  styles.ssnBackInput,
-                  { letterSpacing: ssnBack.length > 0 ? 4 : 0 },
-                ]}
-                value={ssnBack}
-                onChangeText={(text) => {
-                  setSsnBack(text.replace(/[^0-9]/g, ''));
-                  setSubmitError('');
-                }}
-                keyboardType="number-pad"
-                maxLength={1}
-              />
-              <Text style={styles.ssnMasking}>******</Text>
-            </View>
+              frontValueStyle={[
+                styles.bareInput,
+                {
+                  textAlign: 'center',
+                  letterSpacing: ssnFront.length > 0 ? 4 : 0,
+                },
+              ]}
+              backContainerStyle={[
+                styles.underlineContainer,
+                styles.ssnBackContainer,
+              ]}
+              backValueStyle={[
+                styles.bareInput,
+                styles.ssnBackInput,
+                { letterSpacing: ssnBack.length > 0 ? 4 : 0 },
+              ]}
+              dashStyle={styles.dash}
+              maskingTextStyle={styles.ssnMasking}
+              placeholderTextColor={COLORS.textTertiary}
+            />
           </Animated.View>
 
           <Animated.View

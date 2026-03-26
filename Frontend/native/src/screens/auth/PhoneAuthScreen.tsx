@@ -5,6 +5,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import AuthStepLayout from '../../components/auth/AuthStepLayout';
 import AuthActionButton from '../../components/common/AuthActionButton';
+import IdentitySsnSection from '../../components/common/IdentitySsnSection';
 import AuthUnderlineInput from '../../components/common/AuthUnderlineInput';
 import TelecomPhoneInputSection from '../../components/common/TelecomPhoneInputSection';
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
@@ -143,33 +144,31 @@ export default function PhoneAuthScreen({
         {step >= 2 ? (
           <Animated.View
             entering={FadeInDown.duration(500)}
-            style={styles.ssnSection}
-          >
-            <AuthUnderlineInput
-              ref={ssnFrontRef}
-              containerStyle={[
+            >
+            <IdentitySsnSection
+              frontValue={ssnFront}
+              backValue={ssnBack}
+              onFrontChange={handleSsnFrontChange}
+              onBackChange={handleSsnBackChange}
+              frontInputRef={ssnFrontRef}
+              backInputRef={ssnBackRef}
+              containerStyle={styles.ssnSection}
+              frontContainerStyle={[
                 styles.underlineContainer,
                 { flex: 1.1, justifyContent: 'center' },
               ]}
-              inputStyle={[
+              frontValueStyle={[
                 styles.bareInput,
                 {
                   textAlign: 'center',
                   letterSpacing: ssnFront.length > 0 ? 4 : 0,
                 },
               ]}
-              value={ssnFront}
-              onChangeText={handleSsnFrontChange}
-              placeholder="YYMMDD"
-              placeholderTextColor={COLORS.textTertiary}
-              keyboardType="number-pad"
-              maxLength={6}
-            />
-            <Text style={styles.dash}>-</Text>
-            <AuthUnderlineInput
-              ref={ssnBackRef}
-              containerStyle={[styles.underlineContainer, styles.ssnBackContainer]}
-              inputStyle={[
+              backContainerStyle={[
+                styles.underlineContainer,
+                styles.ssnBackContainer,
+              ]}
+              backValueStyle={[
                 styles.bareInput,
                 {
                   width: CONSTANTS.ssnBackInputWidth,
@@ -177,11 +176,9 @@ export default function PhoneAuthScreen({
                   letterSpacing: 4,
                 },
               ]}
-              value={ssnBack}
-              onChangeText={handleSsnBackChange}
-              keyboardType="number-pad"
-              maxLength={1}
-              rightAccessory={<Text style={styles.ssnMasking}>******</Text>}
+              dashStyle={styles.dash}
+              maskingTextStyle={styles.ssnMasking}
+              placeholderTextColor={COLORS.textTertiary}
             />
           </Animated.View>
         ) : null}

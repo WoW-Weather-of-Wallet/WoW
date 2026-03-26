@@ -6,6 +6,7 @@ import { COLORS, hp, wp } from '../../constants/theme';
 import { TELECOM_OPTIONS } from '../../constants/auth/identityVerification';
 import { useIdentityVerificationForm } from '../../hooks';
 import AuthActionButton from '../common/AuthActionButton';
+import IdentitySsnSection from '../common/IdentitySsnSection';
 import TelecomPhoneInputSection from '../common/TelecomPhoneInputSection';
 import TelecomSelectModal from '../common/TelecomSelectModal';
 import type { IdentityVerificationData } from '../../types/auth';
@@ -90,44 +91,39 @@ export default function IdentityVerificationForm({
       </View>
 
       {step >= 2 ? (
-        <Animated.View entering={FadeInDown.duration(500)} style={styles.ssnSection}>
-          <View style={[styles.underlineContainer, { flex: 1.1 }]}>
-            <TextInput
-              ref={ssnFrontRef}
-              style={[
-                styles.bareInput,
-                {
-                  textAlign: 'center',
-                  letterSpacing: ssnFront.length > 0 ? 4 : 0,
-                },
-              ]}
-              value={ssnFront}
-              onChangeText={handleSsnFrontChange}
-              placeholder="YYMMDD"
-              placeholderTextColor={COLORS.textTertiary}
-              keyboardType="number-pad"
-              maxLength={6}
-            />
-          </View>
-          <Text style={styles.dash}>-</Text>
-          <View style={[styles.underlineContainer, styles.ssnBackContainer]}>
-            <TextInput
-              ref={ssnBackRef}
-              style={[
-                styles.bareInput,
-                {
-                  width: wp(30),
-                  textAlign: 'center',
-                  letterSpacing: 4,
-                },
-              ]}
-              value={ssnBack}
-              onChangeText={handleSsnBackChange}
-              keyboardType="number-pad"
-              maxLength={1}
-            />
-            <Text style={styles.ssnMasking}>******</Text>
-          </View>
+        <Animated.View entering={FadeInDown.duration(500)}>
+          <IdentitySsnSection
+            frontValue={ssnFront}
+            backValue={ssnBack}
+            onFrontChange={handleSsnFrontChange}
+            onBackChange={handleSsnBackChange}
+            frontInputRef={ssnFrontRef}
+            backInputRef={ssnBackRef}
+            containerStyle={styles.ssnSection}
+            frontContainerStyle={[styles.underlineContainer, { flex: 1.1 }]}
+            frontValueStyle={[
+              styles.bareInput,
+              {
+                textAlign: 'center',
+                letterSpacing: ssnFront.length > 0 ? 4 : 0,
+              },
+            ]}
+            backContainerStyle={[
+              styles.underlineContainer,
+              styles.ssnBackContainer,
+            ]}
+            backValueStyle={[
+              styles.bareInput,
+              {
+                width: wp(30),
+                textAlign: 'center',
+                letterSpacing: 4,
+              },
+            ]}
+            dashStyle={styles.dash}
+            maskingTextStyle={styles.ssnMasking}
+            placeholderTextColor={COLORS.textTertiary}
+          />
         </Animated.View>
       ) : null}
 
