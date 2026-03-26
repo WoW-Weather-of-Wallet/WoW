@@ -97,6 +97,21 @@ public class CalendarController {
         return ResponseEntity.ok(ApiResponse.success(200, "일일 요약 조회 성공", response));
     }
 
+    @PutMapping("/{date}/memo")
+    public ResponseEntity<ApiResponse<CalendarMemoResponse>> upsertMemo(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @Valid @RequestBody CalendarMemoRequest request
+    ) {
+        if (userDetails == null) {
+            throw new InvalidTokenException("인증이 필요하거나 유효하지 않은 토큰입니다.");
+        }
+
+        Long userId = userDetails.getId();
+        CalendarMemoResponse response = calendarService.updateMemo(userId, date, request.getMemo());
+        return ResponseEntity.ok(ApiResponse.success(200, "메모 입력 성공", response));
+    }
+
     @PostMapping("/transactions/csv")
     public ResponseEntity<FlaskPreprocessDto> uploadTransactions(
             @RequestPart(value = "bank_file", required = false) MultipartFile bankFile,
