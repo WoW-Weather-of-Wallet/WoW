@@ -670,15 +670,23 @@ export function useCalendarMockState() {
 
     if (target?.fixedExpenseId && accessToken) {
       try {
-        const response = await updateFixedExpenseEnable(target.fixedExpenseId, {
+        await updateFixedExpenseEnable(target.fixedExpenseId, {
           isEnable: nextValue,
         });
 
-        setManageItems((current) =>
-          current.map((item) =>
-            item.id === id ? { ...item, isEnabled: response.isEnable } : item,
-          ),
-        );
+        const [summaryResponse, manageResponse] = await Promise.all([
+          getCalendarFixedExpenses({
+            year: displayedMonth.getFullYear(),
+            month: displayedMonth.getMonth() + 1,
+          }),
+          getFixedExpenseManage({
+            year: displayedMonth.getFullYear(),
+            month: displayedMonth.getMonth() + 1,
+          }),
+        ]);
+
+        setFixedExpenseItems(mapFixedExpenseSummaryItems(summaryResponse));
+        setManageItems(mapFixedExpenseManageItems(manageResponse));
       } catch (error) {
         console.warn('Failed to update fixed expense enable state', error);
         Alert.alert(
