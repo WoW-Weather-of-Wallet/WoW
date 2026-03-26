@@ -2,7 +2,6 @@ import React from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { COLORS, hp, wp } from '../../constants/theme';
-import { styles } from './AiLoadingScreen.styles';
 import BottomTabOverlayLayout from '../../components/common/BottomTabOverlayLayout';
 import { AiLoadingStage } from '../../components/ai';
 import { useAiLoadingFlow } from '../../hooks';
@@ -17,8 +16,17 @@ export default function AiLoadingScreen({
 
   return (
     <BottomTabOverlayLayout
-      containerStyle={styles.container}
-      contentContainerStyle={styles.contentContainer}
+      containerStyle={{
+        flex: 1,
+        backgroundColor: COLORS.background,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: wp(24),
+      }}
+      contentContainerStyle={{
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
       backgroundColor={COLORS.background}
       topOverlayTopPadding={hp(16)}
       topOverlayStyle={{
@@ -26,10 +34,20 @@ export default function AiLoadingScreen({
         zIndex: 2,
       }}
       bottomOverlayBottomPadding={hp(30)}
-      bottomOverlayStyle={styles.progressBarOverlay}
+      bottomOverlayStyle={{ alignItems: 'center' }}
       bottomOverlayContent={
-        <View style={styles.progressBarContainer}>
-          <Animated.View style={[styles.progressBarFill, animatedProgressStyle]} />
+        <View
+          className="overflow-hidden bg-[#E5E7EB]"
+          style={{
+            width: wp(200),
+            height: 4,
+            borderRadius: 999,
+          }}
+        >
+          <Animated.View
+            className="bg-[#4D74FF]"
+            style={[{ height: '100%' }, animatedProgressStyle]}
+          />
         </View>
       }
     >

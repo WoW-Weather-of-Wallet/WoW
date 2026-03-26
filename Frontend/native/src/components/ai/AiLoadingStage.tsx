@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -38,7 +38,22 @@ function PulseRing({ delayTime = 0 }: { delayTime?: number }) {
     opacity: opacity.value,
   }));
 
-  return <Animated.View style={[styles.pulseRing, animatedStyle]} />;
+  return (
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          width: wp(100),
+          height: wp(100),
+          borderRadius: wp(50),
+          borderWidth: 2,
+          borderColor: COLORS.primary,
+          backgroundColor: 'transparent',
+        },
+        animatedStyle,
+      ]}
+    />
+  );
 }
 
 function CompletionCheck() {
@@ -73,8 +88,24 @@ function CompletionCheck() {
   }));
 
   return (
-    <View style={styles.lastIconWrapper}>
-      <Animated.View style={[styles.pulseRing, animatedPulseStyle]} />
+    <View
+      className="items-center justify-center"
+      style={{ marginBottom: 0, height: hp(240) }}
+    >
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            width: wp(100),
+            height: wp(100),
+            borderRadius: wp(50),
+            borderWidth: 2,
+            borderColor: COLORS.primary,
+            backgroundColor: 'transparent',
+          },
+          animatedPulseStyle,
+        ]}
+      />
       <Animated.View style={animatedIconStyle}>
         <Ionicons name="checkmark-circle" size={wp(160)} color={COLORS.primary} />
       </Animated.View>
@@ -96,61 +127,40 @@ export default function AiLoadingStage({
       {isLastStep ? (
         <CompletionCheck />
       ) : (
-        <View style={styles.iconWrapper}>
+        <View
+          className="items-center justify-center"
+          style={{ marginBottom: hp(40), height: hp(100) }}
+        >
           <PulseRing delayTime={0} />
           <PulseRing delayTime={1000} />
           <Ionicons
             name={step.icon}
             size={wp(80)}
             color={COLORS.primary}
-            style={step.icon === 'sparkles-outline' ? styles.sparklesIcon : undefined}
+            style={
+              step.icon === 'sparkles-outline'
+                ? { marginLeft: wp(6), marginTop: hp(6) }
+                : undefined
+            }
           />
         </View>
       )}
 
       {!isLastStep ? (
-        <View style={styles.textWrapper}>
-          <Text style={styles.loadingText}>{step.text}</Text>
+        <View className="items-center">
+          <Text
+            className="text-center text-[#15192A]"
+            style={{
+              fontSize: fp(20),
+              fontFamily: FONTS.bold,
+              color: COLORS.textPrimary,
+              lineHeight: fp(28),
+            }}
+          >
+            {step.text}
+          </Text>
         </View>
       ) : null}
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  iconWrapper: {
-    marginBottom: hp(40),
-    height: hp(100),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  textWrapper: {
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: fp(20),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    textAlign: 'center',
-    lineHeight: fp(28),
-  },
-  pulseRing: {
-    position: 'absolute',
-    width: wp(100),
-    height: wp(100),
-    borderRadius: wp(50),
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-    backgroundColor: 'transparent',
-  },
-  lastIconWrapper: {
-    marginBottom: 0,
-    height: hp(240),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sparklesIcon: {
-    marginLeft: wp(6),
-    marginTop: hp(6),
-  },
-});
