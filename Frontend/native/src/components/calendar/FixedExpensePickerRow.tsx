@@ -75,7 +75,7 @@ export default function FixedExpensePickerRow({
               color: COLORS.textSecondary,
             }}
           >
-            {`${item.category} · ${item.dateLabel}`}
+            {`${item.category} / ${item.dateLabel}`}
           </Text>
         </View>
       </View>

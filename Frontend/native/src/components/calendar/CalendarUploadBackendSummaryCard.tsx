@@ -121,7 +121,7 @@ export default function CalendarUploadBackendSummaryCard({
                   color: COLORS.primary,
                 }}
               >
-                {record.cnt}건 · {record.amt.toLocaleString()}원
+                {record.cnt}건 / {record.amt.toLocaleString()}원
               </Text>
             </View>
           ))}
@@ -172,7 +172,7 @@ export default function CalendarUploadBackendSummaryCard({
                   color: COLORS.primary,
                 }}
               >
-                {row.cnt}건 · {row.amount.toLocaleString()}원
+                {row.cnt}건 / {row.amount.toLocaleString()}원
               </Text>
             </View>
           ))}

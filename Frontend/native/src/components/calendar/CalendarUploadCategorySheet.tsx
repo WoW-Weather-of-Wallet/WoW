@@ -24,7 +24,7 @@ export default function CalendarUploadCategorySheet({
       onClose={onClose}
       title="카테고리 선택"
       subtitle={
-        selectedItem ? `${selectedItem.merchantName} · ${selectedItem.amount.toLocaleString()}원` : ''
+        selectedItem ? `${selectedItem.merchantName} / ${selectedItem.amount.toLocaleString()}원` : ''
       }
       scrollable={false}
     >
@@ -48,7 +48,7 @@ export default function CalendarUploadCategorySheet({
               color: COLORS.warningOrange,
             }}
           >
-            자동 분류가 애매한 항목은 직접 고를 수 있어요.
+            자동 분류가 애매한 항목은 직접 선택해 주세요.
           </Text>
         </View>
 
