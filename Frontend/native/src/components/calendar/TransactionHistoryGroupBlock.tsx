@@ -1,8 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
-import { styles } from './TransactionHistorySection.styles';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import type { CalendarTransactionGroup } from '../../mock/calendar';
 
 interface TransactionHistoryGroupBlockProps {
@@ -13,17 +12,44 @@ export default function TransactionHistoryGroupBlock({
   group,
 }: TransactionHistoryGroupBlockProps) {
   return (
-    <View style={styles.groupBlock}>
-      <Text style={styles.groupLabel}>{group.dateLabel}</Text>
+    <View style={{ gap: hp(8) }}>
+      <Text
+        style={{
+          fontSize: fp(13),
+          fontFamily: FONTS.semiBold,
+          color: COLORS.textTertiary,
+        }}
+      >
+        {group.dateLabel}
+      </Text>
 
-      <View style={styles.groupCard}>
+      <View
+        style={{
+          borderRadius: RADIUS.xl,
+          backgroundColor: COLORS.transactionBackground,
+          paddingHorizontal: wp(14),
+        }}
+      >
         {group.items.map((item, index) => (
           <View
             key={item.id}
-            style={[styles.rowCard, index < group.items.length - 1 && styles.rowDivider]}
+            className="flex-row items-center justify-between"
+            style={{
+              paddingVertical: hp(13),
+              borderBottomWidth: index < group.items.length - 1 ? 1 : 0,
+              borderBottomColor: COLORS.border,
+            }}
           >
-            <View style={styles.rowLeft}>
-              <View style={[styles.iconWrap, { backgroundColor: item.iconTone }]}>
+            <View className="flex-1 flex-row items-center" style={{ gap: wp(12) }}>
+              <View
+                className="items-center justify-center"
+                style={{
+                  width: wp(44),
+                  height: wp(44),
+                  borderRadius: wp(18),
+                  backgroundColor: item.iconTone,
+                }}
+              >
                 <Ionicons
                   name={item.icon as keyof typeof Ionicons.glyphMap}
                   size={wp(20)}
@@ -31,22 +57,71 @@ export default function TransactionHistoryGroupBlock({
                 />
               </View>
 
-              <View style={styles.textBlock}>
-                <View style={styles.itemTitleRow}>
-                  <Text style={styles.itemTitle}>{item.title}</Text>
+              <View className="flex-1">
+                <View className="flex-row items-center" style={{ gap: wp(6), marginBottom: hp(4) }}>
+                  <Text
+                    style={{
+                      fontSize: fp(16),
+                      fontFamily: FONTS.bold,
+                      color: COLORS.textPrimary,
+                    }}
+                  >
+                    {item.title}
+                  </Text>
                   {item.isFixedExpense ? (
-                    <Text style={styles.fixedPinEmoji}>📌</Text>
+                    <View
+                      style={{
+                        borderRadius: RADIUS.full,
+                        backgroundColor: COLORS.primary50,
+                        paddingHorizontal: wp(8),
+                        paddingVertical: hp(3),
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: fp(10),
+                          fontFamily: FONTS.semiBold,
+                          color: COLORS.primary,
+                        }}
+                      >
+                        고정
+                      </Text>
+                    </View>
                   ) : null}
                 </View>
-                <Text style={styles.itemCategory}>{item.category}</Text>
+                <Text
+                  style={{
+                    fontSize: fp(13),
+                    fontFamily: FONTS.medium,
+                    color: COLORS.textSecondary,
+                  }}
+                >
+                  {item.category}
+                </Text>
               </View>
             </View>
 
-            <View style={styles.amountBlock}>
-              <Text style={[styles.amount, item.amount < 0 && styles.incomeAmount]}>
-                {item.amount < 0 ? '+' : '-'}₩{Math.abs(item.amount).toLocaleString()}
+            <View className="items-end" style={{ gap: hp(4) }}>
+              <Text
+                style={{
+                  fontSize: fp(15),
+                  fontFamily: FONTS.bold,
+                  color: item.amount < 0 ? COLORS.incomeGreen : COLORS.spentRed,
+                }}
+              >
+                {`${item.amount < 0 ? '+' : '-'}${Math.abs(item.amount).toLocaleString()}원`}
               </Text>
-              {item.time ? <Text style={styles.time}>{item.time}</Text> : null}
+              {item.time ? (
+                <Text
+                  style={{
+                    fontSize: fp(12),
+                    fontFamily: FONTS.medium,
+                    color: COLORS.textTertiary,
+                  }}
+                >
+                  {item.time}
+                </Text>
+              ) : null}
             </View>
           </View>
         ))}
