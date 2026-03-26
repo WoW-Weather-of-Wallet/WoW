@@ -36,9 +36,9 @@ interface UseMainHomeFlowParams {
 }
 
 export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
-  const accessToken = useAuthStore(state => state.accessToken);
-  const sessionUserName = useAuthStore(state => state.user?.name);
-  const latestAiReport = useAiStore(state => state.resultData?.report as AiAnalysisReport | null);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const sessionUserName = useAuthStore((state) => state.user?.name);
+  const latestAiResult = useAiStore((state) => state.resultData);
   const [liveHeader, setLiveHeader] = React.useState<CalendarHeaderResponse | null>(null);
   const [aiAnalysis, setAiAnalysis] = React.useState<AiAnalysisReport | null>(null);
   const [spendingHalfYearly, setSpendingHalfYearly] =
@@ -49,7 +49,19 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
   const [isWeatherLoading, setIsWeatherLoading] = React.useState(false);
   const [isBudgetSubmitting, setIsBudgetSubmitting] = React.useState(false);
   const today = React.useMemo(() => new Date(), []);
-  const monthLabel = `${today.getMonth() + 1}??`;
+  const monthLabel = `${today.getMonth() + 1}월`;
+
+  const hasFreshHomeAiSummary = React.useMemo(() => {
+    if (!latestAiResult?.report || !latestAiResult.cacheExpiresAt) {
+      return false;
+    }
+
+    return (
+      latestAiResult.reportYear === today.getFullYear() &&
+      latestAiResult.reportMonth === today.getMonth() + 1 &&
+      new Date(latestAiResult.cacheExpiresAt).getTime() > Date.now()
+    );
+  }, [latestAiResult, today]);
 
   const loadHomeData = React.useCallback(async () => {
     if (!accessToken) {
@@ -77,14 +89,18 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
       setSpendingHalfYearly(halfYearlyResponse);
       setMonthlyCompare(monthlyCompareResponse);
 
-      void getAiAnalysis()
-        .then((response) => {
-          setAiAnalysis(response);
-        })
-        .catch((error) => {
-          console.warn('Failed to load AI analysis summary for home card', error);
-          setAiAnalysis(null);
-        });
+      if (hasFreshHomeAiSummary) {
+        setAiAnalysis(null);
+      } else {
+        void getAiAnalysis()
+          .then((response) => {
+            setAiAnalysis(response);
+          })
+          .catch((error) => {
+            console.warn('Failed to load AI analysis summary for home card', error);
+            setAiAnalysis(null);
+          });
+      }
     } catch (error) {
       console.warn('Failed to load home data from backend', error);
       setLiveHeader(null);
@@ -94,7 +110,7 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     } finally {
       setIsWeatherLoading(false);
     }
-  }, [accessToken, today]);
+  }, [accessToken, hasFreshHomeAiSummary, today]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -110,13 +126,16 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
         const createdBudget = await createBudget({ amount });
         setBudgetAmount(createdBudget.amount);
         closeReportModal();
-        Alert.alert('?덉궛 ?깅줉 ?꾨즺', `${createdBudget.budgetDate} ?덉궛???깅줉?섏뿀?듬땲??`);
+        Alert.alert(
+          '예산 등록 완료',
+          `${createdBudget.budgetDate} 예산이 정상적으로 등록되었어요.`,
+        );
       } catch (error) {
         const message = extractApiErrorMessage(
           error,
-          '?대쾲 ???덉궛 ?깅줉 以?臾몄젣媛 諛쒖깮?덉뒿?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄?댁＜?몄슂.',
+          '예산 등록 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
         );
-        Alert.alert('?덉궛 ?깅줉 ?ㅽ뙣', message);
+        Alert.alert('예산 등록 실패', message);
       } finally {
         setIsBudgetSubmitting(false);
       }
@@ -158,10 +177,10 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
       : null;
   const forecastText =
     totalBudget == null
-      ? '?대쾲 ???덉궛???깅줉?섎㈃ ?⑥? ?덉궛怨??ъ슜瑜좎쓣 諛붾줈 ?뺤씤?????덉뼱??'
+      ? '이번 달 예산을 먼저 등록하면 남은 예산과 소비 흐름을 함께 보여드릴게요.'
       : remainingBudget != null && remainingBudget >= 0
-        ? `${remainingBudget.toLocaleString()}?먯씠 ?⑥븘 ?덉뼱?? 吏湲??띾룄瑜??좎??대낫?몄슂.`
-        : `?덉궛??${Math.abs(remainingBudget ?? 0).toLocaleString()}??珥덇낵?덉뼱?? 吏異?議곗젙???꾩슂?댁슂.`;
+        ? `${remainingBudget.toLocaleString()}원 정도 여유가 있어요. 지금 흐름이면 예산 안에서 마무리할 가능성이 높습니다.`
+        : `예산을 ${Math.abs(remainingBudget ?? 0).toLocaleString()}원 초과했어요. 지출 비중이 큰 항목부터 먼저 확인해 보세요.`;
 
   const weatherCard = React.useMemo<HomeDashboardWeatherCardData>(
     () => ({
@@ -173,17 +192,17 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     [isWeatherLoading, liveHeader?.description, liveHeader?.iconCode, liveHeader?.weatherName],
   );
 
-  const homeAiSummary = latestAiReport ?? aiAnalysis;
+  const homeAiSummary = (hasFreshHomeAiSummary ? latestAiResult?.report : null) ?? aiAnalysis;
 
   const spendingTypeCard = React.useMemo<HomeDashboardSpendingTypeCardData>(
     () => ({
       spendingTypeTitle:
         homeAiSummary?.cluster.name || spendingHalfYearly?.spendingType.name,
       spendingTypeDescription:
-        homeAiSummary?.goal.actionTip
-        || homeAiSummary?.cluster.description
-        || spendingHalfYearly?.spendingType.summary
-        || spendingHalfYearly?.description,
+        homeAiSummary?.goal.actionTip ||
+        homeAiSummary?.cluster.description ||
+        spendingHalfYearly?.spendingType.summary ||
+        spendingHalfYearly?.description,
       spendingTypeIconName: homeAiSummary
         ? 'sparkles-outline'
         : resolveSpendingIconName(spendingHalfYearly?.spendingType.iconCode),
@@ -220,9 +239,9 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
         ? 'sparkles-outline'
         : resolveSpendingIconName(spendingHalfYearly?.spendingType.iconCode),
       spendingTypeDescription:
-        homeAiSummary?.cluster.description
-        || homeAiSummary?.goal.actionTip
-        || spendingHalfYearly?.description,
+        homeAiSummary?.cluster.description ||
+        homeAiSummary?.goal.actionTip ||
+        spendingHalfYearly?.description,
       spendingMetrics,
       spendingReasons,
     }),

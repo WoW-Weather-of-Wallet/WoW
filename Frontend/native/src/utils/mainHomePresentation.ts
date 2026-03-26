@@ -85,7 +85,7 @@ export const buildMonthlyComparisonLegend = (
   return names.map((name, index) => ({
     id: `${name}-${index}`,
     label: name,
-    value: `이번 ${currentMap.get(name) ?? 0}% · 지난 ${lastMap.get(name) ?? 0}%`,
+    value: `이번 ${currentMap.get(name) ?? 0}% / 지난 ${lastMap.get(name) ?? 0}%`,
     color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
   }));
 };
@@ -105,7 +105,7 @@ export const buildMonthlyInsight = (response: SpendingMonthlyCompareResponse | n
   }
 
   if (diff > 0) {
-    return `이번 달 소비가 지난달보다 ${diff.toLocaleString()}원 많아요.${topCategory ? ` 특히 ${topCategory} 비중을 먼저 확인해보세요.` : ''}`;
+    return `이번 달 소비가 지난달보다 ${diff.toLocaleString()}원 많아요.${topCategory ? ` 특히 ${topCategory} 비중을 먼저 확인해 보세요.` : ''}`;
   }
 
   if (diff < 0) {

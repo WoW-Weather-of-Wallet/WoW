@@ -8,7 +8,7 @@ import HomeMonthlyReportSheet from './HomeMonthlyReportSheet';
 import HomeSpendingTypeSheet from './HomeSpendingTypeSheet';
 
 const MONTHLY_REPORT_SUBTITLE =
-  "?챘흸???씸??횗?챘?슿?챦짠탑횂??챙?쇺▣モ볛??챘큄짰챠?걔?㎮샚?챕혥짰챗쩐짠챠?쨀?챙?왖띊?궗짭 ?챘혥?걘ぢ뜯??챗쨀쨔챗쨔짯챌?샚??창?샕Ｃ?띉?챔쨔?????챘혥?걘ヂ셋??";
+  '이번 달과 지난달 소비 흐름을 비교해서 현재 예산 상태를 한눈에 확인할 수 있어요.';
 
 interface HomeDashboardSheetsProps {
   isSpendingTypeVisible: boolean;
