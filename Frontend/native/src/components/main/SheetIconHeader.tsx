@@ -1,35 +1,59 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
-import { styles } from './SheetIconHeader.styles';
+
+import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
 import SheetInfoButton from './SheetInfoButton';
 import type { SheetIconHeaderProps } from './types';
 
-/**
- * 메인 홈 바텀시트 상단에서 공통으로 쓰는 아이콘 헤더.
- * 아이콘과 타이틀 톤을 고정해 시트마다 문구만 바꿔 재사용한다.
- */
 export default function SheetIconHeader({
   iconName,
   eyebrow,
   title,
   onPressInfo,
 }: SheetIconHeaderProps) {
+  const containerStyle = {
+    gap: wp(14),
+  } as const;
+
+  const iconWrapStyle = {
+    width: wp(50),
+    height: wp(50),
+    borderRadius: wp(18),
+    backgroundColor: COLORS.sheetIconBackground,
+  } as const;
+
+  const eyebrowRowStyle = {
+    gap: wp(4),
+    paddingTop: hp(4),
+  } as const;
+
+  const eyebrowStyle = {
+    fontSize: fp(14),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+    marginBottom: hp(2),
+  } as const;
+
+  const titleStyle = {
+    fontSize: fp(24),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  } as const;
+
   return (
-    <View style={styles.container}>
-      <View style={styles.iconWrap}>
+    <View className="flex-row items-center" style={containerStyle}>
+      <View className="items-center justify-center" style={iconWrapStyle}>
         <Ionicons name={iconName} size={wp(26)} color={COLORS.primary} />
       </View>
-      <View style={styles.textBlock}>
-        <View style={styles.eyebrowRow}>
-          <Text style={styles.eyebrow}>{eyebrow}</Text>
+
+      <View className="flex-1">
+        <View className="flex-row items-center" style={eyebrowRowStyle}>
+          <Text style={eyebrowStyle}>{eyebrow}</Text>
           {onPressInfo && <SheetInfoButton onPress={onPressInfo} size={wp(16)} />}
         </View>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={titleStyle}>{title}</Text>
       </View>
     </View>
   );
 }
-

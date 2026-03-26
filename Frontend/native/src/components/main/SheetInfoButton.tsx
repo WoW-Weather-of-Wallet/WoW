@@ -3,7 +3,6 @@ import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { COLORS, wp } from '../../constants/theme';
-import { styles } from './SheetIconHeader.styles';
 
 type SheetInfoButtonProps = {
   onPress: () => void;
@@ -15,7 +14,7 @@ export default function SheetInfoButton({
   size = wp(16),
 }: SheetInfoButtonProps) {
   return (
-    <TouchableOpacity activeOpacity={0.7} style={styles.infoButton} onPress={onPress}>
+    <TouchableOpacity activeOpacity={0.7} className="p-1" onPress={onPress}>
       <Ionicons
         name="information-circle-outline"
         size={size}
