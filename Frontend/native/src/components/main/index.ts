@@ -26,4 +26,8 @@ export { default as HomeWeeklyPreviewCard } from './HomeWeeklyPreviewCard';
 export { default as LegendList } from './LegendList';
 export { default as ReasonHighlightCard } from './ReasonHighlightCard';
 export { default as SheetIconHeader } from './SheetIconHeader';
+export { default as SpendingStyleGuideHeader } from './SpendingStyleGuideHeader';
+export { default as SpendingStyleGuideModal } from './SpendingStyleGuideModal';
+export { default as SpendingStyleGuidePagination } from './SpendingStyleGuidePagination';
+export { default as SpendingStyleGuideSlide } from './SpendingStyleGuideSlide';
 export { default as SpendingStyleRadarChart } from './SpendingStyleRadarChart';
