@@ -4,6 +4,7 @@ export { default as CalendarDayDetailTransactionRow } from './CalendarDayDetailT
 export { default as CalendarDraftEntryCard } from './CalendarDraftEntryCard';
 export { default as CalendarDirectEntrySection } from './CalendarDirectEntrySection';
 export { default as CalendarEntryModeToggle } from './CalendarEntryModeToggle';
+export { default as CalendarExcelUploadSection } from './CalendarExcelUploadSection';
 export { default as CalendarFieldLabel } from './CalendarFieldLabel';
 export { default as CalendarGuideModal } from './CalendarGuideModal';
 export { default as CalendarDayCell } from './CalendarDayCell';
