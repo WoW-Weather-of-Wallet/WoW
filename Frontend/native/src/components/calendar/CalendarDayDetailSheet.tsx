@@ -39,11 +39,13 @@ export default function CalendarDayDetailSheet({
   }
 
   return (
-    <BottomSheetModal visible={visible} onClose={onClose} showHandle={false}>
-      <View style={styles.titleRow}>
-        <Text style={styles.title}>{detail.title}</Text>
-      </View>
-
+    <BottomSheetModal
+      visible={visible}
+      onClose={onClose}
+      showHandle={false}
+      title={detail.title}
+      subtitle="선택한 날짜의 소비 기록과 메모를 확인할 수 있어요."
+    >
       <View style={styles.weatherCard}>
         <View style={styles.weatherLeft}>
           <Ionicons name={getWeatherIconName(detail)} size={wp(28)} color={COLORS.primary} />
@@ -70,10 +72,15 @@ export default function CalendarDayDetailSheet({
         </View>
       </View>
 
-      {detail.items.length > 0 ? (
-        <View style={styles.listSection}>
-          <Text style={styles.listTitle}>내역</Text>
-          {detail.items.map((item) => (
+      <View style={styles.listSection}>
+        <View style={styles.listHeaderRow}>
+          <Text style={styles.listTitle}>조회된 거래 내역</Text>
+          <View style={styles.readonlyBadge}>
+            <Text style={styles.readonlyBadgeText}>읽기 전용</Text>
+          </View>
+        </View>
+        {detail.items.length > 0 ? (
+          detail.items.map((item) => (
             <View key={item.id} style={styles.itemRow}>
               <View style={styles.itemLeft}>
                 <View style={[styles.iconWrap, { backgroundColor: item.iconTone }]}>
@@ -90,12 +97,17 @@ export default function CalendarDayDetailSheet({
               </View>
               <Text style={styles.itemAmount}>-₩{item.amount.toLocaleString()}</Text>
             </View>
-          ))}
-        </View>
-      ) : null}
+          ))
+        ) : (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>등록된 거래 내역이 없어요.</Text>
+          </View>
+        )}
+      </View>
 
       <View style={styles.memoSection}>
         <Text style={styles.memoTitle}>오늘의 메모</Text>
+        <Text style={styles.memoHint}>선택한 날짜의 소비 기록이나 느낌을 간단히 남길 수 있어요.</Text>
         <TextInput
           value={memoValue}
           onChangeText={onChangeMemo}
