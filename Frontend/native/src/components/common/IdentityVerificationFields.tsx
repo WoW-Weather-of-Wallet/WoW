@@ -14,7 +14,7 @@ import TelecomPhoneInputSection, {
   type TelecomPhoneInputSectionProps,
 } from './TelecomPhoneInputSection';
 
-interface IdentityVerificationFieldsProps {
+export interface IdentityVerificationFieldsProps {
   nameSection: IdentityNameSectionProps;
   ssnSection?: IdentitySsnSectionProps;
   phoneSection?: TelecomPhoneInputSectionProps;

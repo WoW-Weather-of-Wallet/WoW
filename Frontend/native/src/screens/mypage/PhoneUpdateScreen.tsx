@@ -7,10 +7,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import StepIndicator from '../../components/common/StepIndicator';
-import AuthActionButton from '../../components/common/AuthActionButton';
-import IdentityStepFormLayout from '../../components/common/IdentityStepFormLayout';
-import IdentityVerificationFields from '../../components/common/IdentityVerificationFields';
-import TelecomSelectModal from '../../components/common/TelecomSelectModal';
+import IdentityVerificationFormStage from '../../components/common/IdentityVerificationFormStage';
 import VerificationCodeStep from '../../components/common/VerificationCodeStep';
 import { styles } from './PhoneUpdateScreen.styles';
 import { COLORS, hp, wp } from '../../constants/theme';
@@ -68,121 +65,111 @@ export default function PhoneUpdateScreen({
 
   if (phase === 'form') {
     return (
-      <>
-        <IdentityStepFormLayout
-          containerStyle={styles.container}
-          scrollContentStyle={styles.scrollContent}
-          backButtonStyle={styles.backButton}
-          stepIndicatorContainerStyle={{ marginTop: 0, marginBottom: hp(12) }}
-          titleStyle={styles.title}
-          subtitleStyle={styles.formSubtitle}
-          bottomContainerStyle={styles.bottomContainer}
-          title="새 휴대폰 번호를 입력해 주세요."
-          subtitle="통신사를 선택한 뒤 변경할 휴대폰 번호로 인증번호를 받아 진행합니다."
-          onBack={() => navigation.goBack()}
-          bottomContent={
-            <AuthActionButton
-              label={SEND_CODE_LABEL}
-              loading={isSending}
-              disabled={!isButtonActive}
-              active={isButtonActive}
-              onPress={() => void handleSendCode()}
-              containerStyle={styles.confirmButton}
-              activeContainerStyle={styles.activeButton}
-              textStyle={styles.confirmButtonText}
-              activeTextStyle={styles.activeButtonText}
-              loadingColor={COLORS.textInverse}
-            />
-          }
-        >
-          <IdentityVerificationFields
-            nameWrapperStyle={styles.inputSection}
-            phoneWrapperStyle={styles.inputSection}
-            nameDelay={100}
-            ssnDelay={160}
-            phoneDelay={220}
-            duration={400}
-            nameSection={{
-              value: profileName,
-              displayValue: profileName || '-',
-              editable: false,
-              containerStyle: styles.underlineContainer,
-              valueStyle: [
-                styles.bareText,
-                { letterSpacing: profileName ? 2 : 0 },
-              ],
-            }}
-            ssnSection={{
-              frontValue: expectedSsnFront,
-              backValue: expectedSsnBack,
-              frontEditable: false,
-              backEditable: false,
-              containerStyle: styles.ssnSection,
-              frontContainerStyle: [
-                styles.underlineContainer,
-                { flex: 1.1, justifyContent: 'center' },
-              ],
-              frontValueStyle: [
-                styles.bareText,
-                {
-                  textAlign: 'center',
-                  letterSpacing: expectedSsnFront ? 4 : 0,
-                },
-              ],
-              backContainerStyle: [
-                styles.underlineContainer,
-                styles.ssnBackContainer,
-              ],
-              backValueStyle: [styles.bareText, styles.ssnBackText],
-              dashStyle: styles.dash,
-              maskingTextStyle: styles.ssnMasking,
-            }}
-            phoneSection={{
-              telecom,
-              telecomPlaceholder: TELECOM_PLACEHOLDER,
-              phone,
-              onOpenTelecomModal: () => setIsTelecomModalVisible(true),
-              onPhoneChange: (text) => {
-                setPhone(text.replace(/[^0-9]/g, ''));
-                setSubmitError('');
+      <IdentityVerificationFormStage
+        containerStyle={styles.container}
+        scrollContentStyle={styles.scrollContent}
+        backButtonStyle={styles.backButton}
+        stepIndicatorContainerStyle={{ marginTop: 0, marginBottom: hp(12) }}
+        titleStyle={styles.title}
+        subtitleStyle={styles.formSubtitle}
+        bottomContainerStyle={styles.bottomContainer}
+        title="새 휴대폰 번호를 입력해 주세요."
+        subtitle="통신사를 선택한 뒤 변경할 휴대폰 번호로 인증번호를 받아 진행합니다."
+        onBack={() => navigation.goBack()}
+        actionLabel={SEND_CODE_LABEL}
+        actionLoading={isSending}
+        actionDisabled={!isButtonActive}
+        actionActive={isButtonActive}
+        onActionPress={() => void handleSendCode()}
+        actionContainerStyle={styles.confirmButton}
+        actionActiveContainerStyle={styles.activeButton}
+        actionTextStyle={styles.confirmButtonText}
+        actionActiveTextStyle={styles.activeButtonText}
+        actionLoadingColor={COLORS.textInverse}
+        fields={{
+          nameWrapperStyle: styles.inputSection,
+          phoneWrapperStyle: styles.inputSection,
+          nameDelay: 100,
+          ssnDelay: 160,
+          phoneDelay: 220,
+          duration: 400,
+          nameSection: {
+            value: profileName,
+            displayValue: profileName || '-',
+            editable: false,
+            containerStyle: styles.underlineContainer,
+            valueStyle: [
+              styles.bareText,
+              { letterSpacing: profileName ? 2 : 0 },
+            ],
+          },
+          ssnSection: {
+            frontValue: expectedSsnFront,
+            backValue: expectedSsnBack,
+            frontEditable: false,
+            backEditable: false,
+            containerStyle: styles.ssnSection,
+            frontContainerStyle: [
+              styles.underlineContainer,
+              { flex: 1.1, justifyContent: 'center' },
+            ],
+            frontValueStyle: [
+              styles.bareText,
+              {
+                textAlign: 'center',
+                letterSpacing: expectedSsnFront ? 4 : 0,
               },
-              phonePlaceholder: PHONE_NUMBER_PLACEHOLDER,
-              selectorStyle: styles.telecomSelector,
-              telecomTextStyle: styles.telecomText,
-              placeholderTextStyle: styles.placeholderText,
-              phoneInputContainerStyle: [
-                styles.underlineContainer,
-                { marginTop: hp(32) },
-              ],
-              phoneInputStyle: [
-                styles.bareInput,
-                { letterSpacing: phone.length > 0 ? 2 : 0 },
-              ],
-              errorTextStyle: styles.errorText,
-              errorText: submitError,
-              phoneVisible: telecom !== TELECOM_PLACEHOLDER,
-              animatePhoneInput: true,
-              chevronIconSize: wp(24),
-              chevronIconColor: COLORS.textPrimary,
-              placeholderTextColor: COLORS.textTertiary,
-            }}
-          />
-        </IdentityStepFormLayout>
-
-        <TelecomSelectModal
-          visible={isTelecomModalVisible}
-          onClose={() => setIsTelecomModalVisible(false)}
-          onSelect={handleSelectTelecom}
-          options={TELECOM_OPTIONS}
-          bottomInset={insets.bottom}
-          overlayStyle={styles.modalOverlay}
-          contentStyle={styles.modalContent}
-          headerStyle={styles.modalHeader}
-          titleStyle={styles.modalTitle}
-          itemStyle={styles.modalItem}
-          itemTextStyle={styles.modalItemText}
-        />
-      </>
+            ],
+            backContainerStyle: [
+              styles.underlineContainer,
+              styles.ssnBackContainer,
+            ],
+            backValueStyle: [styles.bareText, styles.ssnBackText],
+            dashStyle: styles.dash,
+            maskingTextStyle: styles.ssnMasking,
+          },
+          phoneSection: {
+            telecom,
+            telecomPlaceholder: TELECOM_PLACEHOLDER,
+            phone,
+            onOpenTelecomModal: () => setIsTelecomModalVisible(true),
+            onPhoneChange: (text) => {
+              setPhone(text.replace(/[^0-9]/g, ''));
+              setSubmitError('');
+            },
+            phonePlaceholder: PHONE_NUMBER_PLACEHOLDER,
+            selectorStyle: styles.telecomSelector,
+            telecomTextStyle: styles.telecomText,
+            placeholderTextStyle: styles.placeholderText,
+            phoneInputContainerStyle: [
+              styles.underlineContainer,
+              { marginTop: hp(32) },
+            ],
+            phoneInputStyle: [
+              styles.bareInput,
+              { letterSpacing: phone.length > 0 ? 2 : 0 },
+            ],
+            errorTextStyle: styles.errorText,
+            errorText: submitError,
+            phoneVisible: telecom !== TELECOM_PLACEHOLDER,
+            animatePhoneInput: true,
+            chevronIconSize: wp(24),
+            chevronIconColor: COLORS.textPrimary,
+            placeholderTextColor: COLORS.textTertiary,
+          },
+        }}
+        telecomModalVisible={isTelecomModalVisible}
+        onCloseTelecomModal={() => setIsTelecomModalVisible(false)}
+        onSelectTelecom={handleSelectTelecom}
+        telecomOptions={TELECOM_OPTIONS}
+        telecomBottomInset={insets.bottom}
+        telecomModalOverlayStyle={styles.modalOverlay}
+        telecomModalContentStyle={styles.modalContent}
+        telecomModalHeaderStyle={styles.modalHeader}
+        telecomModalTitleStyle={styles.modalTitle}
+        telecomModalItemStyle={styles.modalItem}
+        telecomModalItemTextStyle={styles.modalItemText}
+      />
     );
   }
 
@@ -216,12 +203,12 @@ export default function PhoneUpdateScreen({
           <StepIndicator currentStep={2} totalSteps={2} compact />
         </View>
       }
-      title={
+        title={
         isVerified
           ? '휴대폰 번호 인증이\n완료되었어요.'
           : '인증번호 6자리를\n입력해 주세요.'
       }
-      subtitle={`${requestedPhoneDisplay} 번호로 전송된 인증번호를 입력해 주세요.`}
+        subtitle={`${requestedPhoneDisplay} 번호로 전송된 인증번호를 입력해 주세요.`}
       code={code}
       codeLength={VERIFICATION_CODE_LENGTH}
       isVerifying={isVerifying}

@@ -9,10 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import StepIndicator from '../../components/common/StepIndicator';
-import AuthActionButton from '../../components/common/AuthActionButton';
-import IdentityStepFormLayout from '../../components/common/IdentityStepFormLayout';
-import IdentityVerificationFields from '../../components/common/IdentityVerificationFields';
-import TelecomSelectModal from '../../components/common/TelecomSelectModal';
+import IdentityVerificationFormStage from '../../components/common/IdentityVerificationFormStage';
 import VerificationCodeStep from '../../components/common/VerificationCodeStep';
 import { styles } from './WithdrawScreen.styles';
 import { COLORS, hp, wp } from '../../constants/theme';
@@ -75,127 +72,121 @@ export default function WithdrawScreen({
 
   if (phase === 'form') {
     return (
-      <>
-        <IdentityStepFormLayout
-          containerStyle={styles.container}
-          scrollContentStyle={styles.scrollContent}
-          backButtonStyle={styles.backButton}
-          stepIndicatorContainerStyle={{ marginTop: 0, marginBottom: hp(12) }}
-          titleStyle={styles.title}
-          subtitleStyle={styles.formSubtitle}
-          bottomContainerStyle={styles.bottomContainer}
-          title={
+      <IdentityVerificationFormStage
+        containerStyle={styles.container}
+        scrollContentStyle={styles.scrollContent}
+        backButtonStyle={styles.backButton}
+        stepIndicatorContainerStyle={{ marginTop: 0, marginBottom: hp(12) }}
+        titleStyle={styles.title}
+        subtitleStyle={styles.formSubtitle}
+        bottomContainerStyle={styles.bottomContainer}
+        title={
             <>
               회원 탈퇴 전{'\n'}본인 확인을 진행해 주세요.
             </>
           }
-          subtitle={
+        subtitle={
             <>
               회원 정보와 일치하는 내용을{'\n'}입력해야 인증번호를 받을 수 있어요.
             </>
           }
-          onBack={() => navigation.goBack()}
-          bottomContent={
-            <AuthActionButton
-              label={SEND_CODE_LABEL}
-              loading={isSending}
-              disabled={!isButtonActive}
-              active={isButtonActive}
-              onPress={() => void handleSendCode()}
-              containerStyle={styles.confirmButton}
-              activeContainerStyle={styles.activeButton}
-              textStyle={styles.confirmButtonText}
-              activeTextStyle={styles.activeButtonText}
-              loadingColor={COLORS.textInverse}
-            />
-          }
-        >
-          <IdentityVerificationFields
-            nameWrapperStyle={styles.inputSection}
-            phoneWrapperStyle={styles.inputSection}
-            nameDelay={100}
-            ssnDelay={160}
-            phoneDelay={220}
-            duration={400}
-            nameSection={{
-              value: name,
-              containerStyle: styles.underlineContainer,
-              valueStyle: [
-                styles.bareInput,
-                { letterSpacing: name.length > 0 ? 2 : 0 },
-              ],
-              placeholderTextColor: COLORS.textTertiary,
-              onChangeText: (value) => {
-                setName(value);
-                setSubmitError('');
+        onBack={() => navigation.goBack()}
+        actionLabel={SEND_CODE_LABEL}
+        actionLoading={isSending}
+        actionDisabled={!isButtonActive}
+        actionActive={isButtonActive}
+        onActionPress={() => void handleSendCode()}
+        actionContainerStyle={styles.confirmButton}
+        actionActiveContainerStyle={styles.activeButton}
+        actionTextStyle={styles.confirmButtonText}
+        actionActiveTextStyle={styles.activeButtonText}
+        actionLoadingColor={COLORS.textInverse}
+        fields={{
+          nameWrapperStyle: styles.inputSection,
+          phoneWrapperStyle: styles.inputSection,
+          nameDelay: 100,
+          ssnDelay: 160,
+          phoneDelay: 220,
+          duration: 400,
+          nameSection: {
+            value: name,
+            containerStyle: styles.underlineContainer,
+            valueStyle: [
+              styles.bareInput,
+              { letterSpacing: name.length > 0 ? 2 : 0 },
+            ],
+            placeholderTextColor: COLORS.textTertiary,
+            onChangeText: (value) => {
+              setName(value);
+              setSubmitError('');
+            },
+            inputProps: { returnKeyType: 'next' },
+          },
+          ssnSection: {
+            frontValue: ssnFront,
+            backValue: ssnBack,
+            onFrontChange: (text) => {
+              setSsnFront(text.replace(/[^0-9]/g, ''));
+              setSubmitError('');
+            },
+            onBackChange: (text) => {
+              setSsnBack(text.replace(/[^0-9]/g, ''));
+              setSubmitError('');
+            },
+            containerStyle: styles.ssnSection,
+            frontContainerStyle: [
+              styles.underlineContainer,
+              { flex: 1.1, justifyContent: 'center' },
+            ],
+            frontValueStyle: [
+              styles.bareInput,
+              {
+                textAlign: 'center',
+                letterSpacing: ssnFront.length > 0 ? 4 : 0,
               },
-              inputProps: { returnKeyType: 'next' },
-            }}
-            ssnSection={{
-              frontValue: ssnFront,
-              backValue: ssnBack,
-              onFrontChange: (text) => {
-                setSsnFront(text.replace(/[^0-9]/g, ''));
-                setSubmitError('');
-              },
-              onBackChange: (text) => {
-                setSsnBack(text.replace(/[^0-9]/g, ''));
-                setSubmitError('');
-              },
-              containerStyle: styles.ssnSection,
-              frontContainerStyle: [
-                styles.underlineContainer,
-                { flex: 1.1, justifyContent: 'center' },
-              ],
-              frontValueStyle: [
-                styles.bareInput,
-                {
-                  textAlign: 'center',
-                  letterSpacing: ssnFront.length > 0 ? 4 : 0,
-                },
-              ],
-              backContainerStyle: [
-                styles.underlineContainer,
-                styles.ssnBackContainer,
-              ],
-              backValueStyle: [
-                styles.bareInput,
-                styles.ssnBackInput,
-                { letterSpacing: ssnBack.length > 0 ? 4 : 0 },
-              ],
-              dashStyle: styles.dash,
-              maskingTextStyle: styles.ssnMasking,
-              placeholderTextColor: COLORS.textTertiary,
-            }}
-            phoneSection={{
-              telecom,
-              telecomPlaceholder: TELECOM_PLACEHOLDER,
-              phone,
-              onOpenTelecomModal: () => setIsTelecomModalVisible(true),
-              onPhoneChange: (text) => {
-                setPhone(text.replace(/[^0-9]/g, ''));
-                setSubmitError('');
-              },
-              phonePlaceholder: PHONE_NUMBER_PLACEHOLDER,
-              selectorStyle: styles.telecomSelector,
-              telecomTextStyle: styles.telecomText,
-              placeholderTextStyle: styles.placeholderText,
-              phoneInputContainerStyle: [
-                styles.underlineContainer,
-                { marginTop: hp(32) },
-              ],
-              phoneInputStyle: [
-                styles.bareInput,
-                { letterSpacing: phone.length > 0 ? 2 : 0 },
-              ],
-              errorTextStyle: styles.errorText,
-              errorText: submitError,
-              chevronIconSize: wp(24),
-              chevronIconColor: COLORS.textPrimary,
-              placeholderTextColor: COLORS.textTertiary,
-            }}
-          />
-
+            ],
+            backContainerStyle: [
+              styles.underlineContainer,
+              styles.ssnBackContainer,
+            ],
+            backValueStyle: [
+              styles.bareInput,
+              styles.ssnBackInput,
+              { letterSpacing: ssnBack.length > 0 ? 4 : 0 },
+            ],
+            dashStyle: styles.dash,
+            maskingTextStyle: styles.ssnMasking,
+            placeholderTextColor: COLORS.textTertiary,
+          },
+          phoneSection: {
+            telecom,
+            telecomPlaceholder: TELECOM_PLACEHOLDER,
+            phone,
+            onOpenTelecomModal: () => setIsTelecomModalVisible(true),
+            onPhoneChange: (text) => {
+              setPhone(text.replace(/[^0-9]/g, ''));
+              setSubmitError('');
+            },
+            phonePlaceholder: PHONE_NUMBER_PLACEHOLDER,
+            selectorStyle: styles.telecomSelector,
+            telecomTextStyle: styles.telecomText,
+            placeholderTextStyle: styles.placeholderText,
+            phoneInputContainerStyle: [
+              styles.underlineContainer,
+              { marginTop: hp(32) },
+            ],
+            phoneInputStyle: [
+              styles.bareInput,
+              { letterSpacing: phone.length > 0 ? 2 : 0 },
+            ],
+            errorTextStyle: styles.errorText,
+            errorText: submitError,
+            chevronIconSize: wp(24),
+            chevronIconColor: COLORS.textPrimary,
+            placeholderTextColor: COLORS.textTertiary,
+          },
+        }}
+        extraContent={
           <Animated.View
             entering={FadeInDown.delay(300).duration(400)}
             style={styles.warningBox}
@@ -209,22 +200,19 @@ export default function WithdrawScreen({
               탈퇴 후에는 계정 정보와 금융 데이터 일부가 삭제되며 복구할 수 없어요.
             </Text>
           </Animated.View>
-        </IdentityStepFormLayout>
-
-        <TelecomSelectModal
-          visible={isTelecomModalVisible}
-          onClose={() => setIsTelecomModalVisible(false)}
-          onSelect={handleSelectTelecom}
-          options={TELECOM_OPTIONS}
-          bottomInset={insets.bottom}
-          overlayStyle={styles.modalOverlay}
-          contentStyle={styles.modalContent}
-          headerStyle={styles.modalHeader}
-          titleStyle={styles.modalTitle}
-          itemStyle={styles.modalItem}
-          itemTextStyle={styles.modalItemText}
-        />
-      </>
+        }
+        telecomModalVisible={isTelecomModalVisible}
+        onCloseTelecomModal={() => setIsTelecomModalVisible(false)}
+        onSelectTelecom={handleSelectTelecom}
+        telecomOptions={TELECOM_OPTIONS}
+        telecomBottomInset={insets.bottom}
+        telecomModalOverlayStyle={styles.modalOverlay}
+        telecomModalContentStyle={styles.modalContent}
+        telecomModalHeaderStyle={styles.modalHeader}
+        telecomModalTitleStyle={styles.modalTitle}
+        telecomModalItemStyle={styles.modalItem}
+        telecomModalItemTextStyle={styles.modalItemText}
+      />
     );
   }
 
