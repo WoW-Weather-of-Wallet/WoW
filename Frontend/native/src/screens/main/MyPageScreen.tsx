@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import Constants from 'expo-constants';
-import { hp } from '../../constants/theme';
+import { COLORS, hp, wp } from '../../constants/theme';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import {
   AgreedTermsModal,
@@ -41,8 +41,6 @@ import { maskPhoneNumber } from '../../utils/phoneFormat';
 import { validatePassword } from '../../utils/validation';
 import { useMyPageSections } from '../../hooks';
 import type { MyPageStackNavigationProp } from '../../types';
-
-import { styles } from './MyPageScreen.styles';
 
 type EditMode = 'profile' | 'phone' | 'password' | null;
 type PinModalStep = 'create' | 'confirm' | 'verify-current' | 'new' | 'confirm-new';
@@ -325,8 +323,12 @@ export default function MyPageScreen() {
   return (
     <>
       <BottomTabScreenLayout
-        containerStyle={styles.container}
-        topDockStyle={styles.profileDock}
+        containerStyle={{ flex: 1, backgroundColor: COLORS.backgroundSecondary }}
+        topDockStyle={{
+          paddingHorizontal: wp(20),
+          paddingBottom: hp(8),
+          backgroundColor: COLORS.backgroundSecondary,
+        }}
         topDockTopPadding={hp(12)}
         topDockContent={
           <MyPageProfileDockCard
@@ -335,8 +337,8 @@ export default function MyPageScreen() {
             isLoading={isLoading}
           />
         }
-        scrollViewStyle={styles.scrollView}
-        contentContainerStyle={styles.contentContainer}
+        scrollViewStyle={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: wp(20), gap: hp(10) }}
         scrollTopPadding={hp(16)}
         scrollBottomPadding={hp(40)}
       >

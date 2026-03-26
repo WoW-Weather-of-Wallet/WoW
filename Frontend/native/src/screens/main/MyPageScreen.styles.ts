@@ -1,30 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
-/**
- * 마이페이지(MyPageScreen)의 스타일 정의입니다.
- * 사용자 프로필, 설정 섹션, 모달 및 보존된 레거시 UI의 레이아웃을 포함합니다.
- */
 export const styles = StyleSheet.create({
-  /* ── 레이아웃 ── */
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.backgroundSecondary,
-  },
-  profileDock: {
-    paddingHorizontal: wp(20),
-    paddingBottom: hp(8),
-    backgroundColor: COLORS.backgroundSecondary,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: wp(20),
-    gap: hp(10),
-  },
-
-  /* ── 프로필 헤더 ── */
   profileCard: {
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.xxl,
@@ -41,7 +18,6 @@ export const styles = StyleSheet.create({
   profileHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    // 다시 왼쪽 정렬로 복구
   },
   avatarCircle: {
     width: wp(68),
@@ -58,7 +34,7 @@ export const styles = StyleSheet.create({
     color: COLORS.textInverse,
   },
   profileTextBlock: {
-    flex: 1, // 우측 공간을 모두 차지하게 함
+    flex: 1,
     gap: hp(6),
   },
   nameRow: {
@@ -77,7 +53,7 @@ export const styles = StyleSheet.create({
     color: COLORS.primaryDark,
   },
   profileBadge: {
-    backgroundColor: COLORS.primary + '15', // very light primary
+    backgroundColor: `${COLORS.primary}15`,
     borderRadius: RADIUS.md,
     paddingHorizontal: wp(8),
     paddingVertical: hp(4),
@@ -98,97 +74,6 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
   },
-
-  /* ── [LEGACY] 스타일 보존 ── */
-  profileSummaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.backgroundSecondary,
-    borderRadius: RADIUS.xl,
-    paddingVertical: hp(14),
-    paddingHorizontal: wp(18),
-  },
-  profileSummaryItem: {
-    flex: 1,
-  },
-  profileSummaryLabel: {
-    fontSize: fp(12),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-    marginBottom: hp(6),
-  },
-  profileSummaryValue: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-  profileDivider: {
-    width: 1,
-    height: hp(34),
-    backgroundColor: COLORS.border,
-    marginHorizontal: wp(16),
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: wp(10),
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.xl,
-    paddingVertical: hp(18),
-    paddingHorizontal: wp(14),
-  },
-  statValue: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    marginBottom: hp(6),
-  },
-  statLabel: {
-    fontSize: fp(12),
-    lineHeight: fp(18),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  sectionCard: {
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.lg,
-    padding: wp(16),
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: hp(12),
-  },
-  sectionTitle: {
-    fontSize: fp(16),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-  sectionAction: {
-    fontSize: fp(12),
-    fontFamily: FONTS.medium,
-    color: COLORS.textTertiary,
-  },
-  emptyStateCard: {
-    alignItems: 'center',
-    backgroundColor: COLORS.backgroundSecondary,
-    borderRadius: RADIUS.xl,
-    paddingHorizontal: wp(18),
-    paddingVertical: hp(20),
-    gap: hp(8),
-  },
-  emptyStateTitle: {
-    fontSize: fp(14),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    textAlign: 'center',
-  },
-
-  /* ── 설정 및 모달 ── */
   modalBackdrop: {
     flex: 1,
     backgroundColor: COLORS.modalOverlay,
@@ -214,8 +99,6 @@ export const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginBottom: hp(2),
   },
-  
-  /* ── 입력 및 필드 ── */
   input: {
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -254,15 +137,13 @@ export const styles = StyleSheet.create({
     marginTop: hp(4),
     paddingHorizontal: wp(4),
   },
-
-  /* ── 하이퍼링크 guidance ── */
   hyperlinkContainer: {
     marginTop: hp(12),
     padding: wp(12),
-    backgroundColor: COLORS.primary + '10',
+    backgroundColor: `${COLORS.primary}10`,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.primary + '30',
+    borderColor: `${COLORS.primary}30`,
   },
   hyperlinkText: {
     fontSize: fp(13),
@@ -271,13 +152,6 @@ export const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: 'left',
   },
-  hyperlinkAction: {
-    fontFamily: FONTS.bold,
-    color: COLORS.primary,
-    textDecorationLine: 'underline',
-  },
-
-  /* ── 모달 버튼 ── */
   modalButtonRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -308,8 +182,6 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
   },
-
-  /* ── PIN 모달 전용 ── */
   pinModalCard: {
     backgroundColor: COLORS.background,
     borderRadius: RADIUS.xl,
@@ -337,8 +209,6 @@ export const styles = StyleSheet.create({
   pinIndicatorDotFilled: {
     backgroundColor: COLORS.primary,
   },
-
-  /* ── 패스워드 입력 필드 ── */
   passwordInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -349,8 +219,6 @@ export const styles = StyleSheet.create({
     right: wp(12),
     padding: wp(4),
   },
-
-  /* ── 유틸리티 ── */
   errorMessage: {
     fontSize: fp(13),
     fontFamily: FONTS.medium,

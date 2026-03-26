@@ -1,81 +1,7 @@
-/**
- * SettingsScreen 스타일 정의
- * 사용자 설정 화면 — 프로필/비밀번호/휴대폰 수정 모달을 포함한 레이아웃을 관리합니다.
- * 모든 색상은 theme.ts 디자인 토큰을 참조합니다.
- */
 import { StyleSheet } from 'react-native';
-import { COLORS, FONTS, RADIUS, wp, hp, fp } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
 export const styles = StyleSheet.create({
-  /* ── 레이아웃 ── */
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.backgroundSecondary,
-  },
-
-  /* ── 헤더 ── */
-  headerDock: {
-    backgroundColor: COLORS.background,
-    borderBottomWidth: 1,
-    borderColor: COLORS.gray100,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(16),
-    height: hp(56),
-  },
-  backButton: {
-    padding: wp(4),
-  },
-  headerTitle: {
-    fontSize: fp(18),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-  headerRight: {
-    width: wp(32),
-  },
-
-  /* ── 스크롤 ── */
-  scrollContent: {
-    paddingBottom: hp(20),
-  },
-
-  /* ── 로딩 ── */
-  loadingCard: {
-    marginTop: hp(20),
-    paddingVertical: hp(20),
-    alignItems: 'center',
-    gap: hp(10),
-    backgroundColor: COLORS.background,
-  },
-  loadingText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-
-  /* ── 알림 토글 ── */
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(20),
-    paddingBottom: hp(16),
-    backgroundColor: COLORS.background,
-    gap: wp(12),
-  },
-  toggleDescription: {
-    flex: 1,
-    fontSize: fp(12),
-    lineHeight: fp(18),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-
-  /* ── 모달 ── */
   modalBackdrop: {
     flex: 1,
     backgroundColor: COLORS.modalOverlay,
@@ -122,8 +48,6 @@ export const styles = StyleSheet.create({
   pinIndicatorDotFilled: {
     backgroundColor: COLORS.primary,
   },
-
-  /* ── 입력 필드 ── */
   input: {
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -135,14 +59,6 @@ export const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     backgroundColor: COLORS.background,
   },
-  helperText: {
-    fontSize: fp(12),
-    lineHeight: fp(18),
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-
-  /* ── 읽기 전용 필드 ── */
   readOnlyInput: {
     backgroundColor: COLORS.gray50,
     borderRadius: RADIUS.md,
@@ -172,35 +88,6 @@ export const styles = StyleSheet.create({
     marginTop: hp(4),
     paddingHorizontal: wp(4),
   },
-
-  /* ── 인라인 액션 버튼 ── */
-  inlineActionButton: {
-    borderRadius: RADIUS.md,
-    paddingVertical: hp(12),
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.primary,
-  },
-  secondaryInlineActionButton: {
-    backgroundColor: COLORS.backgroundSecondary,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  verifiedInlineActionButton: {
-    backgroundColor: COLORS.success,
-  },
-  inlineActionText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textInverse,
-  },
-  secondaryInlineActionText: {
-    fontSize: fp(14),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textPrimary,
-  },
-
-  /* ── 모달 버튼 ── */
   modalButtonRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -229,16 +116,12 @@ export const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     color: COLORS.textInverse,
   },
-
-  /* ── 에러 메시지 ── */
   errorMessage: {
     fontSize: fp(14),
     fontFamily: FONTS.medium,
     color: COLORS.error,
     marginTop: hp(8),
   },
-
-  /* ── 비밀번호 입력 ── */
   passwordInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
