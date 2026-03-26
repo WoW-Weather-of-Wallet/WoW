@@ -9,7 +9,10 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { TELECOM_OPTIONS } from '../../constants/auth/identityVerification';
+import {
+  TELECOM_OPTIONS,
+  TELECOM_PLACEHOLDER,
+} from '../../constants/auth/identityVerification';
 
 interface TelecomSelectModalProps {
   visible: boolean;
@@ -30,7 +33,7 @@ export default function TelecomSelectModal({
   visible,
   onClose,
   onSelect,
-  title = '통신사를 선택해 주세요',
+  title = TELECOM_PLACEHOLDER,
   options = TELECOM_OPTIONS,
   bottomInset = 0,
   overlayStyle,

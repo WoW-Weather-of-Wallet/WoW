@@ -19,6 +19,8 @@ import VerificationCodeStep from '../../components/common/VerificationCodeStep';
 import { styles } from './WithdrawScreen.styles';
 import { COLORS, hp, wp } from '../../constants/theme';
 import {
+  PHONE_NUMBER_PLACEHOLDER,
+  SEND_CODE_LABEL,
   TELECOM_OPTIONS,
   TELECOM_PLACEHOLDER,
   VERIFICATION_CODE_LENGTH,
@@ -99,7 +101,7 @@ export default function WithdrawScreen({
           onBack={() => navigation.goBack()}
           bottomContent={
             <AuthActionButton
-              label="인증번호 받기"
+              label={SEND_CODE_LABEL}
               loading={isSending}
               disabled={!isButtonActive}
               active={isButtonActive}
@@ -184,7 +186,7 @@ export default function WithdrawScreen({
                 setPhone(text.replace(/[^0-9]/g, ''));
                 setSubmitError('');
               }}
-              phonePlaceholder="휴대폰 번호 (- 없이 입력)"
+              phonePlaceholder={PHONE_NUMBER_PLACEHOLDER}
               selectorStyle={styles.telecomSelector}
               telecomTextStyle={styles.telecomText}
               placeholderTextStyle={styles.placeholderText}

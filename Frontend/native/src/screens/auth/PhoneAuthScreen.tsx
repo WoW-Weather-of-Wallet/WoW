@@ -11,13 +11,16 @@ import TelecomPhoneInputSection from '../../components/common/TelecomPhoneInputS
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
-import { TELECOM_OPTIONS } from '../../constants/auth/identityVerification';
+import {
+  IDENTITY_NEXT_LABEL,
+  PHONE_NUMBER_PLACEHOLDER,
+  TELECOM_OPTIONS,
+  TELECOM_PLACEHOLDER,
+} from '../../constants/auth/identityVerification';
 import type { RootScreenProps } from '../../types';
 import type { PhoneAuthRouteParams, SignupMode } from '../../types/auth';
 import { decodeUnicodeEscapes } from '../../utils/authIdentity';
 import { useIdentityVerificationForm, usePhoneAuthFlow } from '../../hooks';
-
-const TELECOM_PLACEHOLDER = '통신사를 선택해 주세요';
 
 export default function PhoneAuthScreen({
   route,
@@ -95,7 +98,7 @@ export default function PhoneAuthScreen({
         bottomMinPadding={CONSTANTS.bottomMinPadding}
         bottomContent={
           <AuthActionButton
-            label="다음"
+            label={IDENTITY_NEXT_LABEL}
             loading={isSendingCode}
             disabled={!isFormValid || isSendingCode}
             active={isFormValid && !isSendingCode}
@@ -194,7 +197,7 @@ export default function PhoneAuthScreen({
               phone={phone}
               onOpenTelecomModal={openTelecomModal}
               onPhoneChange={handlePhoneChange}
-              phonePlaceholder="휴대폰 번호 (- 없이 입력)"
+              phonePlaceholder={PHONE_NUMBER_PLACEHOLDER}
               selectorStyle={styles.telecomSelector}
               telecomTextStyle={styles.telecomText}
               placeholderTextStyle={styles.placeholderText}

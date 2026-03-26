@@ -3,7 +3,13 @@ import { View, Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, hp, wp } from '../../constants/theme';
-import { TELECOM_OPTIONS } from '../../constants/auth/identityVerification';
+import {
+  IDENTITY_NEXT_LABEL,
+  PHONE_NUMBER_PLACEHOLDER,
+  SEND_CODE_LABEL,
+  TELECOM_OPTIONS,
+  TELECOM_PLACEHOLDER,
+} from '../../constants/auth/identityVerification';
 import { useIdentityVerificationForm } from '../../hooks';
 import AuthActionButton from '../common/AuthActionButton';
 import IdentityNameSection from '../common/IdentityNameSection';
@@ -12,8 +18,6 @@ import TelecomPhoneInputSection from '../common/TelecomPhoneInputSection';
 import TelecomSelectModal from '../common/TelecomSelectModal';
 import type { IdentityVerificationData } from '../../types/auth';
 import { styles } from './IdentityVerificationForm.styles';
-
-const TELECOM_PLACEHOLDER = '통신사를 선택해 주세요';
 
 interface IdentityVerificationFormProps {
   onComplete: (data: IdentityVerificationData) => void;
@@ -29,7 +33,7 @@ interface IdentityVerificationFormProps {
 
 export default function IdentityVerificationForm({
   onComplete,
-  submitButtonText = '인증번호 받기',
+  submitButtonText = SEND_CODE_LABEL,
   isSubmitting = false,
   errorMessage = '',
   onValuesChange,
@@ -135,7 +139,7 @@ export default function IdentityVerificationForm({
             phone={phone}
             onOpenTelecomModal={openTelecomModal}
             onPhoneChange={handlePhoneChange}
-            phonePlaceholder="휴대폰 번호 (- 없이 입력)"
+            phonePlaceholder={PHONE_NUMBER_PLACEHOLDER}
             selectorStyle={styles.telecomSelector}
             telecomTextStyle={styles.telecomText}
             placeholderTextStyle={styles.placeholderText}
@@ -161,7 +165,7 @@ export default function IdentityVerificationForm({
 
       <View style={[styles.buttonWrapper, { marginBottom: Math.max(insets.bottom, hp(20)) }]}>
         <AuthActionButton
-          label={step < 3 ? '다음' : submitButtonText}
+          label={step < 3 ? IDENTITY_NEXT_LABEL : submitButtonText}
           loading={isSubmitting}
           disabled={!isFormValid || isSubmitting}
           active={isFormValid && !isSubmitting}
@@ -178,7 +182,7 @@ export default function IdentityVerificationForm({
         visible={modalVisible}
         onClose={closeTelecomModal}
         onSelect={handleTelecomSelect}
-        title="통신사를 선택해 주세요"
+        title={TELECOM_PLACEHOLDER}
         options={TELECOM_OPTIONS}
         bottomInset={insets.bottom}
         overlayStyle={styles.modalOverlay}
