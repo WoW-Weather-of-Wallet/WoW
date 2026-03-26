@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { NativeUserProfileResponse } from '../services/auth';
 import type { LocalSecurityPreferences } from '../services/localSecurity';
 import { maskPhoneNumber } from '../utils/phoneFormat';
-import type { SettingItemProps } from '../components/mypage/SettingItem';
+import type { SettingItemProps } from '../components/mypage';
 
 interface MyPageSectionConfig {
   key: string;

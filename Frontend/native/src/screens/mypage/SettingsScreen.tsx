@@ -13,16 +13,18 @@ import Constants from 'expo-constants';
 import { styles } from './SettingsScreen.styles';
 import { COLORS, hp, wp } from '../../constants/theme';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
+import {
+  AgreedTermsModal,
+  ProfileEditHeader,
+  SettingItem,
+  SettingSection,
+  SettingsDescriptionRow,
+  SettingsEditModal,
+  SettingsPinModal,
+} from '../../components/mypage';
 import { useAuthStore } from '../../store/authStore';
 import { useLocalSecurityStore } from '../../store/localSecurityStore';
 import { fcmService } from '../../services/fcmService';
-import ProfileEditHeader from '../../components/mypage/ProfileEditHeader';
-import SettingSection from '../../components/mypage/SettingSection';
-import SettingItem from '../../components/mypage/SettingItem';
-import SettingsDescriptionRow from '../../components/mypage/SettingsDescriptionRow';
-import SettingsEditModal from '../../components/mypage/SettingsEditModal';
-import SettingsPinModal from '../../components/mypage/SettingsPinModal';
-import AgreedTermsModal from '../../components/mypage/AgreedTermsModal';
 import {
   changePassword,
   getNotificationSettings,

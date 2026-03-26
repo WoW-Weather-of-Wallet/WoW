@@ -9,18 +9,20 @@ import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/
 import Constants from 'expo-constants';
 import { hp } from '../../constants/theme';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
+import {
+  AgreedTermsModal,
+  MyPageActionButtons,
+  MyPagePasswordModal,
+  MyPagePhoneGuidanceModal,
+  MyPagePinModal,
+  MyPageProfileDockCard,
+  MyPageProfileInfoModal,
+  SettingItem,
+  SettingSection,
+} from '../../components/mypage';
 import { useAuthStore } from '../../store/authStore';
 import { useLocalSecurityStore } from '../../store/localSecurityStore';
 import { fcmService } from '../../services/fcmService';
-import MyPageActionButtons from '../../components/mypage/MyPageActionButtons';
-import MyPagePasswordModal from '../../components/mypage/MyPagePasswordModal';
-import MyPagePhoneGuidanceModal from '../../components/mypage/MyPagePhoneGuidanceModal';
-import MyPagePinModal from '../../components/mypage/MyPagePinModal';
-import MyPageProfileDockCard from '../../components/mypage/MyPageProfileDockCard';
-import MyPageProfileInfoModal from '../../components/mypage/MyPageProfileInfoModal';
-import SettingSection from '../../components/mypage/SettingSection';
-import SettingItem from '../../components/mypage/SettingItem';
-import AgreedTermsModal from '../../components/mypage/AgreedTermsModal';
 import {
   changePassword,
   getProfile,
