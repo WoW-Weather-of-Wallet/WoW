@@ -1,12 +1,12 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS } from '../../constants/theme';
+
+import { COLORS, RADIUS, wp } from '../../constants/theme';
 import { useHomeBudgetReportSummary } from '../../hooks/useHomeBudgetReportSummary';
 import HomeBudgetReportHeader from './HomeBudgetReportHeader';
 import HomeBudgetReportStatus from './HomeBudgetReportStatus';
 import HomeBudgetReportTexts from './HomeBudgetReportTexts';
-import { styles } from './HomeBudgetReportCard.styles';
 
 interface HomeBudgetReportCardProps {
   monthLabel: string;
@@ -46,11 +46,18 @@ export default function HomeBudgetReportCard({
     forecastText,
   });
 
+  const cardStyle = {
+    borderRadius: RADIUS.xxl,
+    padding: wp(22),
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+  } as const;
+
   return (
-    <TouchableOpacity activeOpacity={0.94} onPress={onPress}>
+    <TouchableOpacity activeOpacity={0.94} onPress={onPress} className="overflow-hidden">
       <LinearGradient
         colors={[COLORS.budgetGradientStart, COLORS.budgetGradientEnd]}
-        style={styles.heroCard}
+        style={cardStyle}
       >
         <HomeBudgetReportHeader monthLabel={monthLabel} userName={trimmedUserName} />
         <HomeBudgetReportStatus
