@@ -31,6 +31,7 @@ import {
 // 엑셀 가이드 서비스 호출 제거 (수동 호출 방식으로 변경)
 import ExcelUploadGuideModal from './ExcelUploadGuideModal';
 import CalendarCategorySelector from './CalendarCategorySelector';
+import CalendarEntryModeToggle from './CalendarEntryModeToggle';
 import CalendarUploadBackendSummaryCard from './CalendarUploadBackendSummaryCard';
 import CalendarFieldLabel from './CalendarFieldLabel';
 import CalendarPaymentMethodSelector from './CalendarPaymentMethodSelector';
@@ -351,31 +352,7 @@ export default function CalendarAddEntrySheet({
         subtitle=""
       >
         <View style={styles.container}>
-          <View style={styles.modeRow}>
-            {ENTRY_MODES.map((mode) => {
-              const isActive = activeMode === mode.key;
-
-              return (
-                <TouchableOpacity
-                  key={mode.key}
-                  activeOpacity={0.88}
-                  style={[styles.modeButton, isActive && styles.modeButtonActive]}
-                  onPress={() => {
-                    setActiveMode(mode.key);
-                  }}
-                >
-                  <Ionicons
-                    name={mode.icon}
-                    size={wp(16)}
-                    color={isActive ? COLORS.primary : COLORS.textTertiary}
-                  />
-                  <Text style={[styles.modeText, isActive && styles.modeTextActive]}>
-                    {mode.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          <CalendarEntryModeToggle activeMode={activeMode} onChangeMode={setActiveMode} />
 
           {activeMode === 'direct' ? (
             <ScrollView
