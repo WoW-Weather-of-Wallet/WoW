@@ -2,15 +2,21 @@ import { create } from 'zustand';
 
 export type AiStatus = 'idle' | 'loading' | 'success' | 'error';
 
+export interface AiResultData {
+  completedAt?: string;
+  fromPush?: boolean;
+  [key: string]: unknown;
+}
+
 interface AiState {
   status: AiStatus;
-  resultData: any | null;
+  resultData: AiResultData | null;
   showToast: boolean;
   
   // Actions
   startAnalysis: () => void;
   simulateAnalysis: () => void;
-  setSuccess: (data: any) => void;
+  setSuccess: (data: AiResultData) => void;
   setError: () => void;
   hideToast: () => void;
   reset: () => void;
@@ -66,7 +72,7 @@ export const useAiStore = create<AiState>((set, get) => ({
     }, 8500);
   },
 
-  setSuccess: (data: any) => {
+  setSuccess: (data: AiResultData) => {
     if (analysisTimer) {
       clearTimeout(analysisTimer);
       analysisTimer = null;
