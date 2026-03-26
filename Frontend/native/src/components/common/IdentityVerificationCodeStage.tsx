@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { type ReactNode } from 'react';
 import {
   View,
   type StyleProp,
@@ -27,15 +27,17 @@ interface IdentityVerificationCodeStageProps {
   resendRowStyle?: StyleProp<ViewStyle>;
   resendTextStyle?: StyleProp<TextStyle>;
   keypadWrapperBaseStyle: StyleProp<ViewStyle>;
-  bottomContainerStyle: StyleProp<ViewStyle>;
+  bottomContainerStyle?: StyleProp<ViewStyle>;
   stepIndicatorContainerStyle?: StyleProp<ViewStyle>;
   topPadding: number;
   bottomMinPadding: number;
-  onBack: () => void;
+  onBack?: () => void;
   backIconSize?: number;
   backIconColor?: string;
   loadingIndicatorColor?: string;
   successIconColor?: string;
+  stepIndicator?: ReactNode;
+  hideDefaultStepIndicator?: boolean;
   title: string;
   subtitle: string;
   code: string;
@@ -49,7 +51,7 @@ interface IdentityVerificationCodeStageProps {
   onResend?: () => void;
   onPressNumber: (value: string) => void;
   onPressDelete: () => void;
-  actionLabel: string;
+  actionLabel?: string;
   actionLoading?: boolean;
   actionDisabled?: boolean;
   onActionPress?: () => void;
@@ -58,6 +60,7 @@ interface IdentityVerificationCodeStageProps {
   actionTextStyle?: StyleProp<TextStyle>;
   actionDisabledTextStyle?: StyleProp<TextStyle>;
   actionLoadingColor?: string;
+  bottomAction?: ReactNode;
 }
 
 export default function IdentityVerificationCodeStage({
@@ -85,6 +88,8 @@ export default function IdentityVerificationCodeStage({
   backIconColor = COLORS.textPrimary,
   loadingIndicatorColor = COLORS.primary,
   successIconColor = COLORS.success,
+  stepIndicator,
+  hideDefaultStepIndicator = false,
   title,
   subtitle,
   code,
@@ -107,8 +112,39 @@ export default function IdentityVerificationCodeStage({
   actionTextStyle,
   actionDisabledTextStyle,
   actionLoadingColor = COLORS.white,
+  bottomAction,
 }: IdentityVerificationCodeStageProps) {
   const insets = useSafeAreaInsets();
+  const resolvedStepIndicator = hideDefaultStepIndicator
+    ? stepIndicator
+    : stepIndicator ?? (
+        <View style={stepIndicatorContainerStyle}>
+          <StepIndicator currentStep={2} totalSteps={2} compact />
+        </View>
+      );
+
+  const resolvedBottomAction =
+    bottomAction ??
+    (actionLabel ? (
+      <View
+        style={[
+          bottomContainerStyle,
+          { paddingBottom: Math.max(insets.bottom, bottomMinPadding) },
+        ]}
+      >
+        <AuthActionButton
+          label={actionLabel}
+          loading={actionLoading}
+          disabled={actionDisabled}
+          onPress={onActionPress}
+          containerStyle={actionContainerStyle}
+          disabledContainerStyle={actionDisabledContainerStyle}
+          textStyle={actionTextStyle}
+          disabledTextStyle={actionDisabledTextStyle}
+          loadingColor={actionLoadingColor}
+        />
+      </View>
+    ) : undefined);
 
   return (
     <VerificationCodeStep
@@ -135,11 +171,7 @@ export default function IdentityVerificationCodeStage({
       backIconColor={backIconColor}
       loadingIndicatorColor={loadingIndicatorColor}
       successIconColor={successIconColor}
-      stepIndicator={
-        <View style={stepIndicatorContainerStyle}>
-          <StepIndicator currentStep={2} totalSteps={2} compact />
-        </View>
-      }
+      stepIndicator={resolvedStepIndicator}
       title={title}
       subtitle={subtitle}
       code={code}
@@ -153,26 +185,7 @@ export default function IdentityVerificationCodeStage({
       onResend={onResend}
       onPressNumber={onPressNumber}
       onPressDelete={onPressDelete}
-      bottomAction={
-        <View
-          style={[
-            bottomContainerStyle,
-            { paddingBottom: Math.max(insets.bottom, bottomMinPadding) },
-          ]}
-        >
-          <AuthActionButton
-            label={actionLabel}
-            loading={actionLoading}
-            disabled={actionDisabled}
-            onPress={onActionPress}
-            containerStyle={actionContainerStyle}
-            disabledContainerStyle={actionDisabledContainerStyle}
-            textStyle={actionTextStyle}
-            disabledTextStyle={actionDisabledTextStyle}
-            loadingColor={actionLoadingColor}
-          />
-        </View>
-      }
+      bottomAction={resolvedBottomAction}
     />
   );
 }
