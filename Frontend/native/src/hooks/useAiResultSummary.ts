@@ -29,7 +29,6 @@ const formatCompletedAt = (completedAt?: string) => {
   }
 
   const parsedDate = new Date(completedAt);
-
   if (Number.isNaN(parsedDate.getTime())) {
     return completedAt;
   }
@@ -43,7 +42,8 @@ const formatCompletedAt = (completedAt?: string) => {
   return `${year}.${month}.${date} ${hours}:${minutes}`;
 };
 
-const formatCurrency = (amount: number) => `${Math.max(0, Math.round(amount)).toLocaleString()}원`;
+const formatCurrency = (amount: number) =>
+  `${Math.max(0, Math.round(amount)).toLocaleString()}원`;
 
 const formatRatio = (ratio: number) => `${ratio.toFixed(1)}%`;
 
@@ -58,7 +58,7 @@ const buildStatusCard = (
       id: 'result-status',
       title: '리포트 상태',
       headline: '저장된 결과를 먼저 보여주고 있어요',
-      description: '백엔드의 최신 AI 리포트를 다시 확인하는 중이에요. 새 결과가 오면 화면에 바로 반영됩니다.',
+      description: '백엔드의 최신 AI 리포트를 다시 확인하는 중이에요. 새 결과가 있으면 화면에 바로 반영됩니다.',
     };
   }
 
@@ -66,9 +66,11 @@ const buildStatusCard = (
     return {
       id: 'result-status',
       title: '리포트 상태',
-      headline: errorInfo.canRetry ? '저장된 결과 기준으로 보여드리고 있어요' : '지금은 저장된 결과만 확인할 수 있어요',
+      headline: errorInfo.canRetry
+        ? '저장된 결과 기준으로 보여드리고 있어요'
+        : '지금은 저장된 결과만 확인할 수 있어요',
       description: errorInfo.canRetry
-        ? `${errorInfo.message} 기존에 받아둔 결과는 그대로 확인할 수 있어요.`
+        ? `${errorInfo.message} 기존에 받아둔 결과는 그대로 유지하고 있어요.`
         : errorInfo.message,
     };
   }
@@ -77,18 +79,22 @@ const buildStatusCard = (
     return {
       id: 'result-status',
       title: '리포트 상태',
-      headline: '조금 전 결과가 아니라면 새로고침이 필요해요',
-      description: '저장된 AI 리포트를 먼저 보여주고 있어요. 화면에 다시 들어오면 최신 결과를 자동으로 확인합니다.',
+      headline: '저장된 결과를 다시 확인할 수 있어요',
+      description: '이달 리포트는 월 단위로 고정되지만, 다른 기기에서 먼저 생성했을 수 있어 최신 상태를 다시 확인할 수 있어요.',
     };
   }
 
   if (!reportExists && errorInfo) {
+    const headline = errorInfo.kind === 'no-transactions'
+      ? '분석에 필요한 거래 내역이 아직 없어요'
+      : errorInfo.kind === 'report-not-generated'
+        ? '이달 AI 리포트가 아직 생성되지 않았어요'
+        : '최신 결과를 불러오지 못했어요';
+
     return {
       id: 'result-status',
       title: '분석 상태',
-      headline: errorInfo.kind === 'no-transactions'
-        ? '분석할 거래 내역이 아직 없어요'
-        : '최신 결과를 불러오지 못했어요',
+      headline,
       description: errorInfo.message,
     };
   }
@@ -97,8 +103,8 @@ const buildStatusCard = (
     return {
       id: 'result-status',
       title: '분석 상태',
-      headline: '최신 결과를 준비 중이에요',
-      description: 'AI 리포트 상세 데이터는 아직 동기화되지 않았어요. 잠시 후 다시 열면 최신 분석 결과가 반영됩니다.',
+      headline: '이번 달 AI 리포트를 확인하는 중이에요',
+      description: '아직 저장된 리포트가 없으면 AI 홈에서 분석을 시작한 뒤 결과를 확인할 수 있어요.',
     };
   }
 
@@ -135,7 +141,7 @@ export function useAiResultSummary(
     }
 
     const topOverspendingItems = report.overspending.slice(0, 3).map((item) => (
-      `${item.name} · ${formatCurrency(item.savableAmount)} 절약 여지 · `
+      `${item.name} · ${formatCurrency(item.savableAmount)} 절약 가능 · `
       + `${formatRatio(item.myRatio)} -> ${formatRatio(item.baseRatio)}`
     ));
 
@@ -156,10 +162,10 @@ export function useAiResultSummary(
       ...(statusCard ? [statusCard] : []),
       {
         id: 'cluster',
-        title: '내 소비 유형',
+        title: 'AI 소비 유형',
         headline: [report.cluster.icon, report.cluster.name].filter(Boolean).join(' '),
         description:
-          report.cluster.description || '최근 3개월 소비 흐름을 기준으로 소비 유형을 분석했어요.',
+          report.cluster.description || '최근 소비 패턴을 기준으로 소비 유형을 분석했어요.',
       },
       {
         id: 'summary',
@@ -171,7 +177,7 @@ export function useAiResultSummary(
       },
       {
         id: 'goal',
-        title: '가장 먼저 해볼 액션',
+        title: '가장 먼저 볼 액션',
         headline: formatCurrency(report.goal.savableAmount),
         description:
           report.goal.actionTip || '절약 가능 금액이 큰 항목부터 우선순위를 정해 조정해보세요.',
@@ -180,23 +186,23 @@ export function useAiResultSummary(
         id: 'overspending',
         title: '절약 여지가 큰 항목',
         description: topOverspendingItems.length
-          ? '비중이 크게 높은 항목부터 순서대로 정리했어요.'
-          : '지금은 눈에 띄는 과소비 항목이 없어요.',
+          ? '비중 차이가 큰 항목부터 순서대로 정리했어요.'
+          : '지금은 과소비로 분류된 항목이 없어요.',
         items: topOverspendingItems,
       },
       {
         id: 'categories',
         title: '주요 소비 카테고리',
-        description: '최근 3개월 누적 기준으로 가장 큰 지출 항목입니다.',
+        description: '최근 3개월 집계 기준으로 금액이 큰 지출 항목입니다.',
         items: topCategoryItems,
       },
       {
         id: 'completed-at',
-        title: '리포트 생성 시각',
+        title: '리포트 확인 시각',
         headline: completedAtLabel,
         description: fromPush
           ? '알림을 통해 방금 도착한 최신 분석 결과입니다.'
-          : '현재 화면에 표시 중인 AI 리포트의 생성 시각입니다.',
+          : '현재 화면에서 표시 중인 AI 리포트를 확인한 시각입니다.',
       },
       ...tipCards,
     ];
@@ -204,7 +210,7 @@ export function useAiResultSummary(
     return {
       displayName,
       title: 'AI 소비 피드백',
-      buttonTitle: '다시 분석하기',
+      buttonTitle: 'AI 홈으로 돌아가기',
       cards,
     };
   }, [options.errorInfo, options.isRefreshing, options.isStale, resultData, userName]);

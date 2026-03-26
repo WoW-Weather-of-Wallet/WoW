@@ -58,6 +58,7 @@ interface AiAnalysisResponse {
 }
 
 export type AiAnalysisErrorKind =
+  | 'report-not-generated'
   | 'no-transactions'
   | 'server'
   | 'network'
@@ -123,6 +124,7 @@ export interface AiAnalysisReport {
 export interface GetAiAnalysisParams {
   year?: number;
   month?: number;
+  generateIfAbsent?: boolean;
 }
 
 const toNumber = (value?: number | null) =>
@@ -167,7 +169,10 @@ const normalizeAiAnalysis = (report?: AiAnalysisResponse | null): AiAnalysisRepo
   },
 });
 
-const buildAiAnalysisApiError = (error: unknown): AiAnalysisApiError => {
+const buildAiAnalysisApiError = (
+  error: unknown,
+  params: GetAiAnalysisParams = {},
+): AiAnalysisApiError => {
   if (axios.isAxiosError(error)) {
     const statusCode = error.response?.status;
     const apiMessage =
@@ -177,10 +182,20 @@ const buildAiAnalysisApiError = (error: unknown): AiAnalysisApiError => {
       ?? error.message;
 
     if (statusCode === 404) {
+      if (params.generateIfAbsent) {
+        return {
+          name: 'AiAnalysisApiError',
+          kind: 'no-transactions',
+          message: apiMessage || '최근 3개월 거래가 없어 AI 리포트를 생성할 수 없어요.',
+          statusCode,
+          canRetry: false,
+        };
+      }
+
       return {
         name: 'AiAnalysisApiError',
-        kind: 'no-transactions',
-        message: apiMessage || '최근 3개월 거래가 없어 AI 피드백을 만들 수 없어요.',
+        kind: 'report-not-generated',
+        message: apiMessage || '이번 달 AI 리포트가 아직 생성되지 않았어요.',
         statusCode,
         canRetry: false,
       };
@@ -190,7 +205,7 @@ const buildAiAnalysisApiError = (error: unknown): AiAnalysisApiError => {
       return {
         name: 'AiAnalysisApiError',
         kind: 'unauthorized',
-        message: apiMessage || '로그인이 만료되었어요. 다시 로그인해주세요.',
+        message: apiMessage || '로그인이 만료됐어요. 다시 로그인해주세요.',
         statusCode,
         canRetry: false,
       };
@@ -200,7 +215,7 @@ const buildAiAnalysisApiError = (error: unknown): AiAnalysisApiError => {
       return {
         name: 'AiAnalysisApiError',
         kind: 'forbidden',
-        message: apiMessage || 'AI 피드백을 조회할 권한이 없어요.',
+        message: apiMessage || 'AI 리포트를 조회할 권한이 없어요.',
         statusCode,
         canRetry: false,
       };
@@ -210,7 +225,7 @@ const buildAiAnalysisApiError = (error: unknown): AiAnalysisApiError => {
       return {
         name: 'AiAnalysisApiError',
         kind: 'server',
-        message: apiMessage || 'AI 서버와 연결이 불안정해요. 잠시 후 다시 시도해주세요.',
+        message: apiMessage || 'AI 서버 연결이 불안정해요. 잠시 후 다시 시도해주세요.',
         statusCode,
         canRetry: true,
       };
@@ -228,7 +243,7 @@ const buildAiAnalysisApiError = (error: unknown): AiAnalysisApiError => {
     return {
       name: 'AiAnalysisApiError',
       kind: 'unknown',
-      message: apiMessage || 'AI 피드백을 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
+      message: apiMessage || 'AI 리포트를 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
       statusCode,
       canRetry: true,
     };
@@ -246,7 +261,7 @@ const buildAiAnalysisApiError = (error: unknown): AiAnalysisApiError => {
   return {
     name: 'AiAnalysisApiError',
     kind: 'unknown',
-    message: 'AI 피드백을 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
+    message: 'AI 리포트를 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
     canRetry: true,
   };
 };
@@ -270,6 +285,6 @@ export async function getAiAnalysis(params: GetAiAnalysisParams = {}) {
 
     return normalizeAiAnalysis(response.data.data);
   } catch (error) {
-    throw buildAiAnalysisApiError(error);
+    throw buildAiAnalysisApiError(error, params);
   }
 }

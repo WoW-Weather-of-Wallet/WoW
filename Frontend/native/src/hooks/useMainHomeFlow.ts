@@ -10,7 +10,7 @@ import type {
   HomeDashboardWeatherCardData,
 } from '../components/main/types';
 import { getCalendarHeader } from '../services/calendar';
-import { getAiAnalysis, type AiAnalysisReport } from '../services/ai';
+import type { AiAnalysisReport } from '../services/ai';
 import {
   createBudget,
   getSpendingHalfYearly,
@@ -21,6 +21,7 @@ import {
 import { useAiStore } from '../store/aiStore';
 import { useAuthStore } from '../store/authStore';
 import type { CalendarHeaderResponse } from '../types/calendar';
+import { matchesAiReportPeriod, resolveAiReportPeriod } from '../utils/aiReportPeriod';
 import { extractApiErrorMessage } from '../utils/error';
 import {
   buildMonthlyComparisonLegend,
@@ -37,8 +38,10 @@ interface UseMainHomeFlowParams {
 
 export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
   const accessToken = useAuthStore((state) => state.accessToken);
+  const sessionUserId = useAuthStore((state) => state.user?.userId ?? null);
   const sessionUserName = useAuthStore((state) => state.user?.name);
   const latestAiResult = useAiStore((state) => state.resultData);
+  const refreshLatestAnalysis = useAiStore((state) => state.refreshLatestAnalysis);
   const [liveHeader, setLiveHeader] = React.useState<CalendarHeaderResponse | null>(null);
   const [aiAnalysis, setAiAnalysis] = React.useState<AiAnalysisReport | null>(null);
   const [spendingHalfYearly, setSpendingHalfYearly] =
@@ -48,20 +51,14 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
   const [budgetAmount, setBudgetAmount] = React.useState<number | null>(null);
   const [isWeatherLoading, setIsWeatherLoading] = React.useState(false);
   const [isBudgetSubmitting, setIsBudgetSubmitting] = React.useState(false);
-  const today = React.useMemo(() => new Date(), []);
+  const today = new Date();
+  const reportPeriod = resolveAiReportPeriod({}, today);
   const monthLabel = `${today.getMonth() + 1}월`;
 
-  const hasFreshHomeAiSummary = React.useMemo(() => {
-    if (!latestAiResult?.report || !latestAiResult.cacheExpiresAt) {
-      return false;
-    }
-
-    return (
-      latestAiResult.reportYear === today.getFullYear() &&
-      latestAiResult.reportMonth === today.getMonth() + 1 &&
-      new Date(latestAiResult.cacheExpiresAt).getTime() > Date.now()
-    );
-  }, [latestAiResult, today]);
+  const hasCurrentHomeAiSummary = React.useMemo(
+    () => matchesAiReportPeriod(latestAiResult, reportPeriod, sessionUserId) && Boolean(latestAiResult?.report),
+    [latestAiResult, reportPeriod, sessionUserId],
+  );
 
   const loadHomeData = React.useCallback(async () => {
     if (!accessToken) {
@@ -89,17 +86,14 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
       setSpendingHalfYearly(halfYearlyResponse);
       setMonthlyCompare(monthlyCompareResponse);
 
-      if (hasFreshHomeAiSummary) {
+      if (hasCurrentHomeAiSummary) {
         setAiAnalysis(null);
       } else {
-        void getAiAnalysis()
-          .then((response) => {
-            setAiAnalysis(response);
-          })
-          .catch((error) => {
-            console.warn('Failed to load AI analysis summary for home card', error);
-            setAiAnalysis(null);
-          });
+        const report = await refreshLatestAnalysis({
+          year: reportPeriod.year,
+          month: reportPeriod.month,
+        });
+        setAiAnalysis(report);
       }
     } catch (error) {
       console.warn('Failed to load home data from backend', error);
@@ -110,7 +104,7 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     } finally {
       setIsWeatherLoading(false);
     }
-  }, [accessToken, hasFreshHomeAiSummary, today]);
+  }, [accessToken, hasCurrentHomeAiSummary, refreshLatestAnalysis, reportPeriod.month, reportPeriod.year, today]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -128,12 +122,12 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
         closeReportModal();
         Alert.alert(
           '예산 등록 완료',
-          `${createdBudget.budgetDate} 예산이 정상적으로 등록되었어요.`,
+          `${createdBudget.budgetDate} 예산이 정상적으로 등록됐어요.`,
         );
       } catch (error) {
         const message = extractApiErrorMessage(
           error,
-          '예산 등록 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+          '예산 등록 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
         );
         Alert.alert('예산 등록 실패', message);
       } finally {
@@ -177,10 +171,10 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
       : null;
   const forecastText =
     totalBudget == null
-      ? '이번 달 예산을 먼저 등록하면 남은 예산과 소비 흐름을 함께 보여드릴게요.'
+      ? '이번 달 예산을 먼저 등록하면 이후 예산과 소비 흐름을 함께 보여드릴게요.'
       : remainingBudget != null && remainingBudget >= 0
-        ? `${remainingBudget.toLocaleString()}원 정도 여유가 있어요. 지금 흐름이면 예산 안에서 마무리할 가능성이 높습니다.`
-        : `예산을 ${Math.abs(remainingBudget ?? 0).toLocaleString()}원 초과했어요. 지출 비중이 큰 항목부터 먼저 확인해 보세요.`;
+        ? `${remainingBudget.toLocaleString()}원 정도 여유가 있어요. 지금 흐름이라면 예산 안에서 마무리할 가능성이 높습니다.`
+        : `예산을 ${Math.abs(remainingBudget ?? 0).toLocaleString()}원 초과했어요. 지출 비중이 큰 항목부터 먼저 확인해보세요.`;
 
   const weatherCard = React.useMemo<HomeDashboardWeatherCardData>(
     () => ({
@@ -192,7 +186,7 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     [isWeatherLoading, liveHeader?.description, liveHeader?.iconCode, liveHeader?.weatherName],
   );
 
-  const homeAiSummary = (hasFreshHomeAiSummary ? latestAiResult?.report : null) ?? aiAnalysis;
+  const homeAiSummary = (hasCurrentHomeAiSummary ? latestAiResult?.report : null) ?? aiAnalysis;
 
   const spendingTypeCard = React.useMemo<HomeDashboardSpendingTypeCardData>(
     () => ({

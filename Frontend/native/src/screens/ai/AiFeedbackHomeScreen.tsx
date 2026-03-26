@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import {
   AiCarouselPagination,
@@ -10,16 +11,41 @@ import GradientButton from '../../components/common/GradientButton';
 import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
 import { useAiFeatureCards, useAiFeatureCarousel } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
+import { useAuthStore } from '../../store/authStore';
 import type { AiFeedbackStackScreenProps } from '../../types';
+import { matchesAiReportPeriod, resolveAiReportPeriod } from '../../utils/aiReportPeriod';
 
 export default function AiFeedbackHomeScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiFeedbackHome'>) {
-  const { status, startAnalysis, simulateAnalysis } = useAiStore();
+  const sessionUserId = useAuthStore((state) => state.user?.userId ?? null);
+  const {
+    status,
+    resultData,
+    isRefreshing,
+    startAnalysis,
+    simulateAnalysis,
+    refreshLatestAnalysis,
+  } = useAiStore();
   const featureCards = useAiFeatureCards();
+  const reportPeriod = resolveAiReportPeriod();
   const { activeIndex, scrollRef, handleScroll, scrollToPage } = useAiFeatureCarousel({
     itemWidth: wp(326),
   });
+
+  useFocusEffect(
+    React.useCallback(() => {
+      void refreshLatestAnalysis({
+        year: reportPeriod.year,
+        month: reportPeriod.month,
+      });
+    }, [refreshLatestAnalysis, reportPeriod.month, reportPeriod.year]),
+  );
+
+  const hasCurrentReport = React.useMemo(
+    () => matchesAiReportPeriod(resultData, reportPeriod, sessionUserId) && Boolean(resultData?.report),
+    [reportPeriod, resultData, sessionUserId],
+  );
 
   const titleStyle = {
     fontSize: fp(28),
@@ -32,6 +58,14 @@ export default function AiFeedbackHomeScreen({
     color: COLORS.primary,
   } as const;
 
+  const buttonTitle = status === 'loading'
+    ? '분석 준비 중'
+    : hasCurrentReport
+      ? '리포트 보기'
+      : isRefreshing
+        ? '리포트 확인 중'
+        : '분석 시작하기';
+
   return (
     <BottomTabScreenLayout
       containerStyle={{ flex: 1, backgroundColor: COLORS.background }}
@@ -42,7 +76,7 @@ export default function AiFeedbackHomeScreen({
     >
       <View style={{ marginTop: hp(20), marginBottom: hp(40) }}>
         <Text style={titleStyle}>
-          AI가 소비 흐름을 분석하고{'\n'}
+          AI가 소비 패턴을 분석하고{'\n'}
           <Text style={highlightStyle}>다음 절약 포인트를 먼저</Text>
           {'\n'}
           정리해드려요.
@@ -88,11 +122,23 @@ export default function AiFeedbackHomeScreen({
 
       <View style={{ paddingBottom: hp(20) }}>
         <GradientButton
-          title={status === 'loading' ? '분석 준비 중' : '분석 시작하기'}
+          title={buttonTitle}
+          disabled={isRefreshing && !hasCurrentReport}
           onPress={() => {
-            if (status === 'idle' || status === 'error') {
-              startAnalysis();
-              simulateAnalysis();
+            if (hasCurrentReport) {
+              navigation.navigate('AiResult');
+              return;
+            }
+
+            if (status === 'idle' || status === 'error' || status === 'success') {
+              startAnalysis({
+                year: reportPeriod.year,
+                month: reportPeriod.month,
+              });
+              simulateAnalysis({
+                year: reportPeriod.year,
+                month: reportPeriod.month,
+              });
             }
 
             navigation.navigate('AiLoading');

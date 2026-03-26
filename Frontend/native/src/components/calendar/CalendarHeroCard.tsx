@@ -54,7 +54,7 @@ export default function CalendarHeroCard({
       }}
     >
       <CalendarHeroHeader
-        title={'\uCEA0\uB9B0\uB354'}
+        title={'\uCEA8\uB9B0\uB354'}
         addLabel={'+ \uB0B4\uC5ED \uCD94\uAC00'}
         onPressAdd={onPressAdd}
         onPressInfo={onPressInfo}

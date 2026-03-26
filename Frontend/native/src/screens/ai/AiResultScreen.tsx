@@ -9,11 +9,15 @@ import GradientButton from '../../components/common/GradientButton';
 import { COLORS, hp, wp } from '../../constants/theme';
 import { useAiResultSummary } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
+import { useAuthStore } from '../../store/authStore';
 import type { AiFeedbackStackScreenProps } from '../../types';
+import { matchesAiReportPeriod, resolveAiReportPeriod } from '../../utils/aiReportPeriod';
 
 export default function AiResultScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiResult'>) {
+  const sessionUserId = useAuthStore((state) => state.user?.userId ?? null);
+  const reportPeriod = resolveAiReportPeriod();
   const {
     reset,
     resultData,
@@ -22,31 +26,38 @@ export default function AiResultScreen({
     refreshLatestAnalysis,
   } = useAiStore();
 
-  const isStale = Boolean(
-    resultData?.report
-    && resultData.cacheExpiresAt
-    && new Date(resultData.cacheExpiresAt).getTime() <= Date.now(),
+  const currentPeriodResultData = React.useMemo(
+    () => (
+      matchesAiReportPeriod(resultData, reportPeriod, sessionUserId)
+        ? resultData
+        : null
+    ),
+    [reportPeriod, resultData, sessionUserId],
   );
 
-  const { displayName, title, buttonTitle, cards } = useAiResultSummary(resultData, {
+  const { displayName, title, buttonTitle, cards } = useAiResultSummary(currentPeriodResultData, {
     errorInfo,
     isRefreshing,
-    isStale,
+    isStale: false,
   });
 
   useFocusEffect(
     React.useCallback(() => {
       void refreshLatestAnalysis({
+        year: reportPeriod.year,
+        month: reportPeriod.month,
         fromPush: Boolean(useAiStore.getState().resultData?.fromPush),
       });
-    }, [refreshLatestAnalysis]),
+    }, [refreshLatestAnalysis, reportPeriod.month, reportPeriod.year]),
   );
 
   const handlePrimaryPress = () => {
-    if (!resultData?.report && errorInfo?.canRetry) {
+    if (!currentPeriodResultData?.report && errorInfo?.canRetry) {
       void refreshLatestAnalysis({
+        year: reportPeriod.year,
+        month: reportPeriod.month,
         force: true,
-        fromPush: Boolean(resultData?.fromPush),
+        fromPush: Boolean(currentPeriodResultData?.fromPush),
       });
       return;
     }
@@ -55,7 +66,7 @@ export default function AiResultScreen({
     navigation.navigate('AiFeedbackHome');
   };
 
-  const showRetryButton = Boolean(resultData?.report && errorInfo?.canRetry && !isRefreshing);
+  const showRetryButton = Boolean(currentPeriodResultData?.report && errorInfo?.canRetry && !isRefreshing);
 
   return (
     <BottomTabScreenLayout
@@ -92,8 +103,10 @@ export default function AiResultScreen({
             disabled={isRefreshing}
             onPress={() => {
               void refreshLatestAnalysis({
+                year: reportPeriod.year,
+                month: reportPeriod.month,
                 force: true,
-                fromPush: Boolean(resultData?.fromPush),
+                fromPush: Boolean(currentPeriodResultData?.fromPush),
               });
             }}
           />
@@ -101,8 +114,8 @@ export default function AiResultScreen({
 
         <View>
           <GradientButton
-            title={!resultData?.report && errorInfo?.canRetry ? '다시 불러오기' : buttonTitle}
-            disabled={isRefreshing && !resultData?.report}
+            title={!currentPeriodResultData?.report && errorInfo?.canRetry ? '다시 불러오기' : buttonTitle}
+            disabled={isRefreshing && !currentPeriodResultData?.report}
             onPress={handlePrimaryPress}
           />
         </View>
