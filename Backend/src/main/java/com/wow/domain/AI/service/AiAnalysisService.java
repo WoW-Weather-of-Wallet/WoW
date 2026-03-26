@@ -1,5 +1,6 @@
 package com.wow.domain.AI.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wow.domain.AI.dto.AiAnalysisRequest;
 import com.wow.domain.AI.dto.AiAnalysisResponse;
 import com.wow.domain.calendar.repository.TransactionRepository;
@@ -13,10 +14,12 @@ import com.wow.domain.spendinganalysis.repository.AiAnalysisRepository;
 import com.wow.domain.spendinganalysis.repository.SpendingTypeRepository;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
+import com.wow.global.constant.RedisKeys;
 import com.wow.global.exception.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -26,8 +29,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +41,8 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class AiAnalysisService {
 
+    private static final Duration AI_REPORT_CACHE_TTL = Duration.ofHours(6);
+
     private final RestTemplate aiRestTemplate;
     private final TransactionRepository transactionRepository;
     private final ExpenseCategoryRepository expenseCategoryRepository;
@@ -43,6 +50,8 @@ public class AiAnalysisService {
     private final AiAnalysisRepository aiAnalysisRepository;
     private final AiAnalysisCategoryResultRepository aiAnalysisCategoryResultRepository;
     private final UserRepository userRepository;
+    private final StringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
 
     @Value("${ai.server.base-url}")
     private String aiServerBaseUrl;
@@ -54,7 +63,9 @@ public class AiAnalysisService {
             SpendingTypeRepository spendingTypeRepository,
             AiAnalysisRepository aiAnalysisRepository,
             AiAnalysisCategoryResultRepository aiAnalysisCategoryResultRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            StringRedisTemplate redisTemplate,
+            ObjectMapper objectMapper
     ) {
         this.aiRestTemplate = aiRestTemplate;
         this.transactionRepository = transactionRepository;
@@ -63,10 +74,17 @@ public class AiAnalysisService {
         this.aiAnalysisRepository = aiAnalysisRepository;
         this.aiAnalysisCategoryResultRepository = aiAnalysisCategoryResultRepository;
         this.userRepository = userRepository;
+        this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
     public AiAnalysisResponse getAnalysis(Long userId, int year, int month) {
+        String cacheKey = buildMonthlyAiReportCacheKey(userId, year, month);
+        AiAnalysisResponse cached = readMonthlyAiReportCache(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
@@ -111,6 +129,7 @@ public class AiAnalysisService {
         }
 
         persistMonthlyAnalysis(user, year, month, response.getBody());
+        writeMonthlyAiReportCache(cacheKey, response.getBody());
         return response.getBody();
     }
 
@@ -181,5 +200,32 @@ public class AiAnalysisService {
 
     private java.math.BigDecimal toBigDecimal(Double value) {
         return value == null ? java.math.BigDecimal.ZERO : java.math.BigDecimal.valueOf(value);
+    }
+
+    private String buildMonthlyAiReportCacheKey(Long userId, int year, int month) {
+        return RedisKeys.AI_MONTHLY_REPORT_PREFIX + userId + ":" + year + ":" + month;
+    }
+
+    private AiAnalysisResponse readMonthlyAiReportCache(String cacheKey) {
+        try {
+            String cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached == null || cached.isBlank()) {
+                return null;
+            }
+            return objectMapper.readValue(cached, AiAnalysisResponse.class);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private void writeMonthlyAiReportCache(String cacheKey, AiAnalysisResponse response) {
+        try {
+            String serialized = objectMapper.writeValueAsString(response);
+            // A short-lived cache prevents repeated 14B inference while keeping
+            // the report fresh enough when users edit recent transactions.
+            redisTemplate.opsForValue().set(cacheKey, serialized, AI_REPORT_CACHE_TTL);
+        } catch (IOException ignored) {
+            // Cache failure should not block the user-facing AI report flow.
+        }
     }
 }

@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.wow.global.GlobalExceptionHandlerTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-03-26T20:15:20.936Z" hostname="DESKTOP-6OO0P6F" time="0.295">
+<testsuite name="com.wow.global.GlobalExceptionHandlerTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-03-26T20:19:57.468Z" hostname="DESKTOP-6OO0P6F" time="0.269">
   <properties/>
-  <testcase name="handleAuthenticationExceptionReturnsUnauthorized()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.122"/>
-  <testcase name="handleDataIntegrityViolationReturnsSsafyMessage()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.003"/>
-  <testcase name="handleDataIntegrityViolationReturnsInternalServerErrorWhenSqlStateIsNotUniqueViolation()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.032"/>
-  <testcase name="handleUnexpectedReturnsInternalServerError()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.023"/>
-  <testcase name="handleDataIntegrityViolationReturnsGenericDuplicateMessageWhenConstraintUnknown()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.003"/>
-  <testcase name="handleIllegalArgumentReturnsBadRequest()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.002"/>
-  <testcase name="handleBusinessExceptionReturnsMatchingStatusAndMessage()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.003"/>
-  <testcase name="handleInternalServerBusinessExceptionReturnsGeneric500Message()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.002"/>
-  <testcase name="handleHttpMessageNotReadableReturnsBadRequest()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.089"/>
-  <testcase name="handleDataIntegrityViolationReturnsPhoneNumberMessage()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.002"/>
-  <testcase name="handleNoResourceFoundReturnsNotFound()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.004"/>
-  <testcase name="handleMethodNotSupportedReturnsMethodNotAllowed()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.001"/>
-  <system-out><![CDATA[2026-03-27T05:15:21.064+09:00 ERROR 15744 --- [backend] [    Test worker] com.wow.global.GlobalExceptionHandler    : DataIntegrityViolationException 발생
+  <testcase name="handleAuthenticationExceptionReturnsUnauthorized()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.158"/>
+  <testcase name="handleDataIntegrityViolationReturnsSsafyMessage()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.001"/>
+  <testcase name="handleDataIntegrityViolationReturnsInternalServerErrorWhenSqlStateIsNotUniqueViolation()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.021"/>
+  <testcase name="handleUnexpectedReturnsInternalServerError()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.017"/>
+  <testcase name="handleDataIntegrityViolationReturnsGenericDuplicateMessageWhenConstraintUnknown()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.001"/>
+  <testcase name="handleIllegalArgumentReturnsBadRequest()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.001"/>
+  <testcase name="handleBusinessExceptionReturnsMatchingStatusAndMessage()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.001"/>
+  <testcase name="handleInternalServerBusinessExceptionReturnsGeneric500Message()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.001"/>
+  <testcase name="handleHttpMessageNotReadableReturnsBadRequest()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.06"/>
+  <testcase name="handleDataIntegrityViolationReturnsPhoneNumberMessage()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.001"/>
+  <testcase name="handleNoResourceFoundReturnsNotFound()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.001"/>
+  <testcase name="handleMethodNotSupportedReturnsMethodNotAllowed()" classname="com.wow.global.GlobalExceptionHandlerTest" time="0.0"/>
+  <system-out><![CDATA[2026-03-27T05:19:57.629+09:00 ERROR 25664 --- [backend] [    Test worker] com.wow.global.GlobalExceptionHandler    : DataIntegrityViolationException 발생
 
 org.springframework.dao.DataIntegrityViolationException: other
 	at com.wow.global.GlobalExceptionHandlerTest.handleDataIntegrityViolationReturnsInternalServerErrorWhenSqlStateIsNotUniqueViolation(GlobalExceptionHandlerTest.java:142) ~[test/:na]
@@ -107,7 +107,7 @@ org.springframework.dao.DataIntegrityViolationException: other
 Caused by: java.sql.SQLException: other failure
 	... 88 common frames omitted
 
-2026-03-27T05:15:21.097+09:00 ERROR 15744 --- [backend] [    Test worker] com.wow.global.GlobalExceptionHandler    : 예상하지 못한 예외 발생
+2026-03-27T05:19:57.650+09:00 ERROR 25664 --- [backend] [    Test worker] com.wow.global.GlobalExceptionHandler    : 예상하지 못한 예외 발생
 
 java.lang.RuntimeException: boom
 	at com.wow.global.GlobalExceptionHandlerTest.handleUnexpectedReturnsInternalServerError(GlobalExceptionHandlerTest.java:154) ~[test/:na]

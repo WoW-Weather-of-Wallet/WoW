@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.wow.domain.security.JwtTokenProviderTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-03-26T20:15:14.659Z" hostname="DESKTOP-6OO0P6F" time="0.269">
+<testsuite name="com.wow.domain.security.JwtTokenProviderTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-03-26T20:19:51.069Z" hostname="DESKTOP-6OO0P6F" time="0.297">
   <properties/>
-  <testcase name="parseRefreshTokenRejectsTokenWithUnexpectedAudience()" classname="com.wow.domain.security.JwtTokenProviderTest" time="0.24"/>
-  <testcase name="validateTokenReturnsFalseWhenIssuerIsUnexpected()" classname="com.wow.domain.security.JwtTokenProviderTest" time="0.005"/>
+  <testcase name="parseRefreshTokenRejectsTokenWithUnexpectedAudience()" classname="com.wow.domain.security.JwtTokenProviderTest" time="0.267"/>
+  <testcase name="validateTokenReturnsFalseWhenIssuerIsUnexpected()" classname="com.wow.domain.security.JwtTokenProviderTest" time="0.004"/>
   <testcase name="parseAccessTokenRejectsTokenWithUnexpectedIssuer()" classname="com.wow.domain.security.JwtTokenProviderTest" time="0.012"/>
-  <system-out><![CDATA[2026-03-27T05:15:14.915+09:00  WARN 15744 --- [backend] [    Test worker] c.wow.domain.security.JwtTokenProvider   : JWT 토큰 검증 실패: ì˜¬ë°”ë¥´ì§€ ì•Šì]]>&#x9d;<![CDATA[€ JWT issuerìž…ë‹ˆë‹¤.
+  <system-out><![CDATA[2026-03-27T05:19:51.354+09:00  WARN 25664 --- [backend] [    Test worker] c.wow.domain.security.JwtTokenProvider   : JWT 토큰 검증 실패: ì˜¬ë°”ë¥´ì§€ ì•Šì]]>&#x9d;<![CDATA[€ JWT issuerìž…ë‹ˆë‹¤.
 ]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
