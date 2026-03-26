@@ -7,6 +7,7 @@ export { default as HomeDashboardContent } from './HomeDashboardContent';
 export { default as HomeDashboardSheets } from './HomeDashboardSheets';
 export { default as HomeCategoryItemRow } from './HomeCategoryItemRow';
 export { default as HomeCategorySection } from './HomeCategorySection';
+export { default as HomeInsightCard } from './HomeInsightCard';
 export { default as HomeInsightSection } from './HomeInsightSection';
 export { default as HomeMonthlyComparisonSection } from './HomeMonthlyComparisonSection';
 export { default as HomeMonthlyComparisonRingCard } from './HomeMonthlyComparisonRingCard';

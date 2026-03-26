@@ -1,6 +1,6 @@
 import type { LegendListItem, SpendingStyleMetric } from '../constants/main/types';
 import type { CalendarDayItem } from '../mock/calendar';
-import type { HomeSpendingCategory } from '../mock/dashboard';
+import type { HomeInsight, HomeSpendingCategory } from '../mock/dashboard';
 import { COLORS } from '../constants/theme';
 import type {
   SpendingHalfYearlyResponse,
@@ -146,5 +146,18 @@ export const buildHomeCategoryDisplayItems = (
           ratio: 0,
           icon: 'remove-outline',
           color: COLORS.gray300,
+        },
+      ];
+
+export const buildHomeInsightDisplayItems = (items: HomeInsight[]): HomeInsight[] =>
+  items.length > 0
+    ? items
+    : [
+        {
+          id: 'empty-insight',
+          label: '-',
+          value: '-',
+          changeText: '-',
+          tone: 'neutral',
         },
       ];

@@ -1,9 +1,10 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+
+import type { HomeInsight } from '../../mock/dashboard';
+import { buildHomeInsightDisplayItems } from '../../utils/mainHomePresentation';
 import SectionHeader from '../common/SectionHeader';
 import SurfaceCard from '../common/SurfaceCard';
-import { styles } from './HomeInsightSection.styles';
-import type { HomeInsight } from '../../mock/dashboard';
+import HomeInsightCard from './HomeInsightCard';
 
 interface HomeInsightSectionProps {
   items: HomeInsight[];
@@ -12,27 +13,13 @@ interface HomeInsightSectionProps {
 export default function HomeInsightSection({
   items,
 }: HomeInsightSectionProps) {
-  const displayItems =
-    items.length > 0
-      ? items
-      : [
-          {
-            id: 'empty-insight',
-            label: '-',
-            value: '-',
-            changeText: '-',
-          },
-        ];
+  const displayItems = buildHomeInsightDisplayItems(items);
 
   return (
     <SurfaceCard>
-      <SectionHeader title="소비 인사이트" actionLabel="-" />
-      {displayItems.map((item) => (
-        <View key={item.id} style={styles.infoCard}>
-          <Text style={styles.infoLabel}>{item.label}</Text>
-          <Text style={styles.infoValue}>{item.value}</Text>
-          <Text style={styles.infoChange}>{item.changeText}</Text>
-        </View>
+      <SectionHeader title="?뚮퉬 ?몄궗?댄듃" actionLabel="-" />
+      {displayItems.map(item => (
+        <HomeInsightCard key={item.id} item={item} />
       ))}
     </SurfaceCard>
   );
