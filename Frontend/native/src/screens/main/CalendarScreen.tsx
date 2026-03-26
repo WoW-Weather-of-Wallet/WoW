@@ -1,6 +1,6 @@
 import React from 'react';
-import { hp } from '../../constants/theme';
-import { styles } from './CalendarScreen.styles';
+import { StyleSheet } from 'react-native';
+import { hp, COLORS, RADIUS, wp } from '../../constants/theme';
 import { useCalendarScreenFlow } from '../../hooks';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import {
@@ -169,7 +169,7 @@ export default function CalendarScreen() {
         mode={editingManageItem ? 'edit' : 'create'}
         initialCategory={editingManageItem?.category}
         initialPaymentDay={editingManageItem?.paymentDay}
-        submitLabel={editingManageItem ? '수정하기' : '고정지출로 등록하기'}
+        submitLabel={editingManageItem ? '\uc218\uc815\ud558\uae30' : '\uace0\uc815\uc9c0\ucd9c\ub85c \ub4f1\ub85d\ud558\uae30'}
         onClose={() => {
           setIsDetailSheetVisible(false);
           setEditingManageId(null);
@@ -177,10 +177,36 @@ export default function CalendarScreen() {
         onSubmit={handleRegisterFixedExpense}
       />
 
-      <CalendarGuideModal
-        visible={isGuideVisible}
-        onClose={handleCloseGuide}
-      />
+      <CalendarGuideModal visible={isGuideVisible} onClose={handleCloseGuide} />
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.backgroundSecondary,
+  },
+  topDock: {
+    paddingHorizontal: wp(20),
+    paddingBottom: hp(4),
+    backgroundColor: COLORS.backgroundSecondary,
+  },
+  notice: {
+    marginBottom: hp(12),
+  },
+  scrollView: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: wp(20),
+    paddingTop: hp(8),
+    gap: hp(18),
+  },
+  tabWrap: {
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.xxl,
+    padding: wp(8),
+    marginTop: hp(6),
+  },
+});

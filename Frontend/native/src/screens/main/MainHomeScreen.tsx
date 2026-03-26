@@ -1,11 +1,11 @@
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
-import { hp } from '../../constants/theme';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import { HomeDashboardContent, HomeDashboardSheets } from '../../components/main';
+import { COLORS, hp, wp } from '../../constants/theme';
 import { useMainHomeFlow } from '../../hooks/useMainHomeFlow';
 import { useModalState } from '../../hooks/useModalState';
-import { styles } from './MainHomeScreen.styles';
 
 export default function MainHomeScreen() {
   const reportModal = useModalState();
@@ -48,3 +48,14 @@ export default function MainHomeScreen() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.backgroundSecondary,
+  },
+  contentContainer: {
+    paddingHorizontal: wp(20),
+    gap: hp(18),
+  },
+});
