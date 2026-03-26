@@ -1,37 +1,21 @@
 import React from 'react';
+
 import { hp } from '../../constants/theme';
-import { styles } from './MainHomeScreen.styles';
-import { useModalState } from '../../hooks/useModalState';
-import { useMainHomeFlow } from '../../hooks/useMainHomeFlow';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import { HomeDashboardContent, HomeDashboardSheets } from '../../components/main';
+import { useMainHomeFlow } from '../../hooks/useMainHomeFlow';
+import { useModalState } from '../../hooks/useModalState';
+import { styles } from './MainHomeScreen.styles';
 
 export default function MainHomeScreen() {
   const reportModal = useModalState();
   const spendingTypeModal = useModalState();
   const {
-    liveHeader,
-    spendingTypeTitle,
-    spendingTypeDescription,
-    spendingTypeIconName,
-    spendingTypeSheetDescription,
-    currentMonthLabel,
-    lastMonthLabel,
-    currentMonthTotalAmount,
-    lastMonthTotalAmount,
-    displayUserName,
-    remainingBudget,
-    budgetUsageRate,
-    spentAmount,
-    totalBudget,
-    forecastText,
-    spendingMetrics,
-    spendingReasons,
-    comparisonLegend,
-    monthlyInsight,
-    isWeatherLoading,
-    isBudgetSubmitting,
-    handleCreateBudget,
+    weatherCard,
+    spendingTypeCard,
+    budgetReportCard,
+    spendingTypeSheet,
+    monthlyReportSheet,
   } = useMainHomeFlow({
     closeReportModal: reportModal.close,
   });
@@ -45,20 +29,9 @@ export default function MainHomeScreen() {
         scrollBottomPadding={hp(30)}
       >
         <HomeDashboardContent
-          weatherName={liveHeader?.weatherName}
-          weatherDescription={liveHeader?.description}
-          weatherIconCode={liveHeader?.iconCode}
-          isWeatherLoading={isWeatherLoading}
-          spendingTypeTitle={spendingTypeTitle}
-          spendingTypeDescription={spendingTypeDescription}
-          spendingTypeIconName={spendingTypeIconName}
-          monthLabel={currentMonthLabel}
-          userName={displayUserName}
-          remainingBudget={remainingBudget}
-          budgetUsageRate={budgetUsageRate}
-          spentAmount={spentAmount}
-          totalBudget={totalBudget}
-          forecastText={forecastText}
+          weatherCard={weatherCard}
+          spendingTypeCard={spendingTypeCard}
+          budgetReportCard={budgetReportCard}
           onPressSpendingType={spendingTypeModal.open}
           onPressBudgetReport={reportModal.open}
         />
@@ -67,22 +40,10 @@ export default function MainHomeScreen() {
       <HomeDashboardSheets
         isSpendingTypeVisible={spendingTypeModal.visible}
         isReportVisible={reportModal.visible}
-        spendingTypeTitle={spendingTypeTitle}
-        spendingTypeIconName={spendingTypeIconName}
-        spendingTypeDescription={spendingTypeSheetDescription}
-        spendingMetrics={spendingMetrics}
-        spendingReasons={spendingReasons}
-        currentMonthLabel={currentMonthLabel}
-        currentMonthTotalAmount={currentMonthTotalAmount}
-        lastMonthLabel={lastMonthLabel}
-        lastMonthTotalAmount={lastMonthTotalAmount}
-        comparisonLegend={comparisonLegend}
-        monthlyInsight={monthlyInsight}
-        canCreateBudget={totalBudget == null}
-        isBudgetSubmitting={isBudgetSubmitting}
+        spendingTypeSheet={spendingTypeSheet}
+        monthlyReportSheet={monthlyReportSheet}
         onCloseSpendingType={spendingTypeModal.close}
         onCloseReport={reportModal.close}
-        onCreateBudget={handleCreateBudget}
       />
     </>
   );

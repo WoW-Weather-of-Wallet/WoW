@@ -1,6 +1,16 @@
 import React from 'react';
 import { Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+
+import type {
+  HomeDashboardBudgetReportCardData,
+  HomeDashboardSpendingTypeCardData,
+  HomeDashboardWeatherCardData,
+} from '../components/main/HomeDashboardContent';
+import type {
+  HomeDashboardMonthlyReportSheetData,
+  HomeDashboardSpendingTypeSheetData,
+} from '../components/main/HomeDashboardSheets';
 import { getCalendarHeader } from '../services/calendar';
 import {
   createBudget,
@@ -26,16 +36,18 @@ interface UseMainHomeFlowParams {
 }
 
 export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const sessionUserName = useAuthStore((state) => state.user?.name);
+  const accessToken = useAuthStore(state => state.accessToken);
+  const sessionUserName = useAuthStore(state => state.user?.name);
   const [liveHeader, setLiveHeader] = React.useState<CalendarHeaderResponse | null>(null);
-  const [spendingHalfYearly, setSpendingHalfYearly] = React.useState<SpendingHalfYearlyResponse | null>(null);
-  const [monthlyCompare, setMonthlyCompare] = React.useState<SpendingMonthlyCompareResponse | null>(null);
+  const [spendingHalfYearly, setSpendingHalfYearly] =
+    React.useState<SpendingHalfYearlyResponse | null>(null);
+  const [monthlyCompare, setMonthlyCompare] =
+    React.useState<SpendingMonthlyCompareResponse | null>(null);
   const [budgetAmount, setBudgetAmount] = React.useState<number | null>(null);
   const [isWeatherLoading, setIsWeatherLoading] = React.useState(false);
   const [isBudgetSubmitting, setIsBudgetSubmitting] = React.useState(false);
   const today = React.useMemo(() => new Date(), []);
-  const monthLabel = `${today.getMonth() + 1}월`;
+  const monthLabel = `${today.getMonth() + 1}??`;
 
   const loadHomeData = React.useCallback(async () => {
     if (!accessToken) {
@@ -85,13 +97,13 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
         const createdBudget = await createBudget({ amount });
         setBudgetAmount(createdBudget.amount);
         closeReportModal();
-        Alert.alert('예산 등록 완료', `${createdBudget.budgetDate} 예산이 등록되었습니다.`);
+        Alert.alert('?덉궛 ?깅줉 ?꾨즺', `${createdBudget.budgetDate} ?덉궛???깅줉?섏뿀?듬땲??`);
       } catch (error) {
         const message = extractApiErrorMessage(
           error,
-          '이번 달 예산 등록 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
+          '?대쾲 ???덉궛 ?깅줉 以?臾몄젣媛 諛쒖깮?덉뒿?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄?댁＜?몄슂.',
         );
-        Alert.alert('예산 등록 실패', message);
+        Alert.alert('?덉궛 ?깅줉 ?ㅽ뙣', message);
       } finally {
         setIsBudgetSubmitting(false);
       }
@@ -133,35 +145,92 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
       : null;
   const forecastText =
     totalBudget == null
-      ? '이번 달 예산을 등록하면 남은 예산과 사용률을 바로 확인할 수 있어요.'
+      ? '?대쾲 ???덉궛???깅줉?섎㈃ ?⑥? ?덉궛怨??ъ슜瑜좎쓣 諛붾줈 ?뺤씤?????덉뼱??'
       : remainingBudget != null && remainingBudget >= 0
-        ? `${remainingBudget.toLocaleString()}원이 남아 있어요. 지금 속도를 유지해보세요.`
-        : `예산을 ${Math.abs(remainingBudget ?? 0).toLocaleString()}원 초과했어요. 지출 조정이 필요해요.`;
+        ? `${remainingBudget.toLocaleString()}?먯씠 ?⑥븘 ?덉뼱?? 吏湲??띾룄瑜??좎??대낫?몄슂.`
+        : `?덉궛??${Math.abs(remainingBudget ?? 0).toLocaleString()}??珥덇낵?덉뼱?? 吏異?議곗젙???꾩슂?댁슂.`;
+
+  const weatherCard = React.useMemo<HomeDashboardWeatherCardData>(
+    () => ({
+      weatherName: liveHeader?.weatherName,
+      weatherDescription: liveHeader?.description,
+      weatherIconCode: liveHeader?.iconCode,
+      isWeatherLoading,
+    }),
+    [isWeatherLoading, liveHeader?.description, liveHeader?.iconCode, liveHeader?.weatherName],
+  );
+
+  const spendingTypeCard = React.useMemo<HomeDashboardSpendingTypeCardData>(
+    () => ({
+      spendingTypeTitle: spendingHalfYearly?.spendingType.name,
+      spendingTypeDescription:
+        spendingHalfYearly?.spendingType.summary || spendingHalfYearly?.description,
+      spendingTypeIconName: resolveSpendingIconName(spendingHalfYearly?.spendingType.iconCode),
+    }),
+    [spendingHalfYearly],
+  );
+
+  const budgetReportCard = React.useMemo<HomeDashboardBudgetReportCardData>(
+    () => ({
+      monthLabel: currentMonthLabel,
+      userName: sessionUserName?.trim() || '-',
+      remainingBudget,
+      budgetUsageRate,
+      spentAmount,
+      totalBudget,
+      forecastText,
+    }),
+    [
+      budgetUsageRate,
+      currentMonthLabel,
+      forecastText,
+      remainingBudget,
+      sessionUserName,
+      spentAmount,
+      totalBudget,
+    ],
+  );
+
+  const spendingTypeSheet = React.useMemo<HomeDashboardSpendingTypeSheetData>(
+    () => ({
+      spendingTypeTitle: spendingHalfYearly?.spendingType.name,
+      spendingTypeIconName: resolveSpendingIconName(spendingHalfYearly?.spendingType.iconCode),
+      spendingTypeDescription: spendingHalfYearly?.description,
+      spendingMetrics,
+      spendingReasons,
+    }),
+    [spendingHalfYearly, spendingMetrics, spendingReasons],
+  );
+
+  const monthlyReportSheet = React.useMemo<HomeDashboardMonthlyReportSheetData>(
+    () => ({
+      currentMonthLabel,
+      currentMonthTotalAmount: monthlyCompare?.currentMonth.totalAmount ?? null,
+      lastMonthLabel,
+      lastMonthTotalAmount: monthlyCompare?.lastMonth.totalAmount ?? null,
+      comparisonLegend,
+      monthlyInsight,
+      canCreateBudget: totalBudget == null,
+      isBudgetSubmitting,
+      onCreateBudget: handleCreateBudget,
+    }),
+    [
+      comparisonLegend,
+      currentMonthLabel,
+      handleCreateBudget,
+      isBudgetSubmitting,
+      lastMonthLabel,
+      monthlyCompare,
+      monthlyInsight,
+      totalBudget,
+    ],
+  );
 
   return {
-    liveHeader,
-    spendingHalfYearly,
-    currentMonthLabel,
-    lastMonthLabel,
-    spentAmount,
-    totalBudget,
-    remainingBudget,
-    budgetUsageRate,
-    forecastText,
-    spendingMetrics,
-    spendingReasons,
-    comparisonLegend,
-    monthlyInsight,
-    displayUserName: sessionUserName?.trim() || '-',
-    isWeatherLoading,
-    isBudgetSubmitting,
-    handleCreateBudget,
-    spendingTypeIconName: resolveSpendingIconName(spendingHalfYearly?.spendingType.iconCode),
-    spendingTypeTitle: spendingHalfYearly?.spendingType.name,
-    spendingTypeDescription:
-      spendingHalfYearly?.spendingType.summary || spendingHalfYearly?.description,
-    spendingTypeSheetDescription: spendingHalfYearly?.description,
-    currentMonthTotalAmount: monthlyCompare?.currentMonth.totalAmount ?? null,
-    lastMonthTotalAmount: monthlyCompare?.lastMonth.totalAmount ?? null,
+    weatherCard,
+    spendingTypeCard,
+    budgetReportCard,
+    spendingTypeSheet,
+    monthlyReportSheet,
   };
 }
