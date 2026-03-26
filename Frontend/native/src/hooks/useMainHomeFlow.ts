@@ -10,6 +10,7 @@ import type {
   HomeDashboardWeatherCardData,
 } from '../components/main/types';
 import { getCalendarHeader } from '../services/calendar';
+import { getAiAnalysis, type AiAnalysisReport } from '../services/ai';
 import {
   createBudget,
   getSpendingHalfYearly,
@@ -17,6 +18,7 @@ import {
   type SpendingHalfYearlyResponse,
   type SpendingMonthlyCompareResponse,
 } from '../services/main';
+import { useAiStore } from '../store/aiStore';
 import { useAuthStore } from '../store/authStore';
 import type { CalendarHeaderResponse } from '../types/calendar';
 import { extractApiErrorMessage } from '../utils/error';
@@ -36,7 +38,9 @@ interface UseMainHomeFlowParams {
 export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
   const accessToken = useAuthStore(state => state.accessToken);
   const sessionUserName = useAuthStore(state => state.user?.name);
+  const latestAiReport = useAiStore(state => state.resultData?.report as AiAnalysisReport | null);
   const [liveHeader, setLiveHeader] = React.useState<CalendarHeaderResponse | null>(null);
+  const [aiAnalysis, setAiAnalysis] = React.useState<AiAnalysisReport | null>(null);
   const [spendingHalfYearly, setSpendingHalfYearly] =
     React.useState<SpendingHalfYearlyResponse | null>(null);
   const [monthlyCompare, setMonthlyCompare] =
@@ -50,6 +54,7 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
   const loadHomeData = React.useCallback(async () => {
     if (!accessToken) {
       setLiveHeader(null);
+      setAiAnalysis(null);
       setSpendingHalfYearly(null);
       setMonthlyCompare(null);
       setIsWeatherLoading(false);
@@ -71,9 +76,19 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
       setLiveHeader(headerResponse);
       setSpendingHalfYearly(halfYearlyResponse);
       setMonthlyCompare(monthlyCompareResponse);
+
+      void getAiAnalysis()
+        .then((response) => {
+          setAiAnalysis(response);
+        })
+        .catch((error) => {
+          console.warn('Failed to load AI analysis summary for home card', error);
+          setAiAnalysis(null);
+        });
     } catch (error) {
       console.warn('Failed to load home data from backend', error);
       setLiveHeader(null);
+      setAiAnalysis(null);
       setSpendingHalfYearly(null);
       setMonthlyCompare(null);
     } finally {
@@ -158,14 +173,22 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     [isWeatherLoading, liveHeader?.description, liveHeader?.iconCode, liveHeader?.weatherName],
   );
 
+  const homeAiSummary = latestAiReport ?? aiAnalysis;
+
   const spendingTypeCard = React.useMemo<HomeDashboardSpendingTypeCardData>(
     () => ({
-      spendingTypeTitle: spendingHalfYearly?.spendingType.name,
+      spendingTypeTitle:
+        homeAiSummary?.cluster.name || spendingHalfYearly?.spendingType.name,
       spendingTypeDescription:
-        spendingHalfYearly?.spendingType.summary || spendingHalfYearly?.description,
-      spendingTypeIconName: resolveSpendingIconName(spendingHalfYearly?.spendingType.iconCode),
+        homeAiSummary?.goal.actionTip
+        || homeAiSummary?.cluster.description
+        || spendingHalfYearly?.spendingType.summary
+        || spendingHalfYearly?.description,
+      spendingTypeIconName: homeAiSummary
+        ? 'sparkles-outline'
+        : resolveSpendingIconName(spendingHalfYearly?.spendingType.iconCode),
     }),
-    [spendingHalfYearly],
+    [homeAiSummary, spendingHalfYearly],
   );
 
   const budgetReportCard = React.useMemo<HomeDashboardBudgetReportCardData>(
@@ -191,13 +214,19 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
 
   const spendingTypeSheet = React.useMemo<HomeDashboardSpendingTypeSheetData>(
     () => ({
-      spendingTypeTitle: spendingHalfYearly?.spendingType.name,
-      spendingTypeIconName: resolveSpendingIconName(spendingHalfYearly?.spendingType.iconCode),
-      spendingTypeDescription: spendingHalfYearly?.description,
+      spendingTypeTitle:
+        homeAiSummary?.cluster.name || spendingHalfYearly?.spendingType.name,
+      spendingTypeIconName: homeAiSummary
+        ? 'sparkles-outline'
+        : resolveSpendingIconName(spendingHalfYearly?.spendingType.iconCode),
+      spendingTypeDescription:
+        homeAiSummary?.cluster.description
+        || homeAiSummary?.goal.actionTip
+        || spendingHalfYearly?.description,
       spendingMetrics,
       spendingReasons,
     }),
-    [spendingHalfYearly, spendingMetrics, spendingReasons],
+    [homeAiSummary, spendingHalfYearly, spendingMetrics, spendingReasons],
   );
 
   const monthlyReportSheet = React.useMemo<HomeDashboardMonthlyReportSheetData>(

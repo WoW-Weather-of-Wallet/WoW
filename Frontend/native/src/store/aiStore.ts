@@ -1,95 +1,190 @@
 import { create } from 'zustand';
 
+import { getAiAnalysis, type AiAnalysisReport, type GetAiAnalysisParams } from '../services/ai';
+import { extractApiErrorMessage } from '../utils/error';
+
 export type AiStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export interface AiResultData {
   completedAt?: string;
   fromPush?: boolean;
+  report?: AiAnalysisReport | null;
   [key: string]: unknown;
+}
+
+interface RefreshAiResultOptions extends GetAiAnalysisParams {
+  fromPush?: boolean;
 }
 
 interface AiState {
   status: AiStatus;
   resultData: AiResultData | null;
   showToast: boolean;
-  
-  // Actions
+  errorMessage: string | null;
+
   startAnalysis: () => void;
   simulateAnalysis: () => void;
+  runAnalysis: (params?: GetAiAnalysisParams) => Promise<AiResultData | null>;
+  refreshLatestAnalysis: (params?: RefreshAiResultOptions) => Promise<AiAnalysisReport | null>;
   setSuccess: (data: AiResultData) => void;
-  setError: () => void;
+  setError: (message?: string) => void;
   hideToast: () => void;
   reset: () => void;
 }
 
-/**
- * useAiStore
- * AI 분석 상태와 결과 데이터를 전역적으로 관리합니다.
- * 사용자가 로딩 화면을 벗어나더라도 배경에서 상태를 유지하고 알림을 띄울 수 있게 합니다.
- */
+let analysisRequestToken = 0;
 let analysisTimer: NodeJS.Timeout | null = null;
+
+const nextAnalysisRequestToken = () => {
+  analysisRequestToken += 1;
+  return analysisRequestToken;
+};
+
+const buildAnalysisFallbackMessage = () =>
+  'AI 피드백을 불러오지 못했어요. 잠시 후 다시 시도해주세요.';
+
+const presentAnalysisReadyNotification = async () => {
+  try {
+    const { fcmService } = require('../services/fcmService');
+    await fcmService.presentLocalNotification(
+      'AI 소비 분석 결과가 도착했어요!',
+      '지금 바로 리포트를 확인해보세요.',
+      { action: 'ai_feedback' },
+    );
+  } catch (error) {
+    console.warn('Failed to present AI notification', error);
+  }
+};
 
 export const useAiStore = create<AiState>((set, get) => ({
   status: 'idle',
   resultData: null,
   showToast: false,
+  errorMessage: null,
 
   startAnalysis: () => {
-    // 기존 타이머가 있다면 정리 (안전 장치)
     if (analysisTimer) {
       clearTimeout(analysisTimer);
       analysisTimer = null;
     }
-    set({ status: 'loading', showToast: false, resultData: null });
+
+    set({
+      status: 'loading',
+      showToast: false,
+      resultData: null,
+      errorMessage: null,
+    });
   },
 
   simulateAnalysis: () => {
-    // 이미 실행 중인 타이머가 있다면 무시하거나 재설정 (여기서는 혹시 모를 중복 방지를 위해 정리 후 시작)
     if (analysisTimer) {
       clearTimeout(analysisTimer);
     }
 
-    // 8.5초 후 분석 완료 시뮬레이션
     analysisTimer = setTimeout(() => {
       const state = get();
-      // 반드시 로딩 상태일 때만 성공으로 변경
       if (state.status === 'loading') {
-        set({
-          status: 'success',
-          resultData: { completedAt: new Date().toISOString() },
-          showToast: true
+        state.setSuccess({
+          completedAt: new Date().toISOString(),
+          fromPush: false,
         });
-        
-        // [Item 5] 시뮬레이션 완료 시에도 시스템 알림(상단 바)을 강제 발생시켜 사용자 인지 유도
-        const { fcmService } = require('../services/fcmService');
-        void fcmService.presentLocalNotification(
-          'AI 소비 분석 결과 도착!',
-          '지금 바로 리포트를 확인해보세요.',
-          { action: 'ai_feedback' }
-        );
+        void presentAnalysisReadyNotification();
       }
       analysisTimer = null;
     }, 8500);
   },
 
-  setSuccess: (data: AiResultData) => {
-    if (analysisTimer) {
-      clearTimeout(analysisTimer);
-      analysisTimer = null;
+  runAnalysis: async (params = {}) => {
+    const requestToken = nextAnalysisRequestToken();
+
+    try {
+      const report = await getAiAnalysis(params);
+      if (requestToken !== analysisRequestToken) {
+        return null;
+      }
+
+      const nextResultData: AiResultData = {
+        completedAt: new Date().toISOString(),
+        fromPush: false,
+        report,
+      };
+
+      set({
+        status: 'success',
+        resultData: nextResultData,
+        showToast: true,
+        errorMessage: null,
+      });
+
+      void presentAnalysisReadyNotification();
+      return nextResultData;
+    } catch (error) {
+      if (requestToken !== analysisRequestToken) {
+        return null;
+      }
+
+      set({
+        status: 'error',
+        showToast: false,
+        errorMessage: extractApiErrorMessage(error, buildAnalysisFallbackMessage()),
+      });
+
+      return null;
     }
-    set({ 
-      status: 'success', 
-      resultData: data, 
-      showToast: true 
-    });
   },
 
-  setError: () => {
-    if (analysisTimer) {
-      clearTimeout(analysisTimer);
-      analysisTimer = null;
+  refreshLatestAnalysis: async (params = {}) => {
+    const requestToken = nextAnalysisRequestToken();
+    const { year, month, fromPush } = params;
+
+    try {
+      const report = await getAiAnalysis({ year, month });
+      if (requestToken !== analysisRequestToken) {
+        return null;
+      }
+
+      set((state) => ({
+        status: 'success',
+        resultData: {
+          ...(state.resultData ?? {}),
+          completedAt: state.resultData?.completedAt ?? new Date().toISOString(),
+          fromPush: fromPush ?? state.resultData?.fromPush ?? false,
+          report,
+        },
+        errorMessage: null,
+      }));
+
+      return report;
+    } catch (error) {
+      if (requestToken !== analysisRequestToken) {
+        return null;
+      }
+
+      const message = extractApiErrorMessage(error, buildAnalysisFallbackMessage());
+      set({ errorMessage: message });
+
+      return null;
     }
-    set({ status: 'error', showToast: false });
+  },
+
+  setSuccess: (data) => {
+    set((state) => ({
+      status: 'success',
+      resultData: {
+        ...(state.resultData ?? {}),
+        ...data,
+      },
+      showToast: true,
+      errorMessage: null,
+    }));
+  },
+
+  setError: (message) => {
+    set({
+      status: 'error',
+      showToast: false,
+      errorMessage: message ?? buildAnalysisFallbackMessage(),
+    });
   },
 
   hideToast: () => {
@@ -97,10 +192,16 @@ export const useAiStore = create<AiState>((set, get) => ({
   },
 
   reset: () => {
+    nextAnalysisRequestToken();
     if (analysisTimer) {
       clearTimeout(analysisTimer);
       analysisTimer = null;
     }
-    set({ status: 'idle', resultData: null, showToast: false });
+    set({
+      status: 'idle',
+      resultData: null,
+      showToast: false,
+      errorMessage: null,
+    });
   },
 }));

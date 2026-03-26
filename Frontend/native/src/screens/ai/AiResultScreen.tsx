@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import GradientButton from '../../components/common/GradientButton';
 import { COLORS, hp, wp } from '../../constants/theme';
@@ -11,8 +11,25 @@ import type { AiFeedbackStackScreenProps } from '../../types';
 export default function AiResultScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiResult'>) {
-  const { reset, resultData } = useAiStore();
-  const { displayName, title, buttonTitle, cards } = useAiResultSummary(resultData);
+  const hasRequestedLatestReport = useRef(false);
+  const { reset, resultData, refreshLatestAnalysis, errorMessage } = useAiStore();
+  const { displayName, title, buttonTitle, cards } = useAiResultSummary(resultData, errorMessage);
+
+  useEffect(() => {
+    if (resultData?.report) {
+      hasRequestedLatestReport.current = false;
+      return;
+    }
+
+    if (hasRequestedLatestReport.current) {
+      return;
+    }
+
+    hasRequestedLatestReport.current = true;
+    void refreshLatestAnalysis({
+      fromPush: Boolean(resultData?.fromPush),
+    });
+  }, [refreshLatestAnalysis, resultData?.fromPush, resultData?.report]);
 
   return (
     <BottomTabScreenLayout
