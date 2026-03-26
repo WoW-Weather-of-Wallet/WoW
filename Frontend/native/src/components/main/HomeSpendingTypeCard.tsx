@@ -1,10 +1,10 @@
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SurfaceCard from '../common/SurfaceCard';
 import { useHomeSpendingTypeSummary } from '../../hooks/useHomeSpendingTypeSummary';
-import { COLORS, wp } from '../../constants/theme';
-import { styles } from './HomeSpendingTypeCard.styles';
+import HomeSpendingTypeCardDescription from './HomeSpendingTypeCardDescription';
+import HomeSpendingTypeCardHeader from './HomeSpendingTypeCardHeader';
 
 interface HomeSpendingTypeCardProps {
   onPress: () => void;
@@ -31,33 +31,8 @@ export default function HomeSpendingTypeCard({
   return (
     <TouchableOpacity activeOpacity={0.94} onPress={onPress}>
       <SurfaceCard>
-        <View style={styles.rowBetween}>
-          <View style={styles.flex1}>
-            <Text style={styles.eyebrow}>AI 소비 유형 분석</Text>
-            <View style={styles.titleRow}>
-              <View style={styles.iconBadge}>
-                <Ionicons
-                  name={iconName}
-                  size={wp(18)}
-                  color={COLORS.primary}
-                />
-              </View>
-              <Text style={styles.mainTitle}>{displayTitle}</Text>
-            </View>
-          </View>
-          <View style={styles.aiBadge}>
-            <Ionicons
-              name="sparkles-outline"
-              size={wp(14)}
-              color={COLORS.primary}
-            />
-            <Text style={styles.aiBadgeText}>AI 리포트</Text>
-          </View>
-        </View>
-
-        <Text style={styles.description}>
-          {displayDescription}
-        </Text>
+        <HomeSpendingTypeCardHeader title={displayTitle} iconName={iconName} />
+        <HomeSpendingTypeCardDescription description={displayDescription} />
       </SurfaceCard>
     </TouchableOpacity>
   );

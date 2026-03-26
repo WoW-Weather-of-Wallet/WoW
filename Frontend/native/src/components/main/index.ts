@@ -14,6 +14,8 @@ export { default as HomeScheduleEmptyState } from './HomeScheduleEmptyState';
 export { default as HomeScheduleItemCard } from './HomeScheduleItemCard';
 export { default as HomeScheduleSection } from './HomeScheduleSection';
 export { default as HomeSpendingTypeIntroCard } from './HomeSpendingTypeIntroCard';
+export { default as HomeSpendingTypeCardDescription } from './HomeSpendingTypeCardDescription';
+export { default as HomeSpendingTypeCardHeader } from './HomeSpendingTypeCardHeader';
 export { default as HomeSpendingTypeReasonsSection } from './HomeSpendingTypeReasonsSection';
 export { default as HomeSpendingTypeCard } from './HomeSpendingTypeCard';
 export { default as HomeSpendingTypeSheet } from './HomeSpendingTypeSheet';
