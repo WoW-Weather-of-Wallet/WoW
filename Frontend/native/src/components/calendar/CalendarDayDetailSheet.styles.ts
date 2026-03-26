@@ -2,14 +2,6 @@ import { StyleSheet } from 'react-native';
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
 export const styles = StyleSheet.create({
-  titleRow: {
-    marginBottom: hp(16),
-  },
-  title: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
   weatherCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -71,11 +63,39 @@ export const styles = StyleSheet.create({
   listSection: {
     marginBottom: hp(18),
   },
+  listHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: hp(10),
+    gap: wp(10),
+  },
   listTitle: {
     fontSize: fp(16),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    marginBottom: hp(10),
+  },
+  readonlyBadge: {
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.backgroundTertiary,
+    paddingHorizontal: wp(10),
+    paddingVertical: hp(4),
+  },
+  readonlyBadgeText: {
+    fontSize: fp(11),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.primary,
+  },
+  emptyCard: {
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.backgroundSecondary,
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(16),
+  },
+  emptyText: {
+    fontSize: fp(14),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
   },
   itemRow: {
     flexDirection: 'row',
@@ -118,7 +138,14 @@ export const styles = StyleSheet.create({
     fontSize: fp(16),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
+    marginBottom: hp(6),
+  },
+  memoHint: {
     marginBottom: hp(10),
+    fontSize: fp(12),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+    lineHeight: fp(18),
   },
   memoInput: {
     minHeight: hp(108),
