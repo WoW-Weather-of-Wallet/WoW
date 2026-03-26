@@ -20,8 +20,8 @@ export default function HomeWeatherGuideItemRow({
       </View>
       <View className="ml-4 flex-1">
         <Text className="text-lg font-bold text-gray-800">{item.type}</Text>
-        <Text className="text-xs text-gray-400">
-          <Text className="font-semibold text-gray-600">{item.detail}</Text>
+        <Text className="text-sm text-gray-500">
+          <Text className="font-semibold text-gray-700">{item.detail}</Text>
         </Text>
       </View>
     </View>

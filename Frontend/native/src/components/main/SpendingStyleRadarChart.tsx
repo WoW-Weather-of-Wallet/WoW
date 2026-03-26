@@ -2,18 +2,19 @@ import React from 'react';
 import { View } from 'react-native';
 import Svg, { Circle, Line, Polygon } from 'react-native-svg';
 
-import { COLORS } from '../../constants/theme';
 import type { SpendingStyleMetric } from '../../constants/main/types';
+import { COLORS, wp } from '../../constants/theme';
 import {
   buildRadarChartGeometry,
   toSvgPointString,
 } from '../../utils/spendingStyleRadar';
-import { styles, DEFAULT_SIZE } from './SpendingStyleRadarChart.styles';
 
 interface SpendingStyleRadarChartProps {
   metrics: SpendingStyleMetric[];
   size?: number;
 }
+
+const DEFAULT_SIZE = wp(164);
 
 export default function SpendingStyleRadarChart({
   metrics,
@@ -23,7 +24,10 @@ export default function SpendingStyleRadarChart({
     buildRadarChartGeometry(metrics, size);
 
   return (
-    <View style={styles.container}>
+    <View
+      className="items-center justify-center"
+      style={{ width: size, height: size }}
+    >
       <Svg width={size} height={size}>
         {gridPolygons.map((polygon, index) => (
           <Polygon

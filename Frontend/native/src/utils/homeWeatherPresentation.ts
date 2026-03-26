@@ -1,9 +1,10 @@
 import type { ComponentType } from 'react';
-import SunnyIcon from '../../assets/imgs/weather/SunnyIcon';
+
 import CloudyIcon from '../../assets/imgs/weather/CloudyIcon';
+import HeavyRainIcon from '../../assets/imgs/weather/HeavyRainIcon';
 import OvercastIcon from '../../assets/imgs/weather/OvercastIcon';
 import RainIcon from '../../assets/imgs/weather/RainIcon';
-import HeavyRainIcon from '../../assets/imgs/weather/HeavyRainIcon';
+import SunnyIcon from '../../assets/imgs/weather/SunnyIcon';
 
 type WeatherIconComponent = ComponentType<{ size?: number; color?: string }>;
 
@@ -43,7 +44,7 @@ export const buildHomeWeatherVisual = ({
   if (isLoading) {
     return {
       type: '불러오는 중',
-      hint: '오늘 소비 날씨를 확인하고 있습니다.',
+      hint: '오늘 소비 흐름을 확인하고 있어요.',
       icon: CloudyIcon,
       color: '#FFFFFF',
     };
@@ -126,7 +127,7 @@ function resolveWeatherVisual(
   }
 
   return {
-    type: normalizedName || '소비날씨',
+    type: normalizedName || '소비 날씨',
     hint,
     icon: CloudyIcon,
     color: '#FFFFFF',

@@ -46,7 +46,7 @@ export default function HomeTodayWeatherCard({
         <HomeTodayWeatherHeader
           WeatherIcon={WeatherIcon}
           color={weatherData.color}
-          dateLabel={`${dateString} ${dayString}`}
+          dateLabel={`${dateString} (${dayString})`}
           typeLabel={weatherData.type}
           iconSize={wp(36)}
         />
