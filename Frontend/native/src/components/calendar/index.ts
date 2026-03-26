@@ -4,6 +4,7 @@ export { default as CalendarGuideModal } from './CalendarGuideModal';
 export { default as CalendarHeroCard } from './CalendarHeroCard';
 export { default as CalendarMonthCard } from './CalendarMonthCard';
 export { default as CalendarTabSwitcher } from './CalendarTabSwitcher';
+export { default as CalendarTopDockContent } from './CalendarTopDockContent';
 export { default as FixedExpenseDetailSheet } from './FixedExpenseDetailSheet';
 export { default as FixedExpenseManageModal } from './FixedExpenseManageModal';
 export { default as FixedExpensePickerSheet } from './FixedExpensePickerSheet';

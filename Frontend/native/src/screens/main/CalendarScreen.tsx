@@ -1,30 +1,22 @@
 import React from 'react';
-import { View } from 'react-native';
-import { useFocusEffect, useRoute, useNavigation } from '@react-navigation/native';
 import { hp } from '../../constants/theme';
 import { styles } from './CalendarScreen.styles';
-import { useCalendarMockState } from '../../hooks/useCalendarMockState';
-import { setHideCalendarGuide, shouldHideCalendarGuide } from '../../services/guidePreference';
-import DataSourceNotice from '../../components/common/DataSourceNotice';
+import { useCalendarScreenFlow } from '../../hooks';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import {
   CalendarAddEntrySheet,
   CalendarDayDetailSheet,
   CalendarGuideModal,
-  FixedExpenseDetailSheet,
-  CalendarHeroCard,
   CalendarMonthCard,
-  CalendarTabSwitcher,
+  CalendarTopDockContent,
+  FixedExpenseDetailSheet,
   FixedExpenseManageModal,
   FixedExpensePickerSheet,
   FixedExpenseSection,
   TransactionHistorySection,
 } from '../../components/calendar';
-import type { MainTabNavigationProp, MainTabRouteProp } from '../../types';
 
 export default function CalendarScreen() {
-  const hasCheckedGuideRef = React.useRef(false);
-  const [isGuideVisible, setIsGuideVisible] = React.useState(false);
   const {
     overview,
     monthLabel,
@@ -72,27 +64,11 @@ export default function CalendarScreen() {
     handleSaveManualEntries,
     handleSaveExcelEntries,
     handleSaveMemo,
-  } = useCalendarMockState();
-
-  const route = useRoute<MainTabRouteProp<'Calendar'>>();
-  const navigation = useNavigation<MainTabNavigationProp<'Calendar'>>();
-
-  // [UX-Fix] 알림 클릭 등을 통한 딥링크(네비게이션 파라미터) 처리
-  React.useEffect(() => {
-    if (route.params?.action === 'add_record') {
-      // 내역 추가 모달 열기
-      setIsAddEntryVisible(true);
-
-      // 처리 후 파라미터 초기화 (다시 들어왔을 때 또 열리지 않도록)
-      navigation.setParams({ action: undefined });
-    }
-  }, [route.params?.action]);
-
-  // 가이드 자동 노출 로직 제거 (수동 호출 방식으로 변경)
-
-  const handleCloseGuide = React.useCallback(() => {
-    setIsGuideVisible(false);
-  }, []);
+    isGuideVisible,
+    handleOpenGuide,
+    handleCloseGuide,
+    handleOpenAddEntry,
+  } = useCalendarScreenFlow();
 
   return (
     <>
@@ -101,47 +77,21 @@ export default function CalendarScreen() {
         topDockStyle={styles.topDock}
         topDockTopPadding={hp(12)}
         topDockContent={
-          <>
-        {false && <DataSourceNotice
-          type={headerFetchState === 'live' ? 'mixed' : 'mock'}
-          description={
-            headerFetchState === 'live'
-              ? '헤더 일부는 실데이터이고, 메모와 일부 월 데이터 및 고정지출 흐름에는 mock 또는 fallback 데이터가 포함됩니다.'
-              : '현재 캘린더 화면은 mock 또는 fallback 데이터가 포함되어 있습니다.'
-          }
-          style={styles.notice}
-        />}
-        {/*
-          원래 화면 기준:
-          - 보라색 히어로 카드가 화면 첫 인상을 만들고 있었습니다.
-
-          변경 이유:
-          - 새 상단 바 대신 기존 히어로 카드를 그대로 고정해, 익숙한 UI를 유지하면서도
-            월 이동과 내역 추가 조작을 항상 상단에서 할 수 있게 맞춥니다.
-        */}
-        <CalendarHeroCard
-          overview={overview}
-          monthLabel={monthLabel}
-          weatherIconName={weatherIconName}
-          headerFetchState={headerFetchState}
-          headerErrorMessage={headerErrorMessage}
-          onPressPrevMonth={() => handleMoveMonth('prev')}
-          onPressNextMonth={() => handleMoveMonth('next')}
-          onPressAdd={() => setIsAddEntryVisible(true)}
-          onPressInfo={() => setIsGuideVisible(true)}
-        />
-
-        {/*
-          변경 이유:
-          - 캘린더/전체내역 토글은 화면 문맥 전환 역할이라 스크롤에 밀려 내려가면
-            사용성이 떨어집니다.
-          - 히어로 카드 바로 아래 고정 영역으로 올려, 화면 어디서든 같은 위치에서
-            보기 전환이 가능하도록 정리합니다.
-        */}
-        <View style={styles.tabWrap}>
-          <CalendarTabSwitcher activeTab={activeTab} onChange={setActiveTab} />
-        </View>
-          </>
+          <CalendarTopDockContent
+            overview={overview}
+            monthLabel={monthLabel}
+            weatherIconName={weatherIconName}
+            headerFetchState={headerFetchState}
+            headerErrorMessage={headerErrorMessage}
+            activeTab={activeTab}
+            onChangeTab={setActiveTab}
+            onPressPrevMonth={() => handleMoveMonth('prev')}
+            onPressNextMonth={() => handleMoveMonth('next')}
+            onPressAdd={handleOpenAddEntry}
+            onPressInfo={handleOpenGuide}
+            noticeStyle={styles.notice}
+            tabWrapStyle={styles.tabWrap}
+          />
         }
         scrollViewStyle={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
