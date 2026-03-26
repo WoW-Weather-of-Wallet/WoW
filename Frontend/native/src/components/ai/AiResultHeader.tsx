@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { COLORS, FONTS, fp, hp } from '../../constants/theme';
 
 interface AiResultHeaderProps {
@@ -9,38 +9,42 @@ interface AiResultHeaderProps {
 
 export default function AiResultHeader({ displayName, title }: AiResultHeaderProps) {
   return (
-    <View style={styles.header}>
-      <Text style={styles.userName}>
-        <Text style={styles.userNameHighlight}>{displayName}</Text>
+    <View style={{ marginBottom: hp(32) }}>
+      <Text
+        className="text-[#15192A]"
+        style={{
+          fontSize: fp(24),
+          fontFamily: FONTS.bold,
+          color: COLORS.textPrimary,
+        }}
+      >
+        <Text
+          style={{
+            fontFamily: FONTS.extraBold,
+            color: COLORS.primaryDark,
+          }}
+        >
+          {displayName}
+        </Text>
       </Text>
-      <Text style={styles.title}>
-        <Text style={styles.highlightExtraBold}>{title}</Text>
+      <Text
+        className="text-[#15192A]"
+        style={{
+          fontSize: fp(24),
+          fontFamily: FONTS.bold,
+          color: COLORS.textPrimary,
+          marginTop: hp(4),
+        }}
+      >
+        <Text
+          style={{
+            color: COLORS.primaryDark,
+            fontFamily: FONTS.extraBold,
+          }}
+        >
+          {title}
+        </Text>
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    marginBottom: hp(32),
-  },
-  userName: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-  title: {
-    fontSize: fp(24),
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    marginTop: hp(4),
-  },
-  highlightExtraBold: {
-    color: COLORS.primaryDark,
-    fontFamily: FONTS.extraBold,
-  },
-  userNameHighlight: {
-    fontFamily: FONTS.extraBold,
-    color: COLORS.primaryDark,
-  },
-});

@@ -1,8 +1,7 @@
 import React from 'react';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { styles } from './AiResultScreen.styles';
 import GradientButton from '../../components/common/GradientButton';
-import { COLORS, hp } from '../../constants/theme';
+import { COLORS, hp, wp } from '../../constants/theme';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import { AiResultHeader, AiResultSummaryCard } from '../../components/ai';
 import { useAiResultSummary } from '../../hooks';
@@ -17,13 +16,16 @@ export default function AiResultScreen({
 
   return (
     <BottomTabScreenLayout
-      containerStyle={styles.container}
-      contentContainerStyle={styles.scrollContent}
+      containerStyle={{ flex: 1, backgroundColor: COLORS.background }}
+      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: wp(20) }}
       scrollTopPadding={20}
       scrollBottomPadding={hp(40)}
       backgroundColor={COLORS.background}
     >
-      <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
+      <Animated.View
+        entering={FadeInDown.duration(500)}
+        style={{ marginBottom: hp(32) }}
+      >
         <AiResultHeader displayName={displayName} title={title} />
       </Animated.View>
 
@@ -36,7 +38,10 @@ export default function AiResultScreen({
         </Animated.View>
       ))}
 
-      <Animated.View entering={FadeInDown.delay(500).duration(500)} style={styles.bottomSection}>
+      <Animated.View
+        entering={FadeInDown.delay(500).duration(500)}
+        style={{ marginTop: hp(10) }}
+      >
         <GradientButton
           title={buttonTitle}
           onPress={() => {
