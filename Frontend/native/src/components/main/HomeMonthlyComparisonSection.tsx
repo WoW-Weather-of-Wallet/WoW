@@ -1,8 +1,10 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+
 import { COLORS } from '../../constants/theme';
 import type { LegendListItem } from '../../constants/main/types';
 import LegendList from './LegendList';
+import HomeMonthlyComparisonRingCard from './HomeMonthlyComparisonRingCard';
 import { styles } from './HomeMonthlyReportSheet.styles';
 
 interface HomeMonthlyComparisonSectionProps {
@@ -27,33 +29,18 @@ export default function HomeMonthlyComparisonSection({
   return (
     <>
       <View style={styles.compareRow}>
-        <View style={styles.compareColumn}>
-          <View style={styles.compareChipPrimary}>
-            <Text style={styles.compareChipPrimaryText}>{currentMonthLabel || '-'}</Text>
-          </View>
-          <View style={styles.reportRing}>
-            <View style={styles.reportRingCenter}>
-              <Text style={styles.reportRingAmount}>
-                {currentTotalAmount == null ? '-' : `${currentTotalAmount.toLocaleString()}원`}
-              </Text>
-              <Text style={styles.reportRingLabel}>{amountLabel}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.compareColumn}>
-          <View style={styles.compareChipMuted}>
-            <Text style={styles.compareChipMutedText}>{lastMonthLabel || '-'}</Text>
-          </View>
-          <View style={[styles.reportRing, styles.reportRingMuted]}>
-            <View style={styles.reportRingCenter}>
-              <Text style={styles.reportRingAmount}>
-                {lastTotalAmount == null ? '-' : `${lastTotalAmount.toLocaleString()}원`}
-              </Text>
-              <Text style={styles.reportRingLabel}>{amountLabel}</Text>
-            </View>
-          </View>
-        </View>
+        <HomeMonthlyComparisonRingCard
+          monthLabel={currentMonthLabel}
+          totalAmount={currentTotalAmount}
+          amountLabel={amountLabel}
+          tone="primary"
+        />
+        <HomeMonthlyComparisonRingCard
+          monthLabel={lastMonthLabel}
+          totalAmount={lastTotalAmount}
+          amountLabel={amountLabel}
+          tone="muted"
+        />
       </View>
 
       <LegendList
