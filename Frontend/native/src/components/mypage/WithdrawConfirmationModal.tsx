@@ -12,50 +12,32 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, wp } from '../../constants/theme';
-import { styles } from './WithdrawConfirmationModal.styles';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import { sendSmsCode, verifySmsCode, normalizePhoneNumber } from '../../services/auth';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { maskPhoneNumber } from '../../utils/phoneFormat';
 
-// ─────────────────────────────────────────────
-// Props
-// ─────────────────────────────────────────────
-
 interface WithdrawConfirmationModalProps {
   visible: boolean;
   onClose: () => void;
-  /** SMS 인증까지 완료한 뒤 탈퇴 API를 호출하는 콜백 */
   onConfirm: () => void;
-  /** 인증번호를 발송할 등록된 휴대폰 번호 (raw) */
   phoneNumber: string;
 }
-
-// ─────────────────────────────────────────────
-// 컴포넌트
-// ─────────────────────────────────────────────
 
 export default function WithdrawConfirmationModal({
   visible,
   onClose,
   onConfirm,
-  // 프로필 로딩 완료 전 undefined가 들어올 수 있으므로 기본값 설정
   phoneNumber = '',
 }: WithdrawConfirmationModalProps) {
-  // 입력된 SMS 인증번호
   const [code, setCode] = useState('');
-  // 인증번호 발송 완료 여부
   const [isCodeSent, setIsCodeSent] = useState(false);
-  // SMS 본인 확인 완료 여부
   const [isVerified, setIsVerified] = useState(false);
-  // SMS 발송 요청 중 여부
   const [isSending, setIsSending] = useState(false);
-  // 인증번호 검증 요청 중 여부
   const [isVerifying, setIsVerifying] = useState(false);
 
   const maskedPhone = maskPhoneNumber(phoneNumber);
 
-  /** 모달 닫기: 내부 상태를 초기화하고 부모 콜백 호출 */
   const handleClose = () => {
     setCode('');
     setIsCodeSent(false);
@@ -65,20 +47,20 @@ export default function WithdrawConfirmationModal({
     onClose();
   };
 
-  /** 인증번호 발송 요청 */
   const handleSendCode = async () => {
     if (isSending) return;
+
     setIsSending(true);
     try {
       await sendSmsCode({ phoneNumber: normalizePhoneNumber(phoneNumber) });
       setIsCodeSent(true);
       setIsVerified(false);
       setCode('');
-      Alert.alert('인증번호 발송', `${maskedPhone}으로 인증번호를 전송했습니다.`);
+      Alert.alert('인증번호 발송', `${maskedPhone}로 인증번호를 전송했어요.`);
     } catch (error) {
       const presentation = buildAuthErrorPresentation(error, {
         flow: 'sms-send',
-        fallbackMessage: '인증번호를 보내지 못했어요. 다시 시도해주세요.',
+        fallbackMessage: '인증번호를 보내지 못했어요. 다시 시도해 주세요.',
       });
       Alert.alert(presentation.title, presentation.alertMessage);
     } finally {
@@ -86,9 +68,9 @@ export default function WithdrawConfirmationModal({
     }
   };
 
-  /** 인증번호 확인 요청 */
   const handleVerifyCode = async () => {
     if (isVerifying || code.trim().length !== 6) return;
+
     setIsVerifying(true);
     try {
       await verifySmsCode({
@@ -99,7 +81,7 @@ export default function WithdrawConfirmationModal({
     } catch (error) {
       const presentation = buildAuthErrorPresentation(error, {
         flow: 'sms-verify',
-        fallbackMessage: '인증번호가 올바르지 않아요. 다시 확인해주세요.',
+        fallbackMessage: '인증번호가 올바르지 않아요. 다시 확인해 주세요.',
       });
       Alert.alert(presentation.title, presentation.alertMessage);
     } finally {
@@ -107,7 +89,6 @@ export default function WithdrawConfirmationModal({
     }
   };
 
-  /** 탈퇴 확정: 본인 확인 완료 후에만 가능 */
   const handleConfirm = () => {
     if (!isVerified) return;
     onConfirm();
@@ -116,97 +97,211 @@ export default function WithdrawConfirmationModal({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
-      <Pressable style={styles.overlay} onPress={handleClose}>
+      <Pressable
+        className="flex-1 justify-center bg-[rgba(15,23,42,0.45)]"
+        onPress={handleClose}
+        style={{ paddingHorizontal: wp(24) }}
+      >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardView}
+          className="w-full items-center"
         >
-          <Pressable style={styles.content} onPress={(e) => e.stopPropagation()}>
-
-            {/* ── 경고 헤더 ── */}
-            <View style={styles.header}>
-              <View style={styles.warningIconContainer}>
+          <Pressable
+            className="w-full bg-[#F8FAFC]"
+            onPress={(event) => event.stopPropagation()}
+            style={{
+              borderRadius: RADIUS.xl,
+              padding: wp(24),
+              gap: hp(24),
+            }}
+          >
+            <View className="items-center" style={{ gap: hp(12) }}>
+              <View
+                className="items-center justify-center bg-[#FFF1F2]"
+                style={{
+                  width: wp(64),
+                  height: wp(64),
+                  borderRadius: wp(32),
+                  marginBottom: hp(4),
+                }}
+              >
                 <Ionicons name="warning" size={wp(32)} color={COLORS.error} />
               </View>
-              <Text style={styles.title}>정말 떠나시나요?</Text>
-              <Text style={styles.description}>
-                계정을 삭제하면 모든 자산 정보, 거래 내역, 설정이{'\n'}
-                즉시 삭제되며 복구할 수 없습니다.
+
+              <Text
+                className="text-center text-[#15192A]"
+                style={{
+                  fontSize: fp(22),
+                  fontFamily: FONTS.bold,
+                  color: COLORS.textPrimary,
+                }}
+              >
+                정말 탈퇴하시나요?
+              </Text>
+
+              <Text
+                className="text-center text-[#6B7280]"
+                style={{
+                  fontSize: fp(14),
+                  fontFamily: FONTS.medium,
+                  color: COLORS.textSecondary,
+                  lineHeight: fp(22),
+                }}
+              >
+                계정을 삭제하면 모든 자산 정보, 거래 내역, 설정이 즉시 삭제되고
+                복구할 수 없어요.
               </Text>
             </View>
 
-            {/* ── SMS 본인 인증 안내 + 발송 버튼 ── */}
-            <View style={styles.inputSection}>
-              <Text style={styles.inputLabel}>
-                {'등록된 번호 '}
-                <Text style={styles.boldText}>{maskedPhone}</Text>
-                {'\n'}으로 인증번호를 발송해 본인 확인을 진행합니다.
+            <View style={{ gap: hp(12) }}>
+              <Text
+                className="text-center text-[#15192A]"
+                style={{
+                  fontSize: fp(14),
+                  fontFamily: FONTS.medium,
+                  color: COLORS.textPrimary,
+                }}
+              >
+                등록된 번호 <Text style={{ fontFamily: FONTS.bold, color: COLORS.error }}>{maskedPhone}</Text>
+                {'\n'}로 인증번호를 발송해 본인 확인을 진행합니다.
               </Text>
+
               <TouchableOpacity
-                style={[styles.sendCodeButton, isSending && styles.disabledButton]}
-                onPress={() => void handleSendCode()}
                 disabled={isSending}
+                onPress={() => void handleSendCode()}
+                className="items-center bg-[#4D74FF]"
+                style={{
+                  paddingVertical: hp(14),
+                  borderRadius: RADIUS.full,
+                  backgroundColor: isSending ? COLORS.switchTrackFalse : COLORS.primary,
+                }}
               >
                 {isSending ? (
                   <ActivityIndicator color={COLORS.white} size="small" />
                 ) : (
-                  <Text style={styles.sendCodeButtonText}>
+                  <Text
+                    style={{
+                      fontSize: fp(15),
+                      fontFamily: FONTS.bold,
+                      color: COLORS.white,
+                    }}
+                  >
                     {isCodeSent ? '인증번호 다시 발송' : '인증번호 발송'}
                   </Text>
                 )}
               </TouchableOpacity>
             </View>
 
-            {/* ── 인증번호 입력 영역 (발송 후 표시) ── */}
             {isCodeSent ? (
-              <View style={styles.inputSection}>
+              <View style={{ gap: hp(12) }}>
                 <TextInput
-                  style={[styles.input, isVerified && styles.inputActive]}
-                  placeholder="인증번호 6자리 입력"
-                  placeholderTextColor={COLORS.textTertiary}
                   value={code}
                   onChangeText={setCode}
                   keyboardType="number-pad"
                   maxLength={6}
                   editable={!isVerified}
+                  placeholder="인증번호 6자리를 입력해 주세요"
+                  placeholderTextColor={COLORS.textTertiary}
+                  className="text-center text-[#15192A]"
+                  style={{
+                    backgroundColor: isVerified
+                      ? COLORS.dangerBackground
+                      : COLORS.noticeBoxBackground,
+                    borderWidth: 1,
+                    borderColor: isVerified ? COLORS.error : COLORS.border,
+                    borderRadius: RADIUS.md,
+                    paddingVertical: hp(14),
+                    paddingHorizontal: wp(16),
+                    fontSize: fp(16),
+                    fontFamily: FONTS.semiBold,
+                    color: COLORS.textPrimary,
+                  }}
                 />
 
-                {/* 인증 전: 확인 버튼 / 인증 후: 완료 메시지 */}
                 {isVerified ? (
-                  <Text style={styles.verifiedText}>✓ 본인 확인이 완료되었습니다.</Text>
+                  <Text
+                    className="text-center"
+                    style={{
+                      fontSize: fp(13),
+                      fontFamily: FONTS.medium,
+                      color: COLORS.success,
+                      marginTop: hp(4),
+                    }}
+                  >
+                    본인 확인이 완료되었습니다.
+                  </Text>
                 ) : (
                   <TouchableOpacity
-                    style={[
-                      styles.confirmButton,
-                      (code.length !== 6 || isVerifying) && styles.disabledButton,
-                    ]}
-                    onPress={() => void handleVerifyCode()}
                     disabled={code.length !== 6 || isVerifying}
+                    onPress={() => void handleVerifyCode()}
+                    className="items-center"
+                    style={{
+                      backgroundColor:
+                        code.length !== 6 || isVerifying ? COLORS.switchTrackFalse : COLORS.error,
+                      paddingVertical: hp(16),
+                      borderRadius: RADIUS.full,
+                    }}
                   >
                     {isVerifying ? (
                       <ActivityIndicator color={COLORS.white} size="small" />
                     ) : (
-                      <Text style={styles.confirmButtonText}>인증번호 확인</Text>
+                      <Text
+                        style={{
+                          fontSize: fp(16),
+                          fontFamily: FONTS.bold,
+                          color: COLORS.white,
+                        }}
+                      >
+                        인증번호 확인
+                      </Text>
                     )}
                   </TouchableOpacity>
                 )}
               </View>
             ) : null}
 
-            {/* ── 취소 / 탈퇴하기 버튼 ── */}
-            <View style={styles.buttonRow}>
-              <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
-                <Text style={styles.cancelButtonText}>취소</Text>
-              </TouchableOpacity>
+            <View className="flex-row" style={{ gap: wp(12) }}>
               <TouchableOpacity
-                style={[styles.confirmButton, !isVerified && styles.disabledButton]}
-                onPress={handleConfirm}
-                disabled={!isVerified}
+                onPress={handleClose}
+                className="flex-1 items-center bg-[#EEF2F7]"
+                style={{
+                  paddingVertical: hp(16),
+                  borderRadius: RADIUS.full,
+                }}
               >
-                <Text style={styles.confirmButtonText}>탈퇴하기</Text>
+                <Text
+                  className="text-[#15192A]"
+                  style={{
+                    fontSize: fp(16),
+                    fontFamily: FONTS.bold,
+                    color: COLORS.textPrimary,
+                  }}
+                >
+                  취소
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                disabled={!isVerified}
+                onPress={handleConfirm}
+                className="flex-1 items-center"
+                style={{
+                  backgroundColor: isVerified ? COLORS.error : COLORS.switchTrackFalse,
+                  paddingVertical: hp(16),
+                  borderRadius: RADIUS.full,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fp(16),
+                    fontFamily: FONTS.bold,
+                    color: COLORS.white,
+                  }}
+                >
+                  탈퇴하기
+                </Text>
               </TouchableOpacity>
             </View>
-
           </Pressable>
         </KeyboardAvoidingView>
       </Pressable>
