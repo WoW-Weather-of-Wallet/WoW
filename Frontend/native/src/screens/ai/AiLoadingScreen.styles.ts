@@ -35,9 +35,10 @@ export const styles = StyleSheet.create({
   /**
    * [UI-Detail] 하단에 진행 상태를 시각적으로 보여주는 미세한 프로그레스 바입니다.
    */
+  progressBarOverlay: {
+    alignItems: 'center',
+  },
   progressBarContainer: {
-    position: 'absolute',
-    bottom: hp(30),
     width: wp(200),
     height: 4,
     backgroundColor: COLORS.gray100,

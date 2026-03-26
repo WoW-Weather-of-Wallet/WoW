@@ -5,19 +5,16 @@ import {
   Linking,
   Modal,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { StatusBar } from 'react-native';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { COLORS, hp, wp } from '../../constants/theme';
+import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import { useAuthStore } from '../../store/authStore';
 import { useLocalSecurityStore } from '../../store/localSecurityStore';
 import { fcmService } from '../../services/fcmService';
@@ -55,8 +52,6 @@ type PinModalMode = 'setup' | 'change' | 'disable';
  * 보유 카드 및 연결 계좌 관련 코드는 주석 처리하여 보존합니다.
  */
 export default function MyPageScreen() {
-  const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
   const navigation = useNavigation<MyPageStackNavigationProp<'MyPageHome'>>();
   const logout = useAuthStore((state) => state.logout);
   const sessionUser = useAuthStore((state) => state.user);
@@ -312,52 +307,44 @@ export default function MyPageScreen() {
   const displayBadge =
     (profile?.loginType ?? sessionLoginType) === 'SSAFY' ? 'SSAFY 회원' : '일반 회원';
   const displayInitial = displayName.slice(0, 1);
-  return (
-    <View style={styles.container}>
-      <View
-        style={[
-          styles.profileDock,
-          {
-            paddingTop: insets.top + hp(12),
-          },
-        ]}
-      >
-        <View style={styles.profileCard}>
-          <View style={styles.profileHeaderRow}>
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarText}>{displayInitial}</Text>
-            </View>
-            <View style={styles.profileTextBlock}>
-              <View style={styles.nameRow}>
-                <Text style={styles.profileName}>
-                  <Text style={styles.profileNameHighlight}>{displayName}</Text>님
-                </Text>
-                <View style={styles.profileBadge}>
-                  <Text style={styles.profileBadgeText}>{displayBadge}</Text>
-                </View>
-              </View>
+  const profileDockContent = (
+    <View style={styles.profileCard}>
+      <View style={styles.profileHeaderRow}>
+        <View style={styles.avatarCircle}>
+          <Text style={styles.avatarText}>{displayInitial}</Text>
+        </View>
+        <View style={styles.profileTextBlock}>
+          <View style={styles.nameRow}>
+            <Text style={styles.profileName}>
+              <Text style={styles.profileNameHighlight}>{displayName}</Text>님
+            </Text>
+            <View style={styles.profileBadge}>
+              <Text style={styles.profileBadgeText}>{displayBadge}</Text>
             </View>
           </View>
-
-          {isLoading && (
-            <View style={styles.profileLoadingRow}>
-              <ActivityIndicator color={COLORS.primary} />
-              <Text style={styles.profileLoadingText}>정보를 불러오고 있어요...</Text>
-            </View>
-          )}
         </View>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.contentContainer,
-          {
-            paddingTop: hp(16),
-            paddingBottom: tabBarHeight + hp(40),
-          },
-        ]}
+      {isLoading && (
+        <View style={styles.profileLoadingRow}>
+          <ActivityIndicator color={COLORS.primary} />
+          <Text style={styles.profileLoadingText}>정보를 불러오고 있어요...</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  return (
+    <>
+      <BottomTabScreenLayout
+        containerStyle={styles.container}
+        topDockStyle={styles.profileDock}
+        topDockTopPadding={hp(12)}
+        topDockContent={profileDockContent}
+        scrollViewStyle={styles.scrollView}
+        contentContainerStyle={styles.contentContainer}
+        scrollTopPadding={hp(16)}
+        scrollBottomPadding={hp(40)}
       >
         {/* [LEGACY: Legacy Sections - Preserved for Reference]
           <View style={styles.profileSummaryRow}>
@@ -459,7 +446,7 @@ export default function MyPageScreen() {
             <Ionicons name="exit-outline" size={wp(20)} color={COLORS.error} />
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </BottomTabScreenLayout>
 
       {/* ── 프로필 정보 모달 ── */}
       <Modal visible={editMode === 'profile'} transparent animationType="fade">
@@ -622,6 +609,6 @@ export default function MyPageScreen() {
       />
 
       {/* 회원 탈퇴는 WithdrawScreen(별도 화면)에서 SMS 인증 후 처리됩니다 */}
-    </View>
+    </>
   );
 }

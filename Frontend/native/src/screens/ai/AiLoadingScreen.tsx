@@ -13,11 +13,10 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, wp, hp } from '../../constants/theme';
 import { styles } from './AiLoadingScreen.styles';
+import BottomTabOverlayLayout from '../../components/common/BottomTabOverlayLayout';
 import { useAiStore } from '../../store/aiStore';
 import { useIsFocused } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DataSourceNotice from '../../components/common/DataSourceNotice';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import type { AiFeedbackStackScreenProps } from '../../types';
 
 /**
@@ -119,11 +118,9 @@ const CompletionCheck = () => {
 export default function AiLoadingScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiLoading'>) {
-  const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState(0);
   const progress = useSharedValue(0);
   const isFocused = useIsFocused(); // 현재 화면에 머물고 있는지 확인
-  const tabBarHeight = useBottomTabBarHeight();
   const { hideToast, status } = useAiStore();
 
   // 1. [DELETED] 분석 시작 로직은 이제 AiFeedbackHomeScreen 버튼에서 직접 처리합니다.
@@ -172,23 +169,35 @@ export default function AiLoadingScreen({
   const isLastStep = currentStep === LOADING_STEPS.length - 1;
 
   return (
-    <View style={styles.container}>
-      {false && <DataSourceNotice
-        type="mock"
-        description="현재 AI 분석 로딩은 실제 서버 응답이 아니라 시뮬레이션 흐름으로 동작합니다."
-        style={{
-          position: 'absolute',
-          top: insets.top + hp(16),
-          left: wp(24),
-          right: wp(24),
-          zIndex: 2,
-        }}
-      />}
-      <Animated.View 
+    <BottomTabOverlayLayout
+      containerStyle={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      backgroundColor={COLORS.background}
+      topOverlayTopPadding={hp(16)}
+      topOverlayStyle={{
+        paddingHorizontal: wp(24),
+        zIndex: 2,
+      }}
+      topOverlayContent={
+        false ? (
+          <DataSourceNotice
+            type="mock"
+            description="현재 AI 분석 로딩은 실제 서버 응답이 아니라 시뮬레이션 흐름으로 동작합니다."
+          />
+        ) : null
+      }
+      bottomOverlayBottomPadding={hp(30)}
+      bottomOverlayStyle={styles.progressBarOverlay}
+      bottomOverlayContent={
+        <View style={styles.progressBarContainer}>
+          <Animated.View style={[styles.progressBarFill, animatedProgressStyle]} />
+        </View>
+      }
+    >
+      <Animated.View
         key={currentStep} 
         entering={FadeIn.duration(800)}
         exiting={FadeOut.duration(800)}
-        style={styles.contentContainer}
       >
         {isLastStep ? (
           <CompletionCheck />
@@ -212,10 +221,6 @@ export default function AiLoadingScreen({
           </View>
         )}
       </Animated.View>
-
-      <View style={[styles.progressBarContainer, { bottom: tabBarHeight + hp(30) }]}>
-        <Animated.View style={[styles.progressBarFill, animatedProgressStyle]} />
-      </View>
-    </View>
+    </BottomTabOverlayLayout>
   );
 }
