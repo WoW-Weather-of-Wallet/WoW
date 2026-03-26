@@ -25,6 +25,7 @@ import {
 import ExcelUploadGuideModal from './ExcelUploadGuideModal';
 import CalendarCategorySelector from './CalendarCategorySelector';
 import CalendarUploadBackendSummaryCard from './CalendarUploadBackendSummaryCard';
+import CalendarUploadResultItemRow from './CalendarUploadResultItemRow';
 import type {
   CalendarUploadBackendItem,
   CalendarUploadBackendSummary,
@@ -639,54 +640,12 @@ export default function CalendarAddEntrySheet({
 
                     <View style={styles.uploadResultList}>
                       {group.items.map((item, index) => (
-                        <TouchableOpacity
+                        <CalendarUploadResultItemRow
                           key={item.id}
-                          activeOpacity={0.88}
-                          style={[
-                            styles.uploadResultItem,
-                            index < group.items.length - 1 && styles.uploadResultDivider,
-                          ]}
-                          onPress={() => setSelectedUploadItemId(item.id)}
-                        >
-                          <View style={styles.uploadResultLeft}>
-                            <View style={styles.uploadResultIcon}>
-                              <Ionicons
-                                name="document-text-outline"
-                                size={wp(16)}
-                                color={COLORS.textTertiary}
-                              />
-                            </View>
-                            <View style={styles.uploadResultTextWrap}>
-                              <Text style={styles.uploadResultMerchant}>{item.merchantName}</Text>
-                              {item.description ? (
-                                <Text style={styles.uploadResultDescription}>{item.description}</Text>
-                              ) : null}
-                            </View>
-                          </View>
-
-                          <View style={styles.uploadResultRight}>
-                            <Text style={styles.uploadResultAmount}>-{item.amount.toLocaleString()}원</Text>
-                            <View
-                              style={[
-                                styles.uploadResultBadge,
-                                item.status === 'needs-category'
-                                  ? styles.uploadResultBadgeWarning
-                                  : styles.uploadResultBadgeDefault,
-                              ]}
-                            >
-                              <Text
-                                style={[
-                                  styles.uploadResultBadgeText,
-                                  item.status === 'needs-category'
-                                    ? styles.uploadResultBadgeTextWarning
-                                    : styles.uploadResultBadgeTextDefault,
-                                ]}
-                              >
-                                {item.categoryLabel}
-                              </Text>
-                            </View>
-                          </View>
-                        </TouchableOpacity>
+                          item={item}
+                          isLast={index === group.items.length - 1}
+                          onPress={setSelectedUploadItemId}
+                        />
                       ))}
                     </View>
                   </View>
