@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert } from 'react-native';
-import { VERIFICATION_CODE_LENGTH } from '../constants/auth/identityVerification';
 import { sendSmsCode, verifySmsCode } from '../services/auth';
 import { buildAuthErrorPresentation } from '../utils/authErrorPresentation';
 import { maskPhoneNumber } from '../utils/phoneFormat';
+import { VERIFICATION_CODE_LENGTH } from '../constants/auth/identityVerification';
+import { useVerificationCodeInput } from './useVerificationCodeInput';
 
 interface UseSmsVerificationOptions {
   sendFallbackMessage: string;
@@ -18,41 +19,11 @@ export function useSmsVerification({
 }: UseSmsVerificationOptions) {
   const [phase, setPhase] = useState<'form' | 'verify'>('form');
   const [requestedPhoneNumber, setRequestedPhoneNumber] = useState('');
-  const [code, setCode] = useState('');
   const [verifyError, setVerifyError] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
-
-  const startVerification = useCallback(
-    async (phoneNumber: string) => {
-      if (isSending || !phoneNumber) {
-        return false;
-      }
-
-      setIsSending(true);
-
-      try {
-        await sendSmsCode({ phoneNumber });
-        setRequestedPhoneNumber(phoneNumber);
-        setCode('');
-        setVerifyError('');
-        setIsVerified(false);
-        setPhase('verify');
-        return true;
-      } catch (error) {
-        const presentation = buildAuthErrorPresentation(error, {
-          flow: 'sms-send',
-          fallbackMessage: sendFallbackMessage,
-        });
-        Alert.alert(presentation.title, presentation.alertMessage);
-        return false;
-      } finally {
-        setIsSending(false);
-      }
-    },
-    [isSending, sendFallbackMessage],
-  );
+  const resetCodeRef = useRef<() => void>(() => {});
 
   const submitVerificationCode = useCallback(
     async (finalCode: string) => {
@@ -76,7 +47,7 @@ export function useSmsVerification({
           fallbackMessage: verifyFallbackMessage,
         });
         setVerifyError(presentation.inlineMessage);
-        setCode('');
+        resetCodeRef.current();
         Alert.alert(presentation.title, presentation.alertMessage);
         return false;
       } finally {
@@ -86,29 +57,48 @@ export function useSmsVerification({
     [requestedPhoneNumber, verifyFallbackMessage],
   );
 
-  const handlePressNumber = useCallback(
-    (num: string) => {
-      if (isVerifying || isVerified || code.length >= VERIFICATION_CODE_LENGTH) {
-        return;
+  const {
+    code,
+    resetCode,
+    handlePressNumber,
+    handlePressDelete,
+  } = useVerificationCodeInput({
+    codeLength: VERIFICATION_CODE_LENGTH,
+    disabled: isVerifying || isVerified,
+    onComplete: submitVerificationCode,
+  });
+
+  resetCodeRef.current = resetCode;
+
+  const startVerification = useCallback(
+    async (phoneNumber: string) => {
+      if (isSending || !phoneNumber) {
+        return false;
       }
 
-      const nextCode = code + num;
-      setCode(nextCode);
+      setIsSending(true);
 
-      if (nextCode.length === VERIFICATION_CODE_LENGTH) {
-        void submitVerificationCode(nextCode);
+      try {
+        await sendSmsCode({ phoneNumber });
+        setRequestedPhoneNumber(phoneNumber);
+        resetCode();
+        setVerifyError('');
+        setIsVerified(false);
+        setPhase('verify');
+        return true;
+      } catch (error) {
+        const presentation = buildAuthErrorPresentation(error, {
+          flow: 'sms-send',
+          fallbackMessage: sendFallbackMessage,
+        });
+        Alert.alert(presentation.title, presentation.alertMessage);
+        return false;
+      } finally {
+        setIsSending(false);
       }
     },
-    [code, isVerified, isVerifying, submitVerificationCode],
+    [isSending, resetCode, sendFallbackMessage],
   );
-
-  const handlePressDelete = useCallback(() => {
-    if (isVerifying || code.length === 0) {
-      return;
-    }
-
-    setCode((prev) => prev.slice(0, -1));
-  }, [code.length, isVerifying]);
 
   const resendCode = useCallback(async () => {
     if (isSending || !requestedPhoneNumber) {
@@ -116,7 +106,7 @@ export function useSmsVerification({
     }
 
     setIsSending(true);
-    setCode('');
+    resetCode();
     setVerifyError('');
     setIsVerified(false);
 
@@ -137,15 +127,15 @@ export function useSmsVerification({
     } finally {
       setIsSending(false);
     }
-  }, [isSending, requestedPhoneNumber, resendFallbackMessage]);
+  }, [isSending, requestedPhoneNumber, resendFallbackMessage, resetCode]);
 
   const backToForm = useCallback(() => {
     setPhase('form');
     setRequestedPhoneNumber('');
-    setCode('');
+    resetCode();
     setVerifyError('');
     setIsVerified(false);
-  }, []);
+  }, [resetCode]);
 
   const requestedPhoneDisplay = useMemo(
     () => maskPhoneNumber(requestedPhoneNumber),
