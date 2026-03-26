@@ -7,6 +7,7 @@ import CloudyIcon from '../../../assets/imgs/weather/CloudyIcon';
 import OvercastIcon from '../../../assets/imgs/weather/OvercastIcon';
 import RainIcon from '../../../assets/imgs/weather/RainIcon';
 import HeavyRainIcon from '../../../assets/imgs/weather/HeavyRainIcon';
+import HomeWeatherGuideModal, { type HomeWeatherGuideItem } from './HomeWeatherGuideModal';
 
 interface HomeTodayWeatherCardProps {
   weatherName?: string | null;
@@ -81,7 +82,7 @@ const FALLBACK_WEATHERS: WeatherVisual[] = [
 ];
 
 // 안내 모달용 가이드 데이터
-const WEATHER_GUIDE = [
+const WEATHER_GUIDE: HomeWeatherGuideItem[] = [
   { type: '맑음', detail: '최근 평균 대비 10% 이하', icon: SunnyIcon, color: '#F59E0B' },
   { type: '구름', detail: '최근 평균 대비 10~20%', icon: CloudyIcon, color: '#FFFFFF' }, // 회색에서 흰색으로 변경
   { type: '흐림', detail: '최근 평균 대비 20~30%', icon: OvercastIcon, color: '#64748B' },
@@ -159,53 +160,11 @@ export default function HomeTodayWeatherCard({
         </View>
       </View>
 
-      <Modal
-        animationType="fade"
-        transparent
+      <HomeWeatherGuideModal
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <Pressable
-          className="flex-1 items-center justify-center bg-black/50 p-6"
-          onPress={() => setModalVisible(false)}
-        >
-          <Pressable className="w-full rounded-3xl bg-white p-6 shadow-lg">
-            <Text className="mb-2 text-xl font-bold text-gray-800">소비 날씨 안내</Text>
-            <Text className="mb-6 text-sm font-medium leading-relaxed text-gray-500">
-              최근 소비 흐름을 바탕으로 현재 소비 상태를 날씨처럼 보여줍니다.
-            </Text>
-
-            <View className="space-y-4">
-              {WEATHER_GUIDE.map((item) => {
-                const GuideIcon = item.icon;
-
-                return (
-                  <View key={item.type} className="mb-6 flex-row items-center">
-                    {/* [UX-Fix] 이미지 크기를 키워 시각적 전달력 강화 (h-10 -> h-14) */}
-                    <View className="h-14 w-14 items-center justify-center rounded-2xl bg-gray-100">
-                      <GuideIcon size={wp(28)} color={item.color} />
-                    </View>
-                    <View className="ml-4 flex-1">
-                      <Text className="text-lg font-bold text-gray-800">{item.type}</Text>
-                      <Text className="text-xs text-gray-400">
-                        <Text className="font-semibold text-gray-600">{item.detail}</Text>
-                      </Text>
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-
-            <TouchableOpacity
-              className="mt-6 items-center rounded-xl bg-primary py-4"
-              onPress={() => setModalVisible(false)}
-              activeOpacity={0.8}
-            >
-              <Text className="text-base font-bold text-white">닫기</Text>
-            </TouchableOpacity>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        items={WEATHER_GUIDE}
+        onClose={() => setModalVisible(false)}
+      />
     </View>
   );
 }
