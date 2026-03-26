@@ -62,8 +62,8 @@ public class NotificationScheduler {
 
     }
 
-    // 고정지출 결제 당일 오후 9시 알림
-    @Scheduled(cron = "0 0 21 * * *", zone = "Asia/Seoul")
+    // 고정지출 결제 당일 오전 9시 알림
+    @Scheduled(cron = "0 0 9 * * *", zone = "Asia/Seoul")
     public void sendFixedExpenseDayOfReminder() {
 
         // 오늘 납부일인 고정지출 조회
