@@ -234,10 +234,10 @@ public class CalendarService {
 
         if (primaryOverspending == null || primaryOverspending.getName() == null || primaryOverspending.getName().isBlank()) {
             if (totalSavable <= 0) {
-                return "최근 3개월 소비 흐름이 비교적 안정적이에요. 지금 패턴을 유지해보세요.";
+                return "최근 3개월 소비 흐름이 비교적 안정적이에요. 지금 패턴을 유지하면서 큰 지출만 가볍게 점검해보세요.";
             }
             return String.format(
-                    "최근 3개월 기준 약 %,d원 절약 여지가 보여요. 주요 소비 카테고리를 한 번 점검해보세요.",
+                    "최근 3개월 기준 약 %,d원 정도 조절 여지가 보여요. 가장 자주 나가는 지출부터 천천히 점검해보세요.",
                     totalSavable
             );
         }
@@ -249,27 +249,27 @@ public class CalendarService {
 
         return switch (weatherName) {
             case "맑음" -> String.format(
-                    "%s 지출이 조금 높지만 전반적으로는 안정적이에요. 약 %,d원 정도만 가볍게 점검해보세요.",
+                    "%s 지출이 조금 높지만 전반적으로는 안정적이에요. 약 %,d원 정도만 가볍게 조절해도 충분합니다.",
                     categoryName,
                     savableAmount
             );
             case "구름" -> String.format(
-                    "%s 지출을 조금만 다듬으면 약 %,d원 더 아낄 수 있어요.",
+                    "%s 지출이 조금씩 누적되고 있어요. 이번 달엔 약 %,d원 정도를 줄이는 흐름을 먼저 만들어보세요.",
                     categoryName,
                     savableAmount
             );
             case "흐림" -> String.format(
-                    "%s 비중이 기준보다 높아요. 약 %,d원 절약할 수 있어 먼저 점검해보세요.",
+                    "%s 비중이 기준보다 높아요. 소비 리듬을 한 번 조정하면 약 %,d원 정도 절감할 가능성이 큽니다.",
                     categoryName,
                     savableAmount
             );
             case "비" -> String.format(
-                    "%s 지출이 크게 높아요. 약 %,d원 절약 여지가 있어 이번 달 관리 우선순위로 추천해요.",
+                    "%s 지출이 이번 달 예산을 흔들고 있어요. 우선순위를 정해 약 %,d원 정도를 먼저 줄여보세요.",
                     categoryName,
                     savableAmount
             );
             default -> String.format(
-                    "%s 과소비 신호가 강해요. 약 %,d원 절약 가능하니 가장 먼저 관리해보세요.",
+                    "%s 지출 비중이 매우 높아요. 지금 강하게 조절하지 않으면 이번 달 소비 부담이 커질 수 있어요. 약 %,d원 정도 절감 목표를 먼저 잡아보세요.",
                     categoryName,
                     savableAmount
             );
