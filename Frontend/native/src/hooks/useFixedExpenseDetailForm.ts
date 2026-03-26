@@ -42,7 +42,9 @@ export function useFixedExpenseDetailForm({
     setAmountInput(String(item.amount));
   }, [initialPaymentDay, item, visible]);
 
-  const sheetTitle = isEditMode ? '고정지출 수정' : '등록 설정';
+  const sheetTitle = isEditMode
+    ? '\uACE0\uC815\uC9C0\uCD9C \uC218\uC815'
+    : '\uACE0\uC815\uC9C0\uCD9C \uB4F1\uB85D';
 
   const sheetSubtitle = useMemo(() => {
     if (!item) {
@@ -50,25 +52,25 @@ export function useFixedExpenseDetailForm({
     }
 
     if (isEditMode) {
-      return `"${item.title}" 항목의 금액과 납부일을 변경할 수 있어요`;
+      return `"${item.title}" \uD56D\uBAA9\uC758 \uAE08\uC561\uACFC \uB0A9\uBD80\uC77C\uC744 \uD544\uC694\uC5D0 \uB9DE\uAC8C \uC218\uC815\uD574\uBCF4\uC138\uC694.`;
     }
 
-    return `"${item.title}"를 고정지출로 연결하는 단계입니다`;
+    return `"${item.title}"\uB97C \uACE0\uC815\uC9C0\uCD9C\uB85C \uB4F1\uB85D\uD558\uACE0 \uC6D4\uBCC4 \uD750\uB984\uC5D0 \uBC18\uC601\uD574\uBCF4\uC138\uC694.`;
   }, [isEditMode, item]);
 
   const aiHintTitle = isEditMode
-    ? '현재 항목 정보는 그대로 유지돼요'
-    : '카테고리는 상세 조회에서만 확인';
+    ? '\uD56D\uBAA9 \uC218\uC815 \uC548\uB0B4'
+    : '\uCE74\uD14C\uACE0\uB9AC \uC81C\uC548 \uC548\uB0B4';
 
   const aiHintText = useMemo(() => {
     if (isEditMode) {
-      return '수정 화면에서는 금액과 납부일을 바꿀 수 있고, 거래명과 카테고리는 현재 설정을 유지합니다.';
+      return '\uC218\uC815 \uD6C4\uC5D0\uB294 \uAE08\uC561\uACFC \uB0A9\uBD80\uC77C\uC774 \uBC14\uB85C \uC801\uC6A9\uB418\uBA70, \uC6D4\uBCC4 \uACE0\uC815\uC9C0\uCD9C \uD750\uB984\uC5D0\uB3C4 \uD568\uAED8 \uBC18\uC601\uB429\uB2C8\uB2E4.';
     }
 
-    return `등록 단계에서는 카테고리를 고르지 않고, 현재 거래 기준 분류를 그대로 유지합니다. 현재 분류는 "${resolvedCategory}"로 연결됩니다.`;
+    return `\uB4F1\uB85D \uC804\uC5D0 \uCE74\uD14C\uACE0\uB9AC\uC640 \uB0A9\uBD80\uC77C\uC744 \uD55C \uBC88 \uB354 \uD655\uC778\uD574\uBCF4\uC138\uC694. \uD604\uC7AC \uC81C\uC548 \uCE74\uD14C\uACE0\uB9AC\uB294 "${resolvedCategory}"\uC785\uB2C8\uB2E4.`;
   }, [isEditMode, resolvedCategory]);
 
-  const amountPreviewLabel = `₩${Number(amountInput || 0).toLocaleString()}`;
+  const amountPreviewLabel = `${Number(amountInput || 0).toLocaleString()}`;
 
   const handleChangeAmountInput = (text: string) => {
     setAmountInput(text.replace(/[^0-9]/g, ''));

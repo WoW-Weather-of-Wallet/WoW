@@ -3,10 +3,10 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import BottomSheetModal from '../common/BottomSheetModal';
 import CustomTextInput from '../common/CustomTextInput';
 import { useFixedExpenseDetailForm, type FixedExpenseDetailItem } from '../../hooks';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import FixedExpensePaymentDayStepper from './FixedExpensePaymentDayStepper';
 import FixedExpenseReadonlyInfoCard from './FixedExpenseReadonlyInfoCard';
 import FixedExpenseSelectedSummaryCard from './FixedExpenseSelectedSummaryCard';
-import { styles } from './FixedExpenseDetailSheet.styles';
 
 interface FixedExpenseDetailSheetProps {
   visible: boolean;
@@ -25,7 +25,7 @@ export default function FixedExpenseDetailSheet({
   mode = 'create',
   initialCategory,
   initialPaymentDay,
-  submitLabel = '고정지출 저장하기',
+  submitLabel = '\uACE0\uC815\uC9C0\uCD9C\uB85C \uB4F1\uB85D\uD558\uAE30',
   onClose,
   onSubmit,
 }: FixedExpenseDetailSheetProps) {
@@ -65,36 +65,110 @@ export default function FixedExpenseDetailSheet({
     >
       <FixedExpenseSelectedSummaryCard item={item} />
 
-      <View style={styles.aiHintCard}>
-        <Text style={styles.aiHintTitle}>{aiHintTitle}</Text>
-        <Text style={styles.aiHintText}>{aiHintText}</Text>
+      <View
+        style={{
+          borderRadius: RADIUS.xl,
+          backgroundColor: COLORS.aiHintBackground,
+          paddingHorizontal: wp(14),
+          paddingVertical: hp(12),
+          marginBottom: hp(18),
+        }}
+      >
+        <Text
+          style={{
+            fontSize: fp(14),
+            fontFamily: FONTS.semiBold,
+            color: COLORS.aiHintTitle,
+          }}
+        >
+          {aiHintTitle}
+        </Text>
+        <Text
+          style={{
+            marginTop: hp(6),
+            fontSize: fp(12),
+            fontFamily: FONTS.medium,
+            color: COLORS.aiHintText,
+            lineHeight: fp(18),
+          }}
+        >
+          {aiHintText}
+        </Text>
       </View>
 
       {isEditMode ? (
         <>
-          <FixedExpenseReadonlyInfoCard title={item.title} category={resolvedCategory} />
+          <FixedExpenseReadonlyInfoCard
+            title={item.title}
+            category={resolvedCategory}
+          />
 
-          <Text style={styles.sectionTitle}>금액</Text>
+          <Text
+            style={{
+              fontSize: fp(16),
+              fontFamily: FONTS.bold,
+              color: COLORS.textPrimary,
+              marginBottom: hp(12),
+            }}
+          >
+            {'\uAE08\uC561'}
+          </Text>
           <CustomTextInput
-            label="수정할 금액을 입력해주세요"
+            label={'\uC218\uC815\uD560 \uAE08\uC561\uC744 \uC785\uB825\uD574 \uC8FC\uC138\uC694'}
             value={amountInput}
             onChangeText={handleChangeAmountInput}
             keyboardType="number-pad"
-            containerStyle={styles.amountInput}
+            containerStyle={{ marginBottom: hp(8) }}
           />
-          <Text style={styles.amountPreview}>{amountPreviewLabel}원</Text>
+          <Text
+            style={{
+              marginBottom: hp(18),
+              textAlign: 'right',
+              fontSize: fp(13),
+              fontFamily: FONTS.semiBold,
+              color: COLORS.textSecondary,
+            }}
+          >
+            {`${amountPreviewLabel}\uC6D0`}
+          </Text>
         </>
       ) : null}
 
-      <Text style={styles.sectionTitle}>납부일</Text>
+      <Text
+        style={{
+          fontSize: fp(16),
+          fontFamily: FONTS.bold,
+          color: COLORS.textPrimary,
+          marginBottom: hp(12),
+        }}
+      >
+        {'\uB0A9\uBD80\uC77C'}
+      </Text>
       <FixedExpensePaymentDayStepper
         paymentDay={paymentDay}
         onDecrease={decreasePaymentDay}
         onIncrease={increasePaymentDay}
       />
 
-      <TouchableOpacity activeOpacity={0.88} style={styles.submitButton} onPress={handleSubmit}>
-        <Text style={styles.submitButtonText}>{submitLabel}</Text>
+      <TouchableOpacity
+        activeOpacity={0.88}
+        className="items-center justify-center"
+        style={{
+          borderRadius: RADIUS.xl,
+          backgroundColor: COLORS.primary,
+          paddingVertical: hp(16),
+        }}
+        onPress={handleSubmit}
+      >
+        <Text
+          style={{
+            fontSize: fp(16),
+            fontFamily: FONTS.bold,
+            color: COLORS.textInverse,
+          }}
+        >
+          {submitLabel}
+        </Text>
       </TouchableOpacity>
     </BottomSheetModal>
   );

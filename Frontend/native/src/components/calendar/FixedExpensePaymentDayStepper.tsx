@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { styles } from './FixedExpenseDetailSheet.styles';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
 interface FixedExpensePaymentDayStepperProps {
   paymentDay: number;
@@ -14,13 +14,66 @@ export default function FixedExpensePaymentDayStepper({
   onIncrease,
 }: FixedExpensePaymentDayStepperProps) {
   return (
-    <View style={styles.stepperCard}>
-      <TouchableOpacity activeOpacity={0.86} style={styles.stepperButton} onPress={onDecrease}>
-        <Text style={styles.stepperButtonText}>-</Text>
+    <View
+      className="flex-row items-center justify-between"
+      style={{
+        borderRadius: RADIUS.xl,
+        backgroundColor: COLORS.backgroundSecondary,
+        paddingHorizontal: wp(14),
+        paddingVertical: hp(10),
+        marginBottom: hp(24),
+      }}
+    >
+      <TouchableOpacity
+        activeOpacity={0.86}
+        className="items-center justify-center"
+        style={{
+          width: wp(40),
+          height: wp(40),
+          borderRadius: wp(14),
+          backgroundColor: COLORS.stepperButtonBackground,
+        }}
+        onPress={onDecrease}
+      >
+        <Text
+          style={{
+            fontSize: fp(24),
+            fontFamily: FONTS.bold,
+            color: COLORS.primary,
+          }}
+        >
+          -
+        </Text>
       </TouchableOpacity>
-      <Text style={styles.stepperValue}>{paymentDay}</Text>
-      <TouchableOpacity activeOpacity={0.86} style={styles.stepperButton} onPress={onIncrease}>
-        <Text style={styles.stepperButtonText}>+</Text>
+      <Text
+        style={{
+          fontSize: fp(24),
+          fontFamily: FONTS.bold,
+          color: COLORS.textPrimary,
+        }}
+      >
+        {paymentDay}
+      </Text>
+      <TouchableOpacity
+        activeOpacity={0.86}
+        className="items-center justify-center"
+        style={{
+          width: wp(40),
+          height: wp(40),
+          borderRadius: wp(14),
+          backgroundColor: COLORS.stepperButtonBackground,
+        }}
+        onPress={onIncrease}
+      >
+        <Text
+          style={{
+            fontSize: fp(24),
+            fontFamily: FONTS.bold,
+            color: COLORS.primary,
+          }}
+        >
+          +
+        </Text>
       </TouchableOpacity>
     </View>
   );
