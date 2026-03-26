@@ -156,3 +156,23 @@ When transactions are created, updated, or deleted:
   - changed month + 2
 
 This matches the 3-month rolling aggregation rule.
+
+## Error Response Examples
+
+No transactions in the rolling 3-month window:
+
+```json
+{
+  "httpStatusCode": 404,
+  "errorMessage": "최근 3개월 내 AI 리포트를 생성할 거래 내역이 없습니다."
+}
+```
+
+AI server timeout or connection failure:
+
+```json
+{
+  "httpStatusCode": 500,
+  "errorMessage": "AI 리포트 서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요."
+}
+```

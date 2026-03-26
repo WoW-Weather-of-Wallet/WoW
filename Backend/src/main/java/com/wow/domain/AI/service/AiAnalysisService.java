@@ -15,6 +15,7 @@ import com.wow.domain.spendinganalysis.repository.SpendingTypeRepository;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.global.constant.RedisKeys;
+import com.wow.global.exception.InternalServerException;
 import com.wow.global.exception.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,15 +28,18 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.time.Duration;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -93,8 +97,8 @@ public class AiAnalysisService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
-        // Build the report from the target month plus the previous 2 months.
-        // Example: 2026-03 request -> aggregate 2026-01-01 <= tx < 2026-04-01.
+        // The monthly report is built from the target month plus the previous 2 months.
+        // Example: 2026-03 request -> 2026-01-01 <= tx < 2026-04-01
         YearMonth baseMonth = YearMonth.of(year, month);
         LocalDateTime start = baseMonth.minusMonths(2).atDay(1).atStartOfDay();
         LocalDateTime end = baseMonth.plusMonths(1).atDay(1).atStartOfDay();
@@ -103,41 +107,25 @@ public class AiAnalysisService {
                 .existsByUser_IdAndTransactionAtBetween(userId, start, end);
 
         if (!hasTransaction) {
-            throw new NotFoundException("최근 3개월 내 AI 분석에 사용할 거래 내역이 없습니다.");
+            throw new NotFoundException("최근 3개월 내 AI 리포트를 생성할 거래 내역이 없습니다.");
         }
 
         List<TransactionRepository.CategoryAmountSummary> summaries =
                 transactionRepository.findCategoryAmountSummariesByUserIdAndRange(userId, start, end);
 
         if (summaries.isEmpty()) {
-            throw new NotFoundException("최근 3개월 내 AI 분석에 사용할 거래 내역이 없습니다.");
+            throw new NotFoundException("최근 3개월 내 AI 리포트를 생성할 거래 내역이 없습니다.");
         }
 
-        // chatbot.py expects `items` shaped as category / amount / count.
-        // We keep keepSession=false because the report API only needs a one-shot analysis.
+        // The AI server expects category / amount / count items.
         AiAnalysisRequest body = AiAnalysisRequest.from(summaries, false);
+        AiAnalysisResponse aiReport = requestAiReport(body, userId, year, month);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<AiAnalysisRequest> request = new HttpEntity<>(body, headers);
-
-        ResponseEntity<AiAnalysisResponse> response = aiRestTemplate.exchange(
-                aiServerBaseUrl + "/api/analyze",
-                HttpMethod.POST,
-                request,
-                AiAnalysisResponse.class
-        );
-
-        if (response.getBody() == null) {
-            throw new NotFoundException("AI 리포트 응답을 받지 못했습니다.");
-        }
-
-        // Persist only the schema-safe monthly snapshot fields that already fit
-        // the current DB model. The full report remains in Redis so we can ship
-        // the complete JSON without requiring a DB migration.
-        persistMonthlyAnalysis(user, year, month, response.getBody());
-        writeMonthlyAiReportCache(cacheKey, response.getBody());
-        return response.getBody();
+        // Keep the full report in Redis and only persist the schema-safe monthly
+        // snapshot fields that already fit the current DB model.
+        persistMonthlyAnalysis(user, year, month, aiReport);
+        writeMonthlyAiReportCache(cacheKey, aiReport);
+        return aiReport;
     }
 
     @Transactional
@@ -155,9 +143,8 @@ public class AiAnalysisService {
 
             YearMonth transactionMonth = YearMonth.from(transactionDate);
 
-            // A monthly AI report uses the target month plus the previous 2 months.
-            // If March data changes, March/April/May reports all become stale because
-            // they each include March in their 3-month rolling window.
+            // A rolling 3-month report becomes stale for the edited month and
+            // the next 2 target months that still include that month.
             affectedReportMonths.add(transactionMonth);
             affectedReportMonths.add(transactionMonth.plusMonths(1));
             affectedReportMonths.add(transactionMonth.plusMonths(2));
@@ -201,7 +188,6 @@ public class AiAnalysisService {
             return;
         }
 
-        // Keep one latest MONTHLY AI report per user/month so downstream 조회가 단순해진다.
         aiAnalysisRepository.deleteByUser_IdAndYearAndMonthAndAnalysisType(
                 user.getId(),
                 year,
@@ -248,8 +234,55 @@ public class AiAnalysisService {
         }
     }
 
-    private java.math.BigDecimal toBigDecimal(Double value) {
-        return value == null ? java.math.BigDecimal.ZERO : java.math.BigDecimal.valueOf(value);
+    private AiAnalysisResponse requestAiReport(AiAnalysisRequest body, Long userId, int year, int month) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<AiAnalysisRequest> request = new HttpEntity<>(body, headers);
+
+        try {
+            ResponseEntity<AiAnalysisResponse> response = aiRestTemplate.exchange(
+                    aiServerBaseUrl + "/api/analyze",
+                    HttpMethod.POST,
+                    request,
+                    AiAnalysisResponse.class
+            );
+
+            if (response.getBody() == null) {
+                log.error(
+                        "AI report response body is empty. userId={}, year={}, month={}",
+                        userId,
+                        year,
+                        month
+                );
+                throw new InternalServerException("AI 리포트 응답이 비어 있습니다. 잠시 후 다시 시도해주세요.");
+            }
+
+            return response.getBody();
+        } catch (ResourceAccessException e) {
+            log.warn(
+                    "AI report server connection failed. userId={}, year={}, month={}, baseUrl={}",
+                    userId,
+                    year,
+                    month,
+                    aiServerBaseUrl,
+                    e
+            );
+            throw new InternalServerException("AI 리포트 서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.", e);
+        } catch (RestClientException e) {
+            log.error(
+                    "AI report request failed. userId={}, year={}, month={}, baseUrl={}",
+                    userId,
+                    year,
+                    month,
+                    aiServerBaseUrl,
+                    e
+            );
+            throw new InternalServerException("AI 리포트 요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.", e);
+        }
+    }
+
+    private BigDecimal toBigDecimal(Double value) {
+        return value == null ? BigDecimal.ZERO : BigDecimal.valueOf(value);
     }
 
     private String buildMonthlyAiReportCacheKey(Long userId, int year, int month) {
@@ -271,8 +304,6 @@ public class AiAnalysisService {
     private void writeMonthlyAiReportCache(String cacheKey, AiAnalysisResponse response) {
         try {
             String serialized = objectMapper.writeValueAsString(response);
-            // A short-lived cache prevents repeated 14B inference while keeping
-            // the report fresh enough when users edit recent transactions.
             redisTemplate.opsForValue().set(cacheKey, serialized, AI_REPORT_CACHE_TTL);
         } catch (IOException ignored) {
             // Cache failure should not block the user-facing AI report flow.
