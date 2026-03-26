@@ -1,15 +1,7 @@
 import React from 'react';
 import { Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { wp } from '../../constants/theme';
-
-type WeatherGuideIcon = React.ComponentType<{ size?: number; color?: string }>;
-
-export interface HomeWeatherGuideItem {
-  type: string;
-  detail: string;
-  icon: WeatherGuideIcon;
-  color: string;
-}
+import type { HomeWeatherGuideItem } from '../../utils/homeWeatherPresentation';
 
 interface HomeWeatherGuideModalProps {
   visible: boolean;
