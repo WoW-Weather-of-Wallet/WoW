@@ -4,6 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, wp } from '../../constants/theme';
 import { styles, statusStyles } from './FixedExpenseSection.styles';
 import type { FixedExpenseItem } from '../../mock/calendar';
+import {
+  getFixedExpenseEnabledLabel,
+  stripFixedExpenseCategorySuffix,
+} from '../../utils/fixedExpensePresentation';
 
 interface FixedExpenseGroupDetail {
   id: string;
@@ -83,14 +87,14 @@ export default function FixedExpenseGroupBlock({
                     </View>
                   </View>
                   <Text style={styles.detailSubtitle}>
-                    {stripCategoryFromSubtitle(detail.subtitle, detail.category)}
+                    {stripFixedExpenseCategorySuffix(detail.subtitle, detail.category)}
                   </Text>
                 </View>
 
                 <View style={styles.detailRight}>
                   <Text style={styles.detailAmount}>₩{detail.amount.toLocaleString()}</Text>
                   <Text style={styles.detailStatus}>
-                    {detail.isEnabled ? '활성' : '비활성'}
+                    {getFixedExpenseEnabledLabel(detail.isEnabled)}
                   </Text>
                 </View>
               </View>
@@ -102,8 +106,4 @@ export default function FixedExpenseGroupBlock({
       ) : null}
     </View>
   );
-}
-
-function stripCategoryFromSubtitle(subtitle: string, category: string) {
-  return subtitle.replace(new RegExp(`\\s*${category}$`), '').trim();
 }

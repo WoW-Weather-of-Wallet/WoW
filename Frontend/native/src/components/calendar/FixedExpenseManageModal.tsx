@@ -3,7 +3,6 @@ import {
   Modal,
   ScrollView,
   StatusBar,
-  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -12,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, hp, wp } from '../../constants/theme';
 import { styles } from './FixedExpenseManageModal.styles';
+import FixedExpenseManageItemCard from './FixedExpenseManageItemCard';
 
 interface ManageFixedExpenseItem {
   id: string;
@@ -32,10 +32,6 @@ interface FixedExpenseManageModalProps {
   onPressEdit: (id: string) => void;
   onToggleItem: (id: string, nextValue: boolean) => void;
   onDeleteItem: (id: string) => void;
-}
-
-function getIconColor(iconTone: string) {
-  return iconTone === '#111111' ? COLORS.white : COLORS.textPrimary;
 }
 
 /**
@@ -86,70 +82,16 @@ export default function FixedExpenseManageModal({
           showsVerticalScrollIndicator={false}
         >
           {items.map((item) => (
-            <View key={item.id} style={styles.itemCard}>
-              <View style={styles.itemTopRow}>
-                <View style={styles.itemLeft}>
-                  <View style={[styles.iconWrap, { backgroundColor: item.iconTone }]}>
-                    <Ionicons
-                      name={item.icon as keyof typeof Ionicons.glyphMap}
-                      size={wp(22)}
-                      color={getIconColor(item.iconTone)}
-                    />
-                  </View>
-
-                  <View style={styles.itemTextBlock}>
-                    <Text style={styles.itemTitle} numberOfLines={2}>
-                      {item.title}
-                    </Text>
-                    <Text style={styles.itemSubtitle} numberOfLines={2}>
-                      {stripCategoryFromSubtitle(item.subtitle)}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.itemAmountBlock}>
-                  <Text style={styles.itemAmount}>₩{item.amount.toLocaleString()}</Text>
-                </View>
-              </View>
-
-              <View style={styles.controlRow}>
-                <View style={styles.controlActions}>
-                  <TouchableOpacity
-                    activeOpacity={0.86}
-                    style={styles.editChip}
-                    onPress={() => onPressEdit(item.id)}
-                  >
-                    <Text style={styles.editChipText}>수정</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    activeOpacity={0.86}
-                    style={styles.deleteChip}
-                    onPress={() => onDeleteItem(item.id)}
-                  >
-                    <Text style={styles.deleteChipText}>삭제</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.switchWrap}>
-                  <Text style={styles.switchLabel}>{item.isEnabled ? '활성' : '비활성'}</Text>
-                  <Switch
-                    value={item.isEnabled}
-                    trackColor={{ false: COLORS.border, true: COLORS.primaryLight }}
-                    thumbColor={COLORS.white}
-                    onValueChange={(nextValue) => onToggleItem(item.id, nextValue)}
-                  />
-                </View>
-              </View>
-            </View>
+            <FixedExpenseManageItemCard
+              key={item.id}
+              item={item}
+              onPressEdit={onPressEdit}
+              onToggleItem={onToggleItem}
+              onDeleteItem={onDeleteItem}
+            />
           ))}
         </ScrollView>
       </View>
     </Modal>
   );
-}
-
-function stripCategoryFromSubtitle(subtitle: string) {
-  return subtitle.replace(
-    /\s(인터넷쇼핑|인테리어\/가정용품|교통서비스|음\/식료품소매|외식|제과\/제빵\/떡\/케익|커피\/음료|패스트푸드|자동차\/유지비|시스템\/통신|건강\/기호식품|분식|육류\/회식|선물\/완구|병원\/의료|화장품소매|공연관람|의약\/의료품|건강\/뷰티\/마사지|수리서비스)$/,
-    '',
-  ).trim();
 }

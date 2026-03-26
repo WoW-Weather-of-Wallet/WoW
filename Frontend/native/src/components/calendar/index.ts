@@ -8,6 +8,7 @@ export { default as CalendarTabSwitcher } from './CalendarTabSwitcher';
 export { default as CalendarTopDockContent } from './CalendarTopDockContent';
 export { default as FixedExpenseGroupBlock } from './FixedExpenseGroupBlock';
 export { default as FixedExpenseDetailSheet } from './FixedExpenseDetailSheet';
+export { default as FixedExpenseManageItemCard } from './FixedExpenseManageItemCard';
 export { default as FixedExpenseManageModal } from './FixedExpenseManageModal';
 export { default as FixedExpensePickerSheet } from './FixedExpensePickerSheet';
 export { default as FixedExpenseSection } from './FixedExpenseSection';
