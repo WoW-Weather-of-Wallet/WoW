@@ -8,8 +8,11 @@ export { default as HomeMonthlyComparisonSection } from './HomeMonthlyComparison
 export { default as HomeMonthlyInsightCard } from './HomeMonthlyInsightCard';
 export { default as HomeMonthlyReportSheet } from './HomeMonthlyReportSheet';
 export { default as HomeScheduleSection } from './HomeScheduleSection';
+export { default as HomeSpendingTypeIntroCard } from './HomeSpendingTypeIntroCard';
+export { default as HomeSpendingTypeReasonsSection } from './HomeSpendingTypeReasonsSection';
 export { default as HomeSpendingTypeCard } from './HomeSpendingTypeCard';
 export { default as HomeSpendingTypeSheet } from './HomeSpendingTypeSheet';
+export { default as HomeSpendingTypeStyleMapSection } from './HomeSpendingTypeStyleMapSection';
 export { default as HomeTodayWeatherCard } from './HomeTodayWeatherCard';
 export { default as HomeWeeklyPreviewCard } from './HomeWeeklyPreviewCard';
 export { default as LegendList } from './LegendList';
