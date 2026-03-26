@@ -1,14 +1,7 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import StepIndicator from '../../components/common/StepIndicator';
 import IdentityVerificationFormStage from '../../components/common/IdentityVerificationFormStage';
-import VerificationCodeStep from '../../components/common/VerificationCodeStep';
+import IdentityVerificationCodeStage from '../../components/common/IdentityVerificationCodeStage';
 import { styles } from './PhoneUpdateScreen.styles';
 import { COLORS, hp, wp } from '../../constants/theme';
 import {
@@ -174,9 +167,9 @@ export default function PhoneUpdateScreen({
   }
 
   return (
-    <VerificationCodeStep
+    <IdentityVerificationCodeStage
       containerStyle={styles.container}
-      contentStyle={[styles.verifyContent, { paddingTop: insets.top + hp(28) }]}
+      contentBaseStyle={styles.verifyContent}
       backButtonStyle={styles.backButton}
       titleStyle={styles.title}
       subtitleStyle={styles.subtitle}
@@ -189,57 +182,41 @@ export default function PhoneUpdateScreen({
       successTextStyle={styles.successText}
       resendRowStyle={styles.resendRow}
       resendTextStyle={styles.resendText}
-      keypadWrapperStyle={[
-        styles.keypadWrapper,
-        { paddingBottom: Math.max(insets.bottom, hp(24)) },
-      ]}
+      keypadWrapperBaseStyle={styles.keypadWrapper}
+      bottomContainerStyle={styles.bottomContainer}
+      stepIndicatorContainerStyle={{ marginTop: 0, marginBottom: hp(12) }}
+      topPadding={hp(28)}
+      bottomMinPadding={hp(24)}
       onBack={backToForm}
       backIconSize={wp(24)}
       backIconColor={COLORS.textPrimary}
       loadingIndicatorColor={COLORS.primary}
       successIconColor={COLORS.success}
-      stepIndicator={
-        <View style={{ marginTop: 0, marginBottom: hp(12) }}>
-          <StepIndicator currentStep={2} totalSteps={2} compact />
-        </View>
-      }
-        title={
-        isVerified
-          ? '휴대폰 번호 인증이\n완료되었어요.'
-          : '인증번호 6자리를\n입력해 주세요.'
-      }
-        subtitle={`${requestedPhoneDisplay} 번호로 전송된 인증번호를 입력해 주세요.`}
+    title={
+            isVerified
+              ? '휴대폰 번호 인증이\n완료되었어요.'
+              : '인증번호 6자리를\n입력해 주세요.'
+          }
+    subtitle={`${requestedPhoneDisplay} 번호로 전송된 인증번호를 입력해 주세요.`}
       code={code}
       codeLength={VERIFICATION_CODE_LENGTH}
       isVerifying={isVerifying}
-      loadingText="인증번호를 확인하고 있어요."
+    loadingText="인증번호를 확인하고 있어요."
       verifyError={verifyError}
       isVerified={isVerified}
-      successMessage="인증 완료! 휴대폰 번호를 변경할 수 있어요."
+    successMessage="인증 완료! 휴대폰 번호를 변경할 수 있어요."
       isSending={isSending}
       onResend={() => void resendCode()}
       onPressNumber={handlePressNumber}
       onPressDelete={handlePressDelete}
-      bottomAction={
-        <View
-          style={[
-            styles.bottomContainer,
-            { paddingBottom: Math.max(insets.bottom, hp(24)) },
-          ]}
-        >
-          <TouchableOpacity
-            style={[styles.updateButton, isUpdating && styles.disabledButton]}
-            disabled={isUpdating}
-            onPress={() => void handleUpdatePhone()}
-          >
-            {isUpdating ? (
-              <ActivityIndicator color={COLORS.white} />
-            ) : (
-              <Text style={styles.updateButtonText}>휴대폰 번호 변경</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      }
+      actionLabel="휴대폰 번호 변경"
+      actionLoading={isUpdating}
+      actionDisabled={isUpdating}
+      onActionPress={() => void handleUpdatePhone()}
+      actionContainerStyle={styles.updateButton}
+      actionDisabledContainerStyle={styles.disabledButton}
+      actionTextStyle={styles.updateButtonText}
+      actionLoadingColor={COLORS.white}
     />
   );
 }

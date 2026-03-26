@@ -1,16 +1,10 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import StepIndicator from '../../components/common/StepIndicator';
 import IdentityVerificationFormStage from '../../components/common/IdentityVerificationFormStage';
-import VerificationCodeStep from '../../components/common/VerificationCodeStep';
+import IdentityVerificationCodeStage from '../../components/common/IdentityVerificationCodeStage';
 import { styles } from './WithdrawScreen.styles';
 import { COLORS, hp, wp } from '../../constants/theme';
 import {
@@ -217,9 +211,9 @@ export default function WithdrawScreen({
   }
 
   return (
-    <VerificationCodeStep
+    <IdentityVerificationCodeStage
       containerStyle={styles.container}
-      contentStyle={[styles.verifyContent, { paddingTop: insets.top + hp(28) }]}
+      contentBaseStyle={styles.verifyContent}
       backButtonStyle={styles.backButton}
       titleStyle={styles.title}
       subtitleStyle={styles.subtitle}
@@ -232,57 +226,41 @@ export default function WithdrawScreen({
       successTextStyle={styles.successText}
       resendRowStyle={styles.resendRow}
       resendTextStyle={styles.resendText}
-      keypadWrapperStyle={[
-        styles.keypadWrapper,
-        { paddingBottom: Math.max(insets.bottom, hp(24)) },
-      ]}
+      keypadWrapperBaseStyle={styles.keypadWrapper}
+      bottomContainerStyle={styles.bottomContainer}
+      stepIndicatorContainerStyle={{ marginTop: 0, marginBottom: hp(12) }}
+      topPadding={hp(28)}
+      bottomMinPadding={hp(24)}
       onBack={backToForm}
       backIconSize={wp(24)}
       backIconColor={COLORS.textPrimary}
       loadingIndicatorColor={COLORS.primary}
       successIconColor={COLORS.success}
-      stepIndicator={
-        <View style={{ marginTop: 0, marginBottom: hp(12) }}>
-          <StepIndicator currentStep={2} totalSteps={2} compact />
-        </View>
-      }
-      title={
-        isVerified
-          ? '본인 확인이\n완료되었어요.'
-          : '인증번호 6자리를\n입력해 주세요.'
-      }
-      subtitle={`${requestedPhoneDisplay} 번호로 전송된 인증번호를 입력해 주세요.`}
+    title={
+            isVerified
+              ? '본인 확인이\n완료되었어요.'
+              : '인증번호 6자리를\n입력해 주세요.'
+          }
+    subtitle={`${requestedPhoneDisplay} 번호로 전송된 인증번호를 입력해 주세요.`}
       code={code}
       codeLength={VERIFICATION_CODE_LENGTH}
       isVerifying={isVerifying}
-      loadingText="인증번호를 확인하고 있어요."
+    loadingText="인증번호를 확인하고 있어요."
       verifyError={verifyError}
       isVerified={isVerified}
-      successMessage="본인 확인 완료! 탈퇴를 진행할 수 있어요."
+    successMessage="본인 확인 완료! 탈퇴를 진행할 수 있어요."
       isSending={isSending}
       onResend={() => void resendCode()}
       onPressNumber={handlePressNumber}
       onPressDelete={handlePressDelete}
-      bottomAction={
-        <View
-          style={[
-            styles.bottomContainer,
-            { paddingBottom: Math.max(insets.bottom, hp(24)) },
-          ]}
-        >
-          <TouchableOpacity
-            style={[styles.withdrawButton, isDeleting && styles.disabledButton]}
-            disabled={isDeleting}
-            onPress={() => void handleWithdraw()}
-          >
-            {isDeleting ? (
-              <ActivityIndicator color={COLORS.white} />
-            ) : (
-              <Text style={styles.withdrawButtonText}>회원 탈퇴</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      }
+      actionLabel="회원 탈퇴"
+      actionLoading={isDeleting}
+      actionDisabled={isDeleting}
+      onActionPress={() => void handleWithdraw()}
+      actionContainerStyle={styles.withdrawButton}
+      actionDisabledContainerStyle={styles.disabledButton}
+      actionTextStyle={styles.withdrawButtonText}
+      actionLoadingColor={COLORS.white}
     />
   );
 }
