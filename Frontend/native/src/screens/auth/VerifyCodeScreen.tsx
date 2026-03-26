@@ -1,9 +1,8 @@
 import React from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import VerificationCodeStep from '../../components/common/VerificationCodeStep';
+import IdentityVerificationCodeStage from '../../components/common/IdentityVerificationCodeStage';
 import StepIndicator from '../../components/common/StepIndicator';
 import { VERIFICATION_CODE_LENGTH } from '../../constants/auth/identityVerification';
-import { COLORS, hp } from '../../constants/theme';
+import { hp } from '../../constants/theme';
 import { useVerificationCodeInput, useVerifyCodeFlow } from '../../hooks';
 import { styles } from './VerifyCodeScreen.styles';
 import type { RootScreenProps } from '../../types';
@@ -12,7 +11,6 @@ import type { VerifyCodeRouteParams } from '../../types/auth';
 export default function VerifyCodeScreen({
   route,
 }: RootScreenProps<'VerifyCode'>) {
-  const insets = useSafeAreaInsets();
   const routeParams = (route?.params ?? {}) as VerifyCodeRouteParams;
   const {
     isRecoveryFlow,
@@ -20,21 +18,18 @@ export default function VerifyCodeScreen({
     verifyError,
     submitVerifyCode,
   } = useVerifyCodeFlow(routeParams);
-  const {
-    code,
-    handlePressNumber,
-    handlePressDelete,
-  } = useVerificationCodeInput({
-    codeLength: VERIFICATION_CODE_LENGTH,
-    disabled: isVerifying,
-    onComplete: submitVerifyCode,
-    clearAfterComplete: true,
-  });
+  const { code, handlePressNumber, handlePressDelete } =
+    useVerificationCodeInput({
+      codeLength: VERIFICATION_CODE_LENGTH,
+      disabled: isVerifying,
+      onComplete: submitVerifyCode,
+      clearAfterComplete: true,
+    });
 
   return (
-    <VerificationCodeStep
+    <IdentityVerificationCodeStage
       containerStyle={styles.container}
-      contentStyle={[styles.content, { paddingTop: insets.top + hp(60) }]}
+      contentBaseStyle={styles.content}
       titleStyle={styles.title}
       subtitleStyle={styles.subtitle}
       dotsContainerStyle={styles.dotsContainer}
@@ -43,25 +38,24 @@ export default function VerifyCodeScreen({
       feedbackRowStyle={styles.loadingRow}
       loadingTextStyle={styles.loadingText}
       errorTextStyle={styles.errorText}
-      keypadWrapperStyle={[
-        styles.keypadWrapper,
-        { paddingBottom: Math.max(insets.bottom, hp(24)) },
-      ]}
+      keypadWrapperBaseStyle={styles.keypadWrapper}
+      topPadding={hp(60)}
+      bottomMinPadding={hp(24)}
       stepIndicator={
         !isRecoveryFlow ? (
           <StepIndicator currentStep={2} totalSteps={5} />
         ) : undefined
       }
-      title="인증번호 6자리를 입력해주세요."
-      subtitle="문자로 전송된 인증번호를 순서대로 입력해주세요."
+      hideDefaultStepIndicator
+      title="?ëª„ì¬†è¸°ëŠìƒ‡ 6?ë¨®â”ç‘œ??ë‚…ì °?ëŒï¼œ?ëª„ìŠ‚."
+      subtitle="è‡¾ëª„ì˜„æ¿¡??ê¾©ë„š???ëª„ì¬†è¸°ëŠìƒ‡ç‘œ??ì’–ê½Œ?Â€æ¿¡??ë‚…ì °?ëŒï¼œ?ëª„ìŠ‚."
       code={code}
       codeLength={VERIFICATION_CODE_LENGTH}
       isVerifying={isVerifying}
-      loadingText="인증번호를 확인하고 있어요."
+      loadingText="?ëª„ì¬†è¸°ëŠìƒ‡ç‘œ??ëº¤ì”¤?ì„í€¬ ?ë‰ë¼±??"
       verifyError={verifyError}
       onPressNumber={handlePressNumber}
       onPressDelete={handlePressDelete}
-      loadingIndicatorColor={COLORS.primary}
     />
   );
 }
