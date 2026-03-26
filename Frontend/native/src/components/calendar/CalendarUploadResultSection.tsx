@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
+import { COLORS, FONTS, RADIUS, fp, hp } from '../../constants/theme';
 import type { CalendarUploadPreviewGroup } from '../../types/calendar';
-import { styles } from './calendarAddEntryUi';
 import CalendarUploadResultItemRow from './CalendarUploadResultItemRow';
 
 interface CalendarUploadResultSectionProps {
@@ -19,19 +19,39 @@ export default function CalendarUploadResultSection({
   );
 
   return (
-    <View style={styles.uploadResultSection}>
-      <View style={styles.uploadResultHeader}>
-        <Text style={styles.uploadResultDate}>{group.dateKey}</Text>
-        <Text style={styles.uploadResultSummary}>
+    <View style={{ gap: hp(10) }}>
+      <View className="flex-row items-center justify-between">
+        <Text
+          style={{
+            fontSize: fp(18),
+            fontFamily: FONTS.bold,
+            color: COLORS.textPrimary,
+          }}
+        >
+          {group.dateKey}
+        </Text>
+        <Text
+          style={{
+            fontSize: fp(13),
+            fontFamily: FONTS.semiBold,
+            color: COLORS.textSecondary,
+          }}
+        >
           {group.totalCount}건
-          <Text style={styles.uploadResultNeedsCategory}>
+          <Text style={{ color: COLORS.warningOrange }}>
             {' '}
             미분류 항목 {needsCategoryCount}건
           </Text>
         </Text>
       </View>
 
-      <View style={styles.uploadResultList}>
+      <View
+        style={{
+          borderRadius: RADIUS.xl,
+          backgroundColor: COLORS.transactionBackground,
+          overflow: 'hidden',
+        }}
+      >
         {group.items.map((item, index) => (
           <CalendarUploadResultItemRow
             key={item.id}
