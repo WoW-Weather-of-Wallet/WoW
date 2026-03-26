@@ -1,10 +1,12 @@
 import type { LegendListItem, SpendingStyleMetric } from '../constants/main/types';
+import type { CalendarDayItem } from '../mock/calendar';
 import type {
   SpendingHalfYearlyResponse,
   SpendingMonthlyCompareResponse,
 } from '../services/main';
 
 const CATEGORY_COLORS = ['#E97975', '#7D8DF1', '#F3B84D', '#86D5D0', '#9D92F4', '#7DD3A7'];
+export const HOME_WEEKLY_PREVIEW_WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 export const resolveSpendingIconName = (iconCode?: string | null) => {
   switch (iconCode) {
@@ -114,3 +116,17 @@ export const buildMonthlyInsight = (response: SpendingMonthlyCompareResponse | n
 
   return `이번 달 소비는 지난달과 비슷한 수준이에요.${topCategory ? ` 가장 큰 비중은 ${topCategory}입니다.` : ''}`;
 };
+
+export const buildWeeklyPreviewItems = (items: CalendarDayItem[]): CalendarDayItem[] =>
+  items.length > 0
+    ? items
+    : Array.from({ length: 7 }, (_, index) => ({
+        dateKey: `empty-week-${index}`,
+        dayNumber: index + 1,
+        amount: undefined,
+        tone: 'mint' as const,
+        weatherTone: undefined,
+        isCurrentMonth: true,
+        isToday: false,
+        isFuture: false,
+      }));

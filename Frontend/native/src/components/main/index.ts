@@ -22,6 +22,7 @@ export { default as HomeSpendingTypeSheet } from './HomeSpendingTypeSheet';
 export { default as HomeSpendingTypeStyleMapSection } from './HomeSpendingTypeStyleMapSection';
 export { default as HomeTodayWeatherCard } from './HomeTodayWeatherCard';
 export { default as HomeWeatherGuideModal } from './HomeWeatherGuideModal';
+export { default as HomeWeeklyPreviewDayColumn } from './HomeWeeklyPreviewDayColumn';
 export { default as HomeWeeklyPreviewCard } from './HomeWeeklyPreviewCard';
 export { default as LegendList } from './LegendList';
 export { default as ReasonHighlightCard } from './ReasonHighlightCard';
