@@ -2,6 +2,30 @@ import { StyleSheet } from 'react-native';
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
 export const styles = StyleSheet.create({
+  budgetFormCard: {
+    backgroundColor: COLORS.backgroundSecondary,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(16),
+    gap: hp(12),
+    marginBottom: hp(20),
+  },
+  budgetFormTitle: {
+    fontSize: fp(16),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  budgetFormDescription: {
+    fontSize: fp(13),
+    lineHeight: fp(20),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  disabledBudgetButton: {
+    opacity: 0.45,
+  },
   compareRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
