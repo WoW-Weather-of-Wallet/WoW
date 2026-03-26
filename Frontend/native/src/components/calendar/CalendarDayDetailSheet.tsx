@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import BottomSheetModal from '../common/BottomSheetModal';
 import type { CalendarDayDetail } from '../../mock/calendar';
-import { styles } from './CalendarDayDetailSheet.styles';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import CalendarDayDetailMemoSection from './CalendarDayDetailMemoSection';
 import CalendarDayDetailOverviewCard from './CalendarDayDetailOverviewCard';
 import CalendarDayDetailTransactionRow from './CalendarDayDetailTransactionRow';
@@ -34,15 +34,43 @@ export default function CalendarDayDetailSheet({
       onClose={onClose}
       showHandle={false}
       title={detail.title}
-      subtitle="선택한 날짜의 소비 요약과 거래 내역을 확인할 수 있습니다."
+      subtitle={
+        '\uD574\uB2F9 \uB0A0\uC9DC\uC758 \uC9C0\uCD9C \uC694\uC57D\uACFC \uAC70\uB798 \uB0B4\uC5ED\uC744 \uD568\uAED8 \uD655\uC778\uD560 \uC218 \uC788\uC5B4\uC694.'
+      }
     >
       <CalendarDayDetailOverviewCard detail={detail} />
 
-      <View style={styles.listSection}>
-        <View style={styles.listHeaderRow}>
-          <Text style={styles.listTitle}>거래 내역</Text>
-          <View style={styles.readonlyBadge}>
-            <Text style={styles.readonlyBadgeText}>읽기 전용</Text>
+      <View style={{ marginBottom: hp(18) }}>
+        <View
+          className="flex-row items-center justify-between"
+          style={{ marginBottom: hp(10), gap: wp(10) }}
+        >
+          <Text
+            style={{
+              fontSize: fp(16),
+              fontFamily: FONTS.bold,
+              color: COLORS.textPrimary,
+            }}
+          >
+            {'\uAC70\uB798 \uB0B4\uC5ED'}
+          </Text>
+          <View
+            style={{
+              borderRadius: RADIUS.full,
+              backgroundColor: COLORS.backgroundTertiary,
+              paddingHorizontal: wp(10),
+              paddingVertical: hp(4),
+            }}
+          >
+            <Text
+              style={{
+                fontSize: fp(11),
+                fontFamily: FONTS.semiBold,
+                color: COLORS.primary,
+              }}
+            >
+              {'\uC0C1\uC138 \uC870\uD68C'}
+            </Text>
           </View>
         </View>
         {detail.items.length > 0 ? (
@@ -50,8 +78,23 @@ export default function CalendarDayDetailSheet({
             <CalendarDayDetailTransactionRow key={item.id} item={item} />
           ))
         ) : (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>등록된 거래 내역이 없습니다.</Text>
+          <View
+            style={{
+              borderRadius: RADIUS.xl,
+              backgroundColor: COLORS.backgroundSecondary,
+              paddingHorizontal: wp(16),
+              paddingVertical: hp(16),
+            }}
+          >
+            <Text
+              style={{
+                fontSize: fp(14),
+                fontFamily: FONTS.medium,
+                color: COLORS.textSecondary,
+              }}
+            >
+              {'\uAE30\uB85D\uB41C \uAC70\uB798 \uB0B4\uC5ED\uC774 \uC5C6\uC5B4\uC694.'}
+            </Text>
           </View>
         )}
       </View>
