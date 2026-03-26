@@ -1,8 +1,5 @@
 import React, { type ReactNode } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   Text,
   TouchableOpacity,
   View,
@@ -10,9 +7,9 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import SafeAreaScrollLayout from './SafeAreaScrollLayout';
 import StepIndicator from './StepIndicator';
 import { COLORS, hp, wp } from '../../constants/theme';
 
@@ -61,56 +58,38 @@ export default function IdentityStepFormLayout({
   backIconSize = wp(24),
   backIconColor = COLORS.textPrimary,
 }: IdentityStepFormLayoutProps) {
-  const insets = useSafeAreaInsets();
-
   return (
-    <KeyboardAvoidingView
-      style={containerStyle}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <SafeAreaScrollLayout
+      containerStyle={containerStyle}
+      scrollContentStyle={scrollContentStyle}
+      scrollTopPadding={scrollTopPadding}
+      scrollBottomPadding={scrollBottomPadding}
+      bottomMinPadding={bottomMinPadding}
+      bottomContainerStyle={bottomContainerStyle}
+      bottomContent={bottomContent}
     >
-      <ScrollView
-        contentContainerStyle={[
-          scrollContentStyle,
-          {
-            paddingTop: insets.top + scrollTopPadding,
-            paddingBottom: insets.bottom + scrollBottomPadding,
-          },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <TouchableOpacity style={backButtonStyle} onPress={onBack}>
-          <Ionicons
-            name="chevron-back"
-            size={backIconSize}
-            color={backIconColor}
-          />
-        </TouchableOpacity>
+      <TouchableOpacity style={backButtonStyle} onPress={onBack}>
+        <Ionicons
+          name="chevron-back"
+          size={backIconSize}
+          color={backIconColor}
+        />
+      </TouchableOpacity>
 
-        <View style={stepIndicatorContainerStyle}>
-          <StepIndicator
-            currentStep={currentStep}
-            totalSteps={totalSteps}
-            compact={compactStepIndicator}
-          />
-        </View>
-
-        <Animated.View entering={FadeInDown.duration(400)}>
-          <Text style={titleStyle}>{title}</Text>
-          <Text style={subtitleStyle}>{subtitle}</Text>
-        </Animated.View>
-
-        {children}
-      </ScrollView>
-
-      <View
-        style={[
-          bottomContainerStyle,
-          { paddingBottom: Math.max(insets.bottom, bottomMinPadding) },
-        ]}
-      >
-        {bottomContent}
+      <View style={stepIndicatorContainerStyle}>
+        <StepIndicator
+          currentStep={currentStep}
+          totalSteps={totalSteps}
+          compact={compactStepIndicator}
+        />
       </View>
-    </KeyboardAvoidingView>
+
+      <Animated.View entering={FadeInDown.duration(400)}>
+        <Text style={titleStyle}>{title}</Text>
+        <Text style={subtitleStyle}>{subtitle}</Text>
+      </Animated.View>
+
+      {children}
+    </SafeAreaScrollLayout>
   );
 }

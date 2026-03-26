@@ -1,17 +1,15 @@
-import React from 'react';
+import React, { type RefObject } from 'react';
 import {
-  KeyboardAvoidingView,
   Platform,
-  ScrollView,
+  type ScrollView as ScrollViewType,
   Text,
   View,
   type StyleProp,
-  type ScrollView as ScrollViewType,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import StepIndicator from '../../components/common/StepIndicator';
+import SafeAreaScrollLayout from '../../components/common/SafeAreaScrollLayout';
 import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
 
 interface AuthStepLayoutProps {
@@ -21,7 +19,7 @@ interface AuthStepLayoutProps {
   description?: React.ReactNode;
   children: React.ReactNode;
   headerContent?: React.ReactNode;
-  scrollViewRef?: React.RefObject<ScrollViewType | null>;
+  scrollViewRef?: RefObject<ScrollViewType | null>;
   scrollContentPaddingTop: number;
   scrollContentPaddingBottom: number;
   bottomMinPadding?: number;
@@ -82,54 +80,34 @@ export default function AuthStepLayout({
   descriptionStyle,
   bottomContainerStyle,
 }: AuthStepLayoutProps) {
-  const insets = useSafeAreaInsets();
-
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={layoutStyles.container}
+    <SafeAreaScrollLayout
+      containerStyle={layoutStyles.container}
+      scrollContentStyle={layoutStyles.scrollContent}
+      scrollViewRef={scrollViewRef}
+      scrollTopPadding={scrollContentPaddingTop}
+      scrollBottomPadding={scrollContentPaddingBottom}
+      bottomMinPadding={bottomMinPadding}
+      bottomContainerStyle={[layoutStyles.bottomContainer, bottomContainerStyle]}
+      bottomContent={bottomContent}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? hp(20) : 0}
     >
-      <ScrollView
-        ref={scrollViewRef}
-        contentContainerStyle={[
-          layoutStyles.scrollContent,
-          {
-            paddingTop: insets.top + scrollContentPaddingTop,
-            paddingBottom: insets.bottom + scrollContentPaddingBottom,
-          },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={[layoutStyles.stepIndicatorContainer, stepIndicatorContainerStyle]}>
-          <StepIndicator currentStep={currentStep} totalSteps={totalSteps} />
-        </View>
+      <View style={[layoutStyles.stepIndicatorContainer, stepIndicatorContainerStyle]}>
+        <StepIndicator currentStep={currentStep} totalSteps={totalSteps} />
+      </View>
 
-        {headerContent}
+      {headerContent}
 
-        <View style={[layoutStyles.titleSection, titleSectionStyle]}>
-          <Text style={[layoutStyles.title, titleStyle]}>{title}</Text>
-          {description ? (
-            <Text style={[layoutStyles.description, descriptionStyle]}>
-              {description}
-            </Text>
-          ) : null}
-        </View>
+      <View style={[layoutStyles.titleSection, titleSectionStyle]}>
+        <Text style={[layoutStyles.title, titleStyle]}>{title}</Text>
+        {description ? (
+          <Text style={[layoutStyles.description, descriptionStyle]}>
+            {description}
+          </Text>
+        ) : null}
+      </View>
 
-        {children}
-      </ScrollView>
-
-      {bottomContent ? (
-        <View
-          style={[
-            layoutStyles.bottomContainer,
-            bottomContainerStyle,
-            { paddingBottom: Math.max(insets.bottom, bottomMinPadding) },
-          ]}
-        >
-          {bottomContent}
-        </View>
-      ) : null}
-    </KeyboardAvoidingView>
+      {children}
+    </SafeAreaScrollLayout>
   );
 }
