@@ -1,6 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
-import { styles } from './LegendList.styles';
+
+import { COLORS, hp } from '../../constants/theme';
 import type { LegendListItem } from '../../constants/main/types';
 import LegendListRow from './LegendListRow';
 
@@ -9,17 +10,25 @@ interface LegendListProps {
   variant?: 'plain' | 'divider';
 }
 
-// 범례는 레이더 차트와 월간 비교 시트에서 공통으로 재사용합니다.
 export default function LegendList({
   items,
   variant = 'plain',
 }: LegendListProps) {
+  const containerStyle = {
+    gap: hp(10),
+  } as const;
+
+  const dividerStyle = {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: hp(16),
+  } as const;
+
   return (
-    <View style={[styles.container, variant === 'divider' && styles.dividerContainer]}>
+    <View style={[containerStyle, variant === 'divider' && dividerStyle]}>
       {items.map(item => (
         <LegendListRow key={item.id} item={item} />
       ))}
     </View>
   );
 }
-
