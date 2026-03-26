@@ -1,9 +1,9 @@
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import IdentityVerificationFormStage from '../../components/common/IdentityVerificationFormStage';
 import IdentityVerificationCodeStage from '../../components/common/IdentityVerificationCodeStage';
-import { styles } from './PhoneUpdateScreen.styles';
-import { COLORS, hp, wp } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import {
   PHONE_NUMBER_PLACEHOLDER,
   SEND_CODE_LABEL,
@@ -66,8 +66,8 @@ export default function PhoneUpdateScreen({
         titleStyle={styles.title}
         subtitleStyle={styles.formSubtitle}
         bottomContainerStyle={styles.bottomContainer}
-        title="새 휴대폰 번호를 입력해 주세요."
-        subtitle="통신사를 선택한 뒤 변경할 휴대폰 번호로 인증번호를 받아 진행합니다."
+        title={'\uc0c8 \ud734\ub300\ud3f0 \ubc88\ud638\ub97c \uc785\ub825\ud574 \uc8fc\uc138\uc694.'}
+        subtitle={'\ud1b5\uc2e0\uc0ac\ub97c \uc120\ud0dd\ud55c \ub4a4 \ubcc0\uacbd\ud560 \ud734\ub300\ud3f0 \ubc88\ud638\ub85c \uc778\uc99d\ubc88\ud638\ub97c \ubc1b\uc544 \uc9c4\ud589\ud569\ub2c8\ub2e4.'}
         onBack={() => navigation.goBack()}
         actionLabel={SEND_CODE_LABEL}
         actionLoading={isSending}
@@ -192,24 +192,24 @@ export default function PhoneUpdateScreen({
       backIconColor={COLORS.textPrimary}
       loadingIndicatorColor={COLORS.primary}
       successIconColor={COLORS.success}
-    title={
-            isVerified
-              ? '휴대폰 번호 인증이\n완료되었어요.'
-              : '인증번호 6자리를\n입력해 주세요.'
-          }
-    subtitle={`${requestedPhoneDisplay} 번호로 전송된 인증번호를 입력해 주세요.`}
+      title={
+        isVerified
+          ? '\ud734\ub300\ud3f0 \ubc88\ud638 \uc778\uc99d\uc774\n\uc644\ub8cc\ub418\uc5c8\uc5b4\uc694.'
+          : '\uc778\uc99d\ubc88\ud638 6\uc790\ub9ac\ub97c\n\uc785\ub825\ud574 \uc8fc\uc138\uc694.'
+      }
+      subtitle={`${requestedPhoneDisplay} \ubc88\ud638\ub85c \uc804\uc1a1\ub41c \uc778\uc99d\ubc88\ud638\ub97c \uc785\ub825\ud574 \uc8fc\uc138\uc694.`}
       code={code}
       codeLength={VERIFICATION_CODE_LENGTH}
       isVerifying={isVerifying}
-    loadingText="인증번호를 확인하고 있어요."
+      loadingText={'\uc778\uc99d\ubc88\ud638\ub97c \ud655\uc778\ud558\uace0 \uc788\uc5b4\uc694.'}
       verifyError={verifyError}
       isVerified={isVerified}
-    successMessage="인증 완료! 휴대폰 번호를 변경할 수 있어요."
+      successMessage={'\uc778\uc99d \uc644\ub8cc! \ud734\ub300\ud3f0 \ubc88\ud638\ub97c \ubcc0\uacbd\ud560 \uc218 \uc788\uc5b4\uc694.'}
       isSending={isSending}
       onResend={() => void resendCode()}
       onPressNumber={handlePressNumber}
       onPressDelete={handlePressDelete}
-      actionLabel="휴대폰 번호 변경"
+      actionLabel={'\ud734\ub300\ud3f0 \ubc88\ud638 \ubcc0\uacbd'}
       actionLoading={isUpdating}
       actionDisabled={isUpdating}
       onActionPress={() => void handleUpdatePhone()}
@@ -220,3 +220,234 @@ export default function PhoneUpdateScreen({
     />
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  scrollContent: {
+    paddingHorizontal: wp(28),
+  },
+  backButton: {
+    paddingHorizontal: wp(8),
+    paddingVertical: hp(8),
+    alignSelf: 'flex-start',
+  },
+  title: {
+    fontSize: fp(28),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    lineHeight: fp(40),
+    letterSpacing: -0.5,
+    marginBottom: hp(8),
+  },
+  formSubtitle: {
+    fontSize: fp(16),
+    fontFamily: FONTS.medium,
+    color: COLORS.textTertiary,
+    lineHeight: fp(24),
+    marginBottom: hp(24),
+  },
+  subtitle: {
+    fontSize: fp(16),
+    fontFamily: FONTS.medium,
+    color: COLORS.textTertiary,
+    lineHeight: fp(24),
+    marginBottom: hp(20),
+  },
+  inputSection: {
+    marginBottom: hp(24),
+  },
+  underlineContainer: {
+    borderBottomWidth: 1.5,
+    borderBottomColor: COLORS.textPrimary,
+    paddingVertical: hp(8),
+    minHeight: hp(50),
+    justifyContent: 'center',
+  },
+  bareInput: {
+    fontSize: fp(24),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    padding: 0,
+    margin: 0,
+  },
+  bareText: {
+    fontSize: fp(24),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  ssnSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: hp(24),
+  },
+  dash: {
+    fontSize: fp(20),
+    fontFamily: FONTS.regular,
+    color: COLORS.textPrimary,
+    marginHorizontal: wp(12),
+    marginBottom: hp(16),
+  },
+  ssnBackContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ssnBackText: {
+    width: wp(30),
+    textAlign: 'center',
+  },
+  ssnMasking: {
+    fontSize: fp(24),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    letterSpacing: wp(4),
+  },
+  telecomSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1.5,
+    borderBottomColor: COLORS.textPrimary,
+    paddingVertical: hp(8),
+    minHeight: hp(50),
+  },
+  telecomText: {
+    fontSize: fp(24),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  placeholderText: {
+    color: COLORS.textTertiary,
+  },
+  errorText: {
+    marginTop: hp(8),
+    textAlign: 'center',
+    fontSize: fp(14),
+    fontFamily: FONTS.medium,
+    color: COLORS.error,
+  },
+  bottomContainer: {
+    paddingHorizontal: wp(28),
+    paddingTop: hp(8),
+    backgroundColor: COLORS.background,
+  },
+  confirmButton: {
+    backgroundColor: COLORS.border,
+    borderRadius: wp(30),
+    paddingVertical: hp(16),
+    alignItems: 'center',
+  },
+  activeButton: {
+    backgroundColor: COLORS.primary,
+  },
+  confirmButtonText: {
+    fontSize: fp(20),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  activeButtonText: {
+    color: COLORS.textInverse,
+  },
+  updateButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: wp(30),
+    paddingVertical: hp(16),
+    alignItems: 'center',
+  },
+  updateButtonText: {
+    fontSize: fp(20),
+    fontFamily: FONTS.bold,
+    color: COLORS.white,
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  verifyContent: {
+    flex: 1,
+    paddingHorizontal: wp(28),
+    paddingTop: hp(32),
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: wp(16),
+    marginBottom: hp(24),
+  },
+  dot: {
+    width: wp(16),
+    height: wp(16),
+    borderRadius: wp(8),
+    backgroundColor: COLORS.gray200,
+  },
+  dotFilled: {
+    backgroundColor: COLORS.primary,
+  },
+  feedbackRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: wp(8),
+    marginTop: hp(8),
+  },
+  loadingText: {
+    fontSize: fp(14),
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  successText: {
+    fontSize: fp(14),
+    fontFamily: FONTS.medium,
+    color: COLORS.success,
+  },
+  resendRow: {
+    alignItems: 'center',
+    marginTop: hp(6),
+    marginBottom: hp(12),
+  },
+  resendText: {
+    fontSize: fp(14),
+    fontFamily: FONTS.medium,
+    color: COLORS.textTertiary,
+    textDecorationLine: 'underline',
+  },
+  keypadWrapper: {
+    backgroundColor: COLORS.background,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: COLORS.background,
+    borderTopLeftRadius: RADIUS.xxl,
+    borderTopRightRadius: RADIUS.xxl,
+    paddingHorizontal: wp(24),
+    paddingTop: hp(24),
+    paddingBottom: hp(16),
+  },
+  modalHeader: {
+    marginBottom: hp(16),
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: fp(18),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  modalItem: {
+    paddingVertical: hp(18),
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray100,
+  },
+  modalItemText: {
+    fontSize: fp(18),
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+  },
+});
