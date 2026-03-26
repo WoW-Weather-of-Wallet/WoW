@@ -1,10 +1,11 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import BottomSheetModal from '../common/BottomSheetModal';
 import CustomTextInput from '../common/CustomTextInput';
-import { COLORS, wp } from '../../constants/theme';
 import { useFixedExpenseDetailForm, type FixedExpenseDetailItem } from '../../hooks';
+import FixedExpensePaymentDayStepper from './FixedExpensePaymentDayStepper';
+import FixedExpenseReadonlyInfoCard from './FixedExpenseReadonlyInfoCard';
+import FixedExpenseSelectedSummaryCard from './FixedExpenseSelectedSummaryCard';
 import { styles } from './FixedExpenseDetailSheet.styles';
 
 interface FixedExpenseDetailSheetProps {
@@ -24,7 +25,7 @@ export default function FixedExpenseDetailSheet({
   mode = 'create',
   initialCategory,
   initialPaymentDay,
-  submitLabel = '고정지출로 등록하기',
+  submitLabel = '고정지출 저장하기',
   onClose,
   onSubmit,
 }: FixedExpenseDetailSheetProps) {
@@ -62,22 +63,7 @@ export default function FixedExpenseDetailSheet({
       title={sheetTitle}
       subtitle={sheetSubtitle}
     >
-      <View style={styles.selectedCard}>
-        <View style={styles.selectedLeft}>
-          <View style={[styles.iconWrap, { backgroundColor: item.iconTone }]}>
-            <Ionicons
-              name={item.icon as keyof typeof Ionicons.glyphMap}
-              size={wp(18)}
-              color={item.iconTone === '#111111' ? COLORS.white : COLORS.textPrimary}
-            />
-          </View>
-          <View>
-            <Text style={styles.selectedTitle}>{item.title}</Text>
-            <Text style={styles.selectedAmount}>-₩{item.amount.toLocaleString()}</Text>
-          </View>
-        </View>
-        <Ionicons name="pin" size={wp(18)} color={COLORS.primary} />
-      </View>
+      <FixedExpenseSelectedSummaryCard item={item} />
 
       <View style={styles.aiHintCard}>
         <Text style={styles.aiHintTitle}>{aiHintTitle}</Text>
@@ -86,48 +72,26 @@ export default function FixedExpenseDetailSheet({
 
       {isEditMode ? (
         <>
-          <View style={styles.readonlyInfoCard}>
-            <View style={styles.readonlyInfoRow}>
-              <Text style={styles.readonlyLabel}>거래명</Text>
-              <Text style={styles.readonlyValue}>{item.title}</Text>
-            </View>
-            <View style={styles.readonlyDivider} />
-            <View style={styles.readonlyInfoRow}>
-              <Text style={styles.readonlyLabel}>카테고리</Text>
-              <Text style={styles.readonlyValue}>{resolvedCategory}</Text>
-            </View>
-          </View>
+          <FixedExpenseReadonlyInfoCard title={item.title} category={resolvedCategory} />
 
           <Text style={styles.sectionTitle}>금액</Text>
           <CustomTextInput
-            label="고정지출 금액을 입력해주세요"
+            label="수정할 금액을 입력해주세요"
             value={amountInput}
             onChangeText={handleChangeAmountInput}
             keyboardType="number-pad"
             containerStyle={styles.amountInput}
           />
-          <Text style={styles.amountPreview}>{amountPreviewLabel}</Text>
+          <Text style={styles.amountPreview}>{amountPreviewLabel}원</Text>
         </>
       ) : null}
 
-      <Text style={styles.sectionTitle}>매월 납부일</Text>
-      <View style={styles.stepperCard}>
-        <TouchableOpacity
-          activeOpacity={0.86}
-          style={styles.stepperButton}
-          onPress={decreasePaymentDay}
-        >
-          <Text style={styles.stepperButtonText}>-</Text>
-        </TouchableOpacity>
-        <Text style={styles.stepperValue}>{paymentDay}</Text>
-        <TouchableOpacity
-          activeOpacity={0.86}
-          style={styles.stepperButton}
-          onPress={increasePaymentDay}
-        >
-          <Text style={styles.stepperButtonText}>+</Text>
-        </TouchableOpacity>
-      </View>
+      <Text style={styles.sectionTitle}>납부일</Text>
+      <FixedExpensePaymentDayStepper
+        paymentDay={paymentDay}
+        onDecrease={decreasePaymentDay}
+        onIncrease={increasePaymentDay}
+      />
 
       <TouchableOpacity activeOpacity={0.88} style={styles.submitButton} onPress={handleSubmit}>
         <Text style={styles.submitButtonText}>{submitLabel}</Text>
