@@ -1,30 +1,22 @@
 import React, { useRef } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import TermsBottomSheet from '../../components/auth/TermsBottomSheet';
 import AuthStepLayout from '../../components/auth/AuthStepLayout';
 import AuthActionButton from '../../components/common/AuthActionButton';
 import AuthUnderlineInput from '../../components/common/AuthUnderlineInput';
+import TelecomPhoneInputSection from '../../components/common/TelecomPhoneInputSection';
 import TelecomSelectModal from '../../components/common/TelecomSelectModal';
 import { styles, CONSTANTS } from './PhoneAuthScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
 import { TELECOM_OPTIONS } from '../../constants/auth/identityVerification';
-import type {
-  PhoneAuthRouteParams,
-  SignupMode,
-} from '../../types/auth';
 import type { RootScreenProps } from '../../types';
+import type { PhoneAuthRouteParams, SignupMode } from '../../types/auth';
 import { decodeUnicodeEscapes } from '../../utils/authIdentity';
 import { useIdentityVerificationForm, usePhoneAuthFlow } from '../../hooks';
 
-const TELECOM_PLACEHOLDER = '통신사를 선택해 주세요';
+const TELECOM_PLACEHOLDER = '통신사를 선택해주세요';
 
 export default function PhoneAuthScreen({
   route,
@@ -94,8 +86,8 @@ export default function PhoneAuthScreen({
       <AuthStepLayout
         currentStep={1}
         totalSteps={5}
-        title={'본인 확인을 위해\n정보를 입력해 주세요.'}
-        description="문자 인증을 진행하기 위해 본인 정보를 먼저 확인할게요."
+        title={'본인 인증으로\n회원가입을 진행해주세요'}
+        description="이름, 주민등록번호, 휴대폰 번호를 순서대로 입력해 주세요."
         scrollViewRef={scrollViewRef}
         scrollContentPaddingTop={CONSTANTS.scrollContentPaddingTop}
         scrollContentPaddingBottom={CONSTANTS.scrollContentPaddingBottom}
@@ -115,7 +107,10 @@ export default function PhoneAuthScreen({
           />
         }
       >
-        <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
+        <Animated.View
+          entering={FadeInDown.duration(500)}
+          style={styles.inputSection}
+        >
           <AuthUnderlineInput
             containerStyle={styles.underlineContainer}
             inputStyle={[
@@ -136,17 +131,20 @@ export default function PhoneAuthScreen({
             autoFocus={!isLockedSsafyName}
             editable={!isLockedSsafyName}
           />
-          {isSsafySignup && (
+          {isSsafySignup ? (
             <Text style={{ color: COLORS.textTertiary, marginTop: hp(12) }}>
               {isLockedSsafyName
-                ? 'SSAFY 계정 이름은 수정할 수 없어요.'
-                : 'SSAFY 이름을 불러오지 못해 직접 입력해 주세요.'}
+                ? 'SSAFY 계정 이름이 자동으로 입력되었어요.'
+                : 'SSAFY 이름을 불러오지 못해 직접 입력이 필요해요.'}
             </Text>
-          )}
+          ) : null}
         </Animated.View>
 
-        {step >= 2 && (
-          <Animated.View entering={FadeInDown.duration(500)} style={styles.ssnSection}>
+        {step >= 2 ? (
+          <Animated.View
+            entering={FadeInDown.duration(500)}
+            style={styles.ssnSection}
+          >
             <AuthUnderlineInput
               ref={ssnFrontRef}
               containerStyle={[
@@ -186,49 +184,40 @@ export default function PhoneAuthScreen({
               rightAccessory={<Text style={styles.ssnMasking}>******</Text>}
             />
           </Animated.View>
-        )}
+        ) : null}
 
-        {step >= 3 && (
-          <Animated.View entering={FadeInDown.duration(500)} style={styles.inputSection}>
-            <TouchableOpacity
-              style={styles.telecomSelector}
-              onPress={openTelecomModal}
-            >
-              <Text
-                style={[
-                  styles.telecomText,
-                  telecom === TELECOM_PLACEHOLDER && styles.placeholderText,
-                ]}
-              >
-                {telecom}
-              </Text>
-              <Ionicons
-                name="chevron-down"
-                size={CONSTANTS.chevronIconSize}
-                color={COLORS.textPrimary}
-              />
-            </TouchableOpacity>
-
-            <AuthUnderlineInput
-              ref={phoneRef}
-              containerStyle={[styles.underlineContainer, { marginTop: hp(32) }]}
-              inputStyle={[
+        {step >= 3 ? (
+          <Animated.View
+            entering={FadeInDown.duration(500)}
+            style={styles.inputSection}
+          >
+            <TelecomPhoneInputSection
+              telecom={telecom}
+              telecomPlaceholder={TELECOM_PLACEHOLDER}
+              phone={phone}
+              onOpenTelecomModal={openTelecomModal}
+              onPhoneChange={handlePhoneChange}
+              phonePlaceholder="휴대폰 번호 (- 없이 입력)"
+              selectorStyle={styles.telecomSelector}
+              telecomTextStyle={styles.telecomText}
+              placeholderTextStyle={styles.placeholderText}
+              phoneInputContainerStyle={[
+                styles.underlineContainer,
+                { marginTop: hp(32) },
+              ]}
+              phoneInputStyle={[
                 styles.bareInput,
                 { letterSpacing: phone.length > 0 ? 2 : 0 },
               ]}
-              value={phone}
-              onChangeText={handlePhoneChange}
-              placeholder="휴대폰 번호 (- 없이 입력)"
+              errorTextStyle={styles.errorText}
+              errorText={submitError}
+              phoneInputRef={phoneRef}
+              chevronIconSize={CONSTANTS.chevronIconSize}
+              chevronIconColor={COLORS.textPrimary}
               placeholderTextColor={COLORS.textTertiary}
-              keyboardType="number-pad"
-              maxLength={11}
             />
-
-            {submitError.length > 0 && (
-              <Text style={styles.errorText}>{submitError}</Text>
-            )}
           </Animated.View>
-        )}
+        ) : null}
       </AuthStepLayout>
 
       <TelecomSelectModal
