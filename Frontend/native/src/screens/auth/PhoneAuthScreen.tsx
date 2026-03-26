@@ -38,6 +38,7 @@ export default function PhoneAuthScreen({
     typeof routeParams.name === 'string'
       ? (decodeUnicodeEscapes(routeParams.name) ?? '').trim()
       : '';
+  const isLockedSsafyName = isSsafySignup && initialSsafyName.length >= 2;
 
   const {
     termsVisible,
@@ -93,8 +94,8 @@ export default function PhoneAuthScreen({
       <AuthStepLayout
         currentStep={1}
         totalSteps={5}
-        title={'본인 확인을 위해\n인증이 필요해요.'}
-        description="인증번호 요청 전에 필수 약관 전체 동의가 필요해요."
+        title={'본인 확인을 위해\n정보를 입력해 주세요.'}
+        description="문자 인증을 진행하기 위해 본인 정보를 먼저 확인할게요."
         scrollViewRef={scrollViewRef}
         scrollContentPaddingTop={CONSTANTS.scrollContentPaddingTop}
         scrollContentPaddingBottom={CONSTANTS.scrollContentPaddingBottom}
@@ -132,7 +133,7 @@ export default function PhoneAuthScreen({
               ]}
               value={name}
               onChangeText={(value) => {
-                if (isSsafySignup) {
+                if (isLockedSsafyName) {
                   return;
                 }
                 setName(value);
@@ -141,13 +142,15 @@ export default function PhoneAuthScreen({
               placeholderTextColor={COLORS.textTertiary}
               onSubmitEditing={handleNameSubmit}
               returnKeyType="next"
-              autoFocus={!isSsafySignup}
-              editable={!isSsafySignup}
+              autoFocus={!isLockedSsafyName}
+              editable={!isLockedSsafyName}
             />
           </View>
           {isSsafySignup && (
             <Text style={{ color: COLORS.textTertiary, marginTop: hp(12) }}>
-              SSAFY 계정의 이름은 수정할 수 없어요.
+              {isLockedSsafyName
+                ? 'SSAFY 계정 이름은 수정할 수 없어요.'
+                : 'SSAFY 이름을 불러오지 못해 직접 입력해 주세요.'}
             </Text>
           )}
         </Animated.View>
