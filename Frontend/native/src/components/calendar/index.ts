@@ -18,6 +18,8 @@ export { default as CalendarMonthCard } from './CalendarMonthCard';
 export { default as CalendarPaymentMethodSelector } from './CalendarPaymentMethodSelector';
 export { default as CalendarTabSwitcher } from './CalendarTabSwitcher';
 export { default as CalendarTopDockContent } from './CalendarTopDockContent';
+export { default as CalendarTopDockNotice } from './CalendarTopDockNotice';
+export { default as CalendarTopDockTabSection } from './CalendarTopDockTabSection';
 export { default as CalendarUploadBackendSummaryCard } from './CalendarUploadBackendSummaryCard';
 export { default as CalendarUploadCategorySheet } from './CalendarUploadCategorySheet';
 export { default as CalendarUploadResultItemRow } from './CalendarUploadResultItemRow';

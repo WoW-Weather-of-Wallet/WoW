@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, type ViewStyle } from 'react-native';
-import DataSourceNotice from '../common/DataSourceNotice';
+import type { ViewStyle } from 'react-native';
 import type { CalendarOverview } from '../../mock/calendar';
 import type { CalendarHeaderFetchState } from '../../types/calendar';
 import CalendarHeroCard from './CalendarHeroCard';
 import CalendarTabSwitcher from './CalendarTabSwitcher';
+import CalendarTopDockNotice from './CalendarTopDockNotice';
+import CalendarTopDockTabSection from './CalendarTopDockTabSection';
 
 type CalendarTabKey = React.ComponentProps<typeof CalendarTabSwitcher>['activeTab'];
 
@@ -41,17 +42,11 @@ export default function CalendarTopDockContent({
   noticeStyle,
   tabWrapStyle,
 }: CalendarTopDockContentProps) {
-  const noticeDescription =
-    headerFetchState === 'live'
-      ? '헤더 일부는 실데이터이고, 메모와 일부 월 데이터 및 고정지출 흐름에는 mock 또는 fallback 데이터가 포함됩니다.'
-      : '현재 캘린더 화면은 mock 또는 fallback 데이터가 포함되어 있습니다.';
-
   return (
     <>
       {showDataSourceNotice ? (
-        <DataSourceNotice
-          type={headerFetchState === 'live' ? 'mixed' : 'mock'}
-          description={noticeDescription}
+        <CalendarTopDockNotice
+          headerFetchState={headerFetchState}
           style={noticeStyle}
         />
       ) : null}
@@ -68,9 +63,11 @@ export default function CalendarTopDockContent({
         onPressInfo={onPressInfo}
       />
 
-      <View style={tabWrapStyle}>
-        <CalendarTabSwitcher activeTab={activeTab} onChange={onChangeTab} />
-      </View>
+      <CalendarTopDockTabSection
+        activeTab={activeTab}
+        onChangeTab={onChangeTab}
+        style={tabWrapStyle}
+      />
     </>
   );
 }
