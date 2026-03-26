@@ -1,9 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
+import { View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+
+import { AiResultHeader, AiResultSummaryCard } from '../../components/ai';
+import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import GradientButton from '../../components/common/GradientButton';
 import { COLORS, hp, wp } from '../../constants/theme';
-import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
-import { AiResultHeader, AiResultSummaryCard } from '../../components/ai';
 import { useAiResultSummary } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import type { AiFeedbackStackScreenProps } from '../../types';
@@ -11,25 +14,48 @@ import type { AiFeedbackStackScreenProps } from '../../types';
 export default function AiResultScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiResult'>) {
-  const hasRequestedLatestReport = useRef(false);
-  const { reset, resultData, refreshLatestAnalysis, errorMessage } = useAiStore();
-  const { displayName, title, buttonTitle, cards } = useAiResultSummary(resultData, errorMessage);
+  const {
+    reset,
+    resultData,
+    errorInfo,
+    isRefreshing,
+    refreshLatestAnalysis,
+  } = useAiStore();
 
-  useEffect(() => {
-    if (resultData?.report) {
-      hasRequestedLatestReport.current = false;
+  const isStale = Boolean(
+    resultData?.report
+    && resultData.cacheExpiresAt
+    && new Date(resultData.cacheExpiresAt).getTime() <= Date.now(),
+  );
+
+  const { displayName, title, buttonTitle, cards } = useAiResultSummary(resultData, {
+    errorInfo,
+    isRefreshing,
+    isStale,
+  });
+
+  useFocusEffect(
+    React.useCallback(() => {
+      void refreshLatestAnalysis({
+        fromPush: Boolean(useAiStore.getState().resultData?.fromPush),
+      });
+    }, [refreshLatestAnalysis]),
+  );
+
+  const handlePrimaryPress = () => {
+    if (!resultData?.report && errorInfo?.canRetry) {
+      void refreshLatestAnalysis({
+        force: true,
+        fromPush: Boolean(resultData?.fromPush),
+      });
       return;
     }
 
-    if (hasRequestedLatestReport.current) {
-      return;
-    }
+    reset();
+    navigation.navigate('AiFeedbackHome');
+  };
 
-    hasRequestedLatestReport.current = true;
-    void refreshLatestAnalysis({
-      fromPush: Boolean(resultData?.fromPush),
-    });
-  }, [refreshLatestAnalysis, resultData?.fromPush, resultData?.report]);
+  const showRetryButton = Boolean(resultData?.report && errorInfo?.canRetry && !isRefreshing);
 
   return (
     <BottomTabScreenLayout
@@ -57,15 +83,29 @@ export default function AiResultScreen({
 
       <Animated.View
         entering={FadeInDown.delay(500).duration(500)}
-        style={{ marginTop: hp(10) }}
+        style={{ marginTop: hp(10), gap: hp(12) }}
       >
-        <GradientButton
-          title={buttonTitle}
-          onPress={() => {
-            reset();
-            navigation.navigate('AiFeedbackHome');
-          }}
-        />
+        {showRetryButton ? (
+          <GradientButton
+            title={isRefreshing ? '최신 결과 확인 중' : '최신 결과 다시 불러오기'}
+            variant="outline"
+            disabled={isRefreshing}
+            onPress={() => {
+              void refreshLatestAnalysis({
+                force: true,
+                fromPush: Boolean(resultData?.fromPush),
+              });
+            }}
+          />
+        ) : null}
+
+        <View>
+          <GradientButton
+            title={!resultData?.report && errorInfo?.canRetry ? '다시 불러오기' : buttonTitle}
+            disabled={isRefreshing && !resultData?.report}
+            onPress={handlePrimaryPress}
+          />
+        </View>
       </Animated.View>
     </BottomTabScreenLayout>
   );

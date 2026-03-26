@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useAuthStore } from '../store/authStore';
-import type { AiResultData } from '../store/aiStore';
+import type { AiErrorState, AiResultData } from '../store/aiStore';
 
 type AiResultIconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -15,6 +15,12 @@ export interface AiResultSummaryCardData {
   iconName?: AiResultIconName;
   iconText?: string;
   items?: string[];
+}
+
+interface UseAiResultSummaryOptions {
+  errorInfo?: AiErrorState | null;
+  isRefreshing?: boolean;
+  isStale?: boolean;
 }
 
 const formatCompletedAt = (completedAt?: string) => {
@@ -41,7 +47,68 @@ const formatCurrency = (amount: number) => `${Math.max(0, Math.round(amount)).to
 
 const formatRatio = (ratio: number) => `${ratio.toFixed(1)}%`;
 
-export function useAiResultSummary(resultData: AiResultData | null, errorMessage?: string | null) {
+const buildStatusCard = (
+  reportExists: boolean,
+  errorInfo?: AiErrorState | null,
+  isRefreshing?: boolean,
+  isStale?: boolean,
+): AiResultSummaryCardData | null => {
+  if (isRefreshing && reportExists) {
+    return {
+      id: 'result-status',
+      title: '리포트 상태',
+      headline: '저장된 결과를 먼저 보여주고 있어요',
+      description: '백엔드의 최신 AI 리포트를 다시 확인하는 중이에요. 새 결과가 오면 화면에 바로 반영됩니다.',
+    };
+  }
+
+  if (errorInfo && reportExists) {
+    return {
+      id: 'result-status',
+      title: '리포트 상태',
+      headline: errorInfo.canRetry ? '저장된 결과 기준으로 보여드리고 있어요' : '지금은 저장된 결과만 확인할 수 있어요',
+      description: errorInfo.canRetry
+        ? `${errorInfo.message} 기존에 받아둔 결과는 그대로 확인할 수 있어요.`
+        : errorInfo.message,
+    };
+  }
+
+  if (isStale && reportExists) {
+    return {
+      id: 'result-status',
+      title: '리포트 상태',
+      headline: '조금 전 결과가 아니라면 새로고침이 필요해요',
+      description: '저장된 AI 리포트를 먼저 보여주고 있어요. 화면에 다시 들어오면 최신 결과를 자동으로 확인합니다.',
+    };
+  }
+
+  if (!reportExists && errorInfo) {
+    return {
+      id: 'result-status',
+      title: '분석 상태',
+      headline: errorInfo.kind === 'no-transactions'
+        ? '분석할 거래 내역이 아직 없어요'
+        : '최신 결과를 불러오지 못했어요',
+      description: errorInfo.message,
+    };
+  }
+
+  if (!reportExists) {
+    return {
+      id: 'result-status',
+      title: '분석 상태',
+      headline: '최신 결과를 준비 중이에요',
+      description: 'AI 리포트 상세 데이터는 아직 동기화되지 않았어요. 잠시 후 다시 열면 최신 분석 결과가 반영됩니다.',
+    };
+  }
+
+  return null;
+};
+
+export function useAiResultSummary(
+  resultData: AiResultData | null,
+  options: UseAiResultSummaryOptions = {},
+) {
   const userName = useAuthStore((state) => state.user?.name);
 
   return useMemo(() => {
@@ -51,32 +118,19 @@ export function useAiResultSummary(resultData: AiResultData | null, errorMessage
     const completedAtLabel = formatCompletedAt(resultData?.completedAt);
     const fromPush = Boolean(resultData?.fromPush);
 
-    if (!report) {
-      const cards: AiResultSummaryCardData[] = [
-        {
-          id: 'status',
-          title: '분석 상태',
-          headline: errorMessage ? '최신 결과를 불러오지 못했어요' : '최신 결과를 준비 중이에요',
-          description:
-            errorMessage
-              ? errorMessage
-              : 'AI 리포트 상세 데이터는 아직 동기화되지 않았어요. 잠시 후 다시 열면 최신 분석 결과가 반영됩니다.',
-        },
-        {
-          id: 'completed-at',
-          title: '최근 완료 시각',
-          headline: completedAtLabel,
-          description: fromPush
-            ? '알림을 통해 도착한 결과예요. 백엔드의 최신 리포트를 다시 확인하고 있어요.'
-            : '가장 최근에 저장된 분석 완료 시각입니다.',
-        },
-      ];
+    const statusCard = buildStatusCard(
+      Boolean(report),
+      options.errorInfo,
+      options.isRefreshing,
+      options.isStale,
+    );
 
+    if (!report) {
       return {
         displayName,
         title: 'AI 소비 피드백',
-        buttonTitle: '다시 분석하기',
-        cards,
+        buttonTitle: 'AI 홈으로 돌아가기',
+        cards: statusCard ? [statusCard] : [],
       };
     }
 
@@ -99,6 +153,7 @@ export function useAiResultSummary(resultData: AiResultData | null, errorMessage
     }));
 
     const cards: AiResultSummaryCardData[] = [
+      ...(statusCard ? [statusCard] : []),
       {
         id: 'cluster',
         title: '내 소비 유형',
@@ -152,5 +207,5 @@ export function useAiResultSummary(resultData: AiResultData | null, errorMessage
       buttonTitle: '다시 분석하기',
       cards,
     };
-  }, [errorMessage, resultData, userName]);
+  }, [options.errorInfo, options.isRefreshing, options.isStale, resultData, userName]);
 }

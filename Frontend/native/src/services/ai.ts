@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 import { nativeApi } from './auth';
 
 const AI_ANALYSIS_TIMEOUT_MS = 180000;
@@ -53,6 +55,20 @@ interface AiAnalysisResponse {
   summary?: AiAnalysisSummaryResponse | null;
   tips?: AiAnalysisTipResponse[] | null;
   goal?: AiAnalysisGoalResponse | null;
+}
+
+export type AiAnalysisErrorKind =
+  | 'no-transactions'
+  | 'server'
+  | 'network'
+  | 'unauthorized'
+  | 'forbidden'
+  | 'unknown';
+
+export interface AiAnalysisApiError extends Error {
+  kind: AiAnalysisErrorKind;
+  statusCode?: number;
+  canRetry: boolean;
 }
 
 export interface AiAnalysisCluster {
@@ -151,15 +167,109 @@ const normalizeAiAnalysis = (report?: AiAnalysisResponse | null): AiAnalysisRepo
   },
 });
 
+const buildAiAnalysisApiError = (error: unknown): AiAnalysisApiError => {
+  if (axios.isAxiosError(error)) {
+    const statusCode = error.response?.status;
+    const apiMessage =
+      error.response?.data?.errorMessage
+      ?? error.response?.data?.responseMessage
+      ?? error.response?.data?.message
+      ?? error.message;
+
+    if (statusCode === 404) {
+      return {
+        name: 'AiAnalysisApiError',
+        kind: 'no-transactions',
+        message: apiMessage || '최근 3개월 거래가 없어 AI 피드백을 만들 수 없어요.',
+        statusCode,
+        canRetry: false,
+      };
+    }
+
+    if (statusCode === 401) {
+      return {
+        name: 'AiAnalysisApiError',
+        kind: 'unauthorized',
+        message: apiMessage || '로그인이 만료되었어요. 다시 로그인해주세요.',
+        statusCode,
+        canRetry: false,
+      };
+    }
+
+    if (statusCode === 403) {
+      return {
+        name: 'AiAnalysisApiError',
+        kind: 'forbidden',
+        message: apiMessage || 'AI 피드백을 조회할 권한이 없어요.',
+        statusCode,
+        canRetry: false,
+      };
+    }
+
+    if (statusCode && statusCode >= 500) {
+      return {
+        name: 'AiAnalysisApiError',
+        kind: 'server',
+        message: apiMessage || 'AI 서버와 연결이 불안정해요. 잠시 후 다시 시도해주세요.',
+        statusCode,
+        canRetry: true,
+      };
+    }
+
+    if (!error.response) {
+      return {
+        name: 'AiAnalysisApiError',
+        kind: 'network',
+        message: '네트워크 연결이 불안정해요. 인터넷 상태를 확인한 뒤 다시 시도해주세요.',
+        canRetry: true,
+      };
+    }
+
+    return {
+      name: 'AiAnalysisApiError',
+      kind: 'unknown',
+      message: apiMessage || 'AI 피드백을 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
+      statusCode,
+      canRetry: true,
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      name: 'AiAnalysisApiError',
+      kind: 'unknown',
+      message: error.message,
+      canRetry: true,
+    };
+  }
+
+  return {
+    name: 'AiAnalysisApiError',
+    kind: 'unknown',
+    message: 'AI 피드백을 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
+    canRetry: true,
+  };
+};
+
+export const isAiAnalysisApiError = (error: unknown): error is AiAnalysisApiError =>
+  error != null
+  && typeof error === 'object'
+  && 'kind' in error
+  && 'canRetry' in error;
+
 export async function getAiAnalysis(params: GetAiAnalysisParams = {}) {
   const queryParams = Object.fromEntries(
     Object.entries(params).filter(([, value]) => value != null),
   );
 
-  const response = await nativeApi.get<ApiResponse<AiAnalysisResponse>>('/api/v1/ai/analysis', {
-    params: queryParams,
-    timeout: AI_ANALYSIS_TIMEOUT_MS,
-  });
+  try {
+    const response = await nativeApi.get<ApiResponse<AiAnalysisResponse>>('/api/v1/ai/analysis', {
+      params: queryParams,
+      timeout: AI_ANALYSIS_TIMEOUT_MS,
+    });
 
-  return normalizeAiAnalysis(response.data.data);
+    return normalizeAiAnalysis(response.data.data);
+  } catch (error) {
+    throw buildAiAnalysisApiError(error);
+  }
 }
