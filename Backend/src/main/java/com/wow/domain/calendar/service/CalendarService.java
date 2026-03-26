@@ -1,5 +1,6 @@
 package com.wow.domain.calendar.service;
 
+import com.wow.domain.AI.dto.AiAnalysisResponse;
 import com.wow.domain.AI.service.AiAnalysisService;
 import com.wow.domain.calendar.dto.*;
 import com.wow.domain.calendar.entity.*;
@@ -14,6 +15,7 @@ import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.global.exception.BadRequestException;
 import com.wow.global.exception.ForbiddenException;
+import com.wow.global.exception.InternalServerException;
 import com.wow.global.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
@@ -41,6 +43,13 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class CalendarService {
 
+    private static final String MONTHLY_DEFAULT_WEATHER_NAME = "정보 없음";
+    private static final String MONTHLY_DEFAULT_DESCRIPTION = "최근 3개월 거래가 부족해 소비 날씨를 계산할 수 없습니다.";
+    private static final double SUNNY_THRESHOLD = 0.10d;
+    private static final double CLOUDY_THRESHOLD = 0.20d;
+    private static final double OVERCAST_THRESHOLD = 0.30d;
+    private static final double RAIN_THRESHOLD = 0.50d;
+
     private static final String DEFAULT_WEATHER_NAME = "정보 없음";
     private static final String DEFAULT_DESCRIPTION = "날씨 정보가 없습니다.";
 
@@ -58,13 +67,13 @@ public class CalendarService {
 
     // ── 캘린더 헤더 ──
     public CalendarHeaderResponse getCalendarHeader(Long userId, int year, int month) {
-        DailyWeatherInfo todayWeatherInfo = getDailyWeatherInfo(userId, LocalDate.now());
+        MonthlyWeatherInfo monthlyWeatherInfo = resolveMonthlyWeatherInfo(userId, year, month);
 
         return CalendarHeaderResponse.builder()
                 .yearMonth(year + "-" + String.format("%02d", month))
-                .weatherName(todayWeatherInfo.weatherName())
-                .iconCode(todayWeatherInfo.iconCode())
-                .description(todayWeatherInfo.description())
+                .weatherName(monthlyWeatherInfo.weatherName())
+                .iconCode(monthlyWeatherInfo.iconCode())
+                .description(monthlyWeatherInfo.description())
                 .savedAmount(calculateSavedAmount(userId, year, month))
                 .build();
     }
@@ -160,6 +169,115 @@ public class CalendarService {
 
     private DailyWeatherInfo defaultDailyWeatherInfo() {
         return new DailyWeatherInfo(DEFAULT_WEATHER_NAME, null, DEFAULT_DESCRIPTION);
+    }
+
+    private MonthlyWeatherInfo resolveMonthlyWeatherInfo(Long userId, int year, int month) {
+        try {
+            return buildMonthlyWeatherInfo(aiAnalysisService.getAnalysis(userId, year, month));
+        } catch (NotFoundException | InternalServerException exception) {
+            return defaultMonthlyWeatherInfo();
+        }
+    }
+
+    private MonthlyWeatherInfo buildMonthlyWeatherInfo(AiAnalysisResponse report) {
+        long totalSavable = report.getSummary() != null && report.getSummary().getTotalSavable() != null
+                ? report.getSummary().getTotalSavable()
+                : 0L;
+        long expectedSpending = report.getSummary() != null && report.getSummary().getExpectedSpending() != null
+                ? report.getSummary().getExpectedSpending()
+                : 0L;
+        long totalObservedSpending = Math.max(expectedSpending + totalSavable, 1L);
+        double savingsRatio = (double) totalSavable / totalObservedSpending;
+
+        WeatherProfile weatherProfile = resolveWeatherProfile(savingsRatio);
+        String description = buildMonthlyWeatherDescription(report, totalSavable, weatherProfile.weatherName());
+
+        return new MonthlyWeatherInfo(
+                weatherProfile.weatherName(),
+                weatherProfile.iconCode(),
+                description
+        );
+    }
+
+    // 프론트 가이드가 10/20/30/50% 절감 여지 구간으로 5단계를 쓰고 있어서
+    // 동일한 기준을 백엔드 헤더 응답에도 그대로 맞춘다.
+    private WeatherProfile resolveWeatherProfile(double savingsRatio) {
+        if (savingsRatio < SUNNY_THRESHOLD) {
+            return new WeatherProfile("맑음", "sunny");
+        }
+        if (savingsRatio < CLOUDY_THRESHOLD) {
+            return new WeatherProfile("구름", "cloudy");
+        }
+        if (savingsRatio < OVERCAST_THRESHOLD) {
+            return new WeatherProfile("흐림", "overcast");
+        }
+        if (savingsRatio < RAIN_THRESHOLD) {
+            return new WeatherProfile("비", "rain");
+        }
+        return new WeatherProfile("폭우", "heavy-rain");
+    }
+
+    private String buildMonthlyWeatherDescription(
+            AiAnalysisResponse report,
+            long totalSavable,
+            String weatherName
+    ) {
+        String actionTip = report.getGoal() != null ? report.getGoal().getActionTip() : null;
+        if (actionTip != null && !actionTip.isBlank() && totalSavable > 0 && !"맑음".equals(weatherName)) {
+            return actionTip;
+        }
+
+        AiAnalysisResponse.Overspending primaryOverspending = report.getOverspending() != null
+                && !report.getOverspending().isEmpty()
+                ? report.getOverspending().getFirst()
+                : null;
+
+        if (primaryOverspending == null || primaryOverspending.getName() == null || primaryOverspending.getName().isBlank()) {
+            if (totalSavable <= 0) {
+                return "최근 3개월 소비 흐름이 비교적 안정적이에요. 지금 패턴을 유지해보세요.";
+            }
+            return String.format(
+                    "최근 3개월 기준 약 %,d원 절약 여지가 보여요. 주요 소비 카테고리를 한 번 점검해보세요.",
+                    totalSavable
+            );
+        }
+
+        String categoryName = primaryOverspending.getName();
+        long savableAmount = primaryOverspending.getSavableAmount() != null
+                ? primaryOverspending.getSavableAmount()
+                : totalSavable;
+
+        return switch (weatherName) {
+            case "맑음" -> String.format(
+                    "%s 지출이 조금 높지만 전반적으로는 안정적이에요. 약 %,d원 정도만 가볍게 점검해보세요.",
+                    categoryName,
+                    savableAmount
+            );
+            case "구름" -> String.format(
+                    "%s 지출을 조금만 다듬으면 약 %,d원 더 아낄 수 있어요.",
+                    categoryName,
+                    savableAmount
+            );
+            case "흐림" -> String.format(
+                    "%s 비중이 기준보다 높아요. 약 %,d원 절약할 수 있어 먼저 점검해보세요.",
+                    categoryName,
+                    savableAmount
+            );
+            case "비" -> String.format(
+                    "%s 지출이 크게 높아요. 약 %,d원 절약 여지가 있어 이번 달 관리 우선순위로 추천해요.",
+                    categoryName,
+                    savableAmount
+            );
+            default -> String.format(
+                    "%s 과소비 신호가 강해요. 약 %,d원 절약 가능하니 가장 먼저 관리해보세요.",
+                    categoryName,
+                    savableAmount
+            );
+        };
+    }
+
+    private MonthlyWeatherInfo defaultMonthlyWeatherInfo() {
+        return new MonthlyWeatherInfo(MONTHLY_DEFAULT_WEATHER_NAME, null, MONTHLY_DEFAULT_DESCRIPTION);
     }
 
     private int calculateSavedAmount(Long userId, int year, int month) {
@@ -443,6 +561,10 @@ public class CalendarService {
     }
 
     private record DailyWeatherInfo(String weatherName, String iconCode, String description) {}
+
+    private record MonthlyWeatherInfo(String weatherName, String iconCode, String description) {}
+
+    private record WeatherProfile(String weatherName, String iconCode) {}
 
     // 전체 거래내역 조회
     public CalendarTransactionResponse getCalendarTransactions(
