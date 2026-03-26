@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, wp } from '../../constants/theme';
 import { styles } from './FixedExpenseManageModal.styles';
@@ -9,7 +9,7 @@ import {
   stripFixedExpenseCategorySuffix,
 } from '../../utils/fixedExpensePresentation';
 
-interface ManageFixedExpenseItem {
+export interface ManageFixedExpenseItem {
   id: string;
   title: string;
   subtitle: string;
@@ -55,7 +55,7 @@ export default function FixedExpenseManageItemCard({
         </View>
 
         <View style={styles.itemAmountBlock}>
-          <Text style={styles.itemAmount}>₩{item.amount.toLocaleString()}</Text>
+          <Text style={styles.itemAmount}>{item.amount.toLocaleString()}원</Text>
         </View>
       </View>
 

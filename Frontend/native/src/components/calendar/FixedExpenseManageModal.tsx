@@ -1,27 +1,13 @@
 import React from 'react';
-import {
-  Modal,
-  ScrollView,
-  StatusBar,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, ScrollView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, hp, wp } from '../../constants/theme';
 import { styles } from './FixedExpenseManageModal.styles';
-import FixedExpenseManageItemCard from './FixedExpenseManageItemCard';
-
-interface ManageFixedExpenseItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  amount: number;
-  icon: string;
-  iconTone: string;
-  isEnabled: boolean;
-}
+import FixedExpenseManageItemCard, {
+  type ManageFixedExpenseItem,
+} from './FixedExpenseManageItemCard';
+import FixedExpenseManageSummaryCard from './FixedExpenseManageSummaryCard';
 
 interface FixedExpenseManageModalProps {
   visible: boolean;
@@ -34,9 +20,6 @@ interface FixedExpenseManageModalProps {
   onDeleteItem: (id: string) => void;
 }
 
-/**
- * 고정지출 관리 전체 화면입니다. 등록된 항목의 수정, 활성화, 삭제를 한곳에서 처리합니다.
- */
 export default function FixedExpenseManageModal({
   visible,
   totalAmount,
@@ -61,18 +44,7 @@ export default function FixedExpenseManageModal({
           <Text style={styles.headerTitle}>고정지출 관리</Text>
         </View>
 
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryTopRow}>
-            <View style={styles.summaryTextBlock}>
-              <Text style={styles.summaryLabel}>활성화된 고정지출 합계</Text>
-              <Text style={styles.summaryAmount}>₩{totalAmount.toLocaleString()}</Text>
-            </View>
-            <TouchableOpacity activeOpacity={0.88} style={styles.addButton} onPress={onPressAdd}>
-              <Text style={styles.addButtonText}>+ 항목 추가</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.summaryHint}>자동으로 반영할 항목을 켜 두면 캘린더 요약에 함께 표시됩니다.</Text>
-        </View>
+        <FixedExpenseManageSummaryCard totalAmount={totalAmount} onPressAdd={onPressAdd} />
 
         <ScrollView
           contentContainerStyle={[
