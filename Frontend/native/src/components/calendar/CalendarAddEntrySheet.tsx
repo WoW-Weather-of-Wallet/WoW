@@ -31,6 +31,7 @@ import {
 // 엑셀 가이드 서비스 호출 제거 (수동 호출 방식으로 변경)
 import ExcelUploadGuideModal from './ExcelUploadGuideModal';
 import CalendarCategorySelector from './CalendarCategorySelector';
+import CalendarDraftEntryCard from './CalendarDraftEntryCard';
 import CalendarEntryModeToggle from './CalendarEntryModeToggle';
 import CalendarUploadBackendSummaryCard from './CalendarUploadBackendSummaryCard';
 import CalendarFieldLabel from './CalendarFieldLabel';
@@ -376,6 +377,14 @@ export default function CalendarAddEntrySheet({
               {draftEntries.length > 0 ? (
                 <View style={styles.draftList}>
                   {draftEntries.map((draft) => (
+                    <CalendarDraftEntryCard
+                      key={draft.id}
+                      draft={draft}
+                      onRemove={removeDraftEntry}
+                    />
+                  ))}
+                  {false &&
+                    draftEntries.map((draft) => (
                     <View key={draft.id} style={styles.draftCard}>
                       <View style={styles.draftHeaderRow}>
                         <Text style={styles.draftDateText}>
