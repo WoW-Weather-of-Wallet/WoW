@@ -38,6 +38,7 @@ import CalendarFieldLabel from './CalendarFieldLabel';
 import CalendarPaymentMethodSelector from './CalendarPaymentMethodSelector';
 import CalendarUploadCategorySheet from './CalendarUploadCategorySheet';
 import CalendarUploadResultItemRow from './CalendarUploadResultItemRow';
+import CalendarUploadResultSection from './CalendarUploadResultSection';
 import type {
   CalendarUploadBackendItem,
   CalendarUploadBackendSummary,
@@ -601,7 +602,14 @@ export default function CalendarAddEntrySheet({
                 </View>
               ) : null}
 
-              {uploadGroups.map((group) => {
+              {uploadGroups.map((group) => (
+                <CalendarUploadResultSection
+                  key={group.dateKey}
+                  group={group}
+                  onPressItem={setSelectedUploadItemId}
+                />
+              ))}
+              {false && uploadGroups.map((group) => {
                 const needsCategoryCount = group.items.filter(
                   (item) => item.status === 'needs-category',
                 ).length;
