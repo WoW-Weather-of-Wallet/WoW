@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text } from 'react-native';
 
-import { styles } from './HomeSpendingTypeSheet.styles';
+import { COLORS, FONTS, fp, hp } from '../../constants/theme';
 
 type HomeSpendingTypeSectionTitleProps = {
   title: string;
@@ -10,5 +10,12 @@ type HomeSpendingTypeSectionTitleProps = {
 export default function HomeSpendingTypeSectionTitle({
   title,
 }: HomeSpendingTypeSectionTitleProps) {
-  return <Text style={styles.sheetSectionTitle}>{title}</Text>;
+  const titleStyle = {
+    fontSize: fp(18),
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: hp(14),
+  } as const;
+
+  return <Text style={titleStyle}>{title}</Text>;
 }

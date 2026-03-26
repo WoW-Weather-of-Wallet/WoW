@@ -2,9 +2,9 @@ import React from 'react';
 import { View } from 'react-native';
 
 import type { SpendingStyleMetric } from '../../constants/main/types';
+import { hp, wp } from '../../constants/theme';
 import LegendList from './LegendList';
 import SpendingStyleRadarChart from './SpendingStyleRadarChart';
-import { styles } from './HomeSpendingTypeSheet.styles';
 
 type HomeSpendingTypeStyleMapContentProps = {
   metrics: SpendingStyleMetric[];
@@ -13,10 +13,15 @@ type HomeSpendingTypeStyleMapContentProps = {
 export default function HomeSpendingTypeStyleMapContent({
   metrics,
 }: HomeSpendingTypeStyleMapContentProps) {
+  const cardStyle = {
+    gap: wp(18),
+    marginBottom: hp(20),
+  } as const;
+
   return (
-    <View style={styles.styleMapCard}>
+    <View className="flex-row items-center" style={cardStyle}>
       <SpendingStyleRadarChart metrics={metrics} />
-      <View style={styles.styleLegend}>
+      <View className="flex-1 justify-center">
         <LegendList items={metrics} />
       </View>
     </View>
