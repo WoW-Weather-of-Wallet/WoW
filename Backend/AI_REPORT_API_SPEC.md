@@ -2,12 +2,29 @@
 
 ## Purpose
 
-This document defines the backend-facing AI report contract and the current
-runtime policy.
+This document defines the current backend contract for:
+
+- monthly AI report generation
+- Redis-first caching policy
+- minimal DB snapshot persistence
+- calendar header spending weather calculation
+
+The current production-safe policy is:
 
 - Full AI report JSON is cached in Redis.
 - Existing DB tables are used only for minimal monthly snapshot storage.
 - No new DB schema is required for this flow.
+
+## Category Basis
+
+The current AI report and cluster calculation use the **existing 45-category
+model feature space**.
+
+- Cluster `0 ~ 7` is already trained on this category basis.
+- Because retraining is expensive, the backend must keep the same category
+  basis for AI report input.
+- If a 20-category summary is needed later, it should be handled as a
+  **display-only derived view**, not as a replacement for the model input.
 
 ## Backend Public API
 
@@ -60,6 +77,12 @@ calling the AI server.
 }
 ```
 
+Notes:
+
+- `category` is the backend category name used for AI aggregation.
+- The backend sends aggregated values, not raw transaction rows.
+- `keepSession` is `false` for monthly report generation.
+
 ## Backend Response Shape
 
 The backend wraps the AI report with the common response envelope.
@@ -72,8 +95,8 @@ The backend wraps the AI report with the common response envelope.
     "cluster": {
       "id": 1,
       "name": "사무·서적형",
-      "description": "사무/교육용품과 서적/도서 비중이 높은 학습 집중형 유형입니다.",
-      "icon": "📚"
+      "description": "사무/교육용품과 서적/도서 비중이 높은 유형",
+      "icon": "book"
     },
     "categories": [
       {
@@ -100,14 +123,14 @@ The backend wraps the AI report with the common response envelope.
       {
         "order": 1,
         "keyword": "커피·간식",
-        "title": "커피·간식 빈도를 먼저 줄여보세요",
-        "description": "하루 1회처럼 횟수 기준을 먼저 정해두면 지출을 안정적으로 줄일 수 있습니다."
+        "title": "커피·간식 빈도를 미리 정해두세요",
+        "description": "충동 구매 대신 하루 1회 같은 규칙을 정하고 관리하세요."
       }
     ],
     "goal": {
       "savable_amount": 29258,
       "expected_spending": 970842,
-      "action_tip": "커피/음료 구매 횟수를 주 3회 이내로 제한해보세요."
+      "action_tip": "커피/음료를 주 3회 구매로 제한하고 대체 음료를 고정해보세요."
     }
   }
 }
@@ -119,11 +142,14 @@ The backend wraps the AI report with the common response envelope.
 - TTL: 6 hours
 - Cache payload: full AI report JSON
 
+The Redis cache is the **source of truth for the full report payload**.
+
 ## DB Persistence Policy
 
 The current schema is kept as-is.
 
 Persisted:
+
 - `ai_analysis`
   - user
   - spending type
@@ -137,6 +163,7 @@ Persisted:
   - amount
 
 Not persisted in DB yet:
+
 - `overspending`
 - `tips`
 - `goal`
@@ -156,6 +183,60 @@ When transactions are created, updated, or deleted:
   - changed month + 2
 
 This matches the 3-month rolling aggregation rule.
+
+## Calendar Header Spending Weather
+
+The calendar header spending weather is derived from the monthly AI report.
+It is **not** calculated from the old per-day weather table.
+
+### Weather Source
+
+- source endpoint: `GET /api/v1/ai/analysis`
+- source fields:
+  - `summary.total_savable`
+  - `summary.expected_spending`
+  - `overspending[0]`
+  - `goal.action_tip`
+
+### Weather Ratio
+
+The backend computes:
+
+`total_savable / (total_savable + expected_spending)`
+
+This ratio represents the savings opportunity level of the monthly report.
+
+### Five Weather Bands
+
+- `< 10%` -> `맑음` / `sunny`
+- `< 20%` -> `구름` / `cloudy`
+- `< 30%` -> `흐림` / `overcast`
+- `< 50%` -> `비` / `rain`
+- `>= 50%` -> `폭우` / `heavy-rain`
+
+These bands are aligned with the current frontend weather guide.
+
+### Header Fallback Policy
+
+If the AI report cannot be generated because:
+
+- there are no transactions in the rolling 3-month window, or
+- the AI server is unavailable,
+
+the calendar header falls back to:
+
+- `weatherName = "정보 없음"`
+- `iconCode = null`
+- `description = "최근 3개월 거래가 부족해 소비 날씨를 계산할 수 없습니다."`
+
+### Header Description Rule
+
+- If risk is meaningful and `goal.action_tip` exists, use it as the header
+  description.
+- Otherwise, use the top overspending category and savable amount to build a
+  short fallback explanation.
+- If no overspending category exists and the savings opportunity is near zero,
+  return a stable message indicating the spending flow is relatively stable.
 
 ## Error Response Examples
 
