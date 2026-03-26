@@ -619,13 +619,28 @@ public class CalendarService {
         return new TransactionCustomResponse(entities.size(), responseItems);
     }
 
-    // CalendarService.java에 추가
     @Transactional
-    public void updateMemo(Long userId, LocalDate date, String memo) {
+    public CalendarMemoResponse updateMemo(Long userId, LocalDate date, String memo) {
+        DayType dayType = resolveDayType(date, LocalDate.now());
         Calendar calendar = calendarRepository.findByUserIdAndDateWithWeather(userId, date)
-                .orElseThrow(() -> new NotFoundException("해당 날짜의 캘린더를 찾을 수 없습니다."));
+                .orElseGet(() -> {
+                    User user = userRepository.findById(userId)
+                            .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+                    LocalDateTime now = LocalDateTime.now();
+                    return calendarRepository.save(
+                            Calendar.builder()
+                                    .user(user)
+                                    .date(date)
+                                    .dayType(dayType)
+                                    .createdAt(now)
+                                    .updatedAt(now)
+                                    .build()
+                    );
+                });
 
+        calendar.updateDayType(dayType);
         calendar.updateMemo(memo);
+        return new CalendarMemoResponse(calendar.getId(), calendar.getMemo());
     }
 
     @Transactional
