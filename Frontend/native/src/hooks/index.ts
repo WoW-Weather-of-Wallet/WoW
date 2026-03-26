@@ -3,6 +3,7 @@
 export * from './useAppPermissions';
 export * from './useAuthSessionLogin';
 export * from './useCreateAccountFlow';
+export * from './useCreateAccountStepFlow';
 export * from './useAccountRecoveryResult';
 export * from './useAccountRecoveryEntry';
 export * from './useFindPwFlow';

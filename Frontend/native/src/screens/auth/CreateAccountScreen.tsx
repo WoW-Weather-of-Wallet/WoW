@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import {
   Text,
   TextInput,
@@ -11,126 +11,50 @@ import { Ionicons } from '@expo/vector-icons';
 import AuthStepLayout from '../../components/auth/AuthStepLayout';
 import { styles, CONSTANTS } from './CreateAccountScreen.styles';
 import { COLORS, hp } from '../../constants/theme';
-import { useCreateAccountFlow, usePasswordPairForm } from '../../hooks';
+import { useCreateAccountStepFlow } from '../../hooks';
 import type { CreateAccountRouteParams } from '../../types/auth';
 import type { RootScreenProps } from '../../types';
 
 export default function CreateAccountScreen({
   route,
 }: RootScreenProps<'CreateAccount'>) {
-  const routeParams = (route?.params ?? {}) as CreateAccountRouteParams;
-
-  const [step, setStep] = useState(1);
-  const [id, setId] = useState('');
+  const routeParams: CreateAccountRouteParams = route.params ?? {};
   const {
+    step,
+    id,
+    password,
+    confirmPassword,
     isCheckingId,
     isIdAvailable,
     isSubmitting,
-    submitError,
-    clearSubmitError,
-    resetIdAvailability,
-    handleCheckId: submitIdCheck,
-    handleCreateAccount: submitCreateAccount,
-  } = useCreateAccountFlow(routeParams);
-  const {
-    password,
-    confirmPassword,
     isPasswordVisible,
     isConfirmPasswordVisible,
+    submitError,
     passwordValidation,
     isPasswordValid,
     isPasswordMatch,
     canShowMismatch,
-    isFormValid: isPasswordFormValid,
+    title,
+    stepIndicatorCurrentStep,
+    buttonState,
+    idRef,
+    pwRef,
+    confirmPwRef,
     setPassword,
     setConfirmPassword,
     togglePasswordVisibility,
     toggleConfirmPasswordVisibility,
-  } = usePasswordPairForm({
-    identifier: id,
-  });
-
-  const idRef = useRef<TextInput>(null);
-  const pwRef = useRef<TextInput>(null);
-  const confirmPwRef = useRef<TextInput>(null);
-
-  const handleCheckId = async () => {
-    const isAvailable = await submitIdCheck(id);
-
-    if (isAvailable) {
-      setTimeout(() => {
-        setStep((prev) => Math.max(prev, 2));
-        pwRef.current?.focus();
-      }, 250);
-    }
-  };
-
-  const hasSignupIdentifier = Boolean(isIdAvailable);
-  const isFormValid = hasSignupIdentifier && isPasswordFormValid && !isSubmitting;
-
-  const handleNextStep = () => {
-    if (step === 2 && isPasswordValid) {
-      setStep(3);
-      setTimeout(() => confirmPwRef.current?.focus(), 150);
-    }
-  };
-
-  const handleCreateAccount = async () => {
-    if (!isFormValid) {
-      return;
-    }
-
-    await submitCreateAccount({
-      userId: id,
-      password,
-    });
-  };
-
-  const handleIdChange = (text: string) => {
-    setId(text);
-    clearSubmitError();
-    if (isIdAvailable !== null) {
-      resetIdAvailability();
-    }
-  };
-
-  const getButtonState = () => {
-    if (step === 1) {
-      return {
-        text: '다음',
-        isActive: false,
-        onPress: undefined as (() => void) | undefined,
-      };
-    }
-
-    if (step === 2) {
-      return {
-        text: '다음',
-        isActive: isPasswordValid,
-        onPress: handleNextStep,
-      };
-    }
-
-    return {
-      text: isSubmitting ? '회원가입 중...' : '계정 생성하기',
-      isActive: isFormValid,
-      onPress: handleCreateAccount,
-    };
-  };
-
-  const btnState = getButtonState();
+    handleCheckId,
+    handleNextStep,
+    handleCreateAccount,
+    handleIdChange,
+  } = useCreateAccountStepFlow(routeParams);
 
   return (
     <AuthStepLayout
-      currentStep={step === 1 ? 3 : 4}
+      currentStep={stepIndicatorCurrentStep}
       totalSteps={5}
-      title={
-        step === 1
-          ? '회원가입 아이디를\n입력해 주세요.'
-          : step === 2
-            ? '비밀번호를\n입력해 주세요.'
-            : '비밀번호를\n한 번 더 입력해 주세요.'
-      }
+      title={title}
       description="입력한 정보는 안전하게 보호되며 회원가입 계정으로 사용할 수 있어요."
       scrollContentPaddingTop={CONSTANTS.scrollContentPaddingTop}
       scrollContentPaddingBottom={CONSTANTS.scrollContentPaddingBottom}
@@ -139,15 +63,15 @@ export default function CreateAccountScreen({
         step >= 2 ? (
           <Animated.View entering={FadeInDown.duration(500)}>
             <TouchableOpacity
-              style={[styles.confirmButton, btnState.isActive && styles.activeButton]}
-              disabled={!btnState.isActive}
-              onPress={btnState.onPress}
+              style={[styles.confirmButton, buttonState.isActive && styles.activeButton]}
+              disabled={!buttonState.isActive}
+              onPress={buttonState.onPress}
             >
               {isSubmitting ? (
                 <ActivityIndicator color={COLORS.textInverse} />
               ) : (
-                <Text style={[styles.confirmButtonText, btnState.isActive && styles.activeButtonText]}>
-                  {btnState.text}
+                <Text style={[styles.confirmButtonText, buttonState.isActive && styles.activeButtonText]}>
+                  {buttonState.text}
                 </Text>
               )}
             </TouchableOpacity>
