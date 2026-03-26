@@ -32,6 +32,7 @@ import {
 import ExcelUploadGuideModal from './ExcelUploadGuideModal';
 import CalendarCategorySelector from './CalendarCategorySelector';
 import CalendarDraftEntryCard from './CalendarDraftEntryCard';
+import CalendarDirectEntrySection from './CalendarDirectEntrySection';
 import CalendarEntryModeToggle from './CalendarEntryModeToggle';
 import CalendarUploadBackendSummaryCard from './CalendarUploadBackendSummaryCard';
 import CalendarFieldLabel from './CalendarFieldLabel';
@@ -358,6 +359,27 @@ export default function CalendarAddEntrySheet({
           <CalendarEntryModeToggle activeMode={activeMode} onChangeMode={setActiveMode} />
 
           {activeMode === 'direct' ? (
+            <>
+              <CalendarDirectEntrySection
+                dateKey={dateKey}
+                selectedCategory={selectedCategory}
+                selectedPaymentMethod={selectedPaymentMethod}
+                merchantName={merchantName}
+                amountInput={amountInput}
+                draftEntries={draftEntries}
+                confirmErrorMessage={confirmErrorMessage}
+                isAddEnabled={isAddEnabled}
+                isConfirmLoading={isConfirmLoading}
+                onChangeDateKey={setDateKey}
+                onSelectCategory={setSelectedCategory}
+                onSelectPaymentMethod={setSelectedPaymentMethod}
+                onChangeMerchantName={setMerchantName}
+                onChangeAmountInput={setAmountInput}
+                onAddDraftEntry={addDraftEntry}
+                onRemoveDraftEntry={removeDraftEntry}
+                onComplete={handleCompleteManualEntries}
+              />
+              {false && (
             <ScrollView
               bounces={false}
               showsVerticalScrollIndicator={false}
@@ -497,6 +519,8 @@ export default function CalendarAddEntrySheet({
                 </Text>
               </TouchableOpacity>
             </ScrollView>
+              )}
+            </>
           ) : (
             <ScrollView
               bounces={false}

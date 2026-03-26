@@ -2,6 +2,7 @@ export { default as CalendarAddEntrySheet } from './CalendarAddEntrySheet';
 export { default as CalendarDayDetailSheet } from './CalendarDayDetailSheet';
 export { default as CalendarDayDetailTransactionRow } from './CalendarDayDetailTransactionRow';
 export { default as CalendarDraftEntryCard } from './CalendarDraftEntryCard';
+export { default as CalendarDirectEntrySection } from './CalendarDirectEntrySection';
 export { default as CalendarEntryModeToggle } from './CalendarEntryModeToggle';
 export { default as CalendarFieldLabel } from './CalendarFieldLabel';
 export { default as CalendarGuideModal } from './CalendarGuideModal';
