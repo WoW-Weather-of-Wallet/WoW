@@ -50,6 +50,10 @@ import java.util.Set;
 public class AiAnalysisService {
 
     private static final Duration AI_REPORT_CACHE_TTL = Duration.ofHours(6);
+    private static final String NO_TRANSACTIONS_MESSAGE = "최근 3개월 거래가 없어 AI 리포트를 생성할 수 없습니다.";
+    private static final String AI_EMPTY_RESPONSE_MESSAGE = "AI 리포트 응답이 비어 있습니다. 잠시 후 다시 시도해주세요.";
+    private static final String AI_CONNECTION_ERROR_MESSAGE = "AI 리포트 서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.";
+    private static final String AI_REQUEST_ERROR_MESSAGE = "AI 리포트 요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
 
     private final RestTemplate aiRestTemplate;
     private final TransactionRepository transactionRepository;
@@ -97,8 +101,8 @@ public class AiAnalysisService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
-        // The monthly report is built from the target month plus the previous 2 months.
-        // Example: 2026-03 request -> 2026-01-01 <= tx < 2026-04-01
+        // 기준 월을 포함한 최근 3개월 거래를 AI 리포트 입력으로 사용한다.
+        // 예: 2026-03 요청 -> 2026-01-01 <= transactionAt < 2026-04-01
         YearMonth baseMonth = YearMonth.of(year, month);
         LocalDateTime start = baseMonth.minusMonths(2).atDay(1).atStartOfDay();
         LocalDateTime end = baseMonth.plusMonths(1).atDay(1).atStartOfDay();
@@ -107,22 +111,23 @@ public class AiAnalysisService {
                 .existsByUser_IdAndTransactionAtBetween(userId, start, end);
 
         if (!hasTransaction) {
-            throw new NotFoundException("최근 3개월 내 AI 리포트를 생성할 거래 내역이 없습니다.");
+            throw new NotFoundException(NO_TRANSACTIONS_MESSAGE);
         }
 
         List<TransactionRepository.CategoryAmountSummary> summaries =
                 transactionRepository.findCategoryAmountSummariesByUserIdAndRange(userId, start, end);
 
         if (summaries.isEmpty()) {
-            throw new NotFoundException("최근 3개월 내 AI 리포트를 생성할 거래 내역이 없습니다.");
+            throw new NotFoundException(NO_TRANSACTIONS_MESSAGE);
         }
 
-        // The AI server expects category / amount / count items.
+        // AI 서버에는 카테고리별 금액/건수만 보낸다.
         AiAnalysisRequest body = AiAnalysisRequest.from(summaries, false);
         AiAnalysisResponse aiReport = requestAiReport(body, userId, year, month);
 
-        // Keep the full report in Redis and only persist the schema-safe monthly
-        // snapshot fields that already fit the current DB model.
+        // 운영 정책:
+        // 1) 프론트에 필요한 전체 리포트 JSON은 Redis 캐시에 저장한다.
+        // 2) DB에는 현재 스키마에 맞는 최소 월별 스냅샷만 저장한다.
         persistMonthlyAnalysis(user, year, month, aiReport);
         writeMonthlyAiReportCache(cacheKey, aiReport);
         return aiReport;
@@ -143,8 +148,8 @@ public class AiAnalysisService {
 
             YearMonth transactionMonth = YearMonth.from(transactionDate);
 
-            // A rolling 3-month report becomes stale for the edited month and
-            // the next 2 target months that still include that month.
+            // 3개월 롤링 집계이므로 특정 월 거래가 바뀌면
+            // 해당 월, 다음 달, 다다음 달 리포트까지 함께 stale 된다.
             affectedReportMonths.add(transactionMonth);
             affectedReportMonths.add(transactionMonth.plusMonths(1));
             affectedReportMonths.add(transactionMonth.plusMonths(2));
@@ -165,7 +170,7 @@ public class AiAnalysisService {
                         affectedMonth.getMonthValue()
                 ));
             } catch (Exception ignored) {
-                // Redis invalidation should not block transaction updates.
+                // Redis 캐시 삭제 실패가 거래 반영 자체를 막으면 안 된다.
             }
         }
     }
@@ -254,7 +259,7 @@ public class AiAnalysisService {
                         year,
                         month
                 );
-                throw new InternalServerException("AI 리포트 응답이 비어 있습니다. 잠시 후 다시 시도해주세요.");
+                throw new InternalServerException(AI_EMPTY_RESPONSE_MESSAGE);
             }
 
             return response.getBody();
@@ -267,7 +272,7 @@ public class AiAnalysisService {
                     aiServerBaseUrl,
                     e
             );
-            throw new InternalServerException("AI 리포트 서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.", e);
+            throw new InternalServerException(AI_CONNECTION_ERROR_MESSAGE, e);
         } catch (RestClientException e) {
             log.error(
                     "AI report request failed. userId={}, year={}, month={}, baseUrl={}",
@@ -277,7 +282,7 @@ public class AiAnalysisService {
                     aiServerBaseUrl,
                     e
             );
-            throw new InternalServerException("AI 리포트 요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.", e);
+            throw new InternalServerException(AI_REQUEST_ERROR_MESSAGE, e);
         }
     }
 
@@ -306,7 +311,7 @@ public class AiAnalysisService {
             String serialized = objectMapper.writeValueAsString(response);
             redisTemplate.opsForValue().set(cacheKey, serialized, AI_REPORT_CACHE_TTL);
         } catch (IOException ignored) {
-            // Cache failure should not block the user-facing AI report flow.
+            // 캐시 저장 실패가 사용자 리포트 응답을 막으면 안 된다.
         }
     }
 }

@@ -18,14 +18,14 @@ runtime policy.
   - `year` optional
   - `month` optional
 
-If `year` and `month` are omitted, the backend uses the current year/month in
-the server time zone.
+If `year` and `month` are omitted, the backend uses the current server
+year/month.
 
 ## Report Period Rule
 
 The AI report is built from a rolling 3-month window.
 
-- Example: `2026-03`
+- Example target month: `2026-03`
 - Included transactions:
   - `2026-01-01 00:00:00 <= transaction_at < 2026-04-01 00:00:00`
 
@@ -72,7 +72,7 @@ The backend wraps the AI report with the common response envelope.
     "cluster": {
       "id": 1,
       "name": "사무·서적형",
-      "description": "사무/교육용품과 서적/도서 비중이 매우 높고 분식 소비가 함께 나타나는 학습 집중형 유형",
+      "description": "사무/교육용품과 서적/도서 비중이 높은 학습 집중형 유형입니다.",
       "icon": "📚"
     },
     "categories": [
@@ -100,14 +100,14 @@ The backend wraps the AI report with the common response envelope.
       {
         "order": 1,
         "keyword": "커피·간식",
-        "title": "커피·간식 빈도를 미리 정해두세요",
-        "description": "충동 구매 대신 '하루 1회' 같은 규칙을 정하고, 나머지는 티백·원두·견과류 등 대체재로 고정하세요."
+        "title": "커피·간식 빈도를 먼저 줄여보세요",
+        "description": "하루 1회처럼 횟수 기준을 먼저 정해두면 지출을 안정적으로 줄일 수 있습니다."
       }
     ],
     "goal": {
       "savable_amount": 29258,
       "expected_spending": 970842,
-      "action_tip": "커피/음료를 주 3회 구매로 제한하고 나머지는 대체 음료로 고정해보세요."
+      "action_tip": "커피/음료 구매 횟수를 주 3회 이내로 제한해보세요."
     }
   }
 }
@@ -164,7 +164,7 @@ No transactions in the rolling 3-month window:
 ```json
 {
   "httpStatusCode": 404,
-  "errorMessage": "최근 3개월 내 AI 리포트를 생성할 거래 내역이 없습니다."
+  "errorMessage": "최근 3개월 거래가 없어 AI 리포트를 생성할 수 없습니다."
 }
 ```
 
@@ -174,5 +174,14 @@ AI server timeout or connection failure:
 {
   "httpStatusCode": 500,
   "errorMessage": "AI 리포트 서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요."
+}
+```
+
+AI server returned an empty body or an unexpected error:
+
+```json
+{
+  "httpStatusCode": 500,
+  "errorMessage": "AI 리포트 요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
 }
 ```
