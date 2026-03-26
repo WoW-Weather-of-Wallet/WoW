@@ -1,11 +1,10 @@
 import React from 'react';
-import { Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { styles } from './AiResultScreen.styles';
 import GradientButton from '../../components/common/GradientButton';
 import { COLORS, hp } from '../../constants/theme';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
-import { AiResultSummaryCard } from '../../components/ai';
+import { AiResultHeader, AiResultSummaryCard } from '../../components/ai';
 import { useAiResultSummary } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import type { AiFeedbackStackScreenProps } from '../../types';
@@ -25,12 +24,7 @@ export default function AiResultScreen({
       backgroundColor={COLORS.background}
     >
       <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
-        <Text style={styles.userName}>
-          <Text style={styles.userNameHighlight}>{displayName}</Text>
-        </Text>
-        <Text style={styles.title}>
-          <Text style={styles.highlightExtraBold}>{title}</Text>
-        </Text>
+        <AiResultHeader displayName={displayName} title={title} />
       </Animated.View>
 
       {cards.map((card, index) => (

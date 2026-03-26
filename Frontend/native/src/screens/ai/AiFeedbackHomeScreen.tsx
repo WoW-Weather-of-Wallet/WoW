@@ -1,10 +1,10 @@
 import React from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { COLORS, hp, wp } from '../../constants/theme';
 import { styles } from './AiFeedbackHomeScreen.styles';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import GradientButton from '../../components/common/GradientButton';
-import { AiFeatureCarouselCard } from '../../components/ai';
+import { AiCarouselPagination, AiFeatureCarouselCard } from '../../components/ai';
 import { useAiFeatureCards, useAiFeatureCarousel } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import type { AiFeedbackStackScreenProps } from '../../types';
@@ -58,18 +58,11 @@ export default function AiFeedbackHomeScreen({
         </ScrollView>
       </View>
 
-      <View style={styles.paginationContainer}>
-        {featureCards.map((item, index) => (
-          <TouchableOpacity
-            key={item.id}
-            onPress={() => scrollToPage(index)}
-            style={[
-              styles.paginationDot,
-              index === activeIndex && styles.paginationDotActive,
-            ]}
-          />
-        ))}
-      </View>
+      <AiCarouselPagination
+        pageCount={featureCards.length}
+        activeIndex={activeIndex}
+        onPressPage={scrollToPage}
+      />
 
       <View style={styles.bottomSection}>
         <GradientButton
