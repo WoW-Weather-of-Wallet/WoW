@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SurfaceCard from '../common/SurfaceCard';
+import { useHomeSpendingTypeSummary } from '../../hooks/useHomeSpendingTypeSummary';
 import { COLORS, wp } from '../../constants/theme';
 import { styles } from './HomeSpendingTypeCard.styles';
 
@@ -22,6 +23,11 @@ export default function HomeSpendingTypeCard({
   description,
   iconName = 'sparkles-outline',
 }: HomeSpendingTypeCardProps) {
+  const { displayTitle, displayDescription } = useHomeSpendingTypeSummary({
+    title,
+    description,
+  });
+
   return (
     <TouchableOpacity activeOpacity={0.94} onPress={onPress}>
       <SurfaceCard>
@@ -36,7 +42,7 @@ export default function HomeSpendingTypeCard({
                   color={COLORS.primary}
                 />
               </View>
-              <Text style={styles.mainTitle}>{title || '분석 전'}</Text>
+              <Text style={styles.mainTitle}>{displayTitle}</Text>
             </View>
           </View>
           <View style={styles.aiBadge}>
@@ -50,7 +56,7 @@ export default function HomeSpendingTypeCard({
         </View>
 
         <Text style={styles.description}>
-          {description || '아직 소비 유형 분석 결과가 없어요. 거래 데이터를 더 쌓아보세요.'}
+          {displayDescription}
         </Text>
       </SurfaceCard>
     </TouchableOpacity>
