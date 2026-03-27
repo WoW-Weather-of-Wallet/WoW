@@ -5,6 +5,8 @@ services:
     restart: unless-stopped
     env_file:
       - ./.env.prod
+    volumes:
+      - ${FIREBASE_SA_HOST_PATH}:/run/secrets/firebase-service-account.json:ro
     expose:
       - "8050"
 
