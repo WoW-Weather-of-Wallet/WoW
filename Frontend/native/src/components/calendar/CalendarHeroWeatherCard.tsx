@@ -1,19 +1,33 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import { buildHomeWeatherVisual } from '../../utils/homeWeatherPresentation';
 
 interface CalendarHeroWeatherCardProps {
-  weatherIconName: keyof typeof Ionicons.glyphMap;
-  title: string;
-  hint: string;
+  weatherName: string;
+  description: string;
+  iconCode?: string | null;
+  isLoading?: boolean;
 }
 
 export default function CalendarHeroWeatherCard({
-  weatherIconName,
-  title,
-  hint,
+  weatherName,
+  description,
+  iconCode,
+  isLoading = false,
 }: CalendarHeroWeatherCardProps) {
+  const weatherVisual = useMemo(
+    () =>
+      buildHomeWeatherVisual({
+        weatherName,
+        description,
+        iconCode,
+        isLoading,
+      }),
+    [description, iconCode, isLoading, weatherName],
+  );
+  const WeatherIcon = weatherVisual.icon;
+
   return (
     <View
       className="flex-row items-center"
@@ -29,7 +43,7 @@ export default function CalendarHeroWeatherCard({
         className="items-center justify-center"
         style={{ width: wp(38), marginRight: wp(10) }}
       >
-        <Ionicons name={weatherIconName} size={wp(25)} color={COLORS.weatherSun} />
+        <WeatherIcon size={wp(25)} color={weatherVisual.color} />
       </View>
       <View className="flex-1">
         <Text
@@ -39,8 +53,8 @@ export default function CalendarHeroWeatherCard({
             color: COLORS.white,
             marginBottom: hp(4),
           }}
-        >
-          {title}
+          >
+          {weatherVisual.type}
         </Text>
         <Text
           style={{
@@ -49,7 +63,7 @@ export default function CalendarHeroWeatherCard({
             color: COLORS.calendarHeroSubText,
           }}
         >
-          {hint}
+          {weatherVisual.hint}
         </Text>
       </View>
     </View>

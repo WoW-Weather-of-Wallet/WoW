@@ -12,7 +12,7 @@ import CalendarHeroWeatherCard from './CalendarHeroWeatherCard';
 interface CalendarHeroCardProps {
   overview: CalendarOverview;
   monthLabel: string;
-  weatherIconName: keyof typeof Ionicons.glyphMap;
+  weatherIconCode?: string | null;
   headerFetchState: CalendarHeaderFetchState;
   headerErrorMessage: string | null;
   onPressPrevMonth: () => void;
@@ -24,7 +24,7 @@ interface CalendarHeroCardProps {
 export default function CalendarHeroCard({
   overview,
   monthLabel,
-  weatherIconName,
+  weatherIconCode,
   headerFetchState,
   headerErrorMessage,
   onPressPrevMonth,
@@ -98,9 +98,10 @@ export default function CalendarHeroCard({
       </View>
 
       <CalendarHeroWeatherCard
-        weatherIconName={weatherIconName}
-        title={weatherTitle}
-        hint={weatherHint}
+        weatherName={weatherTitle}
+        description={weatherHint}
+        iconCode={weatherIconCode}
+        isLoading={headerFetchState === 'loading'}
       />
 
       <CalendarHeroSummaryRow

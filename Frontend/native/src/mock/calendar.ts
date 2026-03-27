@@ -46,6 +46,7 @@ export interface CalendarDayDetail {
   title: string;
   weatherLabel: string;
   weatherHint: string;
+  weatherIconCode?: string | null;
   weatherTemperature: string;
   spentAmount: number | null;
   transactionCount: number | null;
