@@ -67,6 +67,9 @@ deploy:
       AWS_S3_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
       AWS_S3_SECRET_KEY=${AWS_S3_SECRET_KEY}
       AWS_S3_BUCKET=${AWS_S3_BUCKET}
+      FIREBASE_SA_HOST_PATH=${FIREBASE_SA_HOST_PATH}
+      FLASK_URL=${FLASK_URL}
+      AI_SERVER_BASE_URL=${AI_SERVER_BASE_URL}
       ENV
     - docker-compose -f docker-compose.prod.yml down
     - docker-compose -f docker-compose.prod.yml up -d

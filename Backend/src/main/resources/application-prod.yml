@@ -39,6 +39,10 @@ solapi:
   api-secret: ${SOLAPI_API_SECRET}
   sender: ${SOLAPI_SENDER}
 
+firebase:
+  enabled: true
+  service-account-key: file:/run/secrets/firebase-service-account.json
+
 # [added] 이유: S3 설정이 프로덕션에 누락되어 TermService 등에서 기동 실패
 cloud:
   aws:
@@ -54,3 +58,10 @@ cloud:
 app:
   ssafy-app-base-uri: ${APP_SSAFY_APP_BASE_URI:wow://auth/ssafy}
   swagger-public: false
+
+flask:
+  url: ${FLASK_URL}
+
+ai:
+  server:
+    base-url: ${AI_SERVER_BASE_URL}
