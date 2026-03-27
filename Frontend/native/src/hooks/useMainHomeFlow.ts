@@ -24,6 +24,8 @@ import type { CalendarHeaderResponse } from '../types/calendar';
 import { matchesAiReportPeriod, resolveAiReportPeriod } from '../utils/aiReportPeriod';
 import { extractApiErrorMessage } from '../utils/error';
 import {
+  buildAiSpendingMetrics,
+  buildAiSpendingReasons,
   buildMonthlyComparisonLegend,
   buildMonthlyInsight,
   buildSpendingMetrics,
@@ -112,6 +114,10 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     }, [loadHomeData]),
   );
 
+  // When the monthly AI report exists, the card and the bottom sheet should
+  // read from the same source so users never see mixed half-yearly content.
+  const homeAiSummary = (hasCurrentHomeAiSummary ? latestAiResult?.report : null) ?? aiAnalysis;
+
   const handleCreateBudget = React.useCallback(
     async (amount: number) => {
       setIsBudgetSubmitting(true);
@@ -138,12 +144,12 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
   );
 
   const spendingMetrics = React.useMemo(
-    () => buildSpendingMetrics(spendingHalfYearly),
-    [spendingHalfYearly],
+    () => (homeAiSummary ? buildAiSpendingMetrics(homeAiSummary) : buildSpendingMetrics(spendingHalfYearly)),
+    [homeAiSummary, spendingHalfYearly],
   );
   const spendingReasons = React.useMemo(
-    () => buildSpendingReasons(spendingHalfYearly),
-    [spendingHalfYearly],
+    () => (homeAiSummary ? buildAiSpendingReasons(homeAiSummary) : buildSpendingReasons(spendingHalfYearly)),
+    [homeAiSummary, spendingHalfYearly],
   );
   const comparisonLegend = React.useMemo(
     () => buildMonthlyComparisonLegend(monthlyCompare),
@@ -185,8 +191,6 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     }),
     [isWeatherLoading, liveHeader?.description, liveHeader?.iconCode, liveHeader?.weatherName],
   );
-
-  const homeAiSummary = (hasCurrentHomeAiSummary ? latestAiResult?.report : null) ?? aiAnalysis;
 
   const spendingTypeCard = React.useMemo<HomeDashboardSpendingTypeCardData>(
     () => ({

@@ -1,4 +1,6 @@
 import type { LegendListItem, SpendingStyleMetric } from '../constants/main/types';
+import type { HomeSpendingTypeReason } from '../hooks/useHomeSpendingTypeSummary';
+import type { AiAnalysisReport } from '../services/ai';
 import type {
   SpendingHalfYearlyResponse,
   SpendingMonthlyCompareResponse,
@@ -39,7 +41,9 @@ export const buildSpendingMetrics = (
     color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
   })) ?? [];
 
-export const buildSpendingReasons = (response: SpendingHalfYearlyResponse | null) => {
+export const buildSpendingReasons = (
+  response: SpendingHalfYearlyResponse | null,
+): HomeSpendingTypeReason[] => {
   if (!response || response.categoryResults.length === 0) {
     return [];
   }
@@ -50,13 +54,63 @@ export const buildSpendingReasons = (response: SpendingHalfYearlyResponse | null
   return [
     ...topCategories.map((item, index) => ({
       title: `${item.name} 비중이 높아요`,
-      description: `${item.name}이 전체 소비의 ${item.percentage}%를 차지하고 있어 현재 소비 성향을 가장 강하게 보여주는 카테고리예요.`,
+      description: `${item.name}가 전체 소비의 ${item.percentage}%를 차지하고 있어 현재 소비 성향을 가장 강하게 보여주는 카테고리예요.`,
       tone: tones[index],
     })),
     {
       title: '최근 소비 패턴 요약',
       description: response.description || response.spendingType.summary,
-      tone: 'green' as const,
+      tone: 'green',
+    },
+  ];
+};
+
+export const buildAiSpendingMetrics = (
+  report: AiAnalysisReport | null,
+): SpendingStyleMetric[] =>
+  report?.categories.slice(0, 6).map((item, index) => ({
+    id: `${item.name}-${index}`,
+    label: item.name,
+    value: `${item.myRatio}%`,
+    score: Math.max(item.myRatio, item.baseRatio, 0),
+    color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+  })) ?? [];
+
+export const buildAiSpendingReasons = (
+  report: AiAnalysisReport | null,
+): HomeSpendingTypeReason[] => {
+  if (!report) {
+    return [];
+  }
+
+  const tones = ['red', 'purple'] as const;
+  const overspendingReasons = report.overspending
+    .filter((item) => item.name.trim().length > 0)
+    .slice(0, 2)
+    .map((item, index) => ({
+      title: `${item.name} 비중이 높아요`,
+      description: `평균 ${item.baseRatio}%보다 내 비중이 ${item.myRatio}%로 높아요. 최대 ${item.savableAmount.toLocaleString()}원까지 줄여볼 수 있어요.`,
+      tone: tones[index],
+    }));
+
+  const firstTip = report.tips.find(
+    (tip) => tip.title.trim().length > 0 || tip.description.trim().length > 0,
+  );
+  const actionDescription =
+    report.goal.actionTip ||
+    firstTip?.description ||
+    report.cluster.description;
+
+  if (!actionDescription) {
+    return overspendingReasons;
+  }
+
+  return [
+    ...overspendingReasons,
+    {
+      title: firstTip?.title || '이번 달 실천 포인트',
+      description: actionDescription,
+      tone: 'green',
     },
   ];
 };
@@ -85,7 +139,7 @@ export const buildMonthlyComparisonLegend = (
   return names.map((name, index) => ({
     id: `${name}-${index}`,
     label: name,
-    value: `이번 ${currentMap.get(name) ?? 0}% / 지난 ${lastMap.get(name) ?? 0}%`,
+    value: `이번 ${currentMap.get(name) ?? 0}% / 지난달 ${lastMap.get(name) ?? 0}%`,
     color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
   }));
 };
