@@ -34,10 +34,6 @@ export default function CalendarHeroCard({
 }: CalendarHeroCardProps) {
   const weatherTitle = headerFetchState === 'live' ? overview.weatherTitle : '-';
   const weatherHint = headerFetchState === 'live' ? overview.weatherHint : '-';
-  const savingsAmountText =
-    headerFetchState === 'live'
-      ? `${overview.savingsAmount.toLocaleString()}\uC6D0`
-      : '-';
   const goalLabel = headerFetchState === 'live' ? overview.goalLabel : '-';
 
   return (
@@ -108,8 +104,6 @@ export default function CalendarHeroCard({
       />
 
       <CalendarHeroSummaryRow
-        label={'\uC774\uBC88 \uB2EC \uC808\uC57D \uAC00\uB2A5 \uAE08\uC561'}
-        amountText={savingsAmountText}
         goalLabel={goalLabel}
       />
 

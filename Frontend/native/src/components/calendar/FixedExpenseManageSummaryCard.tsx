@@ -24,7 +24,7 @@ export default function FixedExpenseManageSummaryCard({
       }}
     >
       <View
-        className="flex-row items-start justify-between"
+        className="flex-row items-center justify-between"
         style={{ gap: wp(12) }}
       >
         <View className="flex-1">
@@ -50,11 +50,13 @@ export default function FixedExpenseManageSummaryCard({
         </View>
         <TouchableOpacity
           activeOpacity={0.88}
+          className="items-center justify-center"
           style={{
             borderRadius: RADIUS.full,
             backgroundColor: COLORS.addButtonBackground,
-            paddingHorizontal: wp(16),
-            paddingVertical: hp(9),
+            minWidth: wp(120),
+            paddingHorizontal: wp(18),
+            paddingVertical: hp(10),
             shadowColor: COLORS.gradientStart,
             shadowOffset: { width: 0, height: 6 },
             shadowOpacity: 0.1,
@@ -62,24 +64,25 @@ export default function FixedExpenseManageSummaryCard({
             elevation: 2,
           }}
           onPress={onPressAdd}
-        >
-          <Text
-            style={{
-              fontSize: fp(13),
-              fontFamily: FONTS.bold,
-              color: COLORS.textInverse,
-            }}
           >
-            {'+ \uD56D\uBAA9 \uCD94\uAC00'}
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={{
+                fontSize: fp(13),
+                fontFamily: FONTS.bold,
+                color: COLORS.textInverse,
+              }}
+            >
+              {'+ \uACE0\uC815\uC9C0\uCD9C \uB4F1\uB85D'}
+            </Text>
+          </TouchableOpacity>
       </View>
       <Text
         style={{
-          marginTop: hp(6),
+          marginTop: hp(10),
           fontSize: fp(12),
           fontFamily: FONTS.medium,
           color: COLORS.summaryTextHint,
+          lineHeight: fp(18),
         }}
       >
         {
