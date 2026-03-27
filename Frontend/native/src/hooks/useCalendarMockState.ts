@@ -533,6 +533,7 @@ export function useCalendarMockState() {
 
         setFixedExpenseItems(mapFixedExpenseSummaryItems(summaryResponse));
         setManageItems(mapFixedExpenseManageItems(manageResponse));
+        await reloadDisplayedMonthTransactionsData();
         setIsDetailSheetVisible(false);
         setEditingManageId(null);
         setIsManageModalVisible(true);
@@ -574,14 +575,7 @@ export function useCalendarMockState() {
 
         setFixedExpenseItems(mapFixedExpenseSummaryItems(summaryResponse));
         setManageItems(mapFixedExpenseManageItems(manageResponse));
-        setTransactionGroups((current) =>
-          current.map((group) => ({
-            ...group,
-            items: group.items.map((item) =>
-              item.id === selectedTransaction.id ? { ...item, isFixedExpense: true } : item,
-            ),
-          })),
-        );
+        await reloadDisplayedMonthTransactionsData();
         setIsDetailSheetVisible(false);
         setEditingManageId(null);
         setIsManageModalVisible(true);
@@ -741,6 +735,7 @@ export function useCalendarMockState() {
 
         setFixedExpenseItems(mapFixedExpenseSummaryItems(summaryResponse));
         setManageItems(mapFixedExpenseManageItems(manageResponse));
+        await reloadDisplayedMonthTransactionsData();
       } catch (error) {
         console.warn('Failed to delete fixed expense', error);
         Alert.alert('삭제 실패', '고정지출 삭제 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.');

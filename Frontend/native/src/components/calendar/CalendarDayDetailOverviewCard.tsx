@@ -40,7 +40,6 @@ export default function CalendarDayDetailOverviewCard({
   return (
     <>
       <View
-        className="flex-row items-center justify-between"
         style={{
           borderRadius: RADIUS.xl,
           backgroundColor: COLORS.calendarDayDetailBackground,
@@ -55,7 +54,7 @@ export default function CalendarDayDetailOverviewCard({
             size={wp(28)}
             color={COLORS.primary}
           />
-          <View>
+          <View style={{ flex: 1 }}>
             <Text
               style={{
                 fontSize: fp(18),
@@ -77,15 +76,6 @@ export default function CalendarDayDetailOverviewCard({
             </Text>
           </View>
         </View>
-        <Text
-          style={{
-            fontSize: fp(26),
-            fontFamily: FONTS.bold,
-            color: COLORS.textSecondary,
-          }}
-        >
-          {detail.weatherTemperature}
-        </Text>
       </View>
 
       <View className="flex-row" style={{ gap: wp(12), marginBottom: hp(18) }}>
