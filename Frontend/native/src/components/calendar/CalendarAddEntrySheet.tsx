@@ -284,6 +284,7 @@ export default function CalendarAddEntrySheet({
       }
 
       await Promise.resolve(onCompleteExcelEntries(nextEntries));
+      onClose();
     } catch (error) {
       console.warn('Failed to confirm uploaded calendar entries', error);
       setConfirmErrorMessage(
