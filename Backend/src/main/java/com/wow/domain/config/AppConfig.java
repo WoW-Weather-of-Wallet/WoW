@@ -23,6 +23,8 @@ public class AppConfig {
         // 일반 외부 호출보다 훨씬 오래 걸릴 수 있다. 10초로는 Read timed out이 자주 나서
         // 로컬/개발 통합 테스트 기준으로 충분한 여유를 둔다.
         factory.setReadTimeout(java.time.Duration.ofSeconds(120));
+        factory.setConnectTimeout(5000);
+        factory.setReadTimeout(600000);
         return new RestTemplate(factory);
     }
 

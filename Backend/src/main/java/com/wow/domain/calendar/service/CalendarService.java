@@ -179,20 +179,38 @@ public class CalendarService {
     }
 
     private MonthlyWeatherInfo resolveMonthlyWeatherInfo(Long userId, int year, int month) {
-        try {
-            // Calendar headers are opened in the current display month, but the AI policy
-            // always exposes the previous month's finished report for that window.
-            YearMonth reportMonth = YearMonth.of(year, month).minusMonths(1);
-            return buildMonthlyWeatherInfo(
-                    aiAnalysisService.getAnalysis(
-                            userId,
-                            reportMonth.getYear(),
-                            reportMonth.getMonthValue()
-                    )
-            );
-        } catch (NotFoundException | InternalServerException exception) {
-            return defaultMonthlyWeatherInfo();
+        YearMonth requestedMonth = YearMonth.of(year, month);
+        List<YearMonth> candidateMonths = List.of(
+                requestedMonth.minusMonths(1),
+                requestedMonth
+        );
+
+        for (YearMonth candidateMonth : candidateMonths) {
+            try {
+                return buildMonthlyWeatherInfo(
+                        aiAnalysisService.getAnalysis(
+                                userId,
+                                candidateMonth.getYear(),
+                                candidateMonth.getMonthValue()
+                        )
+                );
+            } catch (NotFoundException | InternalServerException ignored) {
+                try {
+                    return buildMonthlyWeatherInfo(
+                            aiAnalysisService.getAnalysis(
+                                    userId,
+                                    candidateMonth.getYear(),
+                                    candidateMonth.getMonthValue(),
+                                    true
+                            )
+                    );
+                } catch (NotFoundException | InternalServerException generateIgnored) {
+                    // Try the next candidate month before falling back to the default weather.
+                }
+            }
         }
+
+        return defaultMonthlyWeatherInfo();
     }
 
     private MonthlyWeatherInfo buildMonthlyWeatherInfo(AiAnalysisResponse report) {

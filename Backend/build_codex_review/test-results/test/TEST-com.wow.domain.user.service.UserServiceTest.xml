@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.wow.domain.user.service.UserServiceTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-03-27T01:57:39.233Z" hostname="DESKTOP-6OO0P6F" time="0.182">
+  <properties/>
+  <testcase name="deleteUserDeletesRefreshTokenAndUserOnly()" classname="com.wow.domain.user.service.UserServiceTest" time="0.078"/>
+  <testcase name="updatePhoneFailsWhenUpdateThrows()" classname="com.wow.domain.user.service.UserServiceTest" time="0.092"/>
+  <testcase name="updateProfileTrimsNameBeforeSaving()" classname="com.wow.domain.user.service.UserServiceTest" time="0.003"/>
+  <testcase name="updatePhoneRejectsCurrentPhoneNumberEvenWhenFormatDiffers()" classname="com.wow.domain.user.service.UserServiceTest" time="0.004"/>
+  <testcase name="updatePhoneUsesNormalizedPhoneNumberWhenChangingToNewNumber()" classname="com.wow.domain.user.service.UserServiceTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

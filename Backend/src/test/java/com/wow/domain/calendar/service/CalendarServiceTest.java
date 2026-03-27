@@ -137,6 +137,12 @@ class CalendarServiceTest {
 
         when(aiAnalysisService.getAnalysis(1L, reportMonth.getYear(), reportMonth.getMonthValue()))
                 .thenThrow(new NotFoundException("최근 3개월 거래 없음"));
+        when(aiAnalysisService.getAnalysis(1L, reportMonth.getYear(), reportMonth.getMonthValue(), true))
+                .thenThrow(new NotFoundException("최근 3개월 거래 없음"));
+        when(aiAnalysisService.getAnalysis(1L, currentMonth.getYear(), currentMonth.getMonthValue()))
+                .thenThrow(new NotFoundException("최근 3개월 거래 없음"));
+        when(aiAnalysisService.getAnalysis(1L, currentMonth.getYear(), currentMonth.getMonthValue(), true))
+                .thenThrow(new NotFoundException("최근 3개월 거래 없음"));
         when(transactionRepository.sumAmountByUserAndRange(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(BigDecimal.ZERO, BigDecimal.ZERO);
 
