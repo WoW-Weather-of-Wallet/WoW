@@ -3,6 +3,7 @@ import type {
   CalendarUploadBackendItem,
   CalendarUploadFile,
   CalendarUploadPreviewGroup,
+  CalendarUploadPreviewItem,
 } from '../types/calendar';
 
 function normalizeMerchantName(value: string) {
@@ -90,6 +91,45 @@ export function mergeUploadGroupsWithBackendItems(
       };
     }),
   }));
+}
+
+export function buildUploadGroupsFromBackendItems(
+  backendItems: CalendarUploadBackendItem[],
+): CalendarUploadPreviewGroup[] {
+  const grouped = new Map<string, CalendarUploadPreviewItem[]>();
+
+  backendItems.forEach((item, index) => {
+    if (!item.transactionDate) {
+      return;
+    }
+
+    const categoryLabel =
+      item.status === 'needs-category'
+        ? '분류필요'
+        : item.category && item.category.trim().length > 0
+          ? item.category
+          : '분류필요';
+
+    const nextItem: CalendarUploadPreviewItem = {
+      id: `backend-${item.transactionDate}-${index}`,
+      merchantName: item.merchantName,
+      amount: item.amount,
+      categoryLabel,
+      status: item.status,
+      description: item.transactionDetail || item.classificationReason || undefined,
+      categoryId: item.categoryId,
+    };
+
+    grouped.set(item.transactionDate, [...(grouped.get(item.transactionDate) ?? []), nextItem]);
+  });
+
+  return Array.from(grouped.entries())
+    .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+    .map(([dateKey, items]) => ({
+      dateKey,
+      totalCount: items.length,
+      items,
+    }));
 }
 
 export function buildOverrideRows(

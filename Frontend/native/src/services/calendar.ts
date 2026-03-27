@@ -77,13 +77,21 @@ interface RawCalendarUploadBackendSummary {
   totalAmount?: number;
 }
 
+function normalizeBackendCategoryName(category: string) {
+  return category.replace(/\s+/g, '').trim();
+}
+
 const BACKEND_CATEGORY_ID_MAP = CALENDAR_ENTRY_CATEGORIES.reduce<Record<string, number>>(
   (acc, category, index) => {
-    acc[category.key] = index + 1;
+    acc[normalizeBackendCategoryName(category.key)] = index + 1;
     return acc;
   },
   {},
 );
+
+const BACKEND_CATEGORY_ALIASES: Record<string, string> = {
+  '제과/제빵': '제과/제빵/떡/케익',
+};
 
 function inferMimeType(file: CalendarUploadFile) {
   if (file.mimeType) {
@@ -121,7 +129,10 @@ function appendUploadFile(
 }
 
 function resolveBackendCategoryId(category: string) {
-  return BACKEND_CATEGORY_ID_MAP[category];
+  const normalizedCategory = normalizeBackendCategoryName(category);
+  const canonicalCategory = BACKEND_CATEGORY_ALIASES[normalizedCategory] ?? normalizedCategory;
+
+  return BACKEND_CATEGORY_ID_MAP[canonicalCategory];
 }
 
 function normalizeClassificationReason(reason?: string) {

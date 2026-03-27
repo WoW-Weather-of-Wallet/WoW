@@ -19,6 +19,7 @@ import {
 } from '../../services/calendar';
 import {
   buildOverrideRows as buildCalendarOverrideRows,
+  buildUploadGroupsFromBackendItems as buildCalendarUploadGroupsFromBackendItems,
   buildUploadRequest as buildCalendarUploadRequest,
   mergeUploadGroupsWithBackendItems as mergeCalendarUploadGroupsWithBackendItems,
 } from '../../utils/calendarAddEntry';
@@ -215,16 +216,32 @@ export default function CalendarAddEntrySheet({
 
     try {
       const summary = await uploadCalendarTransactions(buildCalendarUploadRequest(nextFile));
+      console.log('[calendar upload] backend summary', {
+        message: summary.message,
+        recordCount: summary.records.length,
+        itemCount: summary.items.length,
+        excludedCount: summary.excludedRows.length,
+        sampleItems: summary.items.slice(0, 5),
+      });
       setBackendSummary(summary);
 
       if (summary.items.length > 0) {
-        setUploadGroups((current) =>
-          mergeCalendarUploadGroupsWithBackendItems(
-            current.length > 0 ? current : nextGroups,
-            summary.items,
-          ),
+        const backendGroups = buildCalendarUploadGroupsFromBackendItems(summary.items);
+        console.log('[calendar upload] backend groups', {
+          groupCount: backendGroups.length,
+          sampleGroups: backendGroups.slice(0, 3),
+        });
+        setUploadGroups(
+          backendGroups.length > 0
+            ? backendGroups
+            : mergeCalendarUploadGroupsWithBackendItems(
+                nextGroups,
+                summary.items,
+              ),
         );
         setUploadErrorMessage(null);
+      } else {
+        console.log('[calendar upload] backend items empty');
       }
     } catch (error) {
       console.warn('Failed to upload calendar file to backend', error);
