@@ -10,7 +10,7 @@ public class ApiResponse<T> {
     private String responseMessage;
     private T data;
 
-    // 성공 응답을 정적 팩토리 메서드로 간단하게 생성
+    // 성공 응답 생성을 위한 정적 팩토리 메서드
     public static <T> ApiResponse<T> success(int status, String message, T data) {
         return new ApiResponse<>(status, message, data);
     }

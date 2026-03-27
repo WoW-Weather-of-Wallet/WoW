@@ -11,9 +11,17 @@ import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    // User 객체의 id 필드로 접근 → User_Id
+    interface CategoryAmountSummary {
+        Integer getCategoryId();
+        String getCategoryName();
+        String getCategoryIcon();
+        BigDecimal getTotalAmount();
+        Long getTransactionCount();
+    }
+
     boolean existsByUser_IdAndTransactionAtBetween(
             Long userId, LocalDateTime start, LocalDateTime end);
+
     @Query("""
             select coalesce(sum(t.amount), 0)
             from Transaction t
@@ -45,22 +53,17 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     void deleteByUser_IdAndTransactionAtBetween(
             Long userId, LocalDateTime start, LocalDateTime end);
 
-    // 고정지출 납부완료 확인용
     boolean existsByUser_IdAndMerchantNameAndTransactionAtBetween(
             Long userId, String merchantName,
             LocalDateTime start, LocalDateTime end);
 
-    // 월별 거래내역 조회 (날짜 내림차순)
     List<Transaction> findByUser_IdAndTransactionAtBetweenOrderByTransactionAtDesc(
             Long userId, LocalDateTime start, LocalDateTime end);
 
-
-    // paymentType별 날짜 범위 삭제
     void deleteByUser_IdAndPaymentTypeAndTransactionAtBetween(
             Long userId, String paymentType,
             LocalDateTime start, LocalDateTime end);
 
-    // 고정지출 연결된 transaction_id 조회용 (삭제 제외)
     @Query("""
         select t.id
         from Transaction t
@@ -74,4 +77,25 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("paymentType") String paymentType,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
+
+    @Query("""
+        select
+          c.id as categoryId,
+          c.categoryName as categoryName,
+          c.categoryIcon as categoryIcon,
+          coalesce(sum(t.amount), 0) as totalAmount,
+          count(t.id) as transactionCount
+        from Transaction t
+        join t.category c
+        where t.user.id = :userId
+          and t.transactionAt >= :start
+          and t.transactionAt < :end
+        group by c.id, c.categoryName, c.categoryIcon
+        order by coalesce(sum(t.amount), 0) desc, c.id asc
+        """)
+    List<CategoryAmountSummary> findCategoryAmountSummariesByUserIdAndRange(
+            @Param("userId") Long userId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 }
