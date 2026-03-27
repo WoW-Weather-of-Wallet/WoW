@@ -3,7 +3,7 @@
     "name": "WOW",
     "slug": "wow-app",
     "scheme": "wow",
-    "version": "0.1.8",
+    "version": "0.7.0",
     "orientation": "portrait",
     "icon": "./src/assets/icon.png",
     "userInterfaceStyle": "light",
@@ -18,7 +18,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.wow.app",
-      "buildNumber": "5",
+      "buildNumber": "7",
       "infoPlist": {
         "NSCameraUsageDescription": "계정 인증 및 프로필 등록에 필요한 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.",
         "NSPhotoLibraryUsageDescription": "계정 인증 및 프로필 등록에 필요한 이미지를 불러오기 위해 사진 보관함 접근 권한이 필요합니다.",
@@ -65,14 +65,13 @@
       "policy": "appVersion"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/e34c1023-81e3-4a5b-84e9-a1121a9beca8"
+      "fallbackToCacheTimeout": 0
     },
     "extra": {
       "eas": {
-        "projectId": "e34c1023-81e3-4a5b-84e9-a1121a9beca8"
+        "projectId": "4780831e-cbf9-483c-b42a-9920d7b41dd0"
       }
     },
-    "owner": "mkhggh"
+    "owner": "jhjs"
   }
 }
