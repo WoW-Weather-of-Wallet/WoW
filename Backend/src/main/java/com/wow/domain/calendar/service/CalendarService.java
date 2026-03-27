@@ -50,6 +50,10 @@ public class CalendarService {
     private static final double CLOUDY_THRESHOLD = 0.20d;
     private static final double OVERCAST_THRESHOLD = 0.30d;
     private static final double RAIN_THRESHOLD = 0.50d;
+    private static final String SAFE_MONTHLY_DEFAULT_WEATHER_NAME = "정보 없음";
+    private static final String SAFE_MONTHLY_DEFAULT_DESCRIPTION = "최근 3개월 거래가 부족해 소비 날씨를 계산할 수 없습니다.";
+    private static final String SAFE_DEFAULT_WEATHER_NAME = "정보 없음";
+    private static final String SAFE_DEFAULT_DESCRIPTION = "소비 날씨 정보가 없습니다.";
     private static final String DEFAULT_WEATHER_ICON_CODE = "sunny";
 
     private static final String DEFAULT_WEATHER_NAME = "정보 없음";
@@ -164,14 +168,14 @@ public class CalendarService {
 
     private DailyWeatherInfo toDailyWeatherInfo(Calendar calendar) {
         SpendingWeather spendingWeather = calendar.getSpendingWeather();
-        String weatherName = spendingWeather != null ? spendingWeather.getWeatherName() : DEFAULT_WEATHER_NAME;
+        String weatherName = spendingWeather != null ? spendingWeather.getWeatherName() : SAFE_DEFAULT_WEATHER_NAME;
         String iconCode = spendingWeather != null ? spendingWeather.getIconCode() : null;
-        String description = calendar.getDescription() != null ? calendar.getDescription() : DEFAULT_DESCRIPTION;
+        String description = calendar.getDescription() != null ? calendar.getDescription() : SAFE_DEFAULT_DESCRIPTION;
         return new DailyWeatherInfo(weatherName, iconCode, description);
     }
 
     private DailyWeatherInfo defaultDailyWeatherInfo() {
-        return new DailyWeatherInfo(DEFAULT_WEATHER_NAME, null, DEFAULT_DESCRIPTION);
+        return new DailyWeatherInfo(SAFE_DEFAULT_WEATHER_NAME, null, SAFE_DEFAULT_DESCRIPTION);
     }
 
     private MonthlyWeatherInfo resolveMonthlyWeatherInfo(Long userId, int year, int month) {
@@ -201,8 +205,8 @@ public class CalendarService {
         long totalObservedSpending = Math.max(expectedSpending + totalSavable, 1L);
         double savingsRatio = (double) totalSavable / totalObservedSpending;
 
-        WeatherProfile weatherProfile = resolveWeatherProfile(savingsRatio);
-        String description = buildMonthlyWeatherDescription(report, totalSavable, weatherProfile.weatherName());
+        WeatherProfile weatherProfile = resolveSafeWeatherProfile(savingsRatio);
+        String description = buildSafeMonthlyWeatherDescription(report, totalSavable, weatherProfile.weatherName());
 
         return new MonthlyWeatherInfo(
                 weatherProfile.weatherName(),
@@ -288,8 +292,83 @@ public class CalendarService {
         };
     }
 
+    private WeatherProfile resolveSafeWeatherProfile(double savingsRatio) {
+        if (savingsRatio < SUNNY_THRESHOLD) {
+            return new WeatherProfile("맑음", "sunny");
+        }
+        if (savingsRatio < CLOUDY_THRESHOLD) {
+            return new WeatherProfile("구름", "cloudy");
+        }
+        if (savingsRatio < OVERCAST_THRESHOLD) {
+            return new WeatherProfile("흐림", "overcast");
+        }
+        if (savingsRatio < RAIN_THRESHOLD) {
+            return new WeatherProfile("비", "rain");
+        }
+        return new WeatherProfile("폭우", "heavy-rain");
+    }
+
+    private String buildSafeMonthlyWeatherDescription(
+            AiAnalysisResponse report,
+            long totalSavable,
+            String weatherName
+    ) {
+        String actionTip = report.getGoal() != null ? report.getGoal().getActionTip() : null;
+        if (actionTip != null && !actionTip.isBlank() && totalSavable > 0 && !"맑음".equals(weatherName)) {
+            return actionTip;
+        }
+
+        AiAnalysisResponse.Overspending primaryOverspending = report.getOverspending() != null
+                && !report.getOverspending().isEmpty()
+                ? report.getOverspending().getFirst()
+                : null;
+
+        if (primaryOverspending == null || primaryOverspending.getName() == null || primaryOverspending.getName().isBlank()) {
+            if (totalSavable <= 0) {
+                return "최근 3개월 소비 흐름이 비교적 안정적이에요. 지금 패턴을 유지하면서 큰 지출만 가볍게 점검해보세요.";
+            }
+            return String.format(
+                    "최근 3개월 기준 약 %,d원 정도 조절 여지가 보여요. 자주 나가는 지출부터 천천히 점검해보세요.",
+                    totalSavable
+            );
+        }
+
+        String categoryName = primaryOverspending.getName();
+        long savableAmount = primaryOverspending.getSavableAmount() != null
+                ? primaryOverspending.getSavableAmount()
+                : totalSavable;
+
+        return switch (weatherName) {
+            case "맑음" -> String.format(
+                    "%s 지출이 조금 높지만 전반적으로는 안정적이에요. 약 %,d원 정도만 가볍게 조절해도 충분합니다.",
+                    categoryName,
+                    savableAmount
+            );
+            case "구름" -> String.format(
+                    "%s 지출이 조금 누적되고 있어요. 이번 달엔 약 %,d원 정도를 줄이는 가벼운 목표부터 시작해보세요.",
+                    categoryName,
+                    savableAmount
+            );
+            case "흐림" -> String.format(
+                    "%s 비중이 기준보다 높아요. 소비 리듬을 한 번 조정하면 약 %,d원 정도 절감할 가능성이 큽니다.",
+                    categoryName,
+                    savableAmount
+            );
+            case "비" -> String.format(
+                    "%s 지출이 이번 달 예산을 흔들고 있어요. 우선순위를 정해 약 %,d원 정도를 먼저 줄여보세요.",
+                    categoryName,
+                    savableAmount
+            );
+            default -> String.format(
+                    "%s 지출 비중이 매우 높아요. 지금 강하게 조절하지 않으면 이번 달 소비 부담이 커질 수 있어요. 약 %,d원 정도 절감 목표를 먼저 잡아보세요.",
+                    categoryName,
+                    savableAmount
+            );
+        };
+    }
+
     private MonthlyWeatherInfo defaultMonthlyWeatherInfo() {
-        return new MonthlyWeatherInfo(MONTHLY_DEFAULT_WEATHER_NAME, null, MONTHLY_DEFAULT_DESCRIPTION);
+        return new MonthlyWeatherInfo(SAFE_MONTHLY_DEFAULT_WEATHER_NAME, null, SAFE_MONTHLY_DEFAULT_DESCRIPTION);
     }
 
     private int calculateSavedAmount(Long userId, int year, int month) {
@@ -819,10 +898,10 @@ public class CalendarService {
     }
 
     private SpendingWeather resolveDefaultSpendingWeather() {
-        return spendingWeatherRepository.findByWeatherName(DEFAULT_WEATHER_NAME)
+        return spendingWeatherRepository.findByWeatherName(SAFE_DEFAULT_WEATHER_NAME)
                 .orElseGet(() -> spendingWeatherRepository.save(
                         SpendingWeather.builder()
-                                .weatherName(DEFAULT_WEATHER_NAME)
+                                .weatherName(SAFE_DEFAULT_WEATHER_NAME)
                                 .iconCode(DEFAULT_WEATHER_ICON_CODE)
                                 .build()
                 ));
