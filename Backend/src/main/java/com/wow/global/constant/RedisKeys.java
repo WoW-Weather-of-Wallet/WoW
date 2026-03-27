@@ -29,4 +29,5 @@ public final class RedisKeys {
     public static final String FIND_PASSWORD_BLOCK_PREFIX = "auth:find-password:block:";
 
     public static final String SPENDING_MONTHLY_COMPARE_PREFIX = "spending:monthly:compare:";
+    public static final String AI_MONTHLY_REPORT_PREFIX = "ai:monthly:report:";
 }

@@ -16,6 +16,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
         String getCategoryName();
         String getCategoryIcon();
         BigDecimal getTotalAmount();
+        Long getTransactionCount();
     }
 
     boolean existsByUser_IdAndTransactionAtBetween(
@@ -82,7 +83,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
           c.id as categoryId,
           c.categoryName as categoryName,
           c.categoryIcon as categoryIcon,
-          coalesce(sum(t.amount), 0) as totalAmount
+          coalesce(sum(t.amount), 0) as totalAmount,
+          count(t.id) as transactionCount
         from Transaction t
         join t.category c
         where t.user.id = :userId
