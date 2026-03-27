@@ -89,7 +89,9 @@ class CalendarServiceTest {
             String expectedIconCode
     ) {
         YearMonth currentMonth = YearMonth.from(LocalDate.now());
-        when(aiAnalysisService.getAnalysis(1L, currentMonth.getYear(), currentMonth.getMonthValue()))
+        YearMonth reportMonth = currentMonth.minusMonths(1);
+
+        when(aiAnalysisService.getAnalysis(1L, reportMonth.getYear(), reportMonth.getMonthValue()))
                 .thenReturn(createReport(totalSavable, expectedSpending, "커피/음료", totalSavable, null));
         // Current-month savedAmount compares "previous month to date - current month to date".
         when(transactionRepository.sumAmountByUserAndRange(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
@@ -110,9 +112,11 @@ class CalendarServiceTest {
     @Test
     void getCalendarHeaderUsesGoalActionTipForHigherRiskWeather() {
         YearMonth currentMonth = YearMonth.from(LocalDate.now());
+        YearMonth reportMonth = currentMonth.minusMonths(1);
         String actionTip = "커피/음료를 주 3회 구매로 제한하고 대체 음료를 고정해보세요.";
-        when(aiAnalysisService.getAnalysis(1L, currentMonth.getYear(), currentMonth.getMonthValue()))
-                .thenReturn(createReport(40L, 60L, "커피/음료", 16322L, actionTip));
+
+        when(aiAnalysisService.getAnalysis(1L, reportMonth.getYear(), reportMonth.getMonthValue()))
+                .thenReturn(createReport(40L, 60L, "커피/음료", 16_322L, actionTip));
         when(transactionRepository.sumAmountByUserAndRange(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(BigDecimal.ZERO, BigDecimal.ZERO);
 
@@ -129,7 +133,9 @@ class CalendarServiceTest {
     @Test
     void getCalendarHeaderFallsBackWhenAiReportIsUnavailable() {
         YearMonth currentMonth = YearMonth.from(LocalDate.now());
-        when(aiAnalysisService.getAnalysis(1L, currentMonth.getYear(), currentMonth.getMonthValue()))
+        YearMonth reportMonth = currentMonth.minusMonths(1);
+
+        when(aiAnalysisService.getAnalysis(1L, reportMonth.getYear(), reportMonth.getMonthValue()))
                 .thenThrow(new NotFoundException("최근 3개월 거래 없음"));
         when(transactionRepository.sumAmountByUserAndRange(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(BigDecimal.ZERO, BigDecimal.ZERO);
@@ -165,14 +171,14 @@ class CalendarServiceTest {
         return AiAnalysisResponse.builder()
                 .cluster(AiAnalysisResponse.Cluster.builder()
                         .id(1)
-                        .name("사무·서적형")
-                        .description("사무/교육용품과 서적/도서 비중이 높은 유형")
+                        .name("배움집중형")
+                        .description("도서/교육용품과 지식/독서 비중이 높은 유형")
                         .icon("book")
                         .build())
                 .categories(List.of(
                         AiAnalysisResponse.Category.builder()
                                 .name(overspendingCategory)
-                                .amount(233500L)
+                                .amount(233_500L)
                                 .myRatio(23.3)
                                 .baseRatio(8.9)
                                 .diff(14.4)
@@ -194,7 +200,7 @@ class CalendarServiceTest {
                         AiAnalysisResponse.Tip.builder()
                                 .order(1)
                                 .keyword(overspendingCategory)
-                                .title(overspendingCategory + " 지출을 점검해보세요")
+                                .title(overspendingCategory + " 지출을 아껴보세요")
                                 .description("이 항목의 소비 비중이 기준보다 높습니다.")
                                 .build()
                 ))
