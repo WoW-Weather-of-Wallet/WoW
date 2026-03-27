@@ -19,7 +19,10 @@ public class AppConfig {
     public RestTemplate restTemplate() {
         var factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(java.time.Duration.ofSeconds(5));
-        factory.setReadTimeout(java.time.Duration.ofSeconds(10));
+        // 엑셀 업로드 전처리는 5000 demo_app이 keyword/GMS 분류를 같이 수행하므로
+        // 일반 외부 호출보다 훨씬 오래 걸릴 수 있다. 10초로는 Read timed out이 자주 나서
+        // 로컬/개발 통합 테스트 기준으로 충분한 여유를 둔다.
+        factory.setReadTimeout(java.time.Duration.ofSeconds(120));
         return new RestTemplate(factory);
     }
 
