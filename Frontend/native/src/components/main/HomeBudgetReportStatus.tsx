@@ -16,49 +16,59 @@ export default function HomeBudgetReportStatus({
   usageLabel,
   usageRate,
 }: HomeBudgetReportStatusProps) {
-  const rowStyle = { gap: wp(12) } as const;
+  const containerStyle = {
+    gap: hp(10),
+    marginBottom: hp(14),
+  } as const;
+
+  const rowStyle = {
+    gap: wp(12),
+  } as const;
 
   const amountLabelStyle = {
-    fontSize: fp(13),
+    fontSize: fp(12),
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
-    marginBottom: hp(6),
+    marginBottom: hp(4),
   } as const;
 
   const amountValueStyle = {
-    fontSize: fp(28),
-    fontFamily: FONTS.bold,
+    fontSize: fp(32),
+    lineHeight: fp(38),
+    fontFamily: FONTS.extraBold,
     color: COLORS.textPrimary,
+    letterSpacing: -0.7,
   } as const;
 
   const usageChipStyle = {
     borderRadius: RADIUS.full,
     backgroundColor: COLORS.primary,
-    paddingHorizontal: wp(12),
-    paddingVertical: hp(8),
+    paddingHorizontal: wp(11),
+    paddingVertical: hp(7),
   } as const;
 
   const usageChipTextStyle = {
-    fontSize: fp(12),
+    fontSize: fp(11),
     fontFamily: FONTS.semiBold,
     color: COLORS.textInverse,
   } as const;
 
   const progressTrackStyle = {
-    height: hp(10),
+    height: hp(8),
     borderRadius: RADIUS.full,
     backgroundColor: COLORS.progressTrackBackground,
-    marginVertical: hp(14),
   } as const;
 
   return (
-    <>
-      <View className="flex-row items-center justify-between" style={rowStyle}>
-        <View>
+    <View style={containerStyle}>
+      <View className="flex-row items-end justify-between" style={rowStyle}>
+        <View className="flex-1 pr-3">
           <Text style={amountLabelStyle}>
-            {hasBudgetData ? '남은 예산' : '리포트 준비 중'}
+            {hasBudgetData ? '남은 예산' : '예산을 먼저 등록해 주세요'}
           </Text>
-          <Text style={amountValueStyle}>{remainingValue}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={amountValueStyle}>
+            {remainingValue}
+          </Text>
         </View>
 
         <View style={usageChipStyle}>
@@ -72,6 +82,6 @@ export default function HomeBudgetReportStatus({
           style={{ width: `${usageRate}%` }}
         />
       </View>
-    </>
+    </View>
   );
 }

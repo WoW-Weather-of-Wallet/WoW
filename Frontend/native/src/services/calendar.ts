@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 import { nativeApi, type NativeApiErrorResponse } from './auth';
 import type {
   CalendarApiErrorResponse,
@@ -231,6 +231,9 @@ export async function uploadCalendarTransactions(payload: CalendarUploadRequest)
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      // Excel upload can trigger Flask preprocessing plus GMS categorization,
+      // so we keep a longer timeout only for this request.
+      timeout: 180000,
     },
   );
 
