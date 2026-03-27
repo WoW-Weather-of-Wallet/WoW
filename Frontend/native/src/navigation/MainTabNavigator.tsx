@@ -21,6 +21,7 @@ export default function MainTabNavigator() {
 
   return (
     <Tab.Navigator
+      backBehavior="history"
       screenOptions={({ route }) => {
         const hideTabBar =
           route.name === 'MyPage' &&
