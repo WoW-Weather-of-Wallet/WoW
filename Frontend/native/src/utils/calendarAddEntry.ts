@@ -30,8 +30,21 @@ export function mergeUploadGroupsWithBackendItems(
         return item;
       }
 
+      const nextCategoryLabel =
+        matchedBackendItem.category && matchedBackendItem.category.trim().length > 0
+          ? matchedBackendItem.category
+          : item.categoryLabel;
+      const nextStatus =
+        matchedBackendItem.status ??
+        (matchedBackendItem.category && matchedBackendItem.category.trim().length > 0
+          ? 'classified'
+          : item.status);
+
       return {
         ...item,
+        categoryLabel: nextCategoryLabel,
+        categoryId: matchedBackendItem.categoryId ?? item.categoryId,
+        status: nextStatus,
         description:
           matchedBackendItem.transactionDetail ||
           matchedBackendItem.classificationReason ||

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { CALENDAR_ENTRY_CATEGORIES } from '../constants/calendar/addEntry';
 import { nativeApi, type NativeApiErrorResponse } from './auth';
 import type {
   CalendarApiErrorResponse,
@@ -9,8 +10,6 @@ import type {
   CalendarCustomResponse,
   CalendarDailyParams,
   CalendarDailyResponse,
-  CalendarTransactionsParams,
-  CalendarTransactionsResponse,
   CalendarHeaderParams,
   CalendarHeaderResponse,
   CalendarMonthlyParams,
@@ -27,6 +26,8 @@ import type {
   CalendarUploadRequest,
   FixedExpenseAddRequest,
   FixedExpenseAddResponse,
+  CalendarTransactionsParams,
+  CalendarTransactionsResponse,
 } from '../types/calendar';
 
 interface RawCalendarUploadRecordSummary {
@@ -76,31 +77,13 @@ interface RawCalendarUploadBackendSummary {
   totalAmount?: number;
 }
 
-const BACKEND_CATEGORY_ID_MAP: Record<string, number> = {
-  '인터넷쇼핑': 1,
-  '인테리어/가정용품': 2,
-  '교통서비스': 3,
-  '음/식료품소매': 4,
-  '외식': 5,
-  '제과/제빵/떡/케익': 6,
-  '커피/음료': 7,
-  '패스트푸드': 8,
-  '자동차/유지비': 9,
-  '시스템/통신': 10,
-  '건강/기호식품': 11,
-  '분식': 12,
-  '육류/회식': 13,
-  '선물/완구': 14,
-  '병원/의료': 15,
-  '화장품소매': 16,
-  '공연관람': 17,
-  '의약/의료품': 18,
-  '건강/뷰티/마사지': 19,
-  '수리서비스': 20,
-  // Flask 분류 결과에 남아 있는 구 라벨도 저장 단계에서 호환합니다.
-  '제과/제빵': 6,
-  '종합소매점': 2,
-};
+const BACKEND_CATEGORY_ID_MAP = CALENDAR_ENTRY_CATEGORIES.reduce<Record<string, number>>(
+  (acc, category, index) => {
+    acc[category.key] = index + 1;
+    return acc;
+  },
+  {},
+);
 
 function inferMimeType(file: CalendarUploadFile) {
   if (file.mimeType) {
@@ -141,16 +124,43 @@ function resolveBackendCategoryId(category: string) {
   return BACKEND_CATEGORY_ID_MAP[category];
 }
 
+function normalizeClassificationReason(reason?: string) {
+  const trimmedReason = reason?.trim();
+
+  if (!trimmedReason) {
+    return '자동 분류 참고 정보가 아직 없어요.';
+  }
+
+  if (trimmedReason.includes('Kakao Local API matched')) {
+    return '장소 정보를 바탕으로 자동 분류했어요.';
+  }
+
+  if (trimmedReason.includes('GMS(') || trimmedReason.includes('GMS classified')) {
+    return '거래처 이름을 바탕으로 자동 분류했어요.';
+  }
+
+  if (trimmedReason.includes('No merchant map match')) {
+    return '자동 분류에 참고할 정보가 부족해 직접 확인이 필요해요.';
+  }
+
+  if (trimmedReason.includes('GMS call budget exhausted')) {
+    return '이번 업로드에서 자동 분류 한도를 넘어 직접 확인이 필요해요.';
+  }
+
+  if (trimmedReason.includes('Temporary fallback classification')) {
+    return '자동 분류가 어려워 우선 임시 카테고리로 담아뒀어요. 나중에 수정할 수 있어요.';
+  }
+
+  return trimmedReason;
+}
+
 function normalizeCalendarUploadSummary(
   rawSummary: RawCalendarUploadBackendSummary,
 ): CalendarUploadBackendSummary {
-  // Flask 응답은 현재 snake_case로 내려오고,
-  // 화면 코드는 camelCase를 기준으로 작성되어 있습니다.
-  // 이 지점에서 한 번만 정규화해서 나머지 화면 코드를 단순하게 유지합니다.
   return {
-    message: rawSummary.message ?? '',
+    message: rawSummary.message?.trim() || '업로드한 거래를 바탕으로 자동 분류를 준비했어요.',
     records: (rawSummary.records ?? []).map((record) => ({
-      category: record.category ?? record.card_tpbuz_nm_2 ?? '미분류',
+      category: record.category ?? record.card_tpbuz_nm_2 ?? '분류 미확정',
       amt: record.amt ?? 0,
       cnt: record.cnt ?? 0,
     })),
@@ -158,20 +168,22 @@ function normalizeCalendarUploadSummary(
       const category = item.category ?? item.card_tpbuz_nm_2 ?? '';
       return {
         transactionDate: item.transactionDate ?? item.transaction_date ?? '',
-        merchantName: item.merchantName ?? item.merchant_name ?? '알 수 없는 상호',
+        merchantName: item.merchantName ?? item.merchant_name ?? '상호 정보 없음',
         transactionDetail: item.transactionDetail ?? item.transaction_detail ?? '',
         amount: item.amount ?? 0,
         category,
-        classificationReason:
-          item.classificationReason ?? item.classification_reason ?? '분류 사유 정보 없음',
+        classificationReason: normalizeClassificationReason(
+          item.classificationReason ?? item.classification_reason,
+        ),
         status: item.status ?? (category ? 'classified' : 'needs-category'),
         categoryId: category ? resolveBackendCategoryId(category) : undefined,
       };
     }),
     excludedRows: (rawSummary.excludedRows ?? rawSummary.excluded_rows ?? []).map((row) => ({
-      merchantName: row.merchantName ?? row.merchant_name ?? '알 수 없는 상호',
-      classificationReason:
-        row.classificationReason ?? row.classification_reason ?? '제외 사유 정보 없음',
+      merchantName: row.merchantName ?? row.merchant_name ?? '상호 정보 없음',
+      classificationReason: normalizeClassificationReason(
+        row.classificationReason ?? row.classification_reason,
+      ),
       amount: row.amount ?? 0,
       cnt: row.cnt ?? 0,
     })),
@@ -186,11 +198,10 @@ export async function getCalendarHeader(params: CalendarHeaderParams) {
   const response = await nativeApi.get<CalendarApiResponse<CalendarHeaderResponse>>(
     '/api/v1/calendar/header',
     {
-    params,
+      params,
     },
   );
 
-  // 캘린더 헤더만 ApiResponse 래퍼를 사용하므로 여기서 한 번만 벗겨서 화면 코드를 단순하게 유지합니다.
   return response.data.data;
 }
 
@@ -219,8 +230,6 @@ export async function getCalendarDaily(params: CalendarDailyParams) {
 export async function uploadCalendarTransactions(payload: CalendarUploadRequest) {
   const formData = new FormData();
 
-  // 백엔드는 각 파일을 독립적으로 받으므로,
-  // 화면에서는 은행 파일만 또는 카드 파일만 올려도 동작할 수 있습니다.
   appendUploadFile(formData, 'bank_file', payload.bankFile);
   appendUploadFile(formData, 'card_file', payload.cardFile);
 
@@ -231,8 +240,6 @@ export async function uploadCalendarTransactions(payload: CalendarUploadRequest)
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      // Excel upload can trigger Flask preprocessing plus GMS categorization,
-      // so we keep a longer timeout only for this request.
       timeout: 180000,
     },
   );
