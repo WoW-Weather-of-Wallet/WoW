@@ -53,7 +53,7 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
   const [budgetAmount, setBudgetAmount] = React.useState<number | null>(null);
   const [isWeatherLoading, setIsWeatherLoading] = React.useState(false);
   const [isBudgetSubmitting, setIsBudgetSubmitting] = React.useState(false);
-  const today = new Date();
+  const today = React.useMemo(() => new Date(), []);
   const reportPeriod = resolveAiReportPeriod({}, today);
   const monthLabel = `${today.getMonth() + 1}월`;
 
