@@ -5,26 +5,64 @@ import type {
   CalendarUploadPreviewGroup,
 } from '../types/calendar';
 
+function normalizeMerchantName(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\(주\)|㈜|주식회사/g, '')
+    .replace(/[\s\-_/().,·]/g, '');
+}
+
+function findMatchedBackendItem(
+  backendItems: CalendarUploadBackendItem[],
+  dateKey: string,
+  merchantName: string,
+  amount: number,
+) {
+  const exactMatch = backendItems.find(
+    (item) =>
+      item.transactionDate === dateKey &&
+      item.merchantName === merchantName &&
+      item.amount === amount,
+  );
+  if (exactMatch) {
+    return exactMatch;
+  }
+
+  const normalizedMerchantName = normalizeMerchantName(merchantName);
+  const normalizedMatch = backendItems.find(
+    (item) =>
+      item.transactionDate === dateKey &&
+      normalizeMerchantName(item.merchantName) === normalizedMerchantName &&
+      item.amount === amount,
+  );
+  if (normalizedMatch) {
+    return normalizedMatch;
+  }
+
+  const sameDateAndAmount = backendItems.filter(
+    (item) => item.transactionDate === dateKey && item.amount === amount,
+  );
+  if (sameDateAndAmount.length === 1) {
+    return sameDateAndAmount[0];
+  }
+
+  return undefined;
+}
+
 export function mergeUploadGroupsWithBackendItems(
   groups: CalendarUploadPreviewGroup[],
   backendItems: CalendarUploadBackendItem[],
 ) {
-  const backendItemByKey = new Map<string, CalendarUploadBackendItem>();
-
-  backendItems.forEach((item) => {
-    if (!item.transactionDate) {
-      return;
-    }
-
-    const lookupKey = `${item.transactionDate}::${item.merchantName}::${item.amount}`;
-    backendItemByKey.set(lookupKey, item);
-  });
-
   return groups.map((group) => ({
     ...group,
     items: group.items.map((item) => {
-      const lookupKey = `${group.dateKey}::${item.merchantName}::${item.amount}`;
-      const matchedBackendItem = backendItemByKey.get(lookupKey);
+      const matchedBackendItem = findMatchedBackendItem(
+        backendItems,
+        group.dateKey,
+        item.merchantName,
+        item.amount,
+      );
 
       if (!matchedBackendItem) {
         return item;
@@ -58,20 +96,14 @@ export function buildOverrideRows(
   groups: CalendarUploadPreviewGroup[],
   backendItems: CalendarUploadBackendItem[],
 ): CalendarOverrideRow[] {
-  const backendItemByKey = new Map<string, CalendarUploadBackendItem>();
-
-  backendItems.forEach((item) => {
-    if (!item.transactionDate) {
-      return;
-    }
-
-    backendItemByKey.set(`${item.transactionDate}::${item.merchantName}::${item.amount}`, item);
-  });
-
   return groups.flatMap((group) =>
     group.items.flatMap((item) => {
-      const lookupKey = `${group.dateKey}::${item.merchantName}::${item.amount}`;
-      const matchedBackendItem = backendItemByKey.get(lookupKey);
+      const matchedBackendItem = findMatchedBackendItem(
+        backendItems,
+        group.dateKey,
+        item.merchantName,
+        item.amount,
+      );
 
       if (!matchedBackendItem || matchedBackendItem.status !== 'needs-category') {
         return [];
