@@ -38,13 +38,4 @@ public class FcmController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "FCM 테스트 전송", description = "본인에게 테스트 알림을 전송합니다.")
-    @PostMapping("/test")
-    public ResponseEntity<Void> sendTest(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody FcmSendRequest request) {
-        fcmService.sendToUser(userDetails.getUsername(), request.getTitle(), request.getBody(), "add_record");
-        return ResponseEntity.ok().build();
-    }
-
 }
