@@ -67,23 +67,13 @@ export const fcmService = {
 
       // [P1 Fix] Android Expo Go 환경에서는 네이티브 푸시 기능을 건너뜁니다.
       if (IS_ANDROID_EXPO_GO) {
-        console.log('[FCM] Android Expo Go 환경: 네이티브 푸시 등록을 건너뜁니다.');
-
-        try {
-          const expoToken = await Notifications.getExpoPushTokenAsync();
-          console.log('--- 테스트용 엑스포 토큰 ---');
-          console.log(expoToken.data);
-        } catch (e) {
-          console.log('[FCM] Expo Push Token 획득 불가');
-        }
+        console.log('[FCM] Android Expo Go 환경: 네이티브 푸시 등록을 건너뜜');
         return null;
       }
 
       // 2. 네이티브 FCM 토큰 가져오기
       const tokenData = await Notifications.getDevicePushTokenAsync();
       const token = tokenData.data;
-
-      console.log('[FCM] Native Token:', token);
 
       // 3. 서버에 토큰 등록
       await this.sendTokenToServer(token, 'POST');
@@ -156,7 +146,6 @@ export const fcmService = {
     // 서비스 런타임에 토큰이 바뀌어도 서버가 즉시 알 수 있도록 업데이트합니다.
     Notifications.addPushTokenListener(tokenData => {
       const newToken = tokenData.data;
-      console.log('[FCM] Token refreshed automatically:', newToken);
       this.sendTokenToServer(newToken, 'POST');
     });
   },
@@ -173,20 +162,5 @@ export const fcmService = {
     } catch (error) {
       console.error('[FCM] 토큰 해제 실패:', error);
     }
-  },
-
-  /**
-   * [P2] 로컬 알림 강제 호출 지원
-   * 백엔드 FCM 없이도 시스템 표준 상단 알림 바를 띄울 때 사용합니다. (시뮬레이션 등)
-   */
-  async presentLocalNotification(title: string, body: string, data?: any) {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title,
-        body,
-        data,
-      },
-      trigger: null, // 즉시 실행
-    });
   },
 };
