@@ -100,12 +100,12 @@ public class AiAnalysisService {
         this.objectMapper = objectMapper;
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = {NotFoundException.class, InternalServerException.class})
     public AiAnalysisResponse getAnalysis(Long userId, int year, int month) {
         return getAnalysis(userId, year, month, false);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = {NotFoundException.class, InternalServerException.class})
     public AiAnalysisResponse getAnalysis(Long userId, int year, int month, boolean generateIfAbsent) {
         String cacheKey = buildMonthlyAiReportCacheKey(userId, year, month);
         AiAnalysisResponse cached = readMonthlyAiReportCache(cacheKey);
