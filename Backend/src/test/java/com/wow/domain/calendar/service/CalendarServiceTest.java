@@ -5,6 +5,7 @@ import com.wow.domain.AI.service.AiAnalysisService;
 import com.wow.domain.calendar.dto.CalendarHeaderResponse;
 import com.wow.domain.calendar.repository.CalendarRepository;
 import com.wow.domain.calendar.repository.FixedExpenseRepository;
+import com.wow.domain.calendar.repository.SpendingWeatherRepository;
 import com.wow.domain.calendar.repository.TransactionRepository;
 import com.wow.domain.expensecategory.repository.ExpenseCategoryRepository;
 import com.wow.domain.spendinganalysis.service.SpendingAnalysisService;
@@ -54,6 +55,9 @@ class CalendarServiceTest {
     private FixedExpenseRepository fixedExpenseRepository;
 
     @Mock
+    private SpendingWeatherRepository spendingWeatherRepository;
+
+    @Mock
     private SpendingAnalysisService spendingAnalysisService;
 
     @Mock
@@ -70,6 +74,7 @@ class CalendarServiceTest {
                 userRepository,
                 expenseCategoryRepository,
                 fixedExpenseRepository,
+                spendingWeatherRepository,
                 spendingAnalysisService,
                 aiAnalysisService
         );

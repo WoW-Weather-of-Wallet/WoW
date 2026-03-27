@@ -7,6 +7,7 @@ import com.wow.domain.calendar.entity.*;
 import com.wow.domain.calendar.entity.Calendar;
 import com.wow.domain.calendar.repository.CalendarRepository;
 import com.wow.domain.calendar.repository.FixedExpenseRepository;
+import com.wow.domain.calendar.repository.SpendingWeatherRepository;
 import com.wow.domain.calendar.repository.TransactionRepository;
 import com.wow.domain.expensecategory.entity.ExpenseCategory;
 import com.wow.domain.expensecategory.repository.ExpenseCategoryRepository;
@@ -49,6 +50,7 @@ public class CalendarService {
     private static final double CLOUDY_THRESHOLD = 0.20d;
     private static final double OVERCAST_THRESHOLD = 0.30d;
     private static final double RAIN_THRESHOLD = 0.50d;
+    private static final String DEFAULT_WEATHER_ICON_CODE = "sunny";
 
     private static final String DEFAULT_WEATHER_NAME = "정보 없음";
     private static final String DEFAULT_DESCRIPTION = "날씨 정보가 없습니다.";
@@ -59,6 +61,7 @@ public class CalendarService {
     private final UserRepository userRepository;
     private final ExpenseCategoryRepository expenseCategoryRepository;
     private final FixedExpenseRepository fixedExpenseRepository;
+    private final SpendingWeatherRepository spendingWeatherRepository;
     private final SpendingAnalysisService spendingAnalysisService;
     private final AiAnalysisService aiAnalysisService;
 
@@ -173,7 +176,16 @@ public class CalendarService {
 
     private MonthlyWeatherInfo resolveMonthlyWeatherInfo(Long userId, int year, int month) {
         try {
-            return buildMonthlyWeatherInfo(aiAnalysisService.getAnalysis(userId, year, month));
+            // Calendar headers are opened in the current display month, but the AI policy
+            // always exposes the previous month's finished report for that window.
+            YearMonth reportMonth = YearMonth.of(year, month).minusMonths(1);
+            return buildMonthlyWeatherInfo(
+                    aiAnalysisService.getAnalysis(
+                            userId,
+                            reportMonth.getYear(),
+                            reportMonth.getMonthValue()
+                    )
+            );
         } catch (NotFoundException | InternalServerException exception) {
             return defaultMonthlyWeatherInfo();
         }
@@ -789,6 +801,7 @@ public class CalendarService {
             return calendarRepository.save(
                     Calendar.builder()
                             .user(user)
+                            .spendingWeather(resolveDefaultSpendingWeather())
                             .date(date)
                             .dayType(dayType)
                             .createdAt(now)
@@ -803,6 +816,16 @@ public class CalendarService {
 
         calendar.updateDailySummary(totalExpense, transactions.size());
         calendar.updateDayType(dayType);
+    }
+
+    private SpendingWeather resolveDefaultSpendingWeather() {
+        return spendingWeatherRepository.findByWeatherName(DEFAULT_WEATHER_NAME)
+                .orElseGet(() -> spendingWeatherRepository.save(
+                        SpendingWeather.builder()
+                                .weatherName(DEFAULT_WEATHER_NAME)
+                                .iconCode(DEFAULT_WEATHER_ICON_CODE)
+                                .build()
+                ));
     }
 
     private void evictAnalysisCaches(Long userId, Collection<LocalDate> transactionDates) {

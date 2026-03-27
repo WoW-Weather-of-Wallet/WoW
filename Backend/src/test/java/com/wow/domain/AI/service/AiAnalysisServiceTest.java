@@ -157,6 +157,31 @@ class AiAnalysisServiceTest {
     }
 
     @Test
+    void getAnalysisDoesNotRegenerateUnreadableLegacyReportWhenFetchOnly() {
+        AiAnalysis storedAnalysis = AiAnalysis.builder()
+                .id(10L)
+                .user(createUser())
+                .spendingType(createSpendingType())
+                .year(2026)
+                .month(3)
+                .analysisType(AiAnalysisType.MONTHLY)
+                .description("legacy-summary")
+                .build();
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(RedisKeys.AI_MONTHLY_REPORT_PREFIX + "1:2026:3")).thenReturn(null);
+        when(aiAnalysisRepository.findFirstByUser_IdAndYearAndMonthAndAnalysisTypeOrderByCreatedAtDescIdDesc(
+                1L, 2026, 3, AiAnalysisType.MONTHLY))
+                .thenReturn(Optional.of(storedAnalysis));
+
+        assertThatThrownBy(() -> aiAnalysisService.getAnalysis(1L, 2026, 3))
+                .isInstanceOf(InternalServerException.class)
+                .hasMessageContaining("기존 AI 리포트를 불러오지 못했습니다");
+
+        verifyNoInteractions(userRepository, transactionRepository, aiRestTemplate);
+    }
+
+    @Test
     void getAnalysisThrowsWhenGeneratingWithoutTransactions() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get(RedisKeys.AI_MONTHLY_REPORT_PREFIX + "1:2026:3")).thenReturn(null);

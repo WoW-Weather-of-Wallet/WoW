@@ -52,6 +52,8 @@ public class AiAnalysisService {
 
     private static final Duration AI_REPORT_CACHE_TTL = Duration.ofHours(6);
     private static final AiAnalysisType MONTHLY_ANALYSIS_TYPE = AiAnalysisType.MONTHLY;
+    private static final String LEGACY_REPORT_UNREADABLE_MESSAGE =
+            "기존 AI 리포트를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
     private static final String NO_TRANSACTIONS_MESSAGE =
             "최근 3개월 거래가 없어 AI 리포트를 생성할 수 없습니다.";
     private static final String REPORT_NOT_READY_MESSAGE =
@@ -123,6 +125,12 @@ public class AiAnalysisService {
             if (storedResponse != null) {
                 writeMonthlyAiReportCache(cacheKey, storedResponse);
                 return storedResponse;
+            }
+
+            // This month already has a persisted report record. Fetch-only calls must not
+            // trigger a second AI generation just because an old row is not JSON-backed yet.
+            if (!generateIfAbsent) {
+                throw new InternalServerException(LEGACY_REPORT_UNREADABLE_MESSAGE);
             }
         }
 
