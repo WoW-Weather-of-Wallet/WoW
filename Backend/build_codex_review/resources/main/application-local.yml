@@ -1,0 +1,63 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/wowdb
+    username: weather
+    password: wallet
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+jwt:
+  secret: d293LWxvY2FsLWp3dC1zZWNyZXQta2V5LTIwMjYtd293LWxvY2FsLWp3dC1zZWNyZXQta2V5
+  issuer: wowDev
+
+server:
+  port: 8080
+
+flask:
+  # 엑셀 업로드 전처리/카테고리 분류는 Runpod demo_app(5000)으로 보낸다.
+  # 로컬에서 demo_app을 별도로 띄우지 않아도 업로드 플로우를 바로 확인할 수 있다.
+  url: https://f4dmqubkd14o9k-5000.proxy.runpod.net
+
+ai:
+  server:
+    # 로컬 통합 테스트에서는 Runpod에 띄운 원격 AI 서버를 직접 호출한다.
+    # 같은 PC에 14B 모델을 다시 띄우지 않아도 프론트-백-AI 전체 흐름을 바로 확인할 수 있다.
+    base-url: https://f4dmqubkd14o9k-8000.proxy.runpod.net
+
+sso:
+  ssafy:
+    client-id: fe7346c1-c83b-4a0f-a4f1-6f18d8a801d0
+    client-secret: edf4ab7d-5f30-4220-91d5-dffbc37ef7d3
+    redirect-uri: http://192.168.100.94:8080/sso/providers/ssafy/callback
+
+solapi:
+  api-key: NCS3LBYXGUBSPHBL
+  api-secret: 8JH9UNUUOYBEXXODGMPSPG9JS5ULYDGS
+  sender: "01071081079"
+
+app:
+  ssafy-app-base-uri: exp://192.168.100.94:8081/--/auth/ssafy
+
+cloud:
+  aws:
+    credentials:
+      access-key: AKIAW7FB3555IZHBLUZP
+      secret-key: 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
+    s3:
+      bucket: ssafyapp-stg-project-prv-data
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false

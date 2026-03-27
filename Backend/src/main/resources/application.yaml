@@ -28,3 +28,8 @@ solapi:
 
 flask:
   url: http://127.0.0.1:5000
+
+ai:
+  server:
+    # 전처리 Flask(demo_app)와 분리해서, 실제 14B 리포트 서버(chatbot.py)를 별도 설정으로 둔다.
+    base-url: ${AI_SERVER_BASE_URL:http://127.0.0.1:8000}
