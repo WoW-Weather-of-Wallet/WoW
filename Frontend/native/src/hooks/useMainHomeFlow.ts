@@ -13,8 +13,10 @@ import { getCalendarHeader } from '../services/calendar';
 import type { AiAnalysisReport } from '../services/ai';
 import {
   createBudget,
+  getCurrentBudget,
   getSpendingHalfYearly,
   getSpendingMonthlyCompare,
+  type CurrentBudgetResponse,
   type SpendingHalfYearlyResponse,
   type SpendingMonthlyCompareResponse,
 } from '../services/main';
@@ -50,7 +52,7 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     React.useState<SpendingHalfYearlyResponse | null>(null);
   const [monthlyCompare, setMonthlyCompare] =
     React.useState<SpendingMonthlyCompareResponse | null>(null);
-  const [budgetAmount, setBudgetAmount] = React.useState<number | null>(null);
+  const [currentBudget, setCurrentBudget] = React.useState<CurrentBudgetResponse | null>(null);
   const [isWeatherLoading, setIsWeatherLoading] = React.useState(false);
   const [isBudgetSubmitting, setIsBudgetSubmitting] = React.useState(false);
   const today = React.useMemo(() => new Date(), []);
@@ -68,6 +70,7 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
       setAiAnalysis(null);
       setSpendingHalfYearly(null);
       setMonthlyCompare(null);
+      setCurrentBudget(null);
       setIsWeatherLoading(false);
       return;
     }
@@ -75,18 +78,20 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     setIsWeatherLoading(true);
 
     try {
-      const [headerResponse, halfYearlyResponse, monthlyCompareResponse] = await Promise.all([
+      const [headerResponse, halfYearlyResponse, monthlyCompareResponse, budgetResponse] = await Promise.all([
         getCalendarHeader({
           year: today.getFullYear(),
           month: today.getMonth() + 1,
         }),
         getSpendingHalfYearly(),
         getSpendingMonthlyCompare(),
+        getCurrentBudget(),
       ]);
 
       setLiveHeader(headerResponse);
       setSpendingHalfYearly(halfYearlyResponse);
       setMonthlyCompare(monthlyCompareResponse);
+      setCurrentBudget(budgetResponse);
 
       if (hasCurrentHomeAiSummary) {
         setAiAnalysis(null);
@@ -103,6 +108,7 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
       setAiAnalysis(null);
       setSpendingHalfYearly(null);
       setMonthlyCompare(null);
+      setCurrentBudget(null);
     } finally {
       setIsWeatherLoading(false);
     }
@@ -124,7 +130,21 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
 
       try {
         const createdBudget = await createBudget({ amount });
-        setBudgetAmount(createdBudget.amount);
+        setCurrentBudget((previous) => ({
+          goalAmount: createdBudget.amount,
+          totalSpent: previous?.totalSpent ?? 0,
+          remainingAmount: previous?.totalSpent != null ? createdBudget.amount - previous.totalSpent : createdBudget.amount,
+          usagePercentage:
+            previous?.totalSpent != null && createdBudget.amount > 0
+              ? Math.max(0, Math.min(Math.round((previous.totalSpent / createdBudget.amount) * 100), 100))
+              : 0,
+          remainingDays: previous?.remainingDays ?? 0,
+          dailyAvailable:
+            previous?.remainingDays != null && previous.remainingDays > 0
+              ? Math.floor((createdBudget.amount - (previous?.totalSpent ?? 0)) / previous.remainingDays)
+              : 0,
+          savedAmount: previous?.savedAmount ?? 0,
+        }));
         closeReportModal();
         Alert.alert(
           '예산 등록 완료',
@@ -167,8 +187,9 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     ? formatMonthLabel(monthlyCompare.lastMonth.year, monthlyCompare.lastMonth.month)
     : '-';
 
-  const spentAmount = monthlyCompare?.currentMonth.totalAmount ?? null;
-  const totalBudget = budgetAmount;
+  const spentAmount = currentBudget?.totalSpent ?? monthlyCompare?.currentMonth.totalAmount ?? null;
+  const totalBudget =
+    currentBudget != null && currentBudget.goalAmount > 0 ? currentBudget.goalAmount : null;
   const remainingBudget =
     totalBudget != null && spentAmount != null ? totalBudget - spentAmount : null;
   const budgetUsageRate =
