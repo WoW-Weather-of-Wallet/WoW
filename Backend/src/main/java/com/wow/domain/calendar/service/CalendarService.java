@@ -90,10 +90,16 @@ public class CalendarService {
         LocalDateTime dayStart = date.atStartOfDay();
         LocalDateTime dayEnd = date.plusDays(1).atStartOfDay();
         Optional<Calendar> calendarOptional = calendarRepository.findByUserIdAndDateWithWeather(userId, date);
-        DailyWeatherInfo weatherInfo = calendarOptional
-                .map(this::toDailyWeatherInfo)
-                .orElseGet(this::defaultDailyWeatherInfo);
-        Integer forecastCode = resolveForecastCode(date, today);
+        MonthlyWeatherInfo monthlyWeatherInfo = supportsDerivedWeather(date, today)
+                ? resolveMonthlyWeatherInfo(userId, date.getYear(), date.getMonthValue())
+                : null;
+        DailyWeatherInfo weatherInfo = resolveDailyWeatherInfo(
+                date,
+                today,
+                calendarOptional.orElse(null),
+                monthlyWeatherInfo
+        );
+        Integer forecastCode = resolveDailyForecastCode(date, today);
         List<CalendarDailyResponse.TransactionItem> transactions = transactionRepository
                 .findDailyByUserIdWithCategory(userId, dayStart, dayEnd).stream()
                 .map(transaction -> new CalendarDailyResponse.TransactionItem(
@@ -140,30 +146,41 @@ public class CalendarService {
         LocalDate startDate = YearMonth.of(year, month).atDay(1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
         LocalDate today = LocalDate.now();
+        Map<LocalDate, Calendar> calendarByDate = calendarRepository.findMonthlyByUserIdWithWeather(userId, startDate, endDate)
+                .stream()
+                .collect(Collectors.toMap(Calendar::getDate, calendar -> calendar));
+        MonthlyWeatherInfo monthlyWeatherInfo = supportsDerivedWeather(endDate, today)
+                ? resolveMonthlyWeatherInfo(userId, year, month)
+                : null;
 
-        return calendarRepository.findMonthlyByUserIdWithWeather(userId, startDate, endDate).stream()
-                .map(calendar -> {
-                    DayType dayType = resolveDayType(calendar.getDate(), today);
-                    String iconCode = dayType == DayType.FAR_FUTURE
-                            ? null
-                            : (calendar.getSpendingWeather() != null
-                            ? calendar.getSpendingWeather().getIconCode() : null);
+        return startDate.datesUntil(endDate.plusDays(1))
+                .map(date -> {
+                    Calendar calendar = calendarByDate.get(date);
+                    DayType dayType = resolveDayType(date, today);
+                    DailyWeatherInfo weatherInfo = resolveDailyWeatherInfo(date, today, calendar, monthlyWeatherInfo);
+                    String iconCode = shouldExposeCalendarWeatherIcon(date, today)
+                            ? weatherInfo.iconCode()
+                            : null;
 
                     return new CalendarMonthlyResponse(
-                            calendar.getDate(),
+                            date,
                             dayType,
-                            calendar.getDailyTotal(),
+                            calendar != null ? calendar.getDailyTotal() : null,
                             iconCode,
-                            resolveForecastCode(calendar.getDate(), today)
+                            resolveDailyForecastCode(date, today)
                     );
                 })
                 .toList();
     }
 
     private DailyWeatherInfo getDailyWeatherInfo(Long userId, LocalDate date) {
-        return calendarRepository.findByUserIdAndDateWithWeather(userId, date)
-                .map(this::toDailyWeatherInfo)
-                .orElseGet(this::defaultDailyWeatherInfo);
+        LocalDate today = LocalDate.now();
+        Optional<Calendar> calendarOptional = calendarRepository.findByUserIdAndDateWithWeather(userId, date);
+        MonthlyWeatherInfo monthlyWeatherInfo = supportsDerivedWeather(date, today)
+                ? resolveMonthlyWeatherInfo(userId, date.getYear(), date.getMonthValue())
+                : null;
+
+        return resolveDailyWeatherInfo(date, today, calendarOptional.orElse(null), monthlyWeatherInfo);
     }
 
     private DailyWeatherInfo toDailyWeatherInfo(Calendar calendar) {
@@ -176,6 +193,96 @@ public class CalendarService {
 
     private DailyWeatherInfo defaultDailyWeatherInfo() {
         return new DailyWeatherInfo(SAFE_DEFAULT_WEATHER_NAME, null, SAFE_DEFAULT_DESCRIPTION);
+    }
+
+    private DailyWeatherInfo toDailyWeatherInfo(MonthlyWeatherInfo monthlyWeatherInfo) {
+        return new DailyWeatherInfo(
+                monthlyWeatherInfo.weatherName(),
+                monthlyWeatherInfo.iconCode(),
+                monthlyWeatherInfo.description()
+        );
+    }
+
+    private DailyWeatherInfo resolveDailyWeatherInfo(
+            LocalDate date,
+            LocalDate today,
+            Calendar calendar,
+            MonthlyWeatherInfo monthlyWeatherInfo
+    ) {
+        if (calendar != null && calendar.getDailyTotal() != null && calendar.getDailyTotal() > 0) {
+            return buildDailySpendingWeatherInfo(calendar.getDailyTotal());
+        }
+
+        if (hasMeaningfulDailyWeather(calendar)) {
+            return toDailyWeatherInfo(calendar);
+        }
+
+        if (monthlyWeatherInfo != null && supportsDerivedWeather(date, today)) {
+            return toDailyWeatherInfo(monthlyWeatherInfo);
+        }
+
+        if (calendar != null) {
+            return toDailyWeatherInfo(calendar);
+        }
+
+        return defaultDailyWeatherInfo();
+    }
+
+    private DailyWeatherInfo buildDailySpendingWeatherInfo(Long dailyTotal) {
+        WeatherProfile weatherProfile = resolveDailyWeatherProfile(dailyTotal);
+        String description = buildDailyWeatherDescription(dailyTotal, weatherProfile.weatherName());
+        return new DailyWeatherInfo(weatherProfile.weatherName(), weatherProfile.iconCode(), description);
+    }
+
+    private WeatherProfile resolveDailyWeatherProfile(Long dailyTotal) {
+        long amount = dailyTotal != null ? dailyTotal : 0L;
+
+        if (amount < 10_000L) {
+            return new WeatherProfile("맑음", "sunny");
+        }
+        if (amount < 30_000L) {
+            return new WeatherProfile("구름", "cloudy");
+        }
+        if (amount < 50_000L) {
+            return new WeatherProfile("흐림", "overcast");
+        }
+        if (amount < 100_000L) {
+            return new WeatherProfile("비", "rain");
+        }
+        return new WeatherProfile("폭우", "heavy-rain");
+    }
+
+    private String buildDailyWeatherDescription(Long dailyTotal, String weatherName) {
+        long amount = dailyTotal != null ? dailyTotal : 0L;
+        String amountLabel = String.format("%,d원", amount);
+
+        return switch (weatherName) {
+            case "맑음" -> amountLabel + " 사용으로 비교적 안정적인 소비였어요.";
+            case "구름" -> amountLabel + " 사용으로 가벼운 지출이 이어졌어요.";
+            case "흐림" -> amountLabel + " 사용으로 지출이 조금 늘어난 날이에요.";
+            case "비" -> amountLabel + " 사용으로 소비 관리가 필요한 날이에요.";
+            case "폭우" -> amountLabel + " 사용으로 지출이 크게 늘어난 날이에요.";
+            default -> SAFE_DEFAULT_DESCRIPTION;
+        };
+    }
+
+    private boolean hasMeaningfulDailyWeather(Calendar calendar) {
+        if (calendar == null || calendar.getSpendingWeather() == null) {
+            return false;
+        }
+
+        String weatherName = calendar.getSpendingWeather().getWeatherName();
+        return weatherName != null
+                && !weatherName.isBlank()
+                && !SAFE_DEFAULT_WEATHER_NAME.equals(weatherName);
+    }
+
+    private boolean supportsDerivedWeather(LocalDate date, LocalDate today) {
+        return !date.isAfter(today.plusMonths(1));
+    }
+
+    private boolean shouldExposeCalendarWeatherIcon(LocalDate date, LocalDate today) {
+        return !date.isAfter(today.plusDays(7));
     }
 
     private MonthlyWeatherInfo resolveMonthlyWeatherInfo(Long userId, int year, int month) {
@@ -664,6 +771,16 @@ public class CalendarService {
             return 0;
         }
         if (!targetDate.isAfter(today.plusDays(7))) {
+            return 1;
+        }
+        return null;
+    }
+
+    private Integer resolveDailyForecastCode(LocalDate targetDate, LocalDate today) {
+        if (!targetDate.isAfter(today)) {
+            return 0;
+        }
+        if (!targetDate.isAfter(today.plusMonths(1))) {
             return 1;
         }
         return null;
