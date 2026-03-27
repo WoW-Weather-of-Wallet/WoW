@@ -72,4 +72,9 @@ public class FixedExpense {
         if (amount != null) this.amount = amount;
         if (dueDay != null) this.dueDay = dueDay;
     }
+
+    // 토글(직접 입력 형식)
+    public void updateEnable(Boolean isEnable) {
+        this.isEnable = isEnable;
+    }
 }

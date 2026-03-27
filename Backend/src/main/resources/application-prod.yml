@@ -43,12 +43,12 @@ solapi:
 cloud:
   aws:
     credentials:
-      access-key: ${AWS_ACCESS_KEY}
-      secret-key: ${AWS_SECRET_KEY}
+      access-key: ${AWS_S3_ACCESS_KEY}
+      secret-key: ${AWS_S3_SECRET_KEY}
     region:
       static: ${AWS_REGION:ap-northeast-2}
     s3:
-      bucket: ${S3_BUCKET}
+      bucket: ${AWS_S3_BUCKET}
 
 # [added] 이유: 프로덕션에서 Swagger UI 비공개 처리
 app:

@@ -1,27 +1,26 @@
 package com.wow.domain.calendar.service;
 
 import com.wow.domain.calendar.dto.*;
+import com.wow.domain.calendar.entity.*;
 import com.wow.domain.calendar.entity.Calendar;
-import com.wow.domain.calendar.entity.DayType;
-import com.wow.domain.calendar.entity.FixedExpense;
-import com.wow.domain.calendar.entity.SpendingWeather;
-import com.wow.domain.calendar.entity.Transaction;
 import com.wow.domain.calendar.repository.CalendarRepository;
-import com.wow.domain.expensecategory.repository.ExpenseCategoryRepository;
 import com.wow.domain.calendar.repository.FixedExpenseRepository;
 import com.wow.domain.calendar.repository.TransactionRepository;
 import com.wow.domain.expensecategory.entity.ExpenseCategory;
+import com.wow.domain.expensecategory.repository.ExpenseCategoryRepository;
+import com.wow.domain.spendinganalysis.service.SpendingAnalysisService;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.global.exception.BadRequestException;
-import com.wow.global.exception.DuplicateException;
+import com.wow.global.exception.ForbiddenException;
 import com.wow.global.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -33,10 +32,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,6 +49,7 @@ public class CalendarService {
     private final UserRepository userRepository;
     private final ExpenseCategoryRepository expenseCategoryRepository;
     private final FixedExpenseRepository fixedExpenseRepository;
+    private final SpendingAnalysisService spendingAnalysisService;
 
     @Value("${flask.url}")
     private String flaskUrl;
@@ -97,6 +95,7 @@ public class CalendarService {
 
         return calendarOptional
                 .map(calendar -> CalendarDailyResponse.builder()
+                        .calendarId(calendar.getId())
                         .date(date)
                         .weather(weather)
                         .summary(CalendarDailyResponse.Summary.builder()
@@ -107,6 +106,7 @@ public class CalendarService {
                         .memo(calendar.getMemo())
                         .build())
                 .orElseGet(() -> CalendarDailyResponse.builder()
+                        .calendarId(null)
                         .date(date)
                         .weather(weather)
                         .summary(CalendarDailyResponse.Summary.builder()
@@ -270,12 +270,15 @@ public class CalendarService {
                 .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
         LocalDate representativeDate = items.get(0).getTransactionDate();
-        LocalDateTime dayStart = representativeDate.atStartOfDay();
-        LocalDateTime dayEnd = representativeDate.atTime(23, 59, 59);
 
-        // 같은 날짜 기존 데이터 삭제 (덮어쓰기)
-        transactionRepository.deleteByUser_IdAndTransactionAtBetween(
-                userId, dayStart, dayEnd);
+        // ↓ 여기만 변경 - paymentType CARD만 삭제
+        Set<LocalDate> dates = items.stream()
+                .map(TransactionConfirmRequest.TransactionItem::getTransactionDate)
+                .collect(Collectors.toSet());
+
+        for (LocalDate date : dates) {
+            deleteTransactionsByDateAndType(userId, date, "CARD");
+        }
 
         List<Transaction> entities = items.stream()
                 .map(item -> {
@@ -289,12 +292,18 @@ public class CalendarService {
                             .amount(BigDecimal.valueOf(item.getAmount()))
                             .merchantName(item.getMerchantName())
                             .transactionAt(item.getTransactionDate().atStartOfDay())
-                            .createdAt(LocalDateTime.now())
+                            .paymentType("CARD")  // ← 추가
                             .build();
                 })
                 .toList();
 
         transactionRepository.saveAll(entities);
+
+// Set<LocalDate> 제거하고 그냥 재사용
+        for (LocalDate date : dates) {
+            recalculateDailySummary(userId, date);
+        }
+        spendingAnalysisService.evictMonthlyCompareCache(userId);
         return new TransactionConfirmResponse(entities.size(), representativeDate);
     }
 
@@ -312,6 +321,15 @@ public class CalendarService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
+        // 날짜별로 같은 날짜 CARD 타입 삭제
+//        Set<LocalDate> dates = items.stream()
+//                .map(TransactionCustomRequest.TransactionCustomItem::getTransactionDate)
+//                .collect(Collectors.toSet());
+//
+//        for (LocalDate date : dates) {
+//            deleteTransactionsByDateAndType(userId, date, "CARD");
+//        }
+
         List<Transaction> entities = items.stream()
                 .map(item -> {
                     ExpenseCategory category = expenseCategoryRepository
@@ -324,12 +342,21 @@ public class CalendarService {
                             .amount(BigDecimal.valueOf(item.getAmount()))
                             .merchantName(item.getMerchantName())
                             .transactionAt(item.getTransactionDate().atStartOfDay())
-                            .createdAt(LocalDateTime.now())
+                            .paymentType("CARD")  // ← 추가
                             .build();
                 })
                 .toList();
 
         transactionRepository.saveAll(entities);
+
+        Set<LocalDate> dates = entities.stream()
+                .map(t -> t.getTransactionAt().toLocalDate())
+                .collect(Collectors.toSet());
+        for (LocalDate date : dates) {
+            recalculateDailySummary(userId, date);
+        }
+
+        spendingAnalysisService.evictMonthlyCompareCache(userId);
 
         List<TransactionCustomResponse.TransactionCustomItem> responseItems = entities.stream()
                 .map(TransactionCustomResponse.TransactionCustomItem::from)
@@ -414,4 +441,243 @@ public class CalendarService {
     }
 
     private record DailyWeatherInfo(String weatherName, String iconCode, String description) {}
+
+    // 전체 거래내역 조회
+    public CalendarTransactionResponse getCalendarTransactions(
+            Long userId, int year, int month) {
+
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 해당 월 시작/끝
+        LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
+        LocalDateTime end = LocalDateTime.of(year, month,
+                YearMonth.of(year, month).lengthOfMonth(), 23, 59, 59);
+
+        // 거래내역 조회
+        List<Transaction> transactions =
+                transactionRepository
+                        .findByUser_IdAndTransactionAtBetweenOrderByTransactionAtDesc(
+                                userId, start, end);
+
+        // 고정지출 가맹점명 목록 한번에 조회 (핀 표시용)
+        Set<String> fixedNames = fixedExpenseRepository.findNamesByUserId(userId);
+
+        // 월 총 지출 합계
+        int totalAmount = transactions.stream()
+                .mapToInt(t -> t.getAmount().intValue())
+                .sum();
+
+        // 날짜별 그룹핑
+        Map<LocalDate, List<Transaction>> groupedByDate = transactions.stream()
+                .collect(Collectors.groupingBy(
+                        t -> t.getTransactionAt().toLocalDate(),
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        // DailyItem 생성
+        List<CalendarTransactionResponse.DailyItem> items = groupedByDate.entrySet().stream()
+                .map(entry -> {
+                    List<CalendarTransactionResponse.TransactionItem> txItems =
+                            entry.getValue().stream()
+                                    .map(t -> new CalendarTransactionResponse.TransactionItem(
+                                            t.getId(),
+                                            t.getCategory() != null
+                                                    ? t.getCategory().getCategoryIcon() : null,
+                                            t.getMerchantName(),
+                                            t.getCategory() != null
+                                                    ? t.getCategory().getCategoryName() : null,
+                                            t.getAmount().intValue(),
+                                            fixedNames.contains(t.getMerchantName()),
+                                            t.getPaymentType()  // ← 이것만 추가
+                                    ))
+                                    .toList();
+
+                    return new CalendarTransactionResponse.DailyItem(
+                            entry.getKey().toString(),
+                            txItems
+                    );
+                })
+                .toList();
+
+        return new CalendarTransactionResponse(
+                year + "-" + String.format("%02d", month),
+                totalAmount,
+                items
+        );
+    }
+
+    // 직접거래내역삭제
+//    @Transactional
+//    public void deleteTransaction(Long userId, Long transactionId) {
+//
+//        Transaction transaction = transactionRepository.findById(transactionId)
+//                .orElseThrow(() -> new NotFoundException("거래내역을 찾을 수 없습니다."));
+//
+//        if (!transaction.getUser().getId().equals(userId)) {
+//            throw new ForbiddenException("삭제 권한이 없습니다.");
+//        }
+//
+//        transactionRepository.delete(transaction);
+//        spendingAnalysisService.evictMonthlyCompareCache(userId);
+//    }
+    @Transactional
+    public void deleteTransaction(Long userId, Long transactionId) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new NotFoundException("거래내역을 찾을 수 없습니다."));
+
+        if (!transaction.getUser().getId().equals(userId)) {
+            throw new ForbiddenException("삭제 권한이 없습니다.");
+        }
+
+        LocalDate date = transaction.getTransactionAt().toLocalDate(); // 삭제 전에 날짜 저장
+        transactionRepository.delete(transaction);
+        recalculateDailySummary(userId, date); // 삭제 후 재계산
+        spendingAnalysisService.evictMonthlyCompareCache(userId);
+    }
+
+    // 현금 처리로 인해서 삭제로직 변경
+    private void deleteTransactionsByDateAndType(
+            Long userId, LocalDate date, String paymentType) {
+
+        // 고정지출에 연결된 id는 삭제 제외
+        Set<Long> fixedTransactionIds =
+                fixedExpenseRepository.findTransactionIdsByUserId(userId);
+
+        List<Long> toDeleteIds = transactionRepository
+                .findIdsByUserIdAndPaymentTypeAndTransactionAtBetween(
+                        userId,
+                        paymentType,
+                        date.atStartOfDay(),
+                        date.plusDays(1).atStartOfDay())
+                .stream()
+                .filter(id -> !fixedTransactionIds.contains(id))
+                .toList();
+
+        transactionRepository.deleteAllById(toDeleteIds);
+    }
+
+    // 현금로직 추가
+    @Transactional
+    public TransactionCustomResponse createCashTransaction(
+            Long userId, TransactionCustomRequest request) {
+
+        List<TransactionCustomRequest.TransactionCustomItem> items = request.getItems();
+
+        if (items == null || items.isEmpty()) {
+            throw new BadRequestException("거래내역 항목이 비어있습니다.");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 같은 날짜 CASH 타입만 삭제
+//        Set<LocalDate> dates = items.stream()
+//                .map(TransactionCustomRequest.TransactionCustomItem::getTransactionDate)
+//                .collect(Collectors.toSet());
+//
+//        for (LocalDate date : dates) {
+//            deleteTransactionsByDateAndType(userId, date, "CASH");
+//        }
+
+        List<Transaction> entities = items.stream()
+                .map(item -> {
+                    ExpenseCategory category = expenseCategoryRepository
+                            .findById(item.getCategoryId())
+                            .orElseThrow(() -> new BadRequestException("존재하지 않는 카테고리입니다."));
+
+                    return Transaction.builder()
+                            .user(user)
+                            .category(category)
+                            .amount(BigDecimal.valueOf(item.getAmount()))
+                            .merchantName(item.getMerchantName())
+                            .transactionAt(item.getTransactionDate().atStartOfDay())
+                            .paymentType("CASH")  // ← CASH
+                            .build();
+                })
+                .toList();
+
+        // createCashTransaction() 마지막에 추가
+        transactionRepository.saveAll(entities);
+
+// 날짜별로 summary 재계산
+        Set<LocalDate> dates = entities.stream()
+                .map(t -> t.getTransactionAt().toLocalDate())
+                .collect(Collectors.toSet());
+        for (LocalDate date : dates) {
+            recalculateDailySummary(userId, date);
+        }
+
+        spendingAnalysisService.evictMonthlyCompareCache(userId);
+
+        List<TransactionCustomResponse.TransactionCustomItem> responseItems = entities.stream()
+                .map(TransactionCustomResponse.TransactionCustomItem::from)
+                .toList();
+
+
+        return new TransactionCustomResponse(entities.size(), responseItems);
+    }
+
+    @Transactional
+    public CalendarMemoResponse updateMemo(Long userId, LocalDate date, String memo) {
+        DayType dayType = resolveDayType(date, LocalDate.now());
+        Calendar calendar = calendarRepository.findByUserIdAndDateWithWeather(userId, date)
+                .orElseGet(() -> {
+                    User user = userRepository.findById(userId)
+                            .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+                    LocalDateTime now = LocalDateTime.now();
+                    return calendarRepository.save(
+                            Calendar.builder()
+                                    .user(user)
+                                    .date(date)
+                                    .dayType(dayType)
+                                    .createdAt(now)
+                                    .updatedAt(now)
+                                    .build()
+                    );
+                });
+
+        calendar.updateDayType(dayType);
+        calendar.updateMemo(memo);
+        return new CalendarMemoResponse(calendar.getId(), calendar.getMemo());
+    }
+
+    @Transactional
+    public void recalculateDailySummary(Long userId, LocalDate date) {
+        LocalDateTime dayStart = date.atStartOfDay();
+        LocalDateTime dayEnd = date.plusDays(1).atStartOfDay();
+
+        // Upsert policy: create a calendar row only when transactions exist for the day.
+        List<Transaction> transactions =
+                transactionRepository.findDailyByUserIdWithCategory(userId, dayStart, dayEnd);
+
+        Optional<Calendar> calendarOptional = calendarRepository.findByUserIdAndDateWithWeather(userId, date);
+        if (calendarOptional.isEmpty() && transactions.isEmpty()) {
+            return;
+        }
+
+        DayType dayType = resolveDayType(date, LocalDate.now());
+        Calendar calendar = calendarOptional.orElseGet(() -> {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+            LocalDateTime now = LocalDateTime.now();
+            return calendarRepository.save(
+                    Calendar.builder()
+                            .user(user)
+                            .date(date)
+                            .dayType(dayType)
+                            .createdAt(now)
+                            .updatedAt(now)
+                            .build()
+            );
+        });
+
+        BigDecimal totalExpense = transactions.stream()
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        calendar.updateDailySummary(totalExpense, transactions.size());
+        calendar.updateDayType(dayType);
+    }
 }
