@@ -8,7 +8,7 @@ import MainHomeScreen from '../screens/main/MainHomeScreen';
 import CalendarScreen from '../screens/main/CalendarScreen';
 import AiFeedbackStackNavigator from './AiFeedbackStackNavigator';
 import MyPageStackNavigator from './MyPageStackNavigator';
-import { COLORS, FONTS, fp, hp, wp } from '../constants/theme';
+import { COLORS, FONTS, LAYOUT, fp } from '../constants/theme';
 import type { MainTabParamList } from '../types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -37,26 +37,26 @@ export default function MainTabNavigator() {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                height: hp(58) + insets.bottom,
+                height: LAYOUT.tabBarHeight + insets.bottom,
                 backgroundColor: COLORS.background,
                 borderTopWidth: 1,
                 borderColor: COLORS.surfaceBorder,
-                paddingTop: hp(6),
-                paddingBottom: Math.max(insets.bottom, hp(6)),
-                paddingHorizontal: wp(8),
+                paddingTop: LAYOUT.tabBarTopPadding,
+                paddingBottom: Math.max(insets.bottom, LAYOUT.tabBarBottomPadding),
+                paddingHorizontal: 8,
                 shadowColor: COLORS.textPrimary,
                 shadowOffset: { width: 0, height: -2 },
                 shadowOpacity: 0.04,
                 shadowRadius: 10,
                 elevation: 8,
               },
-          tabBarItemStyle: { paddingVertical: hp(2) },
+          tabBarItemStyle: { paddingVertical: LAYOUT.tabBarItemPaddingVertical },
           tabBarLabelStyle: {
             fontFamily: FONTS.semiBold,
             fontSize: fp(10.5),
-            marginTop: hp(2),
+            marginTop: LAYOUT.tabBarLabelMarginTop,
           },
-          tabBarIconStyle: { marginTop: hp(1) },
+          tabBarIconStyle: { marginTop: LAYOUT.tabBarIconMarginTop },
           tabBarActiveTintColor: COLORS.primary,
           tabBarInactiveTintColor: COLORS.textTertiary,
           tabBarIcon: ({ focused, color, size }) => {
@@ -73,7 +73,13 @@ export default function MainTabNavigator() {
             }
 
             return (
-              <View className="items-center justify-center" style={{ width: wp(34), height: wp(34) }}>
+              <View
+                className="items-center justify-center"
+                style={{
+                  width: LAYOUT.tabBarIconBoxSize,
+                  height: LAYOUT.tabBarIconBoxSize,
+                }}
+              >
                 <Ionicons name={iconName} size={size} color={color} />
               </View>
             );

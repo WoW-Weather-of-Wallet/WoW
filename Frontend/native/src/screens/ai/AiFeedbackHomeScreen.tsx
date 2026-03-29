@@ -7,7 +7,7 @@ import {
 } from '../../components/ai';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import GradientButton from '../../components/common/GradientButton';
-import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, FONTS, fp, wp } from '../../constants/theme';
 import { useAiFeatureCards, useAiFeatureCarousel, useResponsiveLayoutMode } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import { useAuthStore } from '../../store/authStore';
@@ -106,12 +106,12 @@ export default function AiFeedbackHomeScreen({
         paddingHorizontal: pageHorizontal,
       }}
       scrollTopPadding={scrollTopPadding}
-      scrollBottomPadding={isCompact ? scrollBottomPadding + hp(24) : scrollBottomPadding}
+      scrollBottomPadding={isCompact ? scrollBottomPadding + 24 : scrollBottomPadding}
       backgroundColor={COLORS.backgroundSecondary}
     >
       <View
         style={{
-          gap: isCompact ? hp(22) : hp(26),
+          gap: isCompact ? 22 : 26,
         }}
       >
         <View style={{ gap: sectionGap }}>
@@ -165,7 +165,7 @@ export default function AiFeedbackHomeScreen({
 
         <View
           style={{
-            paddingBottom: isCompact ? hp(8) : hp(12),
+            paddingBottom: isCompact ? 8 : 12,
             width: '100%',
           }}
         >

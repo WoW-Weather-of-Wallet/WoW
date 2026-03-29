@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 
 import type { ResponsiveLayoutMode } from '../../hooks/useResponsiveLayoutMode';
-import { hp } from '../../constants/theme';
+import { LAYOUT } from '../../constants/theme';
 import type {
   HomeDashboardBudgetReportCardData,
   HomeDashboardSpendingTypeCardData,
@@ -29,13 +29,13 @@ export default function HomeDashboardContent({
   onPressSpendingType,
   onPressBudgetReport,
   layoutMode = 'regular',
-  sectionGap = hp(18),
+  sectionGap = LAYOUT.pageSectionGap,
 }: HomeDashboardContentProps) {
   const isCompact = layoutMode === 'compact';
   const isTall = layoutMode === 'tall';
   const cardHeights = isCompact
-    ? { weather: hp(164), spending: hp(136), budget: hp(278) }
-    : { weather: hp(180), spending: hp(150), budget: hp(304) };
+    ? { weather: 164, spending: 136, budget: 278 }
+    : { weather: 180, spending: 150, budget: 304 };
 
   const spacerStyle = isTall
     ? { minHeight: sectionGap, flexGrow: 1 }

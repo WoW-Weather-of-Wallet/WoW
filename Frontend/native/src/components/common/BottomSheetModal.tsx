@@ -6,10 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   COLORS,
   FONTS,
+  LAYOUT,
   RADIUS,
   fp,
-  hp,
-  wp,
 } from '../../constants/theme';
 
 interface BottomSheetModalProps extends PropsWithChildren {
@@ -59,7 +58,7 @@ export default function BottomSheetModal({
       onBackButtonPress={onClose}
       onSwipeComplete={enableSwipeToClose ? onClose : undefined}
       swipeDirection={enableSwipeToClose ? ['down'] : undefined}
-      swipeThreshold={hp(18)}
+      swipeThreshold={18}
       scrollTo={scrollable ? handleScrollTo : undefined}
       scrollOffset={scrollable ? scrollOffset : 0}
       scrollOffsetMax={scrollable ? scrollOffsetMax : 0}
@@ -73,26 +72,26 @@ export default function BottomSheetModal({
           backgroundColor: COLORS.background,
           borderTopLeftRadius: RADIUS.xxl,
           borderTopRightRadius: RADIUS.xxl,
-          paddingHorizontal: wp(20),
-          paddingTop: hp(18),
-          paddingBottom: insets.bottom + hp(18),
+          paddingHorizontal: LAYOUT.bottomSheetHorizontal,
+          paddingTop: LAYOUT.bottomSheetTopPadding,
+          paddingBottom: insets.bottom + LAYOUT.bottomSheetBottomPadding,
           maxHeight: '88%',
         }}
       >
-        <View style={{ paddingBottom: hp(4) }}>
+        <View style={{ paddingBottom: LAYOUT.topDockBottomPadding }}>
           {showHandle ? (
             <View
               className="self-center items-center justify-center"
               style={{
-                paddingHorizontal: wp(18),
-                paddingVertical: hp(10),
-                marginBottom: hp(8),
+                paddingHorizontal: LAYOUT.bottomSheetHandlePaddingHorizontal,
+                paddingVertical: LAYOUT.bottomSheetHandlePaddingVertical,
+                marginBottom: 8,
               }}
             >
               <View
                 style={{
-                  width: wp(42),
-                  height: hp(6),
+                  width: LAYOUT.bottomSheetHandleWidth,
+                  height: LAYOUT.bottomSheetHandleHeight,
                   borderRadius: RADIUS.full,
                   backgroundColor: COLORS.modalHandle,
                 }}
@@ -103,7 +102,7 @@ export default function BottomSheetModal({
           {title || subtitle ? (
             <View
               className="flex-row items-start justify-between"
-              style={{ gap: wp(12), marginBottom: hp(18) }}
+              style={{ gap: 12, marginBottom: LAYOUT.bottomSheetHeaderGap }}
             >
               <View className="flex-1">
                 {title ? (
@@ -120,7 +119,7 @@ export default function BottomSheetModal({
                 {subtitle ? (
                   <Text
                     style={{
-                      marginTop: hp(6),
+                      marginTop: 6,
                       fontSize: fp(14),
                       fontFamily: FONTS.medium,
                       color: COLORS.textSecondary,
@@ -135,9 +134,9 @@ export default function BottomSheetModal({
                   activeOpacity={0.86}
                   className="items-center justify-center"
                   style={{
-                    width: wp(34),
-                    height: wp(34),
-                    borderRadius: wp(17),
+                    width: LAYOUT.bottomSheetCloseButtonSize,
+                    height: LAYOUT.bottomSheetCloseButtonSize,
+                    borderRadius: LAYOUT.bottomSheetCloseButtonSize / 2,
                     backgroundColor: COLORS.backgroundSecondary,
                   }}
                   onPress={onClose}
@@ -146,21 +145,21 @@ export default function BottomSheetModal({
                 >
                   <Ionicons
                     name="close"
-                    size={wp(18)}
+                    size={LAYOUT.bottomSheetCloseIconSize}
                     color={COLORS.textSecondary}
                   />
                 </TouchableOpacity>
               ) : null}
             </View>
           ) : showCloseButton ? (
-            <View className="items-end" style={{ marginBottom: hp(12) }}>
+            <View className="items-end" style={{ marginBottom: 12 }}>
               <TouchableOpacity
                 activeOpacity={0.86}
                 className="items-center justify-center"
                 style={{
-                  width: wp(34),
-                  height: wp(34),
-                  borderRadius: wp(17),
+                  width: LAYOUT.bottomSheetCloseButtonSize,
+                  height: LAYOUT.bottomSheetCloseButtonSize,
+                  borderRadius: LAYOUT.bottomSheetCloseButtonSize / 2,
                   backgroundColor: COLORS.backgroundSecondary,
                 }}
                 onPress={onClose}
@@ -169,7 +168,7 @@ export default function BottomSheetModal({
               >
                 <Ionicons
                   name="close"
-                  size={wp(18)}
+                  size={LAYOUT.bottomSheetCloseIconSize}
                   color={COLORS.textSecondary}
                 />
               </TouchableOpacity>
@@ -193,7 +192,7 @@ export default function BottomSheetModal({
               setScrollOffset(event.nativeEvent.contentOffset.y);
             }}
             scrollEventThrottle={16}
-            contentContainerStyle={{ paddingBottom: hp(4) }}
+            contentContainerStyle={{ paddingBottom: 4 }}
           >
             {children}
           </ScrollView>

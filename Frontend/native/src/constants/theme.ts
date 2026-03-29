@@ -38,9 +38,36 @@ export const fp = (size: number): number => {
 };
 
 export const LAYOUT = {
-  pageHorizontal: wp(20),
-  pageSectionGap: hp(18),
-};
+  // Root screen spacing uses stable dp values to reduce device-height wobble.
+  pageHorizontal: 20,
+  pageHorizontalNarrow: 16,
+  pageSectionGap: 18,
+  pageSectionGapCompact: 14,
+  scrollTopPadding: 12,
+  scrollTopPaddingCompact: 10,
+  scrollBottomPadding: 30,
+  scrollBottomPaddingCompact: 24,
+  topDockTopPadding: 12,
+  topDockTopPaddingCompact: 10,
+  topDockBottomPadding: 4,
+  tabBarHeight: 58,
+  tabBarTopPadding: 6,
+  tabBarBottomPadding: 6,
+  tabBarItemPaddingVertical: 2,
+  tabBarLabelMarginTop: 2,
+  tabBarIconMarginTop: 1,
+  tabBarIconBoxSize: 34,
+  bottomSheetHorizontal: 20,
+  bottomSheetTopPadding: 18,
+  bottomSheetBottomPadding: 18,
+  bottomSheetHeaderGap: 18,
+  bottomSheetHandlePaddingHorizontal: 18,
+  bottomSheetHandlePaddingVertical: 10,
+  bottomSheetHandleWidth: 42,
+  bottomSheetHandleHeight: 6,
+  bottomSheetCloseButtonSize: 34,
+  bottomSheetCloseIconSize: 18,
+} as const;
 
 // =============================================
 // 색상 팔레트

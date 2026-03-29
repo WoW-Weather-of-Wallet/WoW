@@ -7,7 +7,7 @@ import {
 } from 'react-native-calendars';
 
 import BottomSheetModal from '../common/BottomSheetModal';
-import { COLORS, FONTS, RADIUS, fp, hp } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, fp } from '../../constants/theme';
 
 interface CalendarDatePickerSheetProps {
   visible: boolean;
@@ -138,11 +138,11 @@ export default function CalendarDatePickerSheet({
             textDayHeaderFontSize: fp(11),
           }}
           style={{
-            paddingBottom: hp(10),
+            paddingBottom: 10,
           }}
           headerStyle={{
-            marginBottom: hp(6),
-            paddingHorizontal: hp(6),
+            marginBottom: 6,
+            paddingHorizontal: 6,
           }}
         />
       </View>

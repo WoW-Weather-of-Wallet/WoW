@@ -10,7 +10,6 @@ import {
   parseCsvToUploadGroups,
   parseSpreadsheetToUploadGroups,
 } from '../../constants/calendar/excel';
-import { hp } from '../../constants/theme';
 import { useCalendarAddEntryForm } from '../../hooks/useCalendarAddEntryForm';
 import {
   getCalendarApiErrorMessage,
@@ -55,7 +54,7 @@ export default function CalendarAddEntrySheet({
   onCompleteExcelEntries,
 }: CalendarAddEntrySheetProps) {
   const screenHeight = Dimensions.get('window').height;
-  const sheetBodyHeight = Math.min(hp(620), screenHeight * 0.74);
+  const sheetBodyHeight = Math.min(620, screenHeight * 0.74);
   const {
     activeMode,
     dateKey,
@@ -345,7 +344,7 @@ export default function CalendarAddEntrySheet({
         swipeArea="sheet"
         subtitle=""
       >
-        <View style={{ height: sheetBodyHeight, minHeight: hp(420) }}>
+        <View style={{ height: sheetBodyHeight, minHeight: 420 }}>
           <CalendarEntryModeToggle activeMode={activeMode} onChangeMode={setActiveMode} />
 
           {activeMode === 'direct' ? (

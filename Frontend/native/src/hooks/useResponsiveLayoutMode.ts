@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useWindowDimensions } from 'react-native';
 
-import { hp, LAYOUT, wp } from '../constants/theme';
+import { LAYOUT } from '../constants/theme';
 
 export type ResponsiveLayoutMode = 'compact' | 'regular' | 'tall';
 
@@ -23,11 +23,15 @@ export function useResponsiveLayoutMode() {
       aspectRatio,
       isCompact,
       isTall,
-      pageHorizontal: isNarrowWidth ? wp(16) : LAYOUT.pageHorizontal,
-      sectionGap: isCompact ? hp(14) : LAYOUT.pageSectionGap,
-      scrollTopPadding: isCompact ? hp(10) : hp(12),
-      scrollBottomPadding: isCompact ? hp(24) : hp(30),
-      topDockTopPadding: isCompact ? hp(10) : hp(12),
+      pageHorizontal: isNarrowWidth ? LAYOUT.pageHorizontalNarrow : LAYOUT.pageHorizontal,
+      sectionGap: isCompact ? LAYOUT.pageSectionGapCompact : LAYOUT.pageSectionGap,
+      scrollTopPadding: isCompact ? LAYOUT.scrollTopPaddingCompact : LAYOUT.scrollTopPadding,
+      scrollBottomPadding: isCompact
+        ? LAYOUT.scrollBottomPaddingCompact
+        : LAYOUT.scrollBottomPadding,
+      topDockTopPadding: isCompact
+        ? LAYOUT.topDockTopPaddingCompact
+        : LAYOUT.topDockTopPadding,
     };
   }, [height, width]);
 }

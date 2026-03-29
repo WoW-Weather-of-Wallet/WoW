@@ -7,7 +7,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AiResultSummaryCard, AiStackHeader, buildAiStackHeaderTitle } from '../../components/ai';
 import BottomTabOverlayLayout from '../../components/common/BottomTabOverlayLayout';
 import GradientButton from '../../components/common/GradientButton';
-import { COLORS, RADIUS, hp, wp } from '../../constants/theme';
+import { COLORS, LAYOUT, RADIUS, wp } from '../../constants/theme';
 import { useAiResultSummary, useResponsiveLayoutMode } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import { useAuthStore } from '../../store/authStore';
@@ -31,8 +31,8 @@ export default function AiResultScreen({
   const refreshKey = `${sessionUserId ?? 'guest'}:${reportPeriod.year}:${reportPeriod.month}`;
   const contentLayoutMode = isCompact ? 'compact' : 'regular';
   const [bottomActionHeight, setBottomActionHeight] = React.useState(0);
-  const headerHeight = hp(40);
-  const headerBottomSpacing = isCompact ? hp(14) : hp(16);
+  const headerHeight = 40;
+  const headerBottomSpacing = isCompact ? 14 : 16;
   const {
     reset,
     resultData,
@@ -116,7 +116,7 @@ export default function AiResultScreen({
         />
       }
       bottomOverlayStyle={showRetryButton ? { paddingHorizontal: pageHorizontal } : undefined}
-      bottomOverlayBottomPadding={isCompact ? hp(10) : hp(14)}
+      bottomOverlayBottomPadding={isCompact ? 10 : 14}
       bottomOverlayContent={showRetryButton ? (
         <View
           onLayout={(event) => {
@@ -126,7 +126,7 @@ export default function AiResultScreen({
             }
           }}
           style={{
-            gap: isCompact ? hp(10) : hp(12),
+            gap: isCompact ? 10 : 12,
             paddingTop: 0,
             paddingHorizontal: 0,
             paddingBottom: 0,
@@ -143,7 +143,7 @@ export default function AiResultScreen({
         >
           <View
             style={{
-              gap: isCompact ? hp(10) : hp(12),
+              gap: isCompact ? 10 : 12,
               padding: wp(isCompact ? 14 : 16),
               borderRadius: RADIUS.xxl,
               backgroundColor: COLORS.background,
@@ -171,11 +171,11 @@ export default function AiResultScreen({
         contentContainerStyle={{
           paddingHorizontal: pageHorizontal,
           paddingTop: insets.top + scrollTopPadding + headerHeight + headerBottomSpacing,
-          paddingBottom: bottomActionHeight + tabBarHeight + scrollBottomPadding + hp(12),
+          paddingBottom: bottomActionHeight + tabBarHeight + scrollBottomPadding + 12,
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ gap: isCompact ? hp(16) : hp(18) }}>
+        <View style={{ gap: isCompact ? LAYOUT.pageSectionGapCompact + 2 : LAYOUT.pageSectionGap }}>
           {cards.map((card, index) => (
             <Animated.View
               key={card.id}

@@ -30,7 +30,7 @@ export default function FixedExpenseDetailSheet({
   onSubmit,
 }: FixedExpenseDetailSheetProps) {
   const screenHeight = Dimensions.get('window').height;
-  const sheetBodyHeight = Math.min(hp(500), screenHeight * 0.62);
+  const sheetBodyHeight = Math.min(500, screenHeight * 0.62);
   const {
     isEditMode,
     resolvedCategory,
@@ -67,7 +67,7 @@ export default function FixedExpenseDetailSheet({
       scrollable={false}
       swipeArea="sheet"
     >
-      <View style={{ height: sheetBodyHeight, minHeight: hp(320) }}>
+      <View style={{ height: sheetBodyHeight, minHeight: 320 }}>
         <ScrollView
           bounces={false}
           showsVerticalScrollIndicator={false}
