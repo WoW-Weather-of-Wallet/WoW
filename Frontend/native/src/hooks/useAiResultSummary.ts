@@ -86,9 +86,9 @@ const buildStatusCard = (
 
   if (!reportExists && errorInfo) {
     const headline = errorInfo.kind === 'no-transactions'
-      ? '분석에 필요한 거래 내역이 아직 없어요'
+      ? '이번 달은 아직 분석할 거래가 부족해요'
       : errorInfo.kind === 'report-not-generated'
-        ? '이달 AI 리포트가 아직 생성되지 않았어요'
+        ? 'AI 리포트를 준비하고 있어요'
         : '최신 결과를 불러오지 못했어요';
 
     return {
@@ -103,8 +103,8 @@ const buildStatusCard = (
     return {
       id: 'result-status',
       title: '분석 상태',
-      headline: '이번 달 AI 리포트를 확인하는 중이에요',
-      description: '아직 저장된 리포트가 없으면 AI 홈에서 분석을 시작한 뒤 결과를 확인할 수 있어요.',
+      headline: '이번 달 AI 리포트를 준비하고 있어요',
+      description: 'AI 홈에서 분석을 시작하면 결과가 이 화면에 보기 좋게 정리돼요.',
     };
   }
 
@@ -187,7 +187,7 @@ export function useAiResultSummary(
         title: '절약 여지가 큰 항목',
         description: topOverspendingItems.length
           ? '비중 차이가 큰 항목부터 순서대로 정리했어요.'
-          : '지금은 과소비로 분류된 항목이 없어요.',
+          : '이번 분석에서는 과소비로 분류된 항목이 없었어요.',
         items: topOverspendingItems,
       },
       {

@@ -66,7 +66,7 @@ export default function HomeSpendingTypeSheet({
           title="소비 스타일맵"
           hasMetrics={hasMetrics}
           metrics={displayMetrics}
-          emptyMessage="아직 표시할 카테고리별 소비 비중 데이터가 없어요."
+          emptyMessage="거래 내역이 더 쌓이면 카테고리별 소비 비중을 보기 쉽게 보여드릴게요."
         />
 
         <HomeSpendingTypeReasonsSection
