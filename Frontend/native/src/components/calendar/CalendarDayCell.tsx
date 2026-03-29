@@ -19,6 +19,7 @@ export default function CalendarDayCell({
 }: CalendarDayCellProps) {
   const isPaddingCell = !day.isCurrentMonth;
   const hasMemo = day.hasMemo && !isPaddingCell;
+  const isToday = day.isToday && !isSelected;
   const amountLabel =
     typeof day.amount === 'number' && day.amount > 0
       ? day.amount.toLocaleString()
@@ -66,20 +67,41 @@ export default function CalendarDayCell({
         </View>
       ) : null}
 
-      <Text
+      <View
         style={{
-          fontSize: fp(16),
-          fontFamily: FONTS.bold,
-          color: isPaddingCell
-            ? 'transparent'
-            : isSelected
-              ? COLORS.textInverse
-              : COLORS.textPrimary,
           marginBottom: hp(4),
         }}
       >
-        {day.dayNumber}
-      </Text>
+        <View
+          style={{
+            minWidth: wp(30),
+            height: wp(30),
+            paddingHorizontal: wp(6),
+            borderRadius: wp(15),
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: isToday ? COLORS.primary50 : 'transparent',
+            borderWidth: isToday ? 1 : 0,
+            borderColor: isToday ? COLORS.todayRingBorder : 'transparent',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fp(16),
+              fontFamily: FONTS.bold,
+              color: isPaddingCell
+                ? 'transparent'
+                : isSelected
+                  ? COLORS.textInverse
+                  : isToday
+                    ? COLORS.primaryDark
+                    : COLORS.textPrimary,
+            }}
+          >
+            {day.dayNumber}
+          </Text>
+        </View>
+      </View>
 
       <View
         className="items-center justify-center"
@@ -109,20 +131,6 @@ export default function CalendarDayCell({
       >
         {amountLabel}
       </Text>
-
-      {day.isToday && !isSelected ? (
-        <View
-          style={{
-            position: 'absolute',
-            top: hp(3),
-            width: wp(29),
-            height: wp(29),
-            borderRadius: wp(14.5),
-            borderWidth: 1,
-            borderColor: COLORS.todayRingBorder,
-          }}
-        />
-      ) : null}
     </TouchableOpacity>
   );
 }
