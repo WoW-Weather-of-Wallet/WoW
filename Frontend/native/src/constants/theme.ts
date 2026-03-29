@@ -47,11 +47,11 @@ export const LAYOUT = {
 // =============================================
 export const COLORS = {
   // 메인 테마 컬러
-  primary: '#6666ee',
-  primaryLight: '#8888f4',
-  primaryDark: '#4d4dcc',
-  primarySoft: '#EAE9FF',
-  primary50: '#F4F3FF',
+  primary: '#7363DD',
+  primaryLight: '#8B74EA',
+  primaryDark: '#5B4BC4',
+  primarySoft: '#EDE8FF',
+  primary50: '#F7F4FF',
 
   // 배경
   background: '#FFFFFF',
@@ -66,7 +66,7 @@ export const COLORS = {
 
   // 보더
   border: '#E5E7EB',
-  borderFocus: '#6666ee',
+  borderFocus: '#7363DD',
   surfaceBorder: '#D9D7FF',
 
   // 상태
@@ -75,8 +75,8 @@ export const COLORS = {
   warning: '#F59E0B',
 
   // 그라데이션
-  gradientStart: '#8888F4',
-  gradientEnd: '#6666EE',
+  gradientStart: '#8B74EA',
+  gradientEnd: '#7363DD',
 
   // 공통 그레이 스케일 (추가)
   white: '#FFFFFF',
@@ -93,7 +93,7 @@ export const COLORS = {
   gray900: '#111827',
 
   // 마이페이지 전용 악센트 컬러 (추가)
-  accentPrimaryLight: '#EAE9FF',
+  accentPrimaryLight: '#EDE8FF',
   accentMintLight: '#D7F4E9',
   accentGoldLight: '#F9EAC5',
   cardOverlay1: '#E3E1FF',
@@ -152,17 +152,17 @@ export const COLORS = {
   radarGridOuter: '#D9D7FF',
   radarGridInner: '#EEEBFF',
   radarAxis: '#E3E1FF',
-  radarFill: '#6666EE26',
+  radarFill: '#7363DD26',
 
   // 캘린더 히어로 관련 (추가)
-  calendarHeroStart: '#7B88F8',
-  calendarHeroEnd: '#5C6EE8',
+  calendarHeroStart: '#7363DD',
+  calendarHeroEnd: '#AE70E0',
   whiteOverlay14: '#FFFFFF14',
   whiteOverlay1E: '#FFFFFF1E',
   whiteOverlay22: '#FFFFFF22',
   whiteOverlay3A: '#FFFFFF3A',
-  calendarHeroSubText: '#EEF1FF',
-  calendarHeroLabel: '#F7F8FF',
+  calendarHeroSubText: '#F3EDFF',
+  calendarHeroLabel: '#F8F4FF',
   weatherSun: '#FFC94D',
 
   // 캘린더 월간 그리드 관련 (추가)
@@ -197,7 +197,7 @@ export const COLORS = {
 
   // 고정지출 관리 관련 (추가)
   headerButtonBackground: '#FFFFFF1E',
-  fixedExpenseSummaryBackground: '#8888F4',
+  fixedExpenseSummaryBackground: '#8B74EA',
   summaryTextLight: '#ECEAFF',
   summaryTextHint: '#F4F3FF',
   addButtonBackground: '#FFFFFF26',
