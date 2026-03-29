@@ -8,7 +8,7 @@ import MainHomeScreen from '../screens/main/MainHomeScreen';
 import CalendarScreen from '../screens/main/CalendarScreen';
 import AiFeedbackStackNavigator from './AiFeedbackStackNavigator';
 import MyPageStackNavigator from './MyPageStackNavigator';
-import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../constants/theme';
+import { COLORS, FONTS, fp, hp, wp } from '../constants/theme';
 import type { MainTabParamList } from '../types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -37,23 +37,18 @@ export default function MainTabNavigator() {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                height: hp(60) + insets.bottom,
-                borderTopLeftRadius: RADIUS.xxl,
-                borderTopRightRadius: RADIUS.xxl,
-                borderBottomLeftRadius: 0,
-                borderBottomRightRadius: 0,
+                height: hp(58) + insets.bottom,
                 backgroundColor: COLORS.background,
-                borderTopWidth: 0,
-                borderWidth: 1,
+                borderTopWidth: 1,
                 borderColor: COLORS.surfaceBorder,
                 paddingTop: hp(6),
                 paddingBottom: Math.max(insets.bottom, hp(6)),
-                paddingHorizontal: wp(12),
+                paddingHorizontal: wp(8),
                 shadowColor: COLORS.textPrimary,
-                shadowOffset: { width: 0, height: 10 },
-                shadowOpacity: 0.08,
-                shadowRadius: 20,
-                elevation: 10,
+                shadowOffset: { width: 0, height: -2 },
+                shadowOpacity: 0.04,
+                shadowRadius: 10,
+                elevation: 8,
               },
           tabBarItemStyle: { paddingVertical: hp(2) },
           tabBarLabelStyle: {
@@ -78,17 +73,7 @@ export default function MainTabNavigator() {
             }
 
             return (
-              <View
-                className="items-center justify-center"
-                style={{
-                  width: wp(34),
-                  height: wp(34),
-                  borderRadius: wp(17),
-                  backgroundColor: focused ? COLORS.primary50 : 'transparent',
-                  borderWidth: focused ? 1 : 0,
-                  borderColor: focused ? COLORS.surfaceBorder : 'transparent',
-                }}
-              >
+              <View className="items-center justify-center" style={{ width: wp(34), height: wp(34) }}>
                 <Ionicons name={iconName} size={size} color={color} />
               </View>
             );
