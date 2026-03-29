@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
-import { wp } from '../../constants/theme';
+import { COLORS, RADIUS, wp } from '../../constants/theme';
 import {
   buildHomeWeatherVisual,
   HOME_WEATHER_GUIDE,
@@ -43,8 +44,26 @@ export default function HomeTodayWeatherCard({
   const WeatherIcon = weatherData.icon;
 
   return (
-    <View className="overflow-hidden rounded-3xl bg-primary shadow-sm" style={style}>
-      <View className="bg-primary-light/10 p-5" style={{ flex: 1, justifyContent: 'space-between' }}>
+    <LinearGradient
+      colors={[COLORS.calendarHeroStart, COLORS.calendarHeroEnd]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[
+        {
+          overflow: 'hidden',
+          borderRadius: RADIUS.xxl,
+        },
+        style,
+      ]}
+    >
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'space-between',
+          padding: 20,
+          backgroundColor: COLORS.whiteOverlay14,
+        }}
+      >
         <HomeTodayWeatherHeader
           WeatherIcon={WeatherIcon}
           color={weatherData.color}
@@ -65,6 +84,6 @@ export default function HomeTodayWeatherCard({
         items={HOME_WEATHER_GUIDE}
         onClose={() => setModalVisible(false)}
       />
-    </View>
+    </LinearGradient>
   );
 }

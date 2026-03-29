@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
-import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, TYPOGRAPHY, hp, wp } from '../../constants/theme';
 import { buildHomeWeatherVisual } from '../../utils/homeWeatherPresentation';
 
 interface CalendarHeroWeatherCardProps {
@@ -48,7 +48,8 @@ export default function CalendarHeroWeatherCard({
       <View className="flex-1">
         <Text
           style={{
-            fontSize: fp(17),
+            fontSize: TYPOGRAPHY.title.fontSize,
+            lineHeight: TYPOGRAPHY.title.lineHeight,
             fontFamily: FONTS.bold,
             color: COLORS.white,
             marginBottom: hp(4),
@@ -58,7 +59,8 @@ export default function CalendarHeroWeatherCard({
         </Text>
         <Text
           style={{
-            fontSize: fp(12),
+            fontSize: TYPOGRAPHY.caption.fontSize,
+            lineHeight: TYPOGRAPHY.caption.lineHeight,
             fontFamily: FONTS.medium,
             color: COLORS.calendarHeroSubText,
           }}

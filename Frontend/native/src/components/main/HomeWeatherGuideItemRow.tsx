@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
-import { wp } from '../../constants/theme';
+import { COLORS, FONTS, TYPOGRAPHY, wp } from '../../constants/theme';
 import type { HomeWeatherGuideItem } from '../../utils/homeWeatherPresentation';
 
 type HomeWeatherGuideItemRowProps = {
@@ -19,9 +19,32 @@ export default function HomeWeatherGuideItemRow({
         <GuideIcon size={wp(28)} color={item.color} />
       </View>
       <View className="ml-4 flex-1">
-        <Text className="text-lg font-bold text-gray-800">{item.type}</Text>
-        <Text className="text-sm text-gray-500">
-          <Text className="font-semibold text-gray-700">{item.detail}</Text>
+        <Text
+          style={{
+            fontSize: TYPOGRAPHY.title.fontSize,
+            lineHeight: TYPOGRAPHY.title.lineHeight,
+            fontFamily: FONTS.bold,
+            color: COLORS.textPrimary,
+          }}
+        >
+          {item.type}
+        </Text>
+        <Text
+          style={{
+            fontSize: TYPOGRAPHY.body.fontSize,
+            lineHeight: TYPOGRAPHY.body.lineHeight,
+            fontFamily: FONTS.regular,
+            color: COLORS.textSecondary,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: FONTS.semiBold,
+              color: COLORS.gray700,
+            }}
+          >
+            {item.detail}
+          </Text>
         </Text>
       </View>
     </View>

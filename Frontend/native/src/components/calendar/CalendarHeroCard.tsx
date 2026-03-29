@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, TYPOGRAPHY, hp, wp } from '../../constants/theme';
 import type { CalendarOverview } from '../../mock/calendar';
 import type { CalendarHeaderFetchState } from '../../types/calendar';
 import CalendarHeroHeader from './CalendarHeroHeader';
@@ -75,7 +75,8 @@ export default function CalendarHeroCard({
         </TouchableOpacity>
         <Text
           style={{
-            fontSize: fp(18),
+            fontSize: TYPOGRAPHY.title.fontSize,
+            lineHeight: TYPOGRAPHY.title.lineHeight,
             fontFamily: FONTS.bold,
             color: COLORS.white,
           }}
@@ -111,7 +112,8 @@ export default function CalendarHeroCard({
       <Text
         style={{
           marginTop: hp(12),
-          fontSize: fp(11),
+          fontSize: TYPOGRAPHY.caption.fontSize,
+          lineHeight: TYPOGRAPHY.caption.lineHeight,
           fontFamily: FONTS.medium,
           color: COLORS.calendarHeroSubText,
         }}

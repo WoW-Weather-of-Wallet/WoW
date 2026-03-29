@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, TYPOGRAPHY, hp, wp } from '../../constants/theme';
 
 interface CalendarHeroHeaderProps {
   title: string;
@@ -24,7 +24,8 @@ export default function CalendarHeroHeader({
       <View className="flex-row items-center" style={{ gap: wp(6) }}>
         <Text
           style={{
-            fontSize: fp(22),
+            fontSize: TYPOGRAPHY.heroSection.fontSize,
+            lineHeight: TYPOGRAPHY.heroSection.lineHeight,
             fontFamily: FONTS.bold,
             color: COLORS.white,
           }}
@@ -58,7 +59,8 @@ export default function CalendarHeroHeader({
       >
         <Text
           style={{
-            fontSize: fp(14),
+            fontSize: TYPOGRAPHY.label.fontSize,
+            lineHeight: TYPOGRAPHY.label.lineHeight,
             fontFamily: FONTS.semiBold,
             color: COLORS.white,
           }}

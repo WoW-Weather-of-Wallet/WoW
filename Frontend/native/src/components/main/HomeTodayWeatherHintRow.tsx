@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, FONTS, TYPOGRAPHY } from '../../constants/theme';
 
 type HomeTodayWeatherHintRowProps = {
   hint: string;
@@ -27,9 +28,16 @@ export default function HomeTodayWeatherHintRow({
         <Ionicons name="information-circle-outline" size={infoIconSize} color="white" />
       </TouchableOpacity>
       <Text
-        className="ml-2 flex-1 text-sm text-white/90"
         numberOfLines={3}
-        style={{ lineHeight: 20 }}
+        style={{
+          marginLeft: 8,
+          flex: 1,
+          fontSize: TYPOGRAPHY.body.fontSize,
+          lineHeight: TYPOGRAPHY.body.lineHeight,
+          fontFamily: FONTS.medium,
+          color: COLORS.white,
+          opacity: 0.92,
+        }}
       >
         {hint}
       </Text>

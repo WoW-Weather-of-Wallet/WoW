@@ -155,14 +155,14 @@ export const COLORS = {
   radarFill: '#6666EE26',
 
   // 캘린더 히어로 관련 (추가)
-  calendarHeroStart: '#8888F4',
-  calendarHeroEnd: '#6666EE',
+  calendarHeroStart: '#7B88F8',
+  calendarHeroEnd: '#5C6EE8',
   whiteOverlay14: '#FFFFFF14',
   whiteOverlay1E: '#FFFFFF1E',
   whiteOverlay22: '#FFFFFF22',
   whiteOverlay3A: '#FFFFFF3A',
-  calendarHeroSubText: '#ECE7FF',
-  calendarHeroLabel: '#E7E1FF',
+  calendarHeroSubText: '#EEF1FF',
+  calendarHeroLabel: '#F7F8FF',
   weatherSun: '#FFC94D',
 
   // 캘린더 월간 그리드 관련 (추가)
@@ -255,6 +255,41 @@ export const FONTS = {
   serifMedium: 'Pretendard-Medium',
   serifSemiBold: 'Pretendard-SemiBold',
   serifBold: 'Pretendard-Bold',
+} as const;
+
+export const TYPOGRAPHY = {
+  caption: {
+    fontSize: fp(12),
+    lineHeight: fp(18),
+  },
+  label: {
+    fontSize: fp(14),
+    lineHeight: fp(20),
+  },
+  body: {
+    fontSize: fp(14),
+    lineHeight: fp(22),
+  },
+  bodyStrong: {
+    fontSize: fp(15),
+    lineHeight: fp(22),
+  },
+  title: {
+    fontSize: fp(18),
+    lineHeight: fp(24),
+  },
+  heroSection: {
+    fontSize: fp(22),
+    lineHeight: fp(30),
+  },
+  heroMeta: {
+    fontSize: fp(16),
+    lineHeight: fp(22),
+  },
+  heroTitle: {
+    fontSize: fp(28),
+    lineHeight: fp(36),
+  },
 } as const;
 
 // =============================================

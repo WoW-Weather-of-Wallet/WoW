@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
 
+import { COLORS, FONTS, RADIUS, TYPOGRAPHY, hp } from '../../constants/theme';
 import type { HomeWeatherGuideItem } from '../../utils/homeWeatherPresentation';
 import HomeWeatherGuideItemRow from './HomeWeatherGuideItemRow';
 
@@ -21,9 +22,30 @@ export default function HomeWeatherGuideModal({
         className="flex-1 items-center justify-center bg-black/50 p-6"
         onPress={onClose}
       >
-        <Pressable className="w-full rounded-3xl bg-white p-6 shadow-lg">
-          <Text className="mb-2 text-xl font-bold text-gray-800">소비 날씨 기준</Text>
-          <Text className="mb-6 text-sm font-medium leading-relaxed text-gray-500">
+        <Pressable
+          className="w-full bg-white shadow-lg"
+          style={{ borderRadius: RADIUS.xxl, padding: hp(24) }}
+        >
+          <Text
+            style={{
+              marginBottom: hp(8),
+              fontSize: TYPOGRAPHY.title.fontSize,
+              lineHeight: TYPOGRAPHY.title.lineHeight,
+              fontFamily: FONTS.bold,
+              color: COLORS.textPrimary,
+            }}
+          >
+            소비 날씨 기준
+          </Text>
+          <Text
+            style={{
+              marginBottom: hp(24),
+              fontSize: TYPOGRAPHY.body.fontSize,
+              lineHeight: TYPOGRAPHY.body.lineHeight,
+              fontFamily: FONTS.medium,
+              color: COLORS.textSecondary,
+            }}
+          >
             최근 평균과 비교해 오늘 소비가 어느 정도 강한지 날씨처럼 보여주는 기준이에요.
           </Text>
 
@@ -34,11 +56,26 @@ export default function HomeWeatherGuideModal({
           </View>
 
           <TouchableOpacity
-            className="mt-6 items-center rounded-xl bg-primary py-4"
+            className="items-center justify-center"
             onPress={onClose}
             activeOpacity={0.8}
+            style={{
+              marginTop: hp(24),
+              minHeight: hp(52),
+              borderRadius: RADIUS.xl,
+              backgroundColor: COLORS.primary,
+            }}
           >
-            <Text className="text-base font-bold text-white">닫기</Text>
+            <Text
+              style={{
+                fontSize: TYPOGRAPHY.heroMeta.fontSize,
+                lineHeight: TYPOGRAPHY.heroMeta.lineHeight,
+                fontFamily: FONTS.bold,
+                color: COLORS.white,
+              }}
+            >
+              닫기
+            </Text>
           </TouchableOpacity>
         </Pressable>
       </Pressable>

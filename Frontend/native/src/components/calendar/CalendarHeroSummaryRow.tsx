@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, TYPOGRAPHY, hp, wp } from '../../constants/theme';
 
 interface CalendarHeroSummaryRowProps {
   goalLabel: string;
@@ -27,8 +27,8 @@ export default function CalendarHeroSummaryRow({
         <Text
           numberOfLines={2}
           style={{
-            fontSize: fp(12),
-            lineHeight: fp(16),
+            fontSize: TYPOGRAPHY.caption.fontSize,
+            lineHeight: TYPOGRAPHY.caption.lineHeight,
             fontFamily: FONTS.semiBold,
             color: COLORS.white,
             flexShrink: 1,
