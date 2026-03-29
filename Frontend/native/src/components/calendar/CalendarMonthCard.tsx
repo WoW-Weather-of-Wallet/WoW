@@ -18,7 +18,7 @@ export default function CalendarMonthCard({
   onSelectDate,
 }: CalendarMonthCardProps) {
   return (
-    <SurfaceCard style={{ paddingHorizontal: hp(14), paddingVertical: hp(14), gap: hp(10) }}>
+    <SurfaceCard style={{ paddingHorizontal: hp(14), paddingVertical: hp(14), gap: hp(8) }}>
       <View
         className="flex-row justify-between"
         style={{ marginBottom: 0 }}
@@ -46,7 +46,7 @@ export default function CalendarMonthCard({
 
       <View
         className="flex-row flex-wrap"
-        style={{ rowGap: hp(1), marginTop: -hp(2) }}
+        style={{ rowGap: hp(1), marginTop: -hp(3) }}
       >
         {days.map((day) => (
           <CalendarDayCell
