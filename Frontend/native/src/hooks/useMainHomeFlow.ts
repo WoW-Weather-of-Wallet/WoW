@@ -18,6 +18,10 @@ import {
   type SpendingHalfYearlyResponse,
   type SpendingMonthlyCompareResponse,
 } from '../services/main';
+import {
+  loadPersistedHomeBudget,
+  savePersistedHomeBudget,
+} from '../services/homeBudgetStorage';
 import { useAiStore } from '../store/aiStore';
 import { useAuthStore } from '../store/authStore';
 import type { CalendarHeaderResponse } from '../types/calendar';
@@ -51,14 +55,41 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
   const [budgetAmount, setBudgetAmount] = React.useState<number | null>(null);
   const [isWeatherLoading, setIsWeatherLoading] = React.useState(false);
   const [isBudgetSubmitting, setIsBudgetSubmitting] = React.useState(false);
-  const today = new Date();
-  const reportPeriod = resolveAiReportPeriod({}, today);
-  const monthLabel = `${today.getMonth() + 1}월`;
+  const today = React.useMemo(() => new Date(), []);
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+  const reportPeriod = React.useMemo(() => resolveAiReportPeriod({}, today), [today]);
+  const monthLabel = `${currentMonth}월`;
 
   const hasCurrentHomeAiSummary = React.useMemo(
     () => matchesAiReportPeriod(latestAiResult, reportPeriod, sessionUserId) && Boolean(latestAiResult?.report),
     [latestAiResult, reportPeriod, sessionUserId],
   );
+
+  React.useEffect(() => {
+    if (!accessToken) {
+      setBudgetAmount(null);
+      return;
+    }
+
+    let isMounted = true;
+
+    void loadPersistedHomeBudget({
+      ownerUserId: sessionUserId,
+      year: currentYear,
+      month: currentMonth,
+    }).then((storedBudget) => {
+      if (!isMounted) {
+        return;
+      }
+
+      setBudgetAmount(storedBudget);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [accessToken, currentMonth, currentYear, sessionUserId]);
 
   const loadHomeData = React.useCallback(async () => {
     if (!accessToken) {
@@ -73,18 +104,32 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     setIsWeatherLoading(true);
 
     try {
-      const [headerResponse, halfYearlyResponse, monthlyCompareResponse] = await Promise.all([
+      const [headerResult, halfYearlyResult, monthlyCompareResult] = await Promise.allSettled([
         getCalendarHeader({
-          year: today.getFullYear(),
-          month: today.getMonth() + 1,
+          year: currentYear,
+          month: currentMonth,
         }),
         getSpendingHalfYearly(),
         getSpendingMonthlyCompare(),
       ]);
 
-      setLiveHeader(headerResponse);
-      setSpendingHalfYearly(halfYearlyResponse);
-      setMonthlyCompare(monthlyCompareResponse);
+      if (headerResult.status === 'fulfilled') {
+        setLiveHeader(headerResult.value);
+      } else {
+        console.warn('Failed to load home calendar header', headerResult.reason);
+      }
+
+      if (halfYearlyResult.status === 'fulfilled') {
+        setSpendingHalfYearly(halfYearlyResult.value);
+      } else {
+        console.warn('Failed to load spending half yearly data', halfYearlyResult.reason);
+      }
+
+      if (monthlyCompareResult.status === 'fulfilled') {
+        setMonthlyCompare(monthlyCompareResult.value);
+      } else {
+        console.warn('Failed to load monthly compare data', monthlyCompareResult.reason);
+      }
 
       if (hasCurrentHomeAiSummary) {
         setAiAnalysis(null);
@@ -97,14 +142,19 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
       }
     } catch (error) {
       console.warn('Failed to load home data from backend', error);
-      setLiveHeader(null);
       setAiAnalysis(null);
-      setSpendingHalfYearly(null);
-      setMonthlyCompare(null);
     } finally {
       setIsWeatherLoading(false);
     }
-  }, [accessToken, hasCurrentHomeAiSummary, refreshLatestAnalysis, reportPeriod.month, reportPeriod.year, today]);
+  }, [
+    accessToken,
+    currentMonth,
+    currentYear,
+    hasCurrentHomeAiSummary,
+    refreshLatestAnalysis,
+    reportPeriod.month,
+    reportPeriod.year,
+  ]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -119,6 +169,12 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
       try {
         const createdBudget = await createBudget({ amount });
         setBudgetAmount(createdBudget.amount);
+        await savePersistedHomeBudget({
+          amount: createdBudget.amount,
+          ownerUserId: sessionUserId,
+          year: currentYear,
+          month: currentMonth,
+        });
         closeReportModal();
         Alert.alert(
           '예산 등록 완료',
@@ -134,7 +190,7 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
         setIsBudgetSubmitting(false);
       }
     },
-    [closeReportModal],
+    [closeReportModal, currentMonth, currentYear, sessionUserId],
   );
 
   const spendingMetrics = React.useMemo(

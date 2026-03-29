@@ -74,6 +74,8 @@ export default function CustomTextInput({
           color: COLORS.textPrimary,
           paddingVertical: hp(14),
         }}
+        accessibilityLabel={label}
+        accessibilityHint={`${label} 입력`}
         placeholder={label}
         placeholderTextColor={COLORS.textTertiary}
         onFocus={handleFocus}
@@ -85,4 +87,3 @@ export default function CustomTextInput({
     </AnimatedView>
   );
 }
-

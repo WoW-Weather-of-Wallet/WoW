@@ -172,6 +172,8 @@ export default function BottomSheetModal({
                 backgroundColor: COLORS.backgroundSecondary,
               }}
               onPress={animateClose}
+              accessibilityRole="button"
+              accessibilityLabel="바텀시트 닫기"
             >
               <Ionicons
                 name="close"
@@ -193,6 +195,8 @@ export default function BottomSheetModal({
               backgroundColor: COLORS.backgroundSecondary,
             }}
             onPress={animateClose}
+            accessibilityRole="button"
+            accessibilityLabel="바텀시트 닫기"
           >
             <Ionicons
               name="close"
@@ -211,12 +215,18 @@ export default function BottomSheetModal({
       animationType="none"
       visible={visible}
       onRequestClose={animateClose}
+      accessibilityViewIsModal
     >
       <View
         className="flex-1 justify-end"
         style={{ backgroundColor: COLORS.modalOverlay }}
       >
-        <Pressable className="w-full flex-1" onPress={animateClose} />
+        <Pressable
+          className="w-full flex-1"
+          onPress={animateClose}
+          accessibilityRole="button"
+          accessibilityLabel="바텀시트 배경 닫기"
+        />
         <Animated.View
           style={{
             backgroundColor: COLORS.background,

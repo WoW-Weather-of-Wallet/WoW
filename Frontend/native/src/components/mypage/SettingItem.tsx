@@ -64,6 +64,7 @@ export default function SettingItem({
             value={isToggled}
             onValueChange={onToggle}
             disabled={isDisabled}
+            accessibilityLabel={label}
             trackColor={{ false: COLORS.switchTrackFalse, true: COLORS.primary }}
             thumbColor={COLORS.white}
           />
@@ -81,9 +82,11 @@ export default function SettingItem({
       activeOpacity={0.6} 
       onPress={onPress}
       disabled={!onPress || isDisabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !onPress || isDisabled }}
     >
       {content}
     </TouchableOpacity>
   );
 }
-

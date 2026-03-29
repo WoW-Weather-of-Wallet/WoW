@@ -25,9 +25,11 @@ import { useLocalSecurityStore } from '../../store/localSecurityStore';
 import { fcmService } from '../../services/fcmService';
 import {
   changePassword,
+  getNotificationSettings,
   getProfile,
   getSsafyLogoutUrl,
   logout as logoutRequest,
+  updateNotificationSettings,
   type NativeUserProfileResponse,
 } from '../../services/auth';
 import { clearPersistedAuthSession } from '../../services/sessionStorage';
@@ -66,6 +68,7 @@ export default function MyPageScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editMode, setEditMode] = useState<EditMode>(null);
+  const [isNotificationSubmitting, setIsNotificationSubmitting] = useState(false);
   const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false);
 
   // 비밀번호 변경 관련 상태
@@ -209,6 +212,43 @@ export default function MyPageScreen() {
     setIsPinModalVisible(true);
   };
 
+  const handleToggleNotifications = async (enabled: boolean) => {
+    if (isNotificationSubmitting) return;
+
+    setIsNotificationSubmitting(true);
+
+    try {
+      const updated = await updateNotificationSettings({ alarmEnabled: enabled });
+
+      try {
+        if (updated.alarmEnabled) {
+          await fcmService.registerFcmToken();
+        } else {
+          await fcmService.unregisterFcmToken();
+        }
+      } catch (fcmError) {
+        console.warn('[MyPage] failed to sync notification token', fcmError);
+      }
+
+      setProfile((prev) => (prev ? { ...prev, alarmEnabled: updated.alarmEnabled } : prev));
+    } catch (error) {
+      const message = extractApiErrorMessage(
+        error,
+        '알림 설정을 변경하지 못했어요. 다시 시도해주세요.',
+      );
+      Alert.alert('알림 설정 변경 실패', message);
+
+      try {
+        const latest = await getNotificationSettings();
+        setProfile((prev) => (prev ? { ...prev, alarmEnabled: latest.alarmEnabled } : prev));
+      } catch (reloadError) {
+        console.warn('[MyPage] failed to reload notification settings', reloadError);
+      }
+    } finally {
+      setIsNotificationSubmitting(false);
+    }
+  };
+
   /* ── 비밀번호 변경 처리 ── */
   const handlePasswordSubmit = async () => {
     if (isSubmitting) return;
@@ -307,11 +347,16 @@ export default function MyPageScreen() {
     profile,
     sessionUserName: sessionUser?.name,
     sessionLoginType,
+    notificationEnabled: profile?.alarmEnabled ?? false,
+    isNotificationSubmitting,
     securityPreferences,
     appVersion,
     onOpenProfile: openProfileEditor,
     onOpenPhoneGuidance: openPhoneGuidance,
     onOpenPassword: openPasswordEditor,
+    onToggleNotifications: (enabled: boolean) => {
+      void handleToggleNotifications(enabled);
+    },
     onOpenPinEditor: openPinEditor,
     onToggleBiometric: (enabled: boolean) => {
       void handleToggleBiometric(enabled);

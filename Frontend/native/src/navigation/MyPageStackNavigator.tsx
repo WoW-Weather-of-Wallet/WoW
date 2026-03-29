@@ -1,7 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MyPageScreen from '../screens/main/MyPageScreen';
-import SettingsScreen from '../screens/mypage/SettingsScreen';
 import WithdrawScreen from '../screens/mypage/WithdrawScreen';
 import PhoneUpdateScreen from '../screens/mypage/PhoneUpdateScreen';
 import type { MyPageStackParamList } from '../types';
@@ -16,11 +15,6 @@ export default function MyPageStackNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MyPageHome" component={MyPageScreen} />
-      <Stack.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{ animation: 'slide_from_right' }}
-      />
       {/* 회원 탈퇴: SMS 본인 인증 후 탈퇴를 진행하는 전용 화면 */}
       <Stack.Screen
         name="Withdraw"

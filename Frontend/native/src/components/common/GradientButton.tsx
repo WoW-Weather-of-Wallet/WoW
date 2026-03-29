@@ -75,6 +75,9 @@ export default function GradientButton({
         onPressOut={handlePressOut}
         activeOpacity={0.8}
         disabled={disabled}
+        accessibilityRole="button"
+        accessibilityLabel={title}
+        accessibilityState={{ disabled }}
         style={[animatedStyle, outlineButtonStyle, style]}
       >
         <Text
@@ -94,6 +97,9 @@ export default function GradientButton({
       onPressOut={handlePressOut}
       activeOpacity={0.8}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled }}
       style={[animatedStyle, style]}
     >
       <LinearGradient
@@ -112,4 +118,3 @@ export default function GradientButton({
     </AnimatedTouchable>
   );
 }
-

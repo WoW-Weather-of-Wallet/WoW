@@ -14,11 +14,14 @@ interface UseMyPageSectionsOptions {
   profile: NativeUserProfileResponse | null;
   sessionUserName?: string | null;
   sessionLoginType?: string | null;
+  notificationEnabled: boolean;
+  isNotificationSubmitting: boolean;
   securityPreferences: LocalSecurityPreferences;
   appVersion: string;
   onOpenProfile: () => void;
   onOpenPhoneGuidance: () => void;
   onOpenPassword: () => void;
+  onToggleNotifications: (enabled: boolean) => void;
   onOpenPinEditor: () => void;
   onToggleBiometric: (enabled: boolean) => void;
   onClearPinCode: () => void;
@@ -29,11 +32,14 @@ export function useMyPageSections({
   profile,
   sessionUserName,
   sessionLoginType,
+  notificationEnabled,
+  isNotificationSubmitting,
   securityPreferences,
   appVersion,
   onOpenProfile,
   onOpenPhoneGuidance,
   onOpenPassword,
+  onToggleNotifications,
   onOpenPinEditor,
   onToggleBiometric,
   onClearPinCode,
@@ -78,8 +84,9 @@ export function useMyPageSections({
           {
             label: '알림 상태',
             type: 'toggle',
-            isToggled: profile?.alarmEnabled || false,
-            isDisabled: true,
+            isToggled: notificationEnabled,
+            onToggle: onToggleNotifications,
+            isDisabled: isNotificationSubmitting,
           },
           {
             label: securityPreferences.pinEnabled ? '간편비밀번호 변경' : '간편비밀번호 설정',
@@ -127,12 +134,15 @@ export function useMyPageSections({
     };
   }, [
     appVersion,
+    isNotificationSubmitting,
+    notificationEnabled,
     onClearPinCode,
     onOpenPassword,
     onOpenPhoneGuidance,
     onOpenPinEditor,
     onOpenProfile,
     onOpenTerms,
+    onToggleNotifications,
     onToggleBiometric,
     profile,
     securityPreferences.biometricEnabled,
