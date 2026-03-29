@@ -218,7 +218,7 @@ export default function CalendarDirectEntrySection({
               color: COLORS.white,
             }}
           >
-            + 내역 초안 추가
+            내역 추가
           </Text>
         </TouchableOpacity>
 
@@ -242,7 +242,7 @@ export default function CalendarDirectEntrySection({
               color: isCompleteDisabled ? COLORS.textTertiary : COLORS.textSecondary,
             }}
           >
-            {isConfirmLoading ? '저장 중...' : '저장한 내역 완료'}
+            {isConfirmLoading ? '저장 중...' : '입력 완료'}
           </Text>
         </TouchableOpacity>
       </View>
