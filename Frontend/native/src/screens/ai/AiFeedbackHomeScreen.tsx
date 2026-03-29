@@ -1,14 +1,15 @@
 import React from 'react';
-import { Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 
 import {
+  AiCarouselPagination,
   AiFeatureCarouselCard,
 } from '../../components/ai';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import GradientButton from '../../components/common/GradientButton';
 import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
-import { useAiFeatureCards } from '../../hooks';
+import { useAiFeatureCards, useAiFeatureCarousel } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import { useAuthStore } from '../../store/authStore';
 import type { AiFeedbackStackScreenProps } from '../../types';
@@ -17,7 +18,7 @@ import { matchesAiReportPeriod, resolveAiReportPeriod } from '../../utils/aiRepo
 export default function AiFeedbackHomeScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiFeedbackHome'>) {
-  const { height: screenHeight } = useWindowDimensions();
+  const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const sessionUserId = useAuthStore((state) => state.user?.userId ?? null);
   const {
     status,
@@ -29,6 +30,12 @@ export default function AiFeedbackHomeScreen({
   const featureCards = useAiFeatureCards();
   const reportPeriod = resolveAiReportPeriod();
   const isCompactHeight = screenHeight < 760;
+  const horizontalPadding = wp(isCompactHeight ? 20 : 24);
+  const carouselPageWidth = Math.max(screenWidth - horizontalPadding * 2, 1);
+  const carouselCardWidth = Math.min(carouselPageWidth, wp(isCompactHeight ? 320 : 336));
+  const { activeIndex, scrollRef, handleScroll, scrollToPage } = useAiFeatureCarousel({
+    itemWidth: carouselPageWidth,
+  });
 
   useFocusEffect(
     React.useCallback(() => {
@@ -68,7 +75,7 @@ export default function AiFeedbackHomeScreen({
   return (
     <BottomTabScreenLayout
       containerStyle={{ flex: 1, backgroundColor: COLORS.background }}
-      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: wp(isCompactHeight ? 20 : 24) }}
+      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: horizontalPadding }}
       scrollTopPadding={isCompactHeight ? hp(12) : hp(20)}
       scrollBottomPadding={isCompactHeight ? hp(56) : hp(28)}
       backgroundColor={COLORS.background}
@@ -91,21 +98,46 @@ export default function AiFeedbackHomeScreen({
         style={{
           marginBottom: isCompactHeight ? hp(20) : hp(28),
           width: '100%',
-          alignItems: 'center',
-          gap: isCompactHeight ? hp(14) : hp(18),
         }}
       >
-        {featureCards.map((item) => (
-          <AiFeatureCarouselCard
-            key={item.id}
-            title={item.title}
-            description={item.description}
-            compact={isCompactHeight}
-          >
-            {item.preview}
-          </AiFeatureCarouselCard>
-        ))}
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          pagingEnabled
+          nestedScrollEnabled
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          disableIntervalMomentum
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
+          {featureCards.map((item) => (
+            <View
+              key={item.id}
+              style={{
+                width: carouselPageWidth,
+                alignItems: 'center',
+              }}
+            >
+              <AiFeatureCarouselCard
+                title={item.title}
+                description={item.description}
+                compact={isCompactHeight}
+                width={carouselCardWidth}
+              >
+                {item.preview}
+              </AiFeatureCarouselCard>
+            </View>
+          ))}
+        </ScrollView>
       </View>
+
+      <AiCarouselPagination
+        pageCount={featureCards.length}
+        activeIndex={activeIndex}
+        onPressPage={scrollToPage}
+        compact={isCompactHeight}
+      />
 
       <View
         style={{

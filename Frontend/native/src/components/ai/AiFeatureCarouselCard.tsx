@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, useWindowDimensions } from 'react-native';
+import { Text, View, useWindowDimensions, type DimensionValue } from 'react-native';
 
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
@@ -8,6 +8,7 @@ interface AiFeatureCarouselCardProps {
   description: string;
   children: React.ReactNode;
   compact?: boolean;
+  width?: DimensionValue;
 }
 
 export default function AiFeatureCarouselCard({
@@ -15,6 +16,7 @@ export default function AiFeatureCarouselCard({
   description,
   children,
   compact,
+  width,
 }: AiFeatureCarouselCardProps) {
   const { height } = useWindowDimensions();
   const isCompactHeight = compact ?? height < 760;
@@ -23,7 +25,7 @@ export default function AiFeatureCarouselCard({
     <View
       className="items-center justify-center bg-white"
       style={{
-        width: '100%',
+        width: width ?? '100%',
         maxWidth: 360,
         height: isCompactHeight ? hp(276) : hp(300),
         alignSelf: 'center',
