@@ -84,8 +84,11 @@ export default function CalendarDirectEntrySection({
   return (
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView
+        style={{ flex: 1 }}
         bounces={false}
+        nestedScrollEnabled
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ gap: hp(14), paddingBottom: hp(20) }}
       >
         <CalendarFieldLabel icon="calendar-outline" label="날짜" />

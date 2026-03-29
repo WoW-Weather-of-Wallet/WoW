@@ -124,8 +124,11 @@ export default function CalendarExcelUploadSection({
   return (
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView
+        style={{ flex: 1 }}
         bounces={false}
+        nestedScrollEnabled
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ gap: hp(16), paddingBottom: hp(20) }}
       >
         <View
