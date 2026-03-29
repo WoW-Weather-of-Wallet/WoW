@@ -24,16 +24,16 @@ const NOTICE_META: Record<
 > = {
   mock: {
     icon: 'flask-outline',
-    badgeLabel: 'MOCK',
-    title: '시뮬레이션 데이터가 포함된 화면입니다.',
+    badgeLabel: '안내',
+    title: '일부 정보는 준비된 예시 데이터로 보여드리고 있어요.',
     backgroundColor: '#FFF7E8',
     borderColor: '#F4D38A',
     badgeColor: '#8A5A00',
   },
   mixed: {
     icon: 'layers-outline',
-    badgeLabel: '일부 MOCK',
-    title: '실데이터와 시뮬레이션 데이터가 함께 보이는 화면입니다.',
+    badgeLabel: '참고',
+    title: '실시간 정보와 준비된 데이터가 함께 표시되고 있어요.',
     backgroundColor: '#EEF5FF',
     borderColor: '#BBD1F8',
     badgeColor: '#2F5FA8',

@@ -58,7 +58,7 @@ const buildStatusCard = (
       id: 'result-status',
       title: '리포트 상태',
       headline: '저장된 결과를 먼저 보여주고 있어요',
-      description: '백엔드의 최신 AI 리포트를 다시 확인하는 중이에요. 새 결과가 있으면 화면에 바로 반영됩니다.',
+      description: '최신 AI 리포트를 다시 확인하는 중이에요. 새 결과가 있으면 화면에 바로 반영됩니다.',
     };
   }
 

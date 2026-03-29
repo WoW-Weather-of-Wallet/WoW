@@ -167,7 +167,7 @@ export default function SettingsScreen() {
   const handleEditProfilePhoto = () => {
     Alert.alert(
       '프로필 사진 변경',
-      '프로필 사진 업로드 API는 아직 백엔드에 준비되지 않았습니다.',
+      '프로필 사진 변경 기능은 아직 준비 중입니다.',
     );
   };
 
