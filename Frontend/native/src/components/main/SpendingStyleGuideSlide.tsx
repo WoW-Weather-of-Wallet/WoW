@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dimensions, Text, View } from 'react-native';
+import { Dimensions, Image, Text, View } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import type { SpendingStyle } from '../../constants/main/spendingStyle';
@@ -14,17 +14,13 @@ const CARD_WIDTH = Dimensions.get('window').width - wp(40);
 export default function SpendingStyleGuideSlide({
   styleItem,
 }: SpendingStyleGuideSlideProps) {
-  const resolvedDescription =
-    styleItem.id === 7
-      ? '특정 카테고리에 치우치지 않고 여러 영역에서 고르게 소비하는 안정적인 스타일이에요.'
-      : styleItem.description;
-
   const iconWrapStyle = {
     width: wp(110),
     height: wp(110),
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.xl,
     backgroundColor: `${styleItem.color}15`,
     marginBottom: hp(24),
+    overflow: 'hidden' as const,
   } as const;
 
   const titleStyle = {
@@ -36,8 +32,7 @@ export default function SpendingStyleGuideSlide({
 
   const descriptionStyle = {
     width: '100%' as const,
-    paddingLeft: styleItem.id === 7 ? wp(18) : wp(10),
-    paddingRight: styleItem.id === 7 ? wp(8) : wp(10),
+    paddingHorizontal: wp(10),
     fontSize: fp(14),
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
@@ -70,18 +65,31 @@ export default function SpendingStyleGuideSlide({
       style={{ width: CARD_WIDTH, paddingHorizontal: wp(24), paddingBottom: hp(12) }}
     >
       <View className="items-center justify-center" style={iconWrapStyle}>
-        {styleItem.iconType === 'MaterialCommunityIcons' ? (
-          <MaterialCommunityIcons
-            name={styleItem.iconName as never}
-            size={wp(64)}
-            color={styleItem.color}
+        {styleItem.imageSource ? (
+          <Image
+            source={styleItem.imageSource}
+            resizeMode="contain"
+            style={{
+              width: wp(92),
+              height: wp(92),
+            }}
           />
         ) : (
-          <Ionicons
-            name={styleItem.iconName as never}
-            size={wp(64)}
-            color={styleItem.color}
-          />
+          <>
+            {styleItem.iconType === 'MaterialCommunityIcons' ? (
+              <MaterialCommunityIcons
+                name={styleItem.iconName as never}
+                size={wp(64)}
+                color={styleItem.color}
+              />
+            ) : (
+              <Ionicons
+                name={styleItem.iconName as never}
+                size={wp(64)}
+                color={styleItem.color}
+              />
+            )}
+          </>
         )}
       </View>
 
@@ -89,8 +97,8 @@ export default function SpendingStyleGuideSlide({
         {styleItem.title}
       </Text>
 
-      {resolvedDescription ? (
-        <Text style={descriptionStyle}>{resolvedDescription}</Text>
+      {styleItem.description ? (
+        <Text style={descriptionStyle}>{styleItem.description}</Text>
       ) : (
         <View className="w-full items-center" style={tagContainerStyle}>
           <View className="flex-row justify-center" style={tagRowStyle}>
