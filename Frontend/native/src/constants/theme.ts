@@ -104,6 +104,7 @@ export const COLORS = {
 
   // 모달 오버레이 (추가)
   modalOverlay: 'rgba(0, 0, 0, 0.5)',
+  modalOverlaySoft: 'rgba(15, 23, 42, 0.45)',
 
   // 모달 핸들 (추가)
   modalHandle: '#E1DEEF',

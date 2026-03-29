@@ -16,11 +16,12 @@ export default function ProfileEditHeader({ name, onEditPress }: ProfileEditHead
     >
       <View style={{ position: 'relative', marginBottom: hp(16) }}>
         <View
-          className="items-center justify-center bg-[#EEF3FF]"
+          className="items-center justify-center"
           style={{
             width: wp(86),
             height: wp(86),
             borderRadius: wp(43),
+            backgroundColor: COLORS.primary50,
           }}
         >
           <Text
@@ -37,7 +38,7 @@ export default function ProfileEditHeader({ name, onEditPress }: ProfileEditHead
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={onEditPress}
-          className="items-center justify-center bg-[#4D74FF]"
+          className="items-center justify-center"
           style={{
             position: 'absolute',
             right: 0,
@@ -47,6 +48,7 @@ export default function ProfileEditHeader({ name, onEditPress }: ProfileEditHead
             borderRadius: wp(14),
             borderWidth: 2,
             borderColor: COLORS.white,
+            backgroundColor: COLORS.primary,
           }}
         >
           <Ionicons name="camera" size={wp(14)} color={COLORS.white} />
@@ -54,7 +56,6 @@ export default function ProfileEditHeader({ name, onEditPress }: ProfileEditHead
       </View>
 
       <Text
-        className="text-[#15192A]"
         style={{
           fontSize: fp(20),
           fontFamily: FONTS.bold,
@@ -66,7 +67,7 @@ export default function ProfileEditHeader({ name, onEditPress }: ProfileEditHead
       </Text>
 
       <Text
-        className="text-center text-[#8E95A9]"
+        className="text-center"
         style={{
           fontSize: fp(13),
           fontFamily: FONTS.medium,

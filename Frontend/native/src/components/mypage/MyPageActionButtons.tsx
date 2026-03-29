@@ -16,13 +16,14 @@ export default function MyPageActionButtons({
     <>
       <TouchableOpacity
         onPress={onLogout}
-        className="flex-row items-center justify-between bg-[#F8FAFC]"
+        className="flex-row items-center justify-between"
         style={{
           borderRadius: RADIUS.md,
           paddingHorizontal: wp(14),
           paddingVertical: hp(12),
           borderWidth: 1,
           borderColor: COLORS.border,
+          backgroundColor: COLORS.gray50,
         }}
       >
         <Text
@@ -39,7 +40,7 @@ export default function MyPageActionButtons({
 
       <TouchableOpacity
         onPress={onDeleteAccount}
-        className="flex-row items-center justify-between bg-[#F8FAFC]"
+        className="flex-row items-center justify-between"
         style={{
           marginTop: hp(10),
           borderRadius: RADIUS.md,
@@ -47,6 +48,7 @@ export default function MyPageActionButtons({
           paddingVertical: hp(12),
           borderWidth: 1,
           borderColor: `${COLORS.error}30`,
+          backgroundColor: COLORS.gray50,
         }}
       >
         <Text

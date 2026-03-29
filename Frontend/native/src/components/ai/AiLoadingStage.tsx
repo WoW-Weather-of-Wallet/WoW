@@ -149,7 +149,7 @@ export default function AiLoadingStage({
       {!isLastStep ? (
         <View className="items-center">
           <Text
-            className="text-center text-[#15192A]"
+            className="text-center"
             style={{
               fontSize: fp(20),
               fontFamily: FONTS.bold,

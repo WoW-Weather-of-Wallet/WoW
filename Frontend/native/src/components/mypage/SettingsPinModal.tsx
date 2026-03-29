@@ -27,17 +27,17 @@ export default function SettingsPinModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable
-        className="flex-1 justify-center bg-[rgba(15,23,42,0.45)]"
-        style={{ paddingHorizontal: wp(20) }}
+        className="flex-1 justify-center"
+        style={{ paddingHorizontal: wp(20), backgroundColor: COLORS.modalOverlaySoft }}
         onPress={onClose}
       >
         <Pressable
-          className="bg-[#F8FAFC]"
           style={{
             borderRadius: RADIUS.xl,
             paddingHorizontal: wp(20),
             paddingVertical: hp(20),
             gap: hp(14),
+            backgroundColor: COLORS.backgroundSecondary,
           }}
           onPress={(event) => event.stopPropagation()}
         >
@@ -95,11 +95,12 @@ export default function SettingsPinModal({
           <View className="flex-row justify-end" style={{ gap: wp(10), marginTop: hp(8) }}>
             <TouchableOpacity
               onPress={onClose}
-              className="items-center justify-center bg-[#E5E7EB]"
+              className="items-center justify-center"
               style={{
                 paddingHorizontal: wp(14),
                 paddingVertical: hp(10),
                 borderRadius: RADIUS.md,
+                backgroundColor: COLORS.gray200,
               }}
             >
               <Text

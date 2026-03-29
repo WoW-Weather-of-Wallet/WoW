@@ -20,16 +20,16 @@ export default function MyPageProfileInfoModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable
-        className="flex-1 justify-center bg-[rgba(15,23,42,0.45)]"
-        style={{ paddingHorizontal: wp(20) }}
+        className="flex-1 justify-center"
+        style={{ paddingHorizontal: wp(20), backgroundColor: COLORS.modalOverlaySoft }}
         onPress={onClose}
       >
         <View
-          className="bg-[#F8FAFC]"
           style={{
             borderRadius: RADIUS.xl,
             padding: wp(20),
             gap: hp(12),
+            backgroundColor: COLORS.backgroundSecondary,
           }}
         >
           <Text
@@ -62,11 +62,12 @@ export default function MyPageProfileInfoModal({
           <View className="flex-row justify-end" style={{ gap: wp(10), marginTop: hp(8) }}>
             <TouchableOpacity
               onPress={onClose}
-              className="items-center justify-center bg-[#4D74FF]"
+              className="items-center justify-center"
               style={{
                 flex: 1,
                 paddingVertical: hp(14),
                 borderRadius: RADIUS.md,
+                backgroundColor: COLORS.primary,
               }}
             >
               <Text
@@ -89,7 +90,7 @@ export default function MyPageProfileInfoModal({
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <View
-      className="flex-row items-center justify-between bg-[#EEF2F7]"
+      className="flex-row items-center justify-between"
       style={{
         borderRadius: RADIUS.md,
         paddingHorizontal: wp(14),
@@ -97,6 +98,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
         borderWidth: 1,
         borderColor: COLORS.border,
         marginBottom: hp(4),
+        backgroundColor: COLORS.primary50,
       }}
     >
       <Text

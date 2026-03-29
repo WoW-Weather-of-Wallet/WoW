@@ -565,7 +565,6 @@ export default function SettingsScreen() {
         <Ionicons name="chevron-back" size={wp(24)} color={COLORS.textPrimary} />
       </TouchableOpacity>
       <Text
-        className="text-[#15192A]"
         style={{
           fontSize: fp(18),
           fontFamily: FONTS.bold,
@@ -598,12 +597,16 @@ export default function SettingsScreen() {
 
         {isLoading ? (
           <View
-            className="items-center bg-[#F8FAFC]"
-            style={{ marginTop: hp(20), paddingVertical: hp(20), gap: hp(10) }}
+            className="items-center"
+            style={{
+              marginTop: hp(20),
+              paddingVertical: hp(20),
+              gap: hp(10),
+              backgroundColor: COLORS.gray50,
+            }}
           >
             <ActivityIndicator color={COLORS.primary} />
             <Text
-              className="text-[#6B7280]"
               style={{
                 fontSize: fp(14),
                 fontFamily: FONTS.medium,
@@ -685,4 +688,3 @@ export default function SettingsScreen() {
 
   );
 }
-

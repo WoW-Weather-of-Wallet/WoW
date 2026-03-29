@@ -18,16 +18,16 @@ export default function MyPagePhoneGuidanceModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable
-        className="flex-1 justify-center bg-[rgba(15,23,42,0.45)]"
-        style={{ paddingHorizontal: wp(20) }}
+        className="flex-1 justify-center"
+        style={{ paddingHorizontal: wp(20), backgroundColor: COLORS.modalOverlaySoft }}
         onPress={onClose}
       >
         <View
-          className="bg-[#F8FAFC]"
           style={{
             borderRadius: RADIUS.xl,
             padding: wp(20),
             gap: hp(12),
+            backgroundColor: COLORS.backgroundSecondary,
           }}
         >
           <Text
@@ -54,13 +54,14 @@ export default function MyPagePhoneGuidanceModal({
           </Text>
 
           <View
-            className="flex-row items-center justify-between bg-[#EEF2F7]"
+            className="flex-row items-center justify-between"
             style={{
               borderRadius: RADIUS.md,
               paddingHorizontal: wp(14),
               paddingVertical: hp(12),
               borderWidth: 1,
               borderColor: COLORS.border,
+              backgroundColor: COLORS.primary50,
             }}
           >
             <Text
@@ -84,13 +85,13 @@ export default function MyPagePhoneGuidanceModal({
           </View>
 
           <View
-            className="bg-[rgba(77,116,255,0.08)]"
             style={{
               marginTop: hp(12),
               padding: wp(12),
               borderRadius: RADIUS.md,
               borderWidth: 1,
               borderColor: `${COLORS.primary}30`,
+              backgroundColor: COLORS.primarySoft,
             }}
           >
             <Text
@@ -121,11 +122,12 @@ export default function MyPagePhoneGuidanceModal({
           <View className="flex-row justify-end" style={{ gap: wp(10), marginTop: hp(8) }}>
             <TouchableOpacity
               onPress={onClose}
-              className="items-center justify-center bg-[#E5E7EB]"
+              className="items-center justify-center"
               style={{
                 flex: 1,
                 paddingVertical: hp(14),
                 borderRadius: RADIUS.md,
+                backgroundColor: COLORS.gray200,
               }}
             >
               <Text
@@ -140,11 +142,12 @@ export default function MyPagePhoneGuidanceModal({
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onStartVerification}
-              className="items-center justify-center bg-[#4D74FF]"
+              className="items-center justify-center"
               style={{
                 flex: 1,
                 paddingVertical: hp(14),
                 borderRadius: RADIUS.md,
+                backgroundColor: COLORS.primary,
               }}
             >
               <Text

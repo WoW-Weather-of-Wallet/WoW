@@ -32,7 +32,6 @@ export default function AiResultSummaryCard({
       }}
     >
       <Text
-        className="text-[#15192A]"
         style={{
           fontSize: fp(18),
           fontFamily: FONTS.bold,
@@ -45,7 +44,6 @@ export default function AiResultSummaryCard({
 
       {headline ? (
         <Text
-          className="text-[#15192A]"
           style={{
             fontSize: fp(18),
             fontFamily: FONTS.bold,
@@ -60,7 +58,6 @@ export default function AiResultSummaryCard({
         <View className="flex-row items-center">
           <Ionicons name={iconName} size={wp(20)} color={COLORS.primary} />
           <Text
-            className="text-[#15192A]"
             style={{
               fontSize: fp(14),
               fontFamily: FONTS.medium,
@@ -74,7 +71,6 @@ export default function AiResultSummaryCard({
       ) : null}
 
       <Text
-        className="text-[#6B7280]"
         style={{
           fontSize: fp(14),
           fontFamily: FONTS.regular,

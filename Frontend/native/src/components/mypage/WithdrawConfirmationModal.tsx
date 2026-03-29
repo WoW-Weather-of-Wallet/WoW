@@ -98,38 +98,40 @@ export default function WithdrawConfirmationModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <Pressable
-        className="flex-1 justify-center bg-[rgba(15,23,42,0.45)]"
+        className="flex-1 justify-center"
         onPress={handleClose}
-        style={{ paddingHorizontal: wp(24) }}
+        style={{ paddingHorizontal: wp(24), backgroundColor: COLORS.modalOverlaySoft }}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="w-full items-center"
         >
           <Pressable
-            className="w-full bg-[#F8FAFC]"
+            className="w-full"
             onPress={(event) => event.stopPropagation()}
             style={{
               borderRadius: RADIUS.xl,
               padding: wp(24),
               gap: hp(24),
+              backgroundColor: COLORS.backgroundSecondary,
             }}
           >
             <View className="items-center" style={{ gap: hp(12) }}>
               <View
-                className="items-center justify-center bg-[#FFF1F2]"
+                className="items-center justify-center"
                 style={{
                   width: wp(64),
                   height: wp(64),
                   borderRadius: wp(32),
                   marginBottom: hp(4),
+                  backgroundColor: COLORS.errorBackground,
                 }}
               >
                 <Ionicons name="warning" size={wp(32)} color={COLORS.error} />
               </View>
 
               <Text
-                className="text-center text-[#15192A]"
+                className="text-center"
                 style={{
                   fontSize: fp(22),
                   fontFamily: FONTS.bold,
@@ -140,7 +142,7 @@ export default function WithdrawConfirmationModal({
               </Text>
 
               <Text
-                className="text-center text-[#6B7280]"
+                className="text-center"
                 style={{
                   fontSize: fp(14),
                   fontFamily: FONTS.medium,
@@ -155,7 +157,7 @@ export default function WithdrawConfirmationModal({
 
             <View style={{ gap: hp(12) }}>
               <Text
-                className="text-center text-[#15192A]"
+                className="text-center"
                 style={{
                   fontSize: fp(14),
                   fontFamily: FONTS.medium,
@@ -169,7 +171,7 @@ export default function WithdrawConfirmationModal({
               <TouchableOpacity
                 disabled={isSending}
                 onPress={() => void handleSendCode()}
-                className="items-center bg-[#4D74FF]"
+                className="items-center"
                 style={{
                   paddingVertical: hp(14),
                   borderRadius: RADIUS.full,
@@ -202,7 +204,7 @@ export default function WithdrawConfirmationModal({
                   editable={!isVerified}
                   placeholder="인증번호 6자리를 입력해 주세요"
                   placeholderTextColor={COLORS.textTertiary}
-                  className="text-center text-[#15192A]"
+                  className="text-center"
                   style={{
                     backgroundColor: isVerified
                       ? COLORS.dangerBackground
@@ -263,14 +265,14 @@ export default function WithdrawConfirmationModal({
             <View className="flex-row" style={{ gap: wp(12) }}>
               <TouchableOpacity
                 onPress={handleClose}
-                className="flex-1 items-center bg-[#EEF2F7]"
+                className="flex-1 items-center"
                 style={{
                   paddingVertical: hp(16),
                   borderRadius: RADIUS.full,
+                  backgroundColor: COLORS.gray100,
                 }}
               >
                 <Text
-                  className="text-[#15192A]"
                   style={{
                     fontSize: fp(16),
                     fontFamily: FONTS.bold,

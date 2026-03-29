@@ -37,16 +37,16 @@ export default function AiLoadingScreen({
       bottomOverlayStyle={{ alignItems: 'center' }}
       bottomOverlayContent={
         <View
-          className="overflow-hidden bg-[#E5E7EB]"
+          className="overflow-hidden"
           style={{
             width: wp(200),
             height: 4,
             borderRadius: 999,
+            backgroundColor: COLORS.progressTrackBackground,
           }}
         >
           <Animated.View
-            className="bg-[#4D74FF]"
-            style={[{ height: '100%' }, animatedProgressStyle]}
+            style={[{ height: '100%', backgroundColor: COLORS.primary }, animatedProgressStyle]}
           />
         </View>
       }

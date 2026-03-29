@@ -11,7 +11,6 @@ export default function AiResultHeader({ displayName, title }: AiResultHeaderPro
   return (
     <View style={{ marginBottom: hp(32) }}>
       <Text
-        className="text-[#15192A]"
         style={{
           fontSize: fp(24),
           fontFamily: FONTS.bold,
@@ -28,7 +27,6 @@ export default function AiResultHeader({ displayName, title }: AiResultHeaderPro
         </Text>
       </Text>
       <Text
-        className="text-[#15192A]"
         style={{
           fontSize: fp(24),
           fontFamily: FONTS.bold,

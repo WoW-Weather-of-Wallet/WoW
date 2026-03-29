@@ -50,16 +50,16 @@ export default function MyPagePasswordModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable
-        className="flex-1 justify-center bg-[rgba(15,23,42,0.45)]"
-        style={{ paddingHorizontal: wp(20) }}
+        className="flex-1 justify-center"
+        style={{ paddingHorizontal: wp(20), backgroundColor: COLORS.modalOverlaySoft }}
         onPress={onClose}
       >
         <View
-          className="bg-[#F8FAFC]"
           style={{
             borderRadius: RADIUS.xl,
             padding: wp(20),
             gap: hp(12),
+            backgroundColor: COLORS.backgroundSecondary,
           }}
         >
           <Text
@@ -100,11 +100,12 @@ export default function MyPagePasswordModal({
           <View className="flex-row justify-end" style={{ gap: wp(8), marginTop: hp(8) }}>
             <TouchableOpacity
               onPress={onClose}
-              className="items-center justify-center bg-[#E5E7EB]"
+              className="items-center justify-center"
               style={{
                 flex: 1,
                 paddingVertical: hp(14),
                 borderRadius: RADIUS.md,
+                backgroundColor: COLORS.gray200,
               }}
             >
               <Text
@@ -120,11 +121,12 @@ export default function MyPagePasswordModal({
 
             <TouchableOpacity
               onPress={onSubmit}
-              className="items-center justify-center bg-[#4D74FF]"
+              className="items-center justify-center"
               style={{
                 flex: 1,
                 paddingVertical: hp(14),
                 borderRadius: RADIUS.md,
+                backgroundColor: COLORS.primary,
               }}
             >
               <Text

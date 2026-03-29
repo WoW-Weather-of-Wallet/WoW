@@ -31,12 +31,13 @@ export default function MyPageProfileDockCard({
     >
       <View className="flex-row items-center">
         <View
-          className="items-center justify-center bg-[#4D74FF]"
+          className="items-center justify-center"
           style={{
             width: wp(68),
             height: wp(68),
             borderRadius: wp(34),
             marginRight: wp(16),
+            backgroundColor: COLORS.primary,
           }}
         >
           <Text
@@ -71,11 +72,11 @@ export default function MyPageProfileDockCard({
             </Text>
 
             <View
-              className="bg-[rgba(77,116,255,0.12)]"
               style={{
                 borderRadius: RADIUS.md,
                 paddingHorizontal: wp(8),
                 paddingVertical: hp(4),
+                backgroundColor: COLORS.primarySoft,
               }}
             >
               <Text

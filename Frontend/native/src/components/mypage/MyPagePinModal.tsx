@@ -27,16 +27,16 @@ export default function MyPagePinModal({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable
-        className="flex-1 justify-center bg-[rgba(15,23,42,0.45)]"
-        style={{ paddingHorizontal: wp(20) }}
+        className="flex-1 justify-center"
+        style={{ paddingHorizontal: wp(20), backgroundColor: COLORS.modalOverlaySoft }}
         onPress={onClose}
       >
         <Pressable
-          className="bg-[#F8FAFC]"
           style={{
             borderRadius: RADIUS.xl,
             padding: wp(20),
             gap: hp(14),
+            backgroundColor: COLORS.backgroundSecondary,
           }}
           onPress={(event) => event.stopPropagation()}
         >

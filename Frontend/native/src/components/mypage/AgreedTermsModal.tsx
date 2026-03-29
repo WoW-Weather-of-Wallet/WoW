@@ -127,11 +127,11 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable
-        className="flex-1 justify-end bg-[rgba(15,23,42,0.45)]"
+        className="flex-1 justify-end"
+        style={{ backgroundColor: COLORS.modalOverlaySoft }}
         onPress={onClose}
       >
         <Pressable
-          className="bg-[#F8FAFC]"
           onPress={(event) => event.stopPropagation()}
           style={{
             borderTopLeftRadius: RADIUS.xl,
@@ -140,6 +140,7 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
             paddingTop: hp(24),
             paddingBottom: hp(40),
             maxHeight: '88%',
+            backgroundColor: COLORS.backgroundSecondary,
           }}
         >
           <View
@@ -147,7 +148,6 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
             style={{ marginBottom: hp(16) }}
           >
             <Text
-              className="text-[#15192A]"
               style={{
                 fontSize: fp(22),
                 fontFamily: FONTS.bold,
@@ -163,7 +163,6 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
           </View>
 
           <Text
-            className="text-[#8E95A9]"
             style={{
               fontSize: fp(14),
               fontFamily: FONTS.medium,
@@ -179,16 +178,16 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={toggleAll}
-            className="flex-row items-center justify-between bg-[#EEF2FF]"
+            className="flex-row items-center justify-between"
             style={{
               borderRadius: RADIUS.md,
               paddingHorizontal: wp(16),
               paddingVertical: hp(14),
               marginBottom: hp(12),
+              backgroundColor: COLORS.primary50,
             }}
           >
             <Text
-              className="text-[#15192A]"
               style={{
                 fontSize: fp(14),
                 fontFamily: FONTS.semiBold,
@@ -198,7 +197,6 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
               표시된 약관 전체 선택
             </Text>
             <Text
-              className="text-[#4D74FF]"
               style={{
                 fontSize: fp(14),
                 fontFamily: FONTS.bold,
@@ -215,16 +213,15 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
           >
             {isLoading ? (
               <View
-                className="bg-[#EEF2FF]"
                 style={{
                   borderRadius: RADIUS.md,
                   padding: wp(16),
                   marginTop: hp(8),
+                  backgroundColor: COLORS.primary50,
                 }}
               >
                 <ActivityIndicator size="small" color={COLORS.primary} />
                 <Text
-                  className="text-[#8E95A9]"
                   style={{
                     fontSize: fp(13),
                     fontFamily: FONTS.medium,
@@ -251,15 +248,14 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
             ))}
 
             <View
-              className="bg-[#EEF2FF]"
               style={{
                 borderRadius: RADIUS.md,
                 padding: wp(16),
                 marginTop: hp(8),
+                backgroundColor: COLORS.primary50,
               }}
             >
               <Text
-                className="text-[#8E95A9]"
                 style={{
                   fontSize: fp(13),
                   fontFamily: FONTS.medium,
@@ -276,11 +272,14 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
           <View className="flex-row" style={{ gap: wp(12), marginTop: hp(24) }}>
             <TouchableOpacity
               onPress={onClose}
-              className="flex-1 items-center bg-[#F1F5F9]"
-              style={{ borderRadius: RADIUS.full, paddingVertical: hp(18) }}
+              className="flex-1 items-center"
+              style={{
+                borderRadius: RADIUS.full,
+                paddingVertical: hp(18),
+                backgroundColor: COLORS.gray100,
+              }}
             >
               <Text
-                className="text-[#15192A]"
                 style={{
                   fontSize: fp(18),
                   fontFamily: FONTS.bold,
@@ -294,7 +293,7 @@ export default function AgreedTermsModal({ visible, onClose }: AgreedTermsModalP
             <TouchableOpacity
               disabled={selectedTerms.length === 0 || isSubmitting}
               onPress={handleAgreeTerms}
-              className="items-center bg-[#4D74FF]"
+              className="items-center"
               style={{
                 flex: 1.4,
                 borderRadius: RADIUS.full,
@@ -366,7 +365,6 @@ function TermItem({
 
         <View className="flex-1" style={{ gap: hp(4) }}>
           <Text
-            className="text-[#15192A]"
             style={{
               fontSize: fp(16),
               fontFamily: FONTS.semiBold,
@@ -378,7 +376,6 @@ function TermItem({
 
           <View className="flex-row items-center" style={{ gap: wp(8) }}>
             <Text
-              className="text-[#8E95A9]"
               style={{
                 fontSize: fp(13),
                 fontFamily: FONTS.medium,
@@ -390,15 +387,14 @@ function TermItem({
 
             {required ? (
               <View
-                className="bg-[rgba(77,116,255,0.12)]"
                 style={{
                   paddingHorizontal: wp(8),
                   paddingVertical: hp(3),
                   borderRadius: RADIUS.sm,
+                  backgroundColor: COLORS.primarySoft,
                 }}
               >
                 <Text
-                  className="text-[#4D74FF]"
                   style={{
                     fontSize: fp(11),
                     fontFamily: FONTS.bold,
@@ -416,16 +412,16 @@ function TermItem({
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={onPress}
-        className="flex-row items-center bg-[#E5E7EB]"
+        className="flex-row items-center"
         style={{
           gap: wp(4),
           paddingHorizontal: wp(10),
           paddingVertical: hp(6),
           borderRadius: RADIUS.sm,
+          backgroundColor: COLORS.gray200,
         }}
       >
         <Text
-          className="text-[#6B7280]"
           style={{
             fontSize: fp(12),
             fontFamily: FONTS.semiBold,
