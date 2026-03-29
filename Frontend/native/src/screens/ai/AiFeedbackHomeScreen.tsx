@@ -43,7 +43,9 @@ export default function AiFeedbackHomeScreen({
   );
 
   const hasCurrentReport = React.useMemo(
-    () => matchesAiReportPeriod(resultData, reportPeriod, sessionUserId) && Boolean(resultData?.report),
+    () =>
+      matchesAiReportPeriod(resultData, reportPeriod, sessionUserId)
+      && Boolean(resultData?.report),
     [reportPeriod, resultData, sessionUserId],
   );
 
@@ -58,13 +60,14 @@ export default function AiFeedbackHomeScreen({
     color: COLORS.primary,
   } as const;
 
-  const buttonTitle = status === 'loading'
-    ? '분석 준비 중'
-    : hasCurrentReport
-      ? '리포트 보기'
-      : isRefreshing
-        ? '리포트 확인 중'
-        : '분석 시작하기';
+  const buttonTitle =
+    status === 'loading'
+      ? 'AI 피드백 분석 중'
+      : hasCurrentReport
+        ? '이번 달 AI 피드백 보기'
+        : isRefreshing
+          ? 'AI 피드백 불러오는 중'
+          : 'AI 피드백 시작하기';
 
   return (
     <BottomTabScreenLayout
@@ -76,10 +79,10 @@ export default function AiFeedbackHomeScreen({
     >
       <View style={{ marginTop: hp(20), marginBottom: hp(40) }}>
         <Text style={titleStyle}>
-          AI가 소비 패턴을 분석하고{'\n'}
-          <Text style={highlightStyle}>다음 절약 포인트를 먼저</Text>
+          AI가 내 소비를 분석해{'\n'}
+          <Text style={highlightStyle}>절약 포인트와 소비 유형</Text>
           {'\n'}
-          정리해드려요.
+          을 알려드려요.
         </Text>
       </View>
 
@@ -120,10 +123,11 @@ export default function AiFeedbackHomeScreen({
         onPressPage={scrollToPage}
       />
 
-      <View style={{ paddingBottom: hp(20) }}>
+      <View style={{ paddingBottom: hp(20), width: '100%' }}>
         <GradientButton
           title={buttonTitle}
           disabled={isRefreshing && !hasCurrentReport}
+          style={{ width: '100%' }}
           onPress={() => {
             if (hasCurrentReport) {
               navigation.navigate('AiResult');

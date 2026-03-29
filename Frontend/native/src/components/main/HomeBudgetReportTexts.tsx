@@ -1,7 +1,7 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { COLORS, FONTS, fp, hp } from '../../constants/theme';
+import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
 interface HomeBudgetReportTextsProps {
   helperMessage: string;
@@ -13,23 +13,33 @@ export default function HomeBudgetReportTexts({
   forecastMessage,
 }: HomeBudgetReportTextsProps) {
   const helperTextStyle = {
-    fontSize: fp(13),
+    fontSize: fp(12),
+    lineHeight: fp(18),
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
   } as const;
 
+  const forecastBoxStyle = {
+    marginTop: hp(10),
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.whiteOverlay3A,
+    paddingHorizontal: wp(12),
+    paddingVertical: hp(11),
+  } as const;
+
   const forecastTextStyle = {
-    fontSize: fp(14),
-    lineHeight: fp(21),
+    fontSize: fp(13),
+    lineHeight: fp(19),
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
-    marginTop: hp(8),
   } as const;
 
   return (
-    <>
+    <View>
       <Text style={helperTextStyle}>{helperMessage}</Text>
-      <Text style={forecastTextStyle}>{forecastMessage}</Text>
-    </>
+      <View style={forecastBoxStyle}>
+        <Text style={forecastTextStyle}>{forecastMessage}</Text>
+      </View>
+    </View>
   );
 }

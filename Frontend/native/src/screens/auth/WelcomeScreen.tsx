@@ -29,7 +29,11 @@ export default function WelcomeScreen({
       headerContent={
         <Animated.View
           entering={FadeInDown.duration(500)}
-          style={{ marginTop: hp(10) }}
+          style={{
+            marginTop: hp(10),
+            width: '100%',
+            alignItems: 'center',
+          }}
         >
           <Ionicons
             name="checkmark-circle"

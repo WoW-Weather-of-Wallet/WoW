@@ -27,11 +27,10 @@ export default function AiResultScreen({
   } = useAiStore();
 
   const currentPeriodResultData = React.useMemo(
-    () => (
+    () =>
       matchesAiReportPeriod(resultData, reportPeriod, sessionUserId)
         ? resultData
-        : null
-    ),
+        : null,
     [reportPeriod, resultData, sessionUserId],
   );
 
@@ -66,7 +65,17 @@ export default function AiResultScreen({
     navigation.navigate('AiFeedbackHome');
   };
 
-  const showRetryButton = Boolean(currentPeriodResultData?.report && errorInfo?.canRetry && !isRefreshing);
+  const showRetryButton = Boolean(
+    currentPeriodResultData?.report && errorInfo?.canRetry && !isRefreshing,
+  );
+
+  const retryButtonTitle = isRefreshing
+    ? 'AI 피드백 다시 불러오는 중'
+    : 'AI 피드백 다시 불러오기';
+  const primaryButtonTitle =
+    !currentPeriodResultData?.report && errorInfo?.canRetry
+      ? '다시 시도하기'
+      : buttonTitle;
 
   return (
     <BottomTabScreenLayout
@@ -76,10 +85,7 @@ export default function AiResultScreen({
       scrollBottomPadding={hp(40)}
       backgroundColor={COLORS.background}
     >
-      <Animated.View
-        entering={FadeInDown.duration(500)}
-        style={{ marginBottom: hp(32) }}
-      >
+      <Animated.View entering={FadeInDown.duration(500)} style={{ marginBottom: hp(32) }}>
         <AiResultHeader displayName={displayName} title={title} />
       </Animated.View>
 
@@ -94,13 +100,14 @@ export default function AiResultScreen({
 
       <Animated.View
         entering={FadeInDown.delay(500).duration(500)}
-        style={{ marginTop: hp(10), gap: hp(12) }}
+        style={{ marginTop: hp(16), gap: hp(12), width: '100%' }}
       >
         {showRetryButton ? (
           <GradientButton
-            title={isRefreshing ? '최신 결과 확인 중' : '최신 결과 다시 불러오기'}
+            title={retryButtonTitle}
             variant="outline"
             disabled={isRefreshing}
+            style={{ width: '100%' }}
             onPress={() => {
               void refreshLatestAnalysis({
                 year: reportPeriod.year,
@@ -112,13 +119,12 @@ export default function AiResultScreen({
           />
         ) : null}
 
-        <View>
-          <GradientButton
-            title={!currentPeriodResultData?.report && errorInfo?.canRetry ? '다시 불러오기' : buttonTitle}
-            disabled={isRefreshing && !currentPeriodResultData?.report}
-            onPress={handlePrimaryPress}
-          />
-        </View>
+        <GradientButton
+          title={primaryButtonTitle}
+          disabled={isRefreshing && !currentPeriodResultData?.report}
+          style={{ width: '100%' }}
+          onPress={handlePrimaryPress}
+        />
       </Animated.View>
     </BottomTabScreenLayout>
   );

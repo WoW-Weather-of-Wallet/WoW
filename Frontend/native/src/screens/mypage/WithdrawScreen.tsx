@@ -182,7 +182,7 @@ export default function WithdrawScreen({
               color={COLORS.error}
             />
             <Text style={styles.warningText}>
-              {'\ud0c8\ud1f4 \ud6c4\uc5d0\ub294 \uacc4\uc815 \uc815\ubcf4\uc640 \uae08\uc735 \ub370\uc774\ud130 \uc77c\ubd80\uac00 \uc0ad\uc81c\ub418\uba70 \ubcf5\uad6c\ud560 \uc218 \uc5c6\uc5b4\uc694.'}
+              {'\ud0c8\ud1f4 \ud6c4\uc5d0\ub294 \uacc4\uc815 \uc815\ubcf4\uc640 \uc11c\ube44\uc2a4 \ub370\uc774\ud130\uac00 \uc0ad\uc81c\ub418\uba70 \ubcf5\uad6c\ud560 \uc218 \uc5c6\uc5b4\uc694.'}
             </Text>
           </Animated.View>
         }

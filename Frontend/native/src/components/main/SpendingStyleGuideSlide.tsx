@@ -14,6 +14,11 @@ const CARD_WIDTH = Dimensions.get('window').width - wp(40);
 export default function SpendingStyleGuideSlide({
   styleItem,
 }: SpendingStyleGuideSlideProps) {
+  const resolvedDescription =
+    styleItem.id === 7
+      ? '특정 카테고리에 치우치지 않고 여러 영역에서 고르게 소비하는 안정적인 스타일이에요.'
+      : styleItem.description;
+
   const iconWrapStyle = {
     width: wp(110),
     height: wp(110),
@@ -31,7 +36,8 @@ export default function SpendingStyleGuideSlide({
 
   const descriptionStyle = {
     width: '100%' as const,
-    paddingHorizontal: wp(10),
+    paddingLeft: styleItem.id === 7 ? wp(18) : wp(10),
+    paddingRight: styleItem.id === 7 ? wp(8) : wp(10),
     fontSize: fp(14),
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
@@ -83,8 +89,8 @@ export default function SpendingStyleGuideSlide({
         {styleItem.title}
       </Text>
 
-      {styleItem.description ? (
-        <Text style={descriptionStyle}>{styleItem.description}</Text>
+      {resolvedDescription ? (
+        <Text style={descriptionStyle}>{resolvedDescription}</Text>
       ) : (
         <View className="w-full items-center" style={tagContainerStyle}>
           <View className="flex-row justify-center" style={tagRowStyle}>

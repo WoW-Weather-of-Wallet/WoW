@@ -13,23 +13,22 @@ export default function HomeBudgetReportHeader({
   monthLabel,
   userName,
 }: HomeBudgetReportHeaderProps) {
-  const rowStyle = {
-    gap: wp(12),
-    marginBottom: hp(18),
+  const topRowStyle = {
+    marginBottom: hp(10),
   } as const;
 
   const eyebrowStyle = {
-    fontSize: fp(13),
-    fontFamily: FONTS.medium,
+    fontSize: fp(12),
+    fontFamily: FONTS.semiBold,
     color: COLORS.primary,
-    marginBottom: hp(8),
   } as const;
 
   const titleStyle = {
-    fontSize: fp(27),
-    lineHeight: fp(35),
+    fontSize: fp(22),
+    lineHeight: fp(30),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
+    letterSpacing: -0.3,
   } as const;
 
   const titleHighlightStyle = {
@@ -38,39 +37,42 @@ export default function HomeBudgetReportHeader({
   } as const;
 
   const badgeStyle = {
-    gap: wp(4),
+    gap: wp(5),
     borderRadius: RADIUS.full,
     backgroundColor: COLORS.aiBadgeBackground,
     paddingHorizontal: wp(10),
-    paddingVertical: hp(7),
+    paddingVertical: hp(6),
   } as const;
 
   const badgeTextStyle = {
-    fontSize: fp(12),
+    fontSize: fp(11),
     fontFamily: FONTS.semiBold,
     color: COLORS.primary,
   } as const;
 
   return (
-    <View className="flex-row items-center justify-between" style={rowStyle}>
-      <View className="flex-1 items-start">
-        <Text style={eyebrowStyle}>{monthLabel}</Text>
-        <Text style={titleStyle}>
-          {userName ? (
-            <>
-              <Text style={titleHighlightStyle}>{userName}</Text>
-              님의 예산 현황
-            </>
-          ) : (
-            '이번 달 예산 리포트'
-          )}
+    <View style={{ marginBottom: hp(16) }}>
+      <View className="flex-row items-center justify-between" style={topRowStyle}>
+        <Text style={eyebrowStyle} numberOfLines={1}>
+          {monthLabel} 예산 현황
         </Text>
+
+        <View className="flex-row items-center self-start" style={badgeStyle}>
+          <Ionicons name="sparkles-outline" size={wp(13)} color={COLORS.primary} />
+          <Text style={badgeTextStyle}>AI</Text>
+        </View>
       </View>
 
-      <View className="flex-row items-center self-start" style={badgeStyle}>
-        <Ionicons name="sparkles-outline" size={wp(14)} color={COLORS.primary} />
-        <Text style={badgeTextStyle}>AI</Text>
-      </View>
+      <Text style={titleStyle} numberOfLines={2}>
+        {userName ? (
+          <>
+            <Text style={titleHighlightStyle}>{userName}</Text>
+            님 이번 달 예산
+          </>
+        ) : (
+          '이번 달 예산'
+        )}
+      </Text>
     </View>
   );
 }

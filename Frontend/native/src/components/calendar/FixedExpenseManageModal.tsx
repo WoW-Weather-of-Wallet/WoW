@@ -43,7 +43,7 @@ export default function FixedExpenseManageModal({
             backgroundColor: COLORS.gradientStart,
             paddingTop: insets.top + 2,
             paddingHorizontal: wp(20),
-            paddingBottom: 4,
+            paddingBottom: hp(10),
           }}
         >
           <TouchableOpacity
@@ -78,9 +78,9 @@ export default function FixedExpenseManageModal({
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: wp(20),
-            paddingTop: hp(6),
+            paddingTop: hp(4),
             paddingBottom: insets.bottom + hp(28),
-            gap: hp(14),
+            gap: hp(12),
           }}
           showsVerticalScrollIndicator={false}
         >

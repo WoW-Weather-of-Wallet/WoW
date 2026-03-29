@@ -32,7 +32,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.wow.app",
-      "versionCode": 2,
+      "versionCode": 7,
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "CAMERA",
@@ -69,9 +69,10 @@
     },
     "extra": {
       "eas": {
-        "projectId": "4780831e-cbf9-483c-b42a-9920d7b41dd0"
+
+        "projectId": "f2ad7c84-70f0-44b9-ac60-fc686a5dff1c"
       }
     },
-    "owner": "jhjs"
+    "owner": "ssafymok"
   }
 }

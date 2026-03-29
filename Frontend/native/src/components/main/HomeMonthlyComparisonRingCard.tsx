@@ -45,24 +45,31 @@ export default function HomeMonthlyComparisonRingCard({
   } as const;
 
   const ringCenterStyle = {
-    width: wp(88),
-    height: wp(88),
-    borderRadius: wp(44),
+    width: wp(94),
+    height: wp(94),
+    borderRadius: wp(47),
     backgroundColor: COLORS.background,
+    paddingHorizontal: wp(6),
   } as const;
 
   const amountStyle = {
-    fontSize: fp(18),
+    width: '100%',
+    fontSize: fp(16),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
     marginBottom: hp(4),
+    textAlign: 'center',
+    includeFontPadding: false,
   } as const;
 
   const labelStyle = {
     fontSize: fp(12),
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
+    textAlign: 'center',
   } as const;
+
+  const amountText = totalAmount == null ? '-' : `${totalAmount.toLocaleString()}원`;
 
   return (
     <View className="flex-1 items-center">
@@ -71,8 +78,13 @@ export default function HomeMonthlyComparisonRingCard({
       </View>
       <View className="items-center justify-center" style={ringStyle}>
         <View className="items-center justify-center" style={ringCenterStyle}>
-          <Text style={amountStyle}>
-            {totalAmount == null ? '-' : `${totalAmount.toLocaleString()}원`}
+          <Text
+            style={amountStyle}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.68}
+          >
+            {amountText}
           </Text>
           <Text style={labelStyle}>{amountLabel}</Text>
         </View>

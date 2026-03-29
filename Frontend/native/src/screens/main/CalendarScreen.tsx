@@ -40,7 +40,7 @@ export default function CalendarScreen() {
     fixedExpensesTotal,
     headerFetchState,
     headerErrorMessage,
-    weatherIconName,
+    weatherIconCode,
     handleMoveMonth,
     historyTitle,
     emptyHistoryTitle,
@@ -79,7 +79,7 @@ export default function CalendarScreen() {
           <CalendarTopDockContent
             overview={overview}
             monthLabel={monthLabel}
-            weatherIconName={weatherIconName}
+            weatherIconCode={weatherIconCode}
             headerFetchState={headerFetchState}
             headerErrorMessage={headerErrorMessage}
             activeTab={activeTab}

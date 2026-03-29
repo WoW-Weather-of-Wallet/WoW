@@ -12,7 +12,7 @@ type CalendarTabKey = React.ComponentProps<typeof CalendarTabSwitcher>['activeTa
 interface CalendarTopDockContentProps {
   overview: CalendarOverview;
   monthLabel: string;
-  weatherIconName: React.ComponentProps<typeof CalendarHeroCard>['weatherIconName'];
+  weatherIconCode: React.ComponentProps<typeof CalendarHeroCard>['weatherIconCode'];
   headerFetchState: CalendarHeaderFetchState;
   headerErrorMessage: string | null;
   activeTab: CalendarTabKey;
@@ -29,7 +29,7 @@ interface CalendarTopDockContentProps {
 export default function CalendarTopDockContent({
   overview,
   monthLabel,
-  weatherIconName,
+  weatherIconCode,
   headerFetchState,
   headerErrorMessage,
   activeTab,
@@ -54,7 +54,7 @@ export default function CalendarTopDockContent({
       <CalendarHeroCard
         overview={overview}
         monthLabel={monthLabel}
-        weatherIconName={weatherIconName}
+        weatherIconCode={weatherIconCode}
         headerFetchState={headerFetchState}
         headerErrorMessage={headerErrorMessage}
         onPressPrevMonth={onPressPrevMonth}

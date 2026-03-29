@@ -37,12 +37,12 @@ export default function FixedExpenseManageItemCard({
         borderRadius: RADIUS.xl,
         backgroundColor: COLORS.background,
         paddingHorizontal: wp(16),
-        paddingVertical: hp(14),
-        gap: hp(10),
+        paddingVertical: hp(16),
+        gap: hp(12),
       }}
     >
       <View
-        className="flex-row items-center justify-between"
+        className="flex-row items-start justify-between"
         style={{ gap: wp(12) }}
       >
         <View className="flex-1 flex-row items-center" style={{ gap: wp(12) }}>
@@ -102,11 +102,12 @@ export default function FixedExpenseManageItemCard({
 
       <View
         className="flex-row items-center justify-between"
-        style={{ gap: wp(12), paddingTop: hp(2) }}
+        style={{ gap: wp(12), paddingTop: hp(4) }}
       >
-        <View className="flex-row items-center" style={{ gap: wp(8) }}>
+        <View className="flex-row items-center" style={{ gap: wp(8), flexWrap: 'wrap', flex: 1 }}>
           <TouchableOpacity
             activeOpacity={0.86}
+            className="items-center justify-center"
             style={{
               borderRadius: RADIUS.full,
               backgroundColor: COLORS.stepperButtonBackground,
@@ -127,6 +128,7 @@ export default function FixedExpenseManageItemCard({
           </TouchableOpacity>
           <TouchableOpacity
             activeOpacity={0.86}
+            className="items-center justify-center"
             style={{
               borderRadius: RADIUS.full,
               backgroundColor: COLORS.deleteChipBackground,
@@ -146,7 +148,7 @@ export default function FixedExpenseManageItemCard({
             </Text>
           </TouchableOpacity>
         </View>
-        <View className="flex-row items-center" style={{ gap: wp(6), flexShrink: 0 }}>
+        <View className="flex-row items-center" style={{ gap: wp(6), flexShrink: 0, marginLeft: wp(8) }}>
           <Text
             style={{
               fontSize: fp(12),
