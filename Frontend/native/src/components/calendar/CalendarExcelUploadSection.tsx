@@ -1,5 +1,12 @@
-import React from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import {
+  Animated,
+  Easing,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CALENDAR_EXCEL_BANKS } from '../../constants/calendar/addEntry';
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
@@ -60,6 +67,39 @@ function ErrorMessageBox({
         {message}
       </Text>
     </View>
+  );
+}
+
+function RotatingAnalysisIcon() {
+  const spinValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 1250,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
+
+    animation.start();
+
+    return () => {
+      animation.stop();
+      spinValue.setValue(0);
+    };
+  }, [spinValue]);
+
+  const rotate = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  return (
+    <Animated.View style={{ transform: [{ rotate }] }}>
+      <Ionicons name="sync-outline" size={wp(18)} color={COLORS.primary} />
+    </Animated.View>
   );
 }
 
@@ -288,7 +328,7 @@ export default function CalendarExcelUploadSection({
             }}
           >
             <View className="flex-row items-center" style={{ gap: wp(8) }}>
-              <Ionicons name="sync-outline" size={wp(18)} color={COLORS.primary} />
+              <RotatingAnalysisIcon />
               <Text
                 style={{
                   fontSize: fp(16),
