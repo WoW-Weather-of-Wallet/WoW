@@ -1,6 +1,5 @@
 import React from 'react';
 import { Alert } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
 
 import type {
   HomeDashboardBudgetReportCardData,
@@ -187,11 +186,28 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     sessionUserId,
   ]);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      void loadHomeData();
-    }, [loadHomeData]),
+  const homeLoadKey = React.useMemo(
+    () =>
+      [
+        accessToken ? 'authorized' : 'guest',
+        sessionUserId ?? 'anonymous',
+        currentYear,
+        currentMonth,
+        reportPeriod.year,
+        reportPeriod.month,
+      ].join(':'),
+    [accessToken, currentMonth, currentYear, reportPeriod.month, reportPeriod.year, sessionUserId],
   );
+  const lastLoadedHomeKeyRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    if (lastLoadedHomeKeyRef.current === homeLoadKey) {
+      return;
+    }
+
+    lastLoadedHomeKeyRef.current = homeLoadKey;
+    void loadHomeData();
+  }, [homeLoadKey, loadHomeData]);
 
   // Keep the card and the bottom sheet on the same data source
   // so users do not see mixed AI and half-yearly messaging.

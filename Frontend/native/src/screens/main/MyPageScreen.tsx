@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -101,6 +101,8 @@ export default function MyPageScreen() {
   const [isTermsModalVisible, setIsTermsModalVisible] = useState(false);
 
   const appVersion = useMemo(() => Constants.expoConfig?.version ?? '1.0.0', []);
+  const hasLoadedProfileRef = useRef(false);
+  const shouldRefreshProfileRef = useRef(true);
 
   const loadProfile = useCallback(async () => {
     setIsLoading(true);
@@ -115,9 +117,18 @@ export default function MyPageScreen() {
     }
   }, []);
 
+  useEffect(() => {
+    hasLoadedProfileRef.current = false;
+    shouldRefreshProfileRef.current = true;
+  }, [sessionUser?.userId]);
+
   useFocusEffect(
     useCallback(() => {
-      void loadProfile();
+      if (!hasLoadedProfileRef.current || shouldRefreshProfileRef.current) {
+        hasLoadedProfileRef.current = true;
+        shouldRefreshProfileRef.current = false;
+        void loadProfile();
+      }
       void refreshSecurityPreferences();
     }, [loadProfile, refreshSecurityPreferences]),
   );
@@ -484,6 +495,7 @@ export default function MyPageScreen() {
         onClose={closeEditor}
         onStartVerification={() => {
           closeEditor();
+          shouldRefreshProfileRef.current = true;
           navigation.navigate('PhoneUpdate', {
             phoneNumber: profile?.phoneNumber ?? '',
             name: profile?.name ?? '',

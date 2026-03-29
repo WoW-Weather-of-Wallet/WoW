@@ -1,6 +1,5 @@
 import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
 
 import {
   AiCarouselPagination,
@@ -36,6 +35,7 @@ export default function AiFeedbackHomeScreen({
   } = useAiStore();
   const featureCards = useAiFeatureCards();
   const reportPeriod = resolveAiReportPeriod();
+  const refreshKey = `${sessionUserId ?? 'guest'}:${reportPeriod.year}:${reportPeriod.month}`;
   const contentLayoutMode = isCompact ? 'compact' : 'regular';
   const carouselPageWidth = Math.max(screenWidth - pageHorizontal * 2, 1);
   const carouselCardWidth = Math.min(
@@ -46,21 +46,13 @@ export default function AiFeedbackHomeScreen({
     itemWidth: carouselPageWidth,
   });
 
-  useFocusEffect(
-    React.useCallback(() => {
-      void refreshLatestAnalysis({
-        year: reportPeriod.year,
-        month: reportPeriod.month,
-      });
-    }, [refreshLatestAnalysis, reportPeriod.month, reportPeriod.year]),
-  );
-
   const hasCurrentReport = React.useMemo(
     () =>
       matchesAiReportPeriod(resultData, reportPeriod, sessionUserId)
       && Boolean(resultData?.report),
     [reportPeriod, resultData, sessionUserId],
   );
+  const refreshAttemptedKeyRef = React.useRef<string | null>(null);
 
   const titleStyle = {
     fontSize: fp(28),
@@ -74,6 +66,30 @@ export default function AiFeedbackHomeScreen({
   } as const;
 
   const isAnalysisRunning = status === 'loading';
+
+  React.useEffect(() => {
+    if (hasCurrentReport || isAnalysisRunning) {
+      return;
+    }
+
+    if (refreshAttemptedKeyRef.current === refreshKey) {
+      return;
+    }
+
+    refreshAttemptedKeyRef.current = refreshKey;
+    void refreshLatestAnalysis({
+      year: reportPeriod.year,
+      month: reportPeriod.month,
+    });
+  }, [
+    hasCurrentReport,
+    isAnalysisRunning,
+    refreshKey,
+    refreshLatestAnalysis,
+    reportPeriod.month,
+    reportPeriod.year,
+  ]);
+
   const buttonTitle =
     isAnalysisRunning
       ? 'AI 피드백 정리 중'

@@ -1,7 +1,6 @@
 import React from 'react';
 import { ScrollView, View } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -29,6 +28,7 @@ export default function AiResultScreen({
   const sessionUserId = useAuthStore((state) => state.user?.userId ?? null);
   const sessionUserName = useAuthStore((state) => state.user?.name ?? null);
   const reportPeriod = resolveAiReportPeriod();
+  const refreshKey = `${sessionUserId ?? 'guest'}:${reportPeriod.year}:${reportPeriod.month}`;
   const contentLayoutMode = isCompact ? 'compact' : 'regular';
   const [bottomActionHeight, setBottomActionHeight] = React.useState(0);
   const headerHeight = hp(40);
@@ -55,16 +55,31 @@ export default function AiResultScreen({
     isStale: false,
   });
   const headerTitle = buildAiStackHeaderTitle(sessionUserName, reportPeriod.month);
+  const refreshAttemptedKeyRef = React.useRef<string | null>(null);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      void refreshLatestAnalysis({
-        year: reportPeriod.year,
-        month: reportPeriod.month,
-        fromPush: Boolean(useAiStore.getState().resultData?.fromPush),
-      });
-    }, [refreshLatestAnalysis, reportPeriod.month, reportPeriod.year]),
-  );
+  React.useEffect(() => {
+    if (currentPeriodResultData?.report || isRefreshing) {
+      return;
+    }
+
+    if (refreshAttemptedKeyRef.current === refreshKey) {
+      return;
+    }
+
+    refreshAttemptedKeyRef.current = refreshKey;
+    void refreshLatestAnalysis({
+      year: reportPeriod.year,
+      month: reportPeriod.month,
+      fromPush: Boolean(useAiStore.getState().resultData?.fromPush),
+    });
+  }, [
+    currentPeriodResultData?.report,
+    isRefreshing,
+    refreshKey,
+    refreshLatestAnalysis,
+    reportPeriod.month,
+    reportPeriod.year,
+  ]);
 
   const showRetryButton = Boolean(
     currentPeriodResultData?.report && errorInfo?.canRetry && !isRefreshing,
