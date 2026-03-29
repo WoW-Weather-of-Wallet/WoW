@@ -8,3 +8,4 @@ export {
 export { default as AiLoadingStage } from './AiLoadingStage';
 export { default as AiResultHeader } from './AiResultHeader';
 export { default as AiResultSummaryCard } from './AiResultSummaryCard';
+export { default as AiStackHeader, buildAiStackHeaderTitle } from './AiStackHeader';

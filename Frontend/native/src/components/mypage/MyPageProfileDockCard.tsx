@@ -5,15 +5,18 @@ import { COLORS, FONTS, fp, hp, RADIUS, wp } from '../../constants/theme';
 
 interface MyPageProfileDockCardProps {
   name: string;
+  clusterLabel?: string | null;
   isLoading: boolean;
 }
 
 export default function MyPageProfileDockCard({
   name,
+  clusterLabel,
   isLoading,
 }: MyPageProfileDockCardProps) {
   const resolvedName = name?.trim() || '사용자';
   const initial = resolvedName.slice(0, 1);
+  const resolvedClusterLabel = clusterLabel?.trim() || 'AI 분석 대기';
 
   return (
     <View
@@ -92,7 +95,7 @@ export default function MyPageProfileDockCard({
                   color: COLORS.primary,
                 }}
               >
-                AI
+                {resolvedClusterLabel}
               </Text>
             </View>
           </View>

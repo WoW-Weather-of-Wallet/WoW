@@ -1,9 +1,10 @@
 import React from 'react';
 import { ScrollView, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { AiResultHeader, AiResultSummaryCard } from '../../components/ai';
+import { AiResultSummaryCard, AiStackHeader, buildAiStackHeaderTitle } from '../../components/ai';
 import BottomTabOverlayLayout from '../../components/common/BottomTabOverlayLayout';
 import GradientButton from '../../components/common/GradientButton';
 import { COLORS, RADIUS, hp, wp } from '../../constants/theme';
@@ -16,6 +17,7 @@ import { matchesAiReportPeriod, resolveAiReportPeriod } from '../../utils/aiRepo
 export default function AiResultScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiResult'>) {
+  const insets = useSafeAreaInsets();
   const {
     isCompact,
     pageHorizontal,
@@ -23,6 +25,7 @@ export default function AiResultScreen({
     scrollBottomPadding,
   } = useResponsiveLayoutMode();
   const sessionUserId = useAuthStore((state) => state.user?.userId ?? null);
+  const sessionUserName = useAuthStore((state) => state.user?.name ?? null);
   const reportPeriod = resolveAiReportPeriod();
   const contentLayoutMode = isCompact ? 'compact' : 'regular';
   const [bottomActionHeight, setBottomActionHeight] = React.useState(hp(104));
@@ -42,11 +45,12 @@ export default function AiResultScreen({
     [reportPeriod, resultData, sessionUserId],
   );
 
-  const { displayName, title, buttonTitle, cards } = useAiResultSummary(currentPeriodResultData, {
+  const { buttonTitle, cards } = useAiResultSummary(currentPeriodResultData, {
     errorInfo,
     isRefreshing,
     isStale: false,
   });
+  const headerTitle = buildAiStackHeaderTitle(sessionUserName, reportPeriod.month);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -154,14 +158,25 @@ export default function AiResultScreen({
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: pageHorizontal,
-          paddingTop: scrollTopPadding + (isCompact ? hp(18) : hp(24)),
+          paddingTop: insets.top + scrollTopPadding,
           paddingBottom: bottomActionHeight + scrollBottomPadding + hp(12),
         }}
         showsVerticalScrollIndicator={false}
       >
         <View style={{ gap: isCompact ? hp(16) : hp(18) }}>
           <Animated.View entering={FadeInDown.duration(500)}>
-            <AiResultHeader displayName={displayName} title={title} />
+            <AiStackHeader
+              title={headerTitle}
+              showBackButton
+              onPressBack={() => {
+                if (navigation.canGoBack()) {
+                  navigation.goBack();
+                  return;
+                }
+
+                navigation.navigate('AiFeedbackHome');
+              }}
+            />
           </Animated.View>
 
           {cards.map((card, index) => (
