@@ -3,8 +3,10 @@ import {
   View,
   TextInput as RNTextInput,
   TextInputProps as RNTextInputProps,
+  TouchableOpacity,
   ViewStyle,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -31,7 +33,12 @@ export default function CustomTextInput({
   ...props
 }: CustomTextInputProps) {
   const [isFocused, setIsFocused] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const focusAnim = useSharedValue(0);
+  const shouldShowPasswordToggle = Boolean(secureTextEntry);
+  const resolvedSecureTextEntry = shouldShowPasswordToggle
+    ? !isPasswordVisible
+    : secureTextEntry;
 
   const animatedBorderStyle = useAnimatedStyle(() => {
     const borderColor = interpolateColor(
@@ -73,6 +80,7 @@ export default function CustomTextInput({
           fontFamily: FONTS.regular,
           color: COLORS.textPrimary,
           paddingVertical: hp(14),
+          paddingRight: shouldShowPasswordToggle ? wp(40) : 0,
         }}
         accessibilityLabel={label}
         accessibilityHint={`${label} 입력`}
@@ -80,10 +88,31 @@ export default function CustomTextInput({
         placeholderTextColor={COLORS.textTertiary}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        secureTextEntry={secureTextEntry}
+        secureTextEntry={resolvedSecureTextEntry}
         autoCapitalize="none"
         {...props}
       />
+      {shouldShowPasswordToggle ? (
+        <TouchableOpacity
+          onPress={() => setIsPasswordVisible((prev) => !prev)}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={isPasswordVisible ? `${label} 숨기기` : `${label} 보기`}
+          style={{
+            position: 'absolute',
+            right: wp(14),
+            top: '50%',
+            marginTop: -wp(10),
+            padding: wp(4),
+          }}
+        >
+          <Ionicons
+            name={isPasswordVisible ? 'eye-outline' : 'eye-off-outline'}
+            size={wp(20)}
+            color={isPasswordVisible ? COLORS.primary : COLORS.textTertiary}
+          />
+        </TouchableOpacity>
+      ) : null}
     </AnimatedView>
   );
 }
