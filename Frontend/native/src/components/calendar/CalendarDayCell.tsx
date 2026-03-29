@@ -53,8 +53,8 @@ export default function CalendarDayCell({
         <View
           style={{
             position: 'absolute',
-            bottom: hp(1),
-            left: wp(1.2),
+            top: hp(1),
+            right: wp(1.2),
             zIndex: 2,
             opacity: isSelected ? 0.92 : 1,
           }}
