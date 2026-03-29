@@ -84,12 +84,20 @@ export default function AiFeedbackHomeScreen({
   return (
     <BottomTabScreenLayout
       containerStyle={{ flex: 1, backgroundColor: COLORS.backgroundSecondary }}
-      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: pageHorizontal }}
+      contentContainerStyle={{
+        flexGrow: 1,
+        justifyContent: 'center',
+        paddingHorizontal: pageHorizontal,
+      }}
       scrollTopPadding={scrollTopPadding}
       scrollBottomPadding={isCompact ? scrollBottomPadding + hp(24) : scrollBottomPadding}
       backgroundColor={COLORS.backgroundSecondary}
     >
-      <View style={{ flex: 1, marginTop: isCompact ? hp(12) : hp(18) }}>
+      <View
+        style={{
+          gap: isCompact ? hp(22) : hp(26),
+        }}
+      >
         <View style={{ gap: sectionGap }}>
           <Text style={titleStyle}>
             AI가 내 소비를 분석해{'\n'}
@@ -141,8 +149,6 @@ export default function AiFeedbackHomeScreen({
 
         <View
           style={{
-            marginTop: 'auto',
-            paddingTop: sectionGap,
             paddingBottom: isCompact ? hp(8) : hp(12),
             width: '100%',
           }}

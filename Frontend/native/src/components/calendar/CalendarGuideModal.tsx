@@ -4,6 +4,7 @@ import {
   Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -71,11 +72,15 @@ export default function CalendarGuideModal({
       transparent
       onRequestClose={onClose}
     >
-      <View
+      <Pressable
         className="flex-1 items-center justify-center"
         style={{ backgroundColor: 'rgba(0,0,0,0.5)', padding: wp(24) }}
+        onPress={onClose}
       >
-        <View
+        <Pressable
+          onPress={(event) => {
+            event.stopPropagation();
+          }}
           style={{
             width: '100%',
             backgroundColor: COLORS.white,
@@ -193,8 +198,8 @@ export default function CalendarGuideModal({
               ))}
             </View>
           </View>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }

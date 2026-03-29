@@ -46,7 +46,7 @@ export default function BottomSheetModal({
   showHandle = true,
   scrollable = true,
   enableSwipeToClose = true,
-  showCloseButton = true,
+  showCloseButton = false,
   children,
 }: BottomSheetModalProps) {
   const insets = useSafeAreaInsets();

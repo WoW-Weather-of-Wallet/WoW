@@ -65,7 +65,7 @@ export default function FixedExpenseSection({
           color: COLORS.primary,
         }}
       >
-        {items.length > 0 ? `총 ${totalAmount.toLocaleString()}원` : '-'}
+        {items.length > 0 ? `총 ${totalAmount.toLocaleString()}원` : '고정지출 내역이 없습니다'}
       </Text>
 
       <View style={{ gap: hp(12) }}>
@@ -77,7 +77,7 @@ export default function FixedExpenseSection({
               color: COLORS.textSecondary,
             }}
           >
-            -
+            고정지출 등록이 필요합니다.
           </Text>
         ) : (
           items.map((item) => {

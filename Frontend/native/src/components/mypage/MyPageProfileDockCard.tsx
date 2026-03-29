@@ -24,8 +24,8 @@ export default function MyPageProfileDockCard({
       style={{
         borderRadius: RADIUS.xxl,
         paddingHorizontal: wp(18),
-        paddingVertical: hp(16),
-        gap: hp(10),
+        paddingVertical: hp(14),
+        gap: hp(8),
         borderWidth: 1,
         borderColor: COLORS.surfaceBorder,
         shadowColor: COLORS.textPrimary,
@@ -35,14 +35,13 @@ export default function MyPageProfileDockCard({
         elevation: 3,
       }}
     >
-      <View className="items-center">
+      <View className="flex-row items-center justify-center" style={{ gap: wp(12) }}>
         <View
           className="items-center justify-center"
           style={{
             width: wp(52),
             height: wp(52),
             borderRadius: wp(26),
-            marginBottom: hp(10),
             backgroundColor: COLORS.primary,
           }}
         >
@@ -57,47 +56,48 @@ export default function MyPageProfileDockCard({
           </Text>
         </View>
 
-        <View className="items-center" style={{ gap: hp(4), justifyContent: 'center' }}>
-          <View className="flex-row items-center justify-center" style={{ gap: wp(8) }}>
+        <View className="flex-1 flex-row items-center" style={{ gap: wp(8) }}>
+          <Text
+            numberOfLines={1}
+            style={{
+              flexShrink: 1,
+              fontSize: fp(20),
+              fontFamily: FONTS.bold,
+              color: COLORS.textPrimary,
+            }}
+          >
             <Text
               style={{
-                fontSize: fp(20),
-                fontFamily: FONTS.bold,
-                color: COLORS.textPrimary,
+                fontFamily: FONTS.extraBold,
+                color: COLORS.primaryDark,
               }}
             >
-              <Text
-                style={{
-                  fontFamily: FONTS.extraBold,
-                  color: COLORS.primaryDark,
-                }}
-              >
-                {resolvedName}
-              </Text>
-              님
+              {resolvedName}
             </Text>
+            님
+          </Text>
 
-            <View
-              className="flex-row items-center"
+          <View
+            className="flex-row items-center"
+            style={{
+              gap: wp(4),
+              borderRadius: RADIUS.full,
+              paddingHorizontal: wp(10),
+              paddingVertical: hp(6),
+              backgroundColor: COLORS.aiBadgeBackground,
+            }}
+          >
+            <Ionicons name="sparkles-outline" size={wp(13)} color={COLORS.primary} />
+            <Text
+              numberOfLines={1}
               style={{
-                gap: wp(4),
-                borderRadius: RADIUS.full,
-                paddingHorizontal: wp(10),
-                paddingVertical: hp(6),
-                backgroundColor: COLORS.aiBadgeBackground,
+                fontSize: fp(11),
+                fontFamily: FONTS.semiBold,
+                color: COLORS.primary,
               }}
             >
-              <Ionicons name="sparkles-outline" size={wp(13)} color={COLORS.primary} />
-              <Text
-                style={{
-                  fontSize: fp(11),
-                  fontFamily: FONTS.semiBold,
-                  color: COLORS.primary,
-                }}
-              >
-                {resolvedClusterLabel}
-              </Text>
-            </View>
+              {resolvedClusterLabel}
+            </Text>
           </View>
         </View>
       </View>
