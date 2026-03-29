@@ -350,7 +350,7 @@ export default function MyPageScreen() {
     });
   };
 
-  const { displayName, displayBadge, sections } = useMyPageSections({
+  const { displayName, sections } = useMyPageSections({
     profile,
     sessionUserName: sessionUser?.name,
     sessionLoginType,
@@ -385,7 +385,6 @@ export default function MyPageScreen() {
         topDockContent={
           <MyPageProfileDockCard
             name={displayName}
-            badgeLabel={displayBadge}
             isLoading={isLoading}
           />
         }

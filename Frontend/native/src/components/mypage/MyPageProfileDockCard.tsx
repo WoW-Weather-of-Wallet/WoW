@@ -1,16 +1,15 @@
 import React from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, fp, hp, RADIUS, wp } from '../../constants/theme';
 
 interface MyPageProfileDockCardProps {
   name: string;
-  badgeLabel: string;
   isLoading: boolean;
 }
 
 export default function MyPageProfileDockCard({
   name,
-  badgeLabel,
   isLoading,
 }: MyPageProfileDockCardProps) {
   const resolvedName = name?.trim() || '사용자';
@@ -23,7 +22,7 @@ export default function MyPageProfileDockCard({
         borderRadius: RADIUS.xxl,
         paddingHorizontal: wp(18),
         paddingVertical: hp(16),
-        gap: hp(8),
+        gap: hp(10),
         borderWidth: 1,
         borderColor: COLORS.surfaceBorder,
         shadowColor: COLORS.textPrimary,
@@ -33,14 +32,14 @@ export default function MyPageProfileDockCard({
         elevation: 3,
       }}
     >
-      <View className="flex-row items-start">
+      <View className="items-center">
         <View
           className="items-center justify-center"
           style={{
             width: wp(52),
             height: wp(52),
             borderRadius: wp(26),
-            marginRight: wp(12),
+            marginBottom: hp(10),
             backgroundColor: COLORS.primary,
           }}
         >
@@ -55,44 +54,45 @@ export default function MyPageProfileDockCard({
           </Text>
         </View>
 
-        <View className="flex-1" style={{ gap: hp(4), justifyContent: 'center' }}>
-          <View className="flex-row items-start justify-between">
-            <View className="flex-1" style={{ paddingRight: wp(10), justifyContent: 'center' }}>
-              <Text
-                style={{
-                  fontSize: fp(20),
-                  fontFamily: FONTS.bold,
-                  color: COLORS.textPrimary,
-                }}
-              >
-                <Text
-                  style={{
-                    fontFamily: FONTS.extraBold,
-                    color: COLORS.primaryDark,
-                  }}
-                >
-                  {resolvedName}
-                </Text>
-                님
-              </Text>
-            </View>
-
-            <View
+        <View className="items-center" style={{ gap: hp(4), justifyContent: 'center' }}>
+          <View className="flex-row items-center justify-center" style={{ gap: wp(8) }}>
+            <Text
               style={{
-                borderRadius: RADIUS.md,
-                paddingHorizontal: wp(8),
-                paddingVertical: hp(5),
-                backgroundColor: COLORS.primarySoft,
+                fontSize: fp(20),
+                fontFamily: FONTS.bold,
+                color: COLORS.textPrimary,
               }}
             >
               <Text
                 style={{
+                  fontFamily: FONTS.extraBold,
+                  color: COLORS.primaryDark,
+                }}
+              >
+                {resolvedName}
+              </Text>
+              님
+            </Text>
+
+            <View
+              className="flex-row items-center"
+              style={{
+                gap: wp(4),
+                borderRadius: RADIUS.full,
+                paddingHorizontal: wp(10),
+                paddingVertical: hp(6),
+                backgroundColor: COLORS.aiBadgeBackground,
+              }}
+            >
+              <Ionicons name="sparkles-outline" size={wp(13)} color={COLORS.primary} />
+              <Text
+                style={{
                   fontSize: fp(11),
-                  fontFamily: FONTS.bold,
+                  fontFamily: FONTS.semiBold,
                   color: COLORS.primary,
                 }}
               >
-                {badgeLabel}
+                AI
               </Text>
             </View>
           </View>
@@ -100,7 +100,7 @@ export default function MyPageProfileDockCard({
       </View>
 
       {isLoading ? (
-        <View className="flex-row items-center" style={{ gap: wp(8), marginTop: hp(2) }}>
+        <View className="flex-row items-center justify-center" style={{ gap: wp(8), marginTop: hp(2) }}>
           <ActivityIndicator color={COLORS.primary} />
           <Text
             style={{
