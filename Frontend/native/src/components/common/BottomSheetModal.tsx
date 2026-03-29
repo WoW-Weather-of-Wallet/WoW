@@ -1,21 +1,6 @@
-import React, {
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react';
-import {
-  Animated,
-  Dimensions,
-  Modal,
-  PanResponder,
-  Pressable,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import React, { PropsWithChildren } from 'react';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import Modal from 'react-native-modal';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -52,224 +37,144 @@ export default function BottomSheetModal({
   children,
 }: BottomSheetModalProps) {
   const insets = useSafeAreaInsets();
-  const screenHeight = Dimensions.get('window').height;
-  const hiddenOffset = screenHeight;
-  const translateY = useRef(new Animated.Value(hiddenOffset)).current;
-
-  useEffect(() => {
-    if (visible) {
-      translateY.setValue(hiddenOffset);
-      Animated.spring(translateY, {
-        toValue: 0,
-        damping: 18,
-        stiffness: 180,
-        mass: 0.8,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [hiddenOffset, translateY, visible]);
-
-  const animateClose = useCallback(() => {
-    Animated.timing(translateY, {
-      toValue: hiddenOffset,
-      duration: 220,
-      useNativeDriver: true,
-    }).start(({ finished }) => {
-      if (finished) {
-        translateY.setValue(hiddenOffset);
-        onClose();
-      }
-    });
-  }, [hiddenOffset, onClose, translateY]);
-
-  const restorePosition = useCallback(() => {
-    Animated.spring(translateY, {
-      toValue: 0,
-      damping: 18,
-      stiffness: 180,
-      mass: 0.8,
-      useNativeDriver: true,
-    }).start();
-  }, [translateY]);
-
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponderCapture: (_, gestureState) =>
-          enableSwipeToClose &&
-          gestureState.dy > 8 &&
-          Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
-        onMoveShouldSetPanResponder: (_, gestureState) =>
-          enableSwipeToClose &&
-          gestureState.dy > 8 &&
-          Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
-        onPanResponderMove: (_, gestureState) => {
-          translateY.setValue(Math.max(0, gestureState.dy));
-        },
-        onPanResponderRelease: (_, gestureState) => {
-          if (gestureState.dy > hp(12) || gestureState.vy > 1.15) {
-            animateClose();
-            return;
-          }
-
-          restorePosition();
-        },
-        onPanResponderTerminate: restorePosition,
-      }),
-    [animateClose, enableSwipeToClose, restorePosition, translateY],
-  );
-
-  const handlePanHandlers = enableSwipeToClose ? panResponder.panHandlers : {};
-
-  const headerBlock = (
-    <View
-      style={{ paddingBottom: hp(4) }}
-      {...(enableSwipeToClose && swipeArea === 'header' ? panResponder.panHandlers : {})}
-    >
-      {showHandle ? (
-        <View
-          className="self-center items-center justify-center"
-          style={{
-            paddingHorizontal: wp(18),
-            paddingVertical: hp(10),
-            marginBottom: hp(8),
-          }}
-          {...handlePanHandlers}
-        >
-          <View
-            style={{
-              width: wp(42),
-              height: hp(6),
-              borderRadius: RADIUS.full,
-              backgroundColor: COLORS.modalHandle,
-            }}
-          />
-        </View>
-      ) : null}
-
-      {title || subtitle ? (
-        <View
-          className="flex-row items-start justify-between"
-          style={{ gap: wp(12), marginBottom: hp(18) }}
-        >
-          <View className="flex-1">
-            {title ? (
-              <Text
-                style={{
-                  fontSize: fp(24),
-                  fontFamily: FONTS.bold,
-                  color: COLORS.textPrimary,
-                }}
-              >
-                {title}
-              </Text>
-            ) : null}
-            {subtitle ? (
-              <Text
-                style={{
-                  marginTop: hp(6),
-                  fontSize: fp(14),
-                  fontFamily: FONTS.medium,
-                  color: COLORS.textSecondary,
-                }}
-              >
-                {subtitle}
-              </Text>
-            ) : null}
-          </View>
-          {showCloseButton ? (
-            <TouchableOpacity
-              activeOpacity={0.86}
-              className="items-center justify-center"
-              style={{
-                width: wp(34),
-                height: wp(34),
-                borderRadius: wp(17),
-                backgroundColor: COLORS.backgroundSecondary,
-              }}
-              onPress={animateClose}
-              accessibilityRole="button"
-              accessibilityLabel="바텀시트 닫기"
-            >
-              <Ionicons
-                name="close"
-                size={wp(18)}
-                color={COLORS.textSecondary}
-              />
-            </TouchableOpacity>
-          ) : null}
-        </View>
-      ) : showCloseButton ? (
-        <View className="items-end" style={{ marginBottom: hp(12) }}>
-          <TouchableOpacity
-            activeOpacity={0.86}
-            className="items-center justify-center"
-            style={{
-              width: wp(34),
-              height: wp(34),
-              borderRadius: wp(17),
-              backgroundColor: COLORS.backgroundSecondary,
-            }}
-            onPress={animateClose}
-            accessibilityRole="button"
-            accessibilityLabel="바텀시트 닫기"
-          >
-            <Ionicons
-              name="close"
-              size={wp(18)}
-              color={COLORS.textSecondary}
-            />
-          </TouchableOpacity>
-        </View>
-      ) : null}
-    </View>
-  );
+  const shouldPropagateSwipe = scrollable || swipeArea === 'sheet';
 
   return (
     <Modal
-      transparent
-      animationType="none"
-      visible={visible}
-      onRequestClose={animateClose}
-      accessibilityViewIsModal
+      isVisible={visible}
+      style={{ justifyContent: 'flex-end', margin: 0 }}
+      backdropOpacity={0.5}
+      backdropColor={COLORS.black}
+      onBackdropPress={onClose}
+      onBackButtonPress={onClose}
+      onSwipeComplete={enableSwipeToClose ? onClose : undefined}
+      swipeDirection={enableSwipeToClose ? ['down'] : undefined}
+      swipeThreshold={hp(18)}
+      propagateSwipe={shouldPropagateSwipe}
+      useNativeDriverForBackdrop
+      hideModalContentWhileAnimating
+      avoidKeyboard
     >
       <View
-        className="flex-1 justify-end"
-        style={{ backgroundColor: COLORS.modalOverlay }}
+        style={{
+          backgroundColor: COLORS.background,
+          borderTopLeftRadius: RADIUS.xxl,
+          borderTopRightRadius: RADIUS.xxl,
+          paddingHorizontal: wp(20),
+          paddingTop: hp(18),
+          paddingBottom: insets.bottom + hp(18),
+          maxHeight: '88%',
+        }}
       >
-        <Pressable
-          className="w-full flex-1"
-          onPress={animateClose}
-          accessibilityRole="button"
-          accessibilityLabel="바텀시트 배경 닫기"
-        />
-        <Animated.View
-          {...(enableSwipeToClose && swipeArea === 'sheet' ? panResponder.panHandlers : {})}
-          style={{
-            backgroundColor: COLORS.background,
-            borderTopLeftRadius: RADIUS.xxl,
-            borderTopRightRadius: RADIUS.xxl,
-            paddingHorizontal: wp(20),
-            paddingTop: hp(18),
-            paddingBottom: insets.bottom + hp(18),
-            maxHeight: '88%',
-            transform: [{ translateY }],
-          }}
-        >
-          {headerBlock}
-
-          {scrollable ? (
-            <ScrollView
-              bounces={false}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: hp(4) }}
+        <View style={{ paddingBottom: hp(4) }}>
+          {showHandle ? (
+            <View
+              className="self-center items-center justify-center"
+              style={{
+                paddingHorizontal: wp(18),
+                paddingVertical: hp(10),
+                marginBottom: hp(8),
+              }}
             >
-              {children}
-            </ScrollView>
-          ) : (
-            children
-          )}
-        </Animated.View>
+              <View
+                style={{
+                  width: wp(42),
+                  height: hp(6),
+                  borderRadius: RADIUS.full,
+                  backgroundColor: COLORS.modalHandle,
+                }}
+              />
+            </View>
+          ) : null}
+
+          {title || subtitle ? (
+            <View
+              className="flex-row items-start justify-between"
+              style={{ gap: wp(12), marginBottom: hp(18) }}
+            >
+              <View className="flex-1">
+                {title ? (
+                  <Text
+                    style={{
+                      fontSize: fp(24),
+                      fontFamily: FONTS.bold,
+                      color: COLORS.textPrimary,
+                    }}
+                  >
+                    {title}
+                  </Text>
+                ) : null}
+                {subtitle ? (
+                  <Text
+                    style={{
+                      marginTop: hp(6),
+                      fontSize: fp(14),
+                      fontFamily: FONTS.medium,
+                      color: COLORS.textSecondary,
+                    }}
+                  >
+                    {subtitle}
+                  </Text>
+                ) : null}
+              </View>
+              {showCloseButton ? (
+                <TouchableOpacity
+                  activeOpacity={0.86}
+                  className="items-center justify-center"
+                  style={{
+                    width: wp(34),
+                    height: wp(34),
+                    borderRadius: wp(17),
+                    backgroundColor: COLORS.backgroundSecondary,
+                  }}
+                  onPress={onClose}
+                  accessibilityRole="button"
+                  accessibilityLabel="바텀시트 닫기"
+                >
+                  <Ionicons
+                    name="close"
+                    size={wp(18)}
+                    color={COLORS.textSecondary}
+                  />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          ) : showCloseButton ? (
+            <View className="items-end" style={{ marginBottom: hp(12) }}>
+              <TouchableOpacity
+                activeOpacity={0.86}
+                className="items-center justify-center"
+                style={{
+                  width: wp(34),
+                  height: wp(34),
+                  borderRadius: wp(17),
+                  backgroundColor: COLORS.backgroundSecondary,
+                }}
+                onPress={onClose}
+                accessibilityRole="button"
+                accessibilityLabel="바텀시트 닫기"
+              >
+                <Ionicons
+                  name="close"
+                  size={wp(18)}
+                  color={COLORS.textSecondary}
+                />
+              </TouchableOpacity>
+            </View>
+          ) : null}
+        </View>
+
+        {scrollable ? (
+          <ScrollView
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: hp(4) }}
+          >
+            {children}
+          </ScrollView>
+        ) : (
+          children
+        )}
       </View>
     </Modal>
   );
