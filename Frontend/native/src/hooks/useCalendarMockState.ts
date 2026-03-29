@@ -17,6 +17,7 @@ import {
   createDisplayedMonth,
   extractCategoryFromSubtitle,
   formatMonthLabel,
+  resolveDisplayedMonthOffset,
   type ManageFixedExpenseItem,
   CATEGORY_META,
 } from '../constants/calendar/state';
@@ -497,6 +498,22 @@ export function useCalendarMockState() {
 
   function handleMoveMonth(direction: 'prev' | 'next') {
     setDisplayedMonthOffset((current) => current + (direction === 'next' ? 1 : -1));
+  }
+
+  function handleJumpToDate(dateKey: string) {
+    const [year, month, day] = dateKey.split('-').map(Number);
+
+    if (!year || !month || !day) {
+      return;
+    }
+
+    const targetDate = new Date(year, month - 1, day);
+    if (Number.isNaN(targetDate.getTime())) {
+      return;
+    }
+
+    setDisplayedMonthOffset(resolveDisplayedMonthOffset(targetDate));
+    setSelectedDateKey(null);
   }
 
   function handleToggleFixedExpenseExpand(id: string) {
@@ -984,6 +1001,7 @@ export function useCalendarMockState() {
     emptyHistoryTitle: `${monthLabel}에는 아직 등록된 거래가 없어요`,
     emptyHistoryDescription: '직접 입력하거나 파일을 업로드하면 이달 소비 내역이 여기에 정리돼요.',
     handleMoveMonth,
+    handleJumpToDate,
     handleToggleFixedExpenseExpand,
     setActiveTab,
     setSelectedDateKey,

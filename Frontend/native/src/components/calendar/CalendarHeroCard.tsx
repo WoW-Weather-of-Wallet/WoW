@@ -17,6 +17,7 @@ interface CalendarHeroCardProps {
   headerErrorMessage: string | null;
   onPressPrevMonth: () => void;
   onPressNextMonth: () => void;
+  onPressMonthLabel?: () => void;
   onPressAdd?: () => void;
   onPressInfo?: () => void;
 }
@@ -29,6 +30,7 @@ export default function CalendarHeroCard({
   headerErrorMessage,
   onPressPrevMonth,
   onPressNextMonth,
+  onPressMonthLabel,
   onPressAdd,
   onPressInfo,
 }: CalendarHeroCardProps) {
@@ -73,16 +75,18 @@ export default function CalendarHeroCard({
         >
           <Ionicons name="chevron-back" size={wp(18)} color={COLORS.white} />
         </TouchableOpacity>
-        <Text
-          style={{
-            fontSize: TYPOGRAPHY.title.fontSize,
-            lineHeight: TYPOGRAPHY.title.lineHeight,
-            fontFamily: FONTS.bold,
-            color: COLORS.white,
-          }}
-        >
-          {monthLabel}
-        </Text>
+        <TouchableOpacity activeOpacity={0.85} onPress={onPressMonthLabel}>
+          <Text
+            style={{
+              fontSize: TYPOGRAPHY.title.fontSize,
+              lineHeight: TYPOGRAPHY.title.lineHeight,
+              fontFamily: FONTS.bold,
+              color: COLORS.white,
+            }}
+          >
+            {monthLabel}
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity
           activeOpacity={0.85}
           className="items-center justify-center"

@@ -19,6 +19,7 @@ interface CalendarTopDockContentProps {
   onChangeTab: (tab: CalendarTabKey) => void;
   onPressPrevMonth: () => void;
   onPressNextMonth: () => void;
+  onPressMonthLabel?: () => void;
   onPressAdd: () => void;
   onPressInfo: () => void;
   showDataSourceNotice?: boolean;
@@ -36,6 +37,7 @@ export default function CalendarTopDockContent({
   onChangeTab,
   onPressPrevMonth,
   onPressNextMonth,
+  onPressMonthLabel,
   onPressAdd,
   onPressInfo,
   showDataSourceNotice = false,
@@ -59,6 +61,7 @@ export default function CalendarTopDockContent({
         headerErrorMessage={headerErrorMessage}
         onPressPrevMonth={onPressPrevMonth}
         onPressNextMonth={onPressNextMonth}
+        onPressMonthLabel={onPressMonthLabel}
         onPressAdd={onPressAdd}
         onPressInfo={onPressInfo}
       />

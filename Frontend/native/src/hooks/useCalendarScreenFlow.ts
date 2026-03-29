@@ -5,6 +5,7 @@ import { useCalendarMockState } from './useCalendarMockState';
 
 export function useCalendarScreenFlow() {
   const [isGuideVisible, setIsGuideVisible] = React.useState(false);
+  const [isMonthPickerVisible, setIsMonthPickerVisible] = React.useState(false);
   const route = useRoute<MainTabRouteProp<'Calendar'>>();
   const navigation = useNavigation<MainTabNavigationProp<'Calendar'>>();
   const calendarState = useCalendarMockState();
@@ -28,11 +29,29 @@ export function useCalendarScreenFlow() {
     calendarState.setIsAddEntryVisible(true);
   }, [calendarState.setIsAddEntryVisible]);
 
+  const handleOpenMonthPicker = React.useCallback(() => {
+    setIsMonthPickerVisible(true);
+  }, []);
+
+  const handleCloseMonthPicker = React.useCallback(() => {
+    setIsMonthPickerVisible(false);
+  }, []);
+
+  const handleSelectCalendarDate = React.useCallback((dateKey: string) => {
+    calendarState.handleJumpToDate(dateKey);
+    setIsMonthPickerVisible(false);
+  }, [calendarState.handleJumpToDate]);
+
   return {
     ...calendarState,
     isGuideVisible,
+    isMonthPickerVisible,
+    calendarPickerDateKey: calendarState.selectedDateKey ?? calendarState.defaultAddEntryDateKey,
     handleOpenGuide,
     handleCloseGuide,
     handleOpenAddEntry,
+    handleOpenMonthPicker,
+    handleCloseMonthPicker,
+    handleSelectCalendarDate,
   };
 }

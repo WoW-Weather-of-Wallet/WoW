@@ -4,6 +4,7 @@ import { useCalendarScreenFlow, useResponsiveLayoutMode } from '../../hooks';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import {
   CalendarAddEntrySheet,
+  CalendarDatePickerSheet,
   CalendarDayDetailSheet,
   CalendarGuideModal,
   CalendarMonthCard,
@@ -71,9 +72,14 @@ export default function CalendarScreen() {
     handleSaveExcelEntries,
     handleSaveMemo,
     isGuideVisible,
+    isMonthPickerVisible,
+    calendarPickerDateKey,
     handleOpenGuide,
     handleCloseGuide,
     handleOpenAddEntry,
+    handleOpenMonthPicker,
+    handleCloseMonthPicker,
+    handleSelectCalendarDate,
   } = useCalendarScreenFlow();
 
   return (
@@ -97,6 +103,7 @@ export default function CalendarScreen() {
             onChangeTab={setActiveTab}
             onPressPrevMonth={() => handleMoveMonth('prev')}
             onPressNextMonth={() => handleMoveMonth('next')}
+            onPressMonthLabel={handleOpenMonthPicker}
             onPressAdd={handleOpenAddEntry}
             onPressInfo={handleOpenGuide}
             noticeStyle={{ marginBottom: isCompact ? hp(10) : hp(12) }}
@@ -148,6 +155,14 @@ export default function CalendarScreen() {
         onClose={() => setIsAddEntryVisible(false)}
         onCompleteManualEntries={handleSaveManualEntries}
         onCompleteExcelEntries={handleSaveExcelEntries}
+      />
+
+      <CalendarDatePickerSheet
+        visible={isMonthPickerVisible}
+        initialDateKey={calendarPickerDateKey}
+        title="날짜 이동"
+        onClose={handleCloseMonthPicker}
+        onSelectDate={handleSelectCalendarDate}
       />
 
       <CalendarDayDetailSheet

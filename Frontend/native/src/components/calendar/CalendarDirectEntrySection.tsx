@@ -23,6 +23,7 @@ interface CalendarDirectEntrySectionProps {
   isAddEnabled: boolean;
   isConfirmLoading: boolean;
   onChangeDateKey: (value: string) => void;
+  onOpenDatePicker: () => void;
   onSelectCategory: (value: CalendarEntryCategoryKey | null) => void;
   onSelectPaymentMethod: (value: ManualEntryPaymentMethod | null) => void;
   onChangeMerchantName: (value: string) => void;
@@ -68,6 +69,7 @@ export default function CalendarDirectEntrySection({
   isAddEnabled,
   isConfirmLoading,
   onChangeDateKey,
+  onOpenDatePicker,
   onSelectCategory,
   onSelectPaymentMethod,
   onChangeMerchantName,
@@ -96,7 +98,18 @@ export default function CalendarDirectEntrySection({
           placeholder="YYYY-MM-DD"
           placeholderTextColor={COLORS.textTertiary}
         />
-        <Ionicons name="calendar-outline" size={wp(20)} color={COLORS.textSecondary} />
+        <TouchableOpacity
+          activeOpacity={0.86}
+          className="items-center justify-center"
+          style={{
+            width: wp(28),
+            height: wp(28),
+            borderRadius: wp(14),
+          }}
+          onPress={onOpenDatePicker}
+        >
+          <Ionicons name="calendar-outline" size={wp(20)} color={COLORS.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       {draftEntries.length > 0 ? (

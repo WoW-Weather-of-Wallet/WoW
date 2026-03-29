@@ -24,6 +24,7 @@ import {
   mergeUploadGroupsWithBackendItems as mergeCalendarUploadGroupsWithBackendItems,
 } from '../../utils/calendarAddEntry';
 import ExcelUploadGuideModal from './ExcelUploadGuideModal';
+import CalendarDatePickerSheet from './CalendarDatePickerSheet';
 import CalendarDirectEntrySection from './CalendarDirectEntrySection';
 import CalendarEntryModeToggle from './CalendarEntryModeToggle';
 import CalendarExcelUploadSection from './CalendarExcelUploadSection';
@@ -85,6 +86,7 @@ export default function CalendarAddEntrySheet({
   const [confirmErrorMessage, setConfirmErrorMessage] = useState<string | null>(null);
   const [isConfirmLoading, setIsConfirmLoading] = useState(false);
   const [isExcelGuideVisible, setIsExcelGuideVisible] = useState(false);
+  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
   const handleOpenExcelGuide = useCallback(() => {
     setIsExcelGuideVisible(true);
@@ -107,6 +109,7 @@ export default function CalendarAddEntrySheet({
     setIsBackendSummaryLoading(false);
     setConfirmErrorMessage(null);
     setIsConfirmLoading(false);
+    setIsDatePickerVisible(false);
   }, [visible]);
 
   const selectedUploadItem = useMemo(() => {
@@ -318,6 +321,16 @@ export default function CalendarAddEntrySheet({
   return (
     <>
       <ExcelUploadGuideModal visible={isExcelGuideVisible} onClose={handleExcelGuideClose} />
+      <CalendarDatePickerSheet
+        visible={isDatePickerVisible}
+        initialDateKey={dateKey}
+        title="날짜 선택"
+        onClose={() => setIsDatePickerVisible(false)}
+        onSelectDate={(nextDateKey) => {
+          setDateKey(nextDateKey);
+          setIsDatePickerVisible(false);
+        }}
+      />
 
       <BottomSheetModal
         visible={visible}
@@ -342,6 +355,7 @@ export default function CalendarAddEntrySheet({
               isAddEnabled={isAddEnabled}
               isConfirmLoading={isConfirmLoading}
               onChangeDateKey={setDateKey}
+              onOpenDatePicker={() => setIsDatePickerVisible(true)}
               onSelectCategory={setSelectedCategory}
               onSelectPaymentMethod={setSelectedPaymentMethod}
               onChangeMerchantName={setMerchantName}

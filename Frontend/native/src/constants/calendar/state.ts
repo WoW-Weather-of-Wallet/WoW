@@ -95,6 +95,13 @@ export function createDisplayedMonth(offset: number) {
   return new Date(BASE_MONTH_DATE.getFullYear(), BASE_MONTH_DATE.getMonth() + offset, 1);
 }
 
+export function resolveDisplayedMonthOffset(targetDate: Date) {
+  return (
+    (targetDate.getFullYear() - BASE_MONTH_DATE.getFullYear()) * 12
+    + (targetDate.getMonth() - BASE_MONTH_DATE.getMonth())
+  );
+}
+
 export function formatMonthLabel(date: Date) {
   return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
 }
