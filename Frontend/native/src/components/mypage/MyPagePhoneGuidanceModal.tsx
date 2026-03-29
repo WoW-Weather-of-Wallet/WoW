@@ -50,7 +50,7 @@ export default function MyPagePhoneGuidanceModal({
               marginBottom: hp(2),
             }}
           >
-            현재 등록된 번호를 먼저 확인한 뒤, 새 번호로 본인 인증을 진행해 주세요.
+            현재 등록된 번호를 확인한 뒤, 새 휴대폰 번호로 바로 변경을 진행해 주세요.
           </Text>
 
           <View
@@ -103,7 +103,7 @@ export default function MyPagePhoneGuidanceModal({
                 textAlign: 'left',
               }}
             >
-              현재 번호로 인증번호를 받아 본인 확인이 완료되면 번호를 변경할 수 있어요.
+              새 휴대폰 번호로 인증을 진행하면 번호를 바로 변경할 수 있어요.
             </Text>
             <Text
               style={{
@@ -157,7 +157,7 @@ export default function MyPagePhoneGuidanceModal({
                   color: COLORS.textInverse,
                 }}
               >
-                본인 인증하기
+                휴대폰 번호 변경
               </Text>
             </TouchableOpacity>
           </View>

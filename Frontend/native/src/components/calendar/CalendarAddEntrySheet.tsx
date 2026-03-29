@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
-import { View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 import BottomSheetModal from '../common/BottomSheetModal';
 import type { CalendarEntryCategoryKey } from '../../constants/calendar/addEntry';
 import {
@@ -53,6 +53,8 @@ export default function CalendarAddEntrySheet({
   onCompleteManualEntries,
   onCompleteExcelEntries,
 }: CalendarAddEntrySheetProps) {
+  const screenHeight = Dimensions.get('window').height;
+  const sheetBodyHeight = Math.min(hp(620), screenHeight * 0.74);
   const {
     activeMode,
     dateKey,
@@ -340,7 +342,7 @@ export default function CalendarAddEntrySheet({
         swipeArea="sheet"
         subtitle=""
       >
-        <View style={{ maxHeight: hp(620) }}>
+        <View style={{ height: sheetBodyHeight, minHeight: hp(420) }}>
           <CalendarEntryModeToggle activeMode={activeMode} onChangeMode={setActiveMode} />
 
           {activeMode === 'direct' ? (

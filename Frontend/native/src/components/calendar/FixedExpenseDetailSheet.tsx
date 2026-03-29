@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import BottomSheetModal from '../common/BottomSheetModal';
 import CustomTextInput from '../common/CustomTextInput';
 import { useFixedExpenseDetailForm, type FixedExpenseDetailItem } from '../../hooks';
@@ -29,6 +29,8 @@ export default function FixedExpenseDetailSheet({
   onClose,
   onSubmit,
 }: FixedExpenseDetailSheetProps) {
+  const screenHeight = Dimensions.get('window').height;
+  const sheetBodyHeight = Math.min(hp(500), screenHeight * 0.62);
   const {
     isEditMode,
     resolvedCategory,
@@ -62,114 +64,134 @@ export default function FixedExpenseDetailSheet({
       onClose={onClose}
       title={sheetTitle}
       subtitle={sheetSubtitle}
+      scrollable={false}
+      swipeArea="sheet"
     >
-      <FixedExpenseSelectedSummaryCard item={item} />
+      <View style={{ height: sheetBodyHeight, minHeight: hp(320) }}>
+        <ScrollView
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ gap: hp(18), paddingBottom: hp(16) }}
+        >
+          <FixedExpenseSelectedSummaryCard item={item} />
 
-      <View
-        style={{
-          borderRadius: RADIUS.xl,
-          backgroundColor: COLORS.aiHintBackground,
-          paddingHorizontal: wp(14),
-          paddingVertical: hp(12),
-          marginBottom: hp(18),
-        }}
-      >
-        <Text
+          <View
+            style={{
+              borderRadius: RADIUS.xl,
+              backgroundColor: COLORS.aiHintBackground,
+              paddingHorizontal: wp(14),
+              paddingVertical: hp(12),
+            }}
+          >
+            <Text
+              style={{
+                fontSize: fp(14),
+                fontFamily: FONTS.semiBold,
+                color: COLORS.aiHintTitle,
+              }}
+            >
+              {aiHintTitle}
+            </Text>
+            <Text
+              style={{
+                marginTop: hp(6),
+                fontSize: fp(12),
+                fontFamily: FONTS.medium,
+                color: COLORS.aiHintText,
+                lineHeight: fp(18),
+              }}
+            >
+              {aiHintText}
+            </Text>
+          </View>
+
+          {isEditMode ? (
+            <>
+              <FixedExpenseReadonlyInfoCard
+                title={item.title}
+                category={resolvedCategory}
+              />
+
+              <View>
+                <Text
+                  style={{
+                    fontSize: fp(16),
+                    fontFamily: FONTS.bold,
+                    color: COLORS.textPrimary,
+                    marginBottom: hp(12),
+                  }}
+                >
+                  {'\uAE08\uC561'}
+                </Text>
+                <CustomTextInput
+                  label={'\uC218\uC815\uD560 \uAE08\uC561\uC744 \uC785\uB825\uD574 \uC8FC\uC138\uC694'}
+                  value={amountInput}
+                  onChangeText={handleChangeAmountInput}
+                  keyboardType="number-pad"
+                  containerStyle={{ marginBottom: hp(8) }}
+                />
+                <Text
+                  style={{
+                    textAlign: 'right',
+                    fontSize: fp(13),
+                    fontFamily: FONTS.semiBold,
+                    color: COLORS.textSecondary,
+                  }}
+                >
+                  {`${amountPreviewLabel}\uC6D0`}
+                </Text>
+              </View>
+            </>
+          ) : null}
+
+          <View>
+            <Text
+              style={{
+                fontSize: fp(16),
+                fontFamily: FONTS.bold,
+                color: COLORS.textPrimary,
+                marginBottom: hp(12),
+              }}
+            >
+              {'\uB0A9\uBD80\uC77C'}
+            </Text>
+            <FixedExpensePaymentDayStepper
+              paymentDay={paymentDay}
+              onDecrease={decreasePaymentDay}
+              onIncrease={increasePaymentDay}
+            />
+          </View>
+        </ScrollView>
+
+        <View
           style={{
-            fontSize: fp(14),
-            fontFamily: FONTS.semiBold,
-            color: COLORS.aiHintTitle,
+            paddingTop: hp(12),
+            borderTopWidth: 1,
+            borderTopColor: COLORS.gray100,
           }}
         >
-          {aiHintTitle}
-        </Text>
-        <Text
-          style={{
-            marginTop: hp(6),
-            fontSize: fp(12),
-            fontFamily: FONTS.medium,
-            color: COLORS.aiHintText,
-            lineHeight: fp(18),
-          }}
-        >
-          {aiHintText}
-        </Text>
+          <TouchableOpacity
+            activeOpacity={0.88}
+            className="items-center justify-center"
+            style={{
+              borderRadius: RADIUS.xl,
+              backgroundColor: COLORS.primary,
+              paddingVertical: hp(16),
+            }}
+            onPress={handleSubmit}
+          >
+            <Text
+              style={{
+                fontSize: fp(16),
+                fontFamily: FONTS.bold,
+                color: COLORS.textInverse,
+              }}
+            >
+              {submitLabel}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-
-      {isEditMode ? (
-        <>
-          <FixedExpenseReadonlyInfoCard
-            title={item.title}
-            category={resolvedCategory}
-          />
-
-          <Text
-            style={{
-              fontSize: fp(16),
-              fontFamily: FONTS.bold,
-              color: COLORS.textPrimary,
-              marginBottom: hp(12),
-            }}
-          >
-            {'\uAE08\uC561'}
-          </Text>
-          <CustomTextInput
-            label={'\uC218\uC815\uD560 \uAE08\uC561\uC744 \uC785\uB825\uD574 \uC8FC\uC138\uC694'}
-            value={amountInput}
-            onChangeText={handleChangeAmountInput}
-            keyboardType="number-pad"
-            containerStyle={{ marginBottom: hp(8) }}
-          />
-          <Text
-            style={{
-              marginBottom: hp(18),
-              textAlign: 'right',
-              fontSize: fp(13),
-              fontFamily: FONTS.semiBold,
-              color: COLORS.textSecondary,
-            }}
-          >
-            {`${amountPreviewLabel}\uC6D0`}
-          </Text>
-        </>
-      ) : null}
-
-      <Text
-        style={{
-          fontSize: fp(16),
-          fontFamily: FONTS.bold,
-          color: COLORS.textPrimary,
-          marginBottom: hp(12),
-        }}
-      >
-        {'\uB0A9\uBD80\uC77C'}
-      </Text>
-      <FixedExpensePaymentDayStepper
-        paymentDay={paymentDay}
-        onDecrease={decreasePaymentDay}
-        onIncrease={increasePaymentDay}
-      />
-
-      <TouchableOpacity
-        activeOpacity={0.88}
-        className="items-center justify-center"
-        style={{
-          borderRadius: RADIUS.xl,
-          backgroundColor: COLORS.primary,
-          paddingVertical: hp(16),
-        }}
-        onPress={handleSubmit}
-      >
-        <Text
-          style={{
-            fontSize: fp(16),
-            fontFamily: FONTS.bold,
-            color: COLORS.textInverse,
-          }}
-        >
-          {submitLabel}
-        </Text>
-      </TouchableOpacity>
     </BottomSheetModal>
   );
 }

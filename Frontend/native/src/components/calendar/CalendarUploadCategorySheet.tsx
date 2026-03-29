@@ -27,6 +27,7 @@ export default function CalendarUploadCategorySheet({
         selectedItem ? `${selectedItem.merchantName} / ${selectedItem.amount.toLocaleString()}원` : ''
       }
       scrollable={false}
+      swipeArea="sheet"
     >
       <View style={{ paddingBottom: hp(4) }}>
         <View

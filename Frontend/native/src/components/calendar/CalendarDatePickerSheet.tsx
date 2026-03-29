@@ -99,6 +99,7 @@ export default function CalendarDatePickerSheet({
       title={title}
       scrollable={false}
       showCloseButton={false}
+      swipeArea="sheet"
     >
       <View
         style={{

@@ -79,288 +79,300 @@ export default function CalendarExcelUploadSection({
   onPressItem,
   onComplete,
 }: CalendarExcelUploadSectionProps) {
-  return (
-    <ScrollView
-      bounces={false}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ gap: hp(16), paddingBottom: hp(32) }}
-    >
-      <View
-        className="flex-row"
-        style={{
-          gap: wp(14),
-          backgroundColor: COLORS.draftCardBackground,
-          borderRadius: RADIUS.xl,
-          padding: wp(16),
-        }}
-      >
-        <View className="items-center" style={{ width: wp(36), paddingTop: hp(2) }}>
-          <Ionicons name="document-text-outline" size={wp(24)} color={COLORS.excelIconGold} />
-        </View>
-        <View className="flex-1">
-          <View className="flex-row items-center" style={{ gap: wp(6), marginBottom: hp(6) }}>
-            <Text
-              style={{
-                fontSize: fp(20),
-                fontFamily: FONTS.bold,
-                color: COLORS.textPrimary,
-              }}
-            >
-              엑셀 파일 업로드
-            </Text>
-            <TouchableOpacity activeOpacity={0.7} onPress={onOpenGuide} style={{ padding: wp(4) }}>
-              <Ionicons
-                name="information-circle-outline"
-                size={wp(16)}
-                color={COLORS.textSecondary}
-              />
-            </TouchableOpacity>
-          </View>
-          <Text
-            style={{
-              fontSize: fp(14),
-              lineHeight: fp(22),
-              fontFamily: FONTS.medium,
-              color: COLORS.textSecondary,
-            }}
-          >
-            카드 CSV나 은행 엑셀 파일을 올리면 거래를 분석해서 날짜별 내역으로 정리해드립니다.
-          </Text>
-        </View>
-      </View>
+  const isCompleteDisabled = hasPendingCategories || !hasUploadEntries || isConfirmLoading;
 
-      <View style={{ gap: hp(10) }}>
-        <Text
+  return (
+    <View style={{ flex: 1, minHeight: 0 }}>
+      <ScrollView
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ gap: hp(16), paddingBottom: hp(20) }}
+      >
+        <View
+          className="flex-row"
           style={{
-            fontSize: fp(14),
-            fontFamily: FONTS.bold,
-            color: COLORS.textSecondary,
+            gap: wp(14),
+            backgroundColor: COLORS.draftCardBackground,
+            borderRadius: RADIUS.xl,
+            padding: wp(16),
           }}
         >
-          지원 기관
-        </Text>
-        <View className="flex-row flex-wrap" style={{ gap: wp(8) }}>
-          {CALENDAR_EXCEL_BANKS.map((bank) => (
-            <View
-              key={bank}
-              style={{
-                borderRadius: RADIUS.full,
-                backgroundColor: COLORS.bankChipBackground,
-                paddingHorizontal: wp(10),
-                paddingVertical: hp(5),
-              }}
-            >
+          <View className="items-center" style={{ width: wp(36), paddingTop: hp(2) }}>
+            <Ionicons name="document-text-outline" size={wp(24)} color={COLORS.excelIconGold} />
+          </View>
+          <View className="flex-1">
+            <View className="flex-row items-center" style={{ gap: wp(6), marginBottom: hp(6) }}>
               <Text
                 style={{
-                  fontSize: fp(12),
-                  fontFamily: FONTS.semiBold,
-                  color: COLORS.primary,
+                  fontSize: fp(20),
+                  fontFamily: FONTS.bold,
+                  color: COLORS.textPrimary,
                 }}
               >
-                {bank}
+                엑셀 파일 업로드
               </Text>
+              <TouchableOpacity activeOpacity={0.7} onPress={onOpenGuide} style={{ padding: wp(4) }}>
+                <Ionicons
+                  name="information-circle-outline"
+                  size={wp(16)}
+                  color={COLORS.textSecondary}
+                />
+              </TouchableOpacity>
             </View>
-          ))}
-        </View>
-      </View>
-
-      <TouchableOpacity
-        activeOpacity={0.88}
-        className="items-center justify-center"
-        style={{
-          borderWidth: 1.5,
-          borderStyle: 'dashed',
-          borderColor: COLORS.uploadBoxBorder,
-          borderRadius: RADIUS.xl,
-          backgroundColor: COLORS.uploadBoxBackground,
-          paddingHorizontal: wp(20),
-          paddingVertical: hp(34),
-        }}
-        onPress={onPickFile}
-      >
-        <Ionicons name="folder-open" size={wp(40)} color="#E2C35A" />
-        <Text
-          style={{
-            marginTop: hp(14),
-            fontSize: fp(22),
-            fontFamily: FONTS.bold,
-            color: COLORS.textPrimary,
-            textAlign: 'center',
-          }}
-        >
-          {selectedExcelFile ? selectedExcelFile.name : '업로드할 파일을 선택해주세요'}
-        </Text>
-        <Text
-          style={{
-            marginTop: hp(6),
-            fontSize: fp(14),
-            fontFamily: FONTS.medium,
-            color: COLORS.textSecondary,
-            textAlign: 'center',
-          }}
-        >
-          {selectedExcelFile
-            ? buildCalendarFileSummary(selectedExcelFile)
-            : '.xlsx, .csv, .xls 형식을 지원합니다'}
-        </Text>
-      </TouchableOpacity>
-
-      <View
-        className="flex-row items-center"
-        style={{
-          gap: wp(8),
-          borderRadius: RADIUS.lg,
-          backgroundColor: COLORS.noticeBackground,
-          paddingHorizontal: wp(14),
-          paddingVertical: hp(12),
-        }}
-      >
-        <Ionicons name="bulb-outline" size={wp(14)} color="#D2A645" />
-        <Text
-          style={{
-            flex: 1,
-            fontSize: fp(13),
-            lineHeight: fp(19),
-            fontFamily: FONTS.medium,
-            color: COLORS.noticeText,
-          }}
-        >
-          자동 분류가 어려운 항목은 직접 카테고리를 지정한 뒤 저장할 수 있습니다.
-        </Text>
-      </View>
-
-      {selectedExcelFile ? (
-        <View
-          style={{
-            borderRadius: RADIUS.xl,
-            backgroundColor: COLORS.draftCardBackground,
-            paddingHorizontal: wp(16),
-            paddingVertical: hp(14),
-          }}
-        >
-          <View className="flex-row items-center" style={{ gap: wp(6), marginBottom: hp(8) }}>
-            <Ionicons name="checkmark-circle" size={wp(18)} color={COLORS.successGreen} />
             <Text
               style={{
                 fontSize: fp(14),
-                fontFamily: FONTS.bold,
-                color: COLORS.successGreen,
+                lineHeight: fp(22),
+                fontFamily: FONTS.medium,
+                color: COLORS.textSecondary,
               }}
             >
-              선택된 파일
+              카드 CSV나 은행 엑셀 파일을 올리면 거래를 분석해서 날짜별 내역으로 정리해드립니다.
             </Text>
           </View>
+        </View>
+
+        <View style={{ gap: hp(10) }}>
           <Text
             style={{
-              fontSize: fp(16),
+              fontSize: fp(14),
               fontFamily: FONTS.bold,
-              color: COLORS.textPrimary,
-              marginBottom: hp(6),
-            }}
-          >
-            {selectedExcelFile.name}
-          </Text>
-          <Text
-            style={{
-              fontSize: fp(12),
-              fontFamily: FONTS.medium,
               color: COLORS.textSecondary,
             }}
           >
-            {buildCalendarFileSummary(selectedExcelFile)}
+            지원 기관
           </Text>
+          <View className="flex-row flex-wrap" style={{ gap: wp(8) }}>
+            {CALENDAR_EXCEL_BANKS.map((bank) => (
+              <View
+                key={bank}
+                style={{
+                  borderRadius: RADIUS.full,
+                  backgroundColor: COLORS.bankChipBackground,
+                  paddingHorizontal: wp(10),
+                  paddingVertical: hp(5),
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fp(12),
+                    fontFamily: FONTS.semiBold,
+                    color: COLORS.primary,
+                  }}
+                >
+                  {bank}
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
-      ) : null}
 
-      {isBackendSummaryLoading ? (
-        <View
+        <TouchableOpacity
+          activeOpacity={0.88}
+          className="items-center justify-center"
           style={{
+            borderWidth: 1.5,
+            borderStyle: 'dashed',
+            borderColor: COLORS.uploadBoxBorder,
             borderRadius: RADIUS.xl,
-            backgroundColor: COLORS.white,
-            borderWidth: 1,
-            borderColor: COLORS.surfaceBorder,
-            paddingHorizontal: wp(16),
-            paddingVertical: hp(14),
-            gap: hp(12),
+            backgroundColor: COLORS.uploadBoxBackground,
+            paddingHorizontal: wp(20),
+            paddingVertical: hp(34),
+          }}
+          onPress={onPickFile}
+        >
+          <Ionicons name="folder-open" size={wp(40)} color="#E2C35A" />
+          <Text
+            style={{
+              marginTop: hp(14),
+              fontSize: fp(22),
+              fontFamily: FONTS.bold,
+              color: COLORS.textPrimary,
+              textAlign: 'center',
+            }}
+          >
+            {selectedExcelFile ? selectedExcelFile.name : '업로드할 파일을 선택해주세요'}
+          </Text>
+          <Text
+            style={{
+              marginTop: hp(6),
+              fontSize: fp(14),
+              fontFamily: FONTS.medium,
+              color: COLORS.textSecondary,
+              textAlign: 'center',
+            }}
+          >
+            {selectedExcelFile
+              ? buildCalendarFileSummary(selectedExcelFile)
+              : '.xlsx, .csv, .xls 형식을 지원합니다'}
+          </Text>
+        </TouchableOpacity>
+
+        <View
+          className="flex-row items-center"
+          style={{
+            gap: wp(8),
+            borderRadius: RADIUS.lg,
+            backgroundColor: COLORS.noticeBackground,
+            paddingHorizontal: wp(14),
+            paddingVertical: hp(12),
           }}
         >
-          <View className="flex-row items-center" style={{ gap: wp(8) }}>
-            <Ionicons name="sync-outline" size={wp(18)} color={COLORS.primary} />
+          <Ionicons name="bulb-outline" size={wp(14)} color="#D2A645" />
+          <Text
+            style={{
+              flex: 1,
+              fontSize: fp(13),
+              lineHeight: fp(19),
+              fontFamily: FONTS.medium,
+              color: COLORS.noticeText,
+            }}
+          >
+            자동 분류가 어려운 항목은 직접 카테고리를 지정한 뒤 저장할 수 있습니다.
+          </Text>
+        </View>
+
+        {selectedExcelFile ? (
+          <View
+            style={{
+              borderRadius: RADIUS.xl,
+              backgroundColor: COLORS.draftCardBackground,
+              paddingHorizontal: wp(16),
+              paddingVertical: hp(14),
+            }}
+          >
+            <View className="flex-row items-center" style={{ gap: wp(6), marginBottom: hp(8) }}>
+              <Ionicons name="checkmark-circle" size={wp(18)} color={COLORS.successGreen} />
+              <Text
+                style={{
+                  fontSize: fp(14),
+                  fontFamily: FONTS.bold,
+                  color: COLORS.successGreen,
+                }}
+              >
+                선택된 파일
+              </Text>
+            </View>
             <Text
               style={{
                 fontSize: fp(16),
                 fontFamily: FONTS.bold,
                 color: COLORS.textPrimary,
+                marginBottom: hp(6),
               }}
             >
-              분석 중
+              {selectedExcelFile.name}
+            </Text>
+            <Text
+              style={{
+                fontSize: fp(12),
+                fontFamily: FONTS.medium,
+                color: COLORS.textSecondary,
+              }}
+            >
+              {buildCalendarFileSummary(selectedExcelFile)}
             </Text>
           </View>
-          <Text
+        ) : null}
+
+        {isBackendSummaryLoading ? (
+          <View
             style={{
-              fontSize: fp(13),
-              lineHeight: fp(19),
-              fontFamily: FONTS.medium,
-              color: COLORS.textSecondary,
+              borderRadius: RADIUS.xl,
+              backgroundColor: COLORS.white,
+              borderWidth: 1,
+              borderColor: COLORS.surfaceBorder,
+              paddingHorizontal: wp(16),
+              paddingVertical: hp(14),
+              gap: hp(12),
             }}
           >
-            업로드한 파일을 분석해서 날짜별 거래를 정리하고 있습니다.
-          </Text>
-        </View>
-      ) : null}
+            <View className="flex-row items-center" style={{ gap: wp(8) }}>
+              <Ionicons name="sync-outline" size={wp(18)} color={COLORS.primary} />
+              <Text
+                style={{
+                  fontSize: fp(16),
+                  fontFamily: FONTS.bold,
+                  color: COLORS.textPrimary,
+                }}
+              >
+                분석 중
+              </Text>
+            </View>
+            <Text
+              style={{
+                fontSize: fp(13),
+                lineHeight: fp(19),
+                fontFamily: FONTS.medium,
+                color: COLORS.textSecondary,
+              }}
+            >
+              업로드한 파일을 분석해서 날짜별 거래를 정리하고 있습니다.
+            </Text>
+          </View>
+        ) : null}
 
-      {backendSummaryError ? (
-        <ErrorMessageBox icon="cloud-offline-outline" message={backendSummaryError} />
-      ) : null}
+        {backendSummaryError ? (
+          <ErrorMessageBox icon="cloud-offline-outline" message={backendSummaryError} />
+        ) : null}
 
-      {backendSummary ? <CalendarUploadBackendSummaryCard summary={backendSummary} /> : null}
+        {backendSummary ? <CalendarUploadBackendSummaryCard summary={backendSummary} /> : null}
 
-      {confirmErrorMessage ? (
-        <ErrorMessageBox icon="cloud-offline-outline" message={confirmErrorMessage} />
-      ) : null}
+        {confirmErrorMessage ? (
+          <ErrorMessageBox icon="cloud-offline-outline" message={confirmErrorMessage} />
+        ) : null}
 
-      {uploadErrorMessage ? (
-        <ErrorMessageBox icon="alert-circle-outline" message={uploadErrorMessage} />
-      ) : null}
+        {uploadErrorMessage ? (
+          <ErrorMessageBox icon="alert-circle-outline" message={uploadErrorMessage} />
+        ) : null}
 
-      {uploadGroups.map((group) => (
-        <CalendarUploadResultSection
-          key={group.dateKey}
-          group={group}
-          onPressItem={onPressItem}
-        />
-      ))}
+        {uploadGroups.map((group) => (
+          <CalendarUploadResultSection
+            key={group.dateKey}
+            group={group}
+            onPressItem={onPressItem}
+          />
+        ))}
+      </ScrollView>
 
       {selectedExcelFile ? (
-        <TouchableOpacity
-          activeOpacity={0.9}
-          className="items-center justify-center"
+        <View
           style={{
-            backgroundColor: COLORS.primary,
-            borderRadius: RADIUS.lg,
-            minHeight: hp(52),
-            opacity: hasPendingCategories || !hasUploadEntries || isConfirmLoading ? 0.45 : 1,
+            paddingTop: hp(12),
+            borderTopWidth: 1,
+            borderTopColor: COLORS.gray100,
           }}
-          disabled={hasPendingCategories || !hasUploadEntries || isConfirmLoading}
-          onPress={onComplete}
         >
-          <Text
+          <TouchableOpacity
+            activeOpacity={0.9}
+            className="items-center justify-center"
             style={{
-              fontSize: fp(20),
-              fontFamily: FONTS.bold,
-              color: COLORS.white,
+              backgroundColor: COLORS.primary,
+              borderRadius: RADIUS.lg,
+              minHeight: hp(52),
+              opacity: isCompleteDisabled ? 0.45 : 1,
             }}
+            disabled={isCompleteDisabled}
+            onPress={onComplete}
           >
-            {isConfirmLoading
-              ? '저장 중...'
-              : hasPendingCategories
-                ? '카테고리를 모두 선택해주세요'
-                : hasUploadEntries
-                  ? '업로드 내역 저장'
-                  : '업로드할 내역이 없습니다'}
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={{
+                fontSize: fp(20),
+                fontFamily: FONTS.bold,
+                color: COLORS.white,
+              }}
+            >
+              {isConfirmLoading
+                ? '저장 중...'
+                : hasPendingCategories
+                  ? '카테고리를 모두 선택해주세요'
+                  : hasUploadEntries
+                    ? '업로드 내역 저장'
+                    : '업로드할 내역이 없습니다'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       ) : null}
-    </ScrollView>
+    </View>
   );
 }

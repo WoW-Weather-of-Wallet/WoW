@@ -95,6 +95,10 @@ export default function BottomSheetModal({
   const panResponder = useMemo(
     () =>
       PanResponder.create({
+        onMoveShouldSetPanResponderCapture: (_, gestureState) =>
+          enableSwipeToClose &&
+          gestureState.dy > 8 &&
+          Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
         onMoveShouldSetPanResponder: (_, gestureState) =>
           enableSwipeToClose &&
           gestureState.dy > 8 &&
@@ -115,6 +119,8 @@ export default function BottomSheetModal({
     [animateClose, enableSwipeToClose, restorePosition, translateY],
   );
 
+  const handlePanHandlers = enableSwipeToClose ? panResponder.panHandlers : {};
+
   const headerBlock = (
     <View
       style={{ paddingBottom: hp(4) }}
@@ -122,15 +128,23 @@ export default function BottomSheetModal({
     >
       {showHandle ? (
         <View
-          className="self-center"
+          className="self-center items-center justify-center"
           style={{
-            width: wp(42),
-            height: hp(6),
-            borderRadius: RADIUS.full,
-            backgroundColor: COLORS.modalHandle,
-            marginBottom: hp(18),
+            paddingHorizontal: wp(18),
+            paddingVertical: hp(10),
+            marginBottom: hp(8),
           }}
-        />
+          {...handlePanHandlers}
+        >
+          <View
+            style={{
+              width: wp(42),
+              height: hp(6),
+              borderRadius: RADIUS.full,
+              backgroundColor: COLORS.modalHandle,
+            }}
+          />
+        </View>
       ) : null}
 
       {title || subtitle ? (

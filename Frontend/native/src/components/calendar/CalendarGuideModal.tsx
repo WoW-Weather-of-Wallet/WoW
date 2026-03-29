@@ -72,11 +72,16 @@ export default function CalendarGuideModal({
       transparent
       onRequestClose={onClose}
     >
-      <Pressable
+      <View
         className="flex-1 items-center justify-center"
         style={{ backgroundColor: 'rgba(0,0,0,0.5)', padding: wp(24) }}
-        onPress={onClose}
       >
+        <Pressable
+          className="absolute inset-0"
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="캘린더 가이드 닫기"
+        />
         <Pressable
           onPress={(event) => {
             event.stopPropagation();
@@ -105,18 +110,6 @@ export default function CalendarGuideModal({
             >
               캘린더 가이드
             </Text>
-            <TouchableOpacity
-              activeOpacity={0.86}
-              className="items-center justify-center"
-              style={{
-                width: wp(32),
-                height: wp(32),
-                borderRadius: wp(16),
-              }}
-              onPress={onClose}
-            >
-              <Ionicons name="close" size={wp(22)} color={COLORS.textPrimary} />
-            </TouchableOpacity>
           </View>
 
           <ScrollView
@@ -199,7 +192,7 @@ export default function CalendarGuideModal({
             </View>
           </View>
         </Pressable>
-      </Pressable>
+      </View>
     </Modal>
   );
 }
