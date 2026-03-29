@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, useMemo, useRef, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,6 +38,16 @@ export default function BottomSheetModal({
 }: BottomSheetModalProps) {
   const insets = useSafeAreaInsets();
   const shouldPropagateSwipe = scrollable || swipeArea === 'sheet';
+  const scrollViewRef = useRef<ScrollView | null>(null);
+  const [scrollOffset, setScrollOffset] = useState(0);
+  const [scrollOffsetMax, setScrollOffsetMax] = useState(0);
+  const [scrollViewHeight, setScrollViewHeight] = useState(0);
+  const handleScrollTo = useMemo(
+    () => (params: { x?: number; y?: number; animated?: boolean }) => {
+      scrollViewRef.current?.scrollTo(params);
+    },
+    [],
+  );
 
   return (
     <Modal
@@ -50,6 +60,9 @@ export default function BottomSheetModal({
       onSwipeComplete={enableSwipeToClose ? onClose : undefined}
       swipeDirection={enableSwipeToClose ? ['down'] : undefined}
       swipeThreshold={hp(18)}
+      scrollTo={scrollable ? handleScrollTo : undefined}
+      scrollOffset={scrollable ? scrollOffset : 0}
+      scrollOffsetMax={scrollable ? scrollOffsetMax : 0}
       propagateSwipe={shouldPropagateSwipe}
       useNativeDriverForBackdrop
       hideModalContentWhileAnimating
@@ -166,8 +179,20 @@ export default function BottomSheetModal({
 
         {scrollable ? (
           <ScrollView
+            ref={scrollViewRef}
             bounces={false}
+            nestedScrollEnabled
             showsVerticalScrollIndicator={false}
+            onLayout={(event) => {
+              setScrollViewHeight(event.nativeEvent.layout.height);
+            }}
+            onContentSizeChange={(_, contentHeight) => {
+              setScrollOffsetMax(Math.max(0, contentHeight - scrollViewHeight));
+            }}
+            onScroll={(event) => {
+              setScrollOffset(event.nativeEvent.contentOffset.y);
+            }}
+            scrollEventThrottle={16}
             contentContainerStyle={{ paddingBottom: hp(4) }}
           >
             {children}
