@@ -76,7 +76,7 @@ export function buildFallbackDetail(
     dateKey,
     title: formatDateTitle(dateKey),
     weatherLabel: '소비 예정 없음',
-    weatherHint: '등록된 거래 내역이 없어요.',
+    weatherHint: '거래를 추가하면 이 날짜의 소비 흐름이 여기에 표시돼요.',
     weatherIconCode: null,
     weatherTemperature: '',
     spentAmount: items.length > 0 ? items.reduce((sum, item) => sum + Math.max(item.amount, 0), 0) : null,

@@ -14,8 +14,8 @@ export default function CalendarTopDockNotice({
 }: CalendarTopDockNoticeProps) {
   const description =
     headerFetchState === 'live'
-      ? '실시간 데이터와 저장된 정보를 함께 반영한 화면입니다. 일부 항목은 mock 또는 fallback 데이터가 함께 보일 수 있어요.'
-      : '현재 실시간 데이터를 불러오지 못해 mock 또는 fallback 데이터로 내용을 보여드리고 있습니다.';
+      ? '실시간 데이터와 저장된 정보를 함께 반영했어요. 일부 항목은 보정 데이터가 함께 표시될 수 있어요.'
+      : '실시간 연결이 잠시 지연되어 저장된 데이터 기준으로 내용을 보여드리고 있어요.';
 
   return (
     <DataSourceNotice

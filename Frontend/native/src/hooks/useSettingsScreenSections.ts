@@ -248,7 +248,7 @@ export function useSettingsScreenSections({
 
     return {
       profileDisplayName: profile?.name ?? '사용자',
-      loadingMessage: '설정 정보를 불러오고 있어요.',
+      loadingMessage: '설정 화면을 준비하고 있어요.',
       sections,
     };
   }, [

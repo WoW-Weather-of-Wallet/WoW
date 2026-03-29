@@ -62,11 +62,11 @@ export default function AiFeedbackHomeScreen({
 
   const buttonTitle =
     status === 'loading'
-      ? 'AI 피드백 분석 중'
+      ? 'AI 피드백 정리 중'
       : hasCurrentReport
         ? '이번 달 AI 피드백 보기'
         : isRefreshing
-          ? 'AI 피드백 불러오는 중'
+          ? '최신 AI 피드백 확인 중'
           : 'AI 피드백 시작하기';
 
   return (

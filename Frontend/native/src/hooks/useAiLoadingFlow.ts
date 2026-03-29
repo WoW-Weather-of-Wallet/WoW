@@ -17,17 +17,17 @@ export interface AiLoadingStep {
 const LOADING_STEPS: AiLoadingStep[] = [
   {
     icon: 'document-text-outline',
-    text: '소비 데이터를 불러오고 있어요.',
+    text: '최근 소비 흐름을 불러오고 있어요.',
     duration: 2500,
   },
   {
     icon: 'search-outline',
-    text: 'AI가 소비 흐름을 분석하고 있어요.',
+    text: 'AI가 소비 패턴과 절약 포인트를 읽고 있어요.',
     duration: 2500,
   },
   {
     icon: 'sparkles-outline',
-    text: '결과 요약을 정리하고 있어요.',
+    text: '결과를 보기 쉽게 정리하고 있어요.',
     duration: 2500,
   },
   {

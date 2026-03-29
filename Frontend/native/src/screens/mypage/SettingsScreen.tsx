@@ -84,7 +84,7 @@ export default function SettingsScreen() {
   const [pinError, setPinError] = useState('');
   const [isPinSubmitting, setIsPinSubmitting] = useState(false);
 
-  // 鍮꾨?踰덊샇 蹂寃?紐⑤떖?먯꽌??鍮꾨?踰덊샇 ?④?/蹂댁엫 泥섎━瑜??꾪븳 ?곹깭?낅땲??
+  // 비밀번호 변경 모달에서 비밀번호 입력/표시 상태를 제어합니다.
   const [isCurrentPwVisible, setIsCurrentPwVisible] = useState(false);
   const [isNewPwVisible, setIsNewPwVisible] = useState(false);
   const [isConfirmPwVisible, setIsConfirmPwVisible] = useState(false);
@@ -102,9 +102,9 @@ export default function SettingsScreen() {
     } catch (error) {
       const message = extractApiErrorMessage(
         error,
-        '?ㅼ젙 ?뺣낫瑜?遺덈윭?ㅼ? 紐삵뻽?댁슂. ?좎떆 ???ㅼ떆 ?쒕룄?댁＜?몄슂.',
+        '설정 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
       );
-      Alert.alert('?ㅼ젙 議고쉶 ?ㅽ뙣', message);
+      Alert.alert('설정 조회 실패', message);
     } finally {
       setIsLoading(false);
     }
@@ -193,17 +193,17 @@ export default function SettingsScreen() {
   const getPinModalTitle = () => {
     switch (pinModalStep) {
       case 'create':
-        return '媛꾪렪鍮꾨?踰덊샇 ?ㅼ젙';
+        return '간편 비밀번호 설정';
       case 'confirm':
-        return pinModalMode === 'disable' ? '媛꾪렪鍮꾨?踰덊샇 ?댁젣' : '媛꾪렪鍮꾨?踰덊샇 ?뺤씤';
+        return pinModalMode === 'disable' ? '간편 비밀번호 해제' : '간편 비밀번호 확인';
       case 'verify-current':
-        return pinModalMode === 'disable' ? '?꾩옱 鍮꾨?踰덊샇 ?뺤씤' : '湲곗〈 鍮꾨?踰덊샇 ?뺤씤';
+        return pinModalMode === 'disable' ? '현재 간편 비밀번호 확인' : '기존 간편 비밀번호 확인';
       case 'new':
-        return '??媛꾪렪鍮꾨?踰덊샇';
+        return '새 간편 비밀번호';
       case 'confirm-new':
-        return '??鍮꾨?踰덊샇 ?뺤씤';
+        return '새 비밀번호 확인';
       default:
-        return '媛꾪렪鍮꾨?踰덊샇';
+        return '간편 비밀번호';
     }
   };
 
@@ -211,14 +211,14 @@ export default function SettingsScreen() {
     switch (pinModalStep) {
       case 'create':
       case 'new':
-        return '6?먮━ ?レ옄瑜??낅젰?댁＜?몄슂.';
+        return '6자리 숫자를 입력해 주세요.';
       case 'confirm':
       case 'confirm-new':
-        return '媛숈? 踰덊샇瑜???踰????낅젰?댁＜?몄슂.';
+        return '같은 번호를 한 번 더 입력해 주세요.';
       case 'verify-current':
         return pinModalMode === 'disable'
-          ? '?댁젣瑜??꾪빐 ?꾩옱 ?ъ슜 以묒씤 媛꾪렪鍮꾨?踰덊샇瑜??낅젰?댁＜?몄슂.'
-          : '?꾩옱 ?ъ슜 以묒씤 媛꾪렪鍮꾨?踰덊샇瑜??낅젰?댁＜?몄슂.';
+          ? '해제를 위해 현재 사용 중인 간편 비밀번호를 입력해 주세요.'
+          : '현재 사용 중인 간편 비밀번호를 입력해 주세요.';
       default:
         return '';
     }
@@ -259,7 +259,7 @@ export default function SettingsScreen() {
         const isValid = await verifyPinCode(nextValue, securityPreferences);
         if (!isValid) {
           setPinInput('');
-          setPinError('?꾩옱 媛꾪렪鍮꾨?踰덊샇媛 ?щ컮瑜댁? ?딆븘??');
+          setPinError('현재 간편 비밀번호가 올바르지 않아요.');
           return;
         }
 
@@ -269,8 +269,8 @@ export default function SettingsScreen() {
         if (pinModalMode === 'disable') {
           await removePinCode();
           Alert.alert(
-            '?댁젣 ?꾨즺',
-            '媛꾪렪濡쒓렇?몄슜 媛꾪렪鍮꾨?踰덊샇? ?앹껜?몄쬆 ?ъ슜 ?ㅼ젙???④퍡 ?댁젣?섏뿀?댁슂.',
+            '해제 완료',
+            '간편 로그인용 비밀번호와 생체 인증 설정을 함께 해제했어요.',
           );
           closePinModal();
           return;
@@ -283,15 +283,15 @@ export default function SettingsScreen() {
       if (nextValue !== pinDraft) {
         setPinInput('');
         setPinDraft('');
-        setPinError('媛꾪렪鍮꾨?踰덊샇媛 ?쇱튂?섏? ?딆븘?? 泥섏쓬遺???ㅼ떆 ?낅젰?댁＜?몄슂.');
+        setPinError('간편 비밀번호가 일치하지 않아요. 처음부터 다시 입력해 주세요.');
         setPinModalStep(pinModalStep === 'confirm' ? 'create' : 'new');
         return;
       }
 
       await persistPinCode(nextValue);
       Alert.alert(
-        '?ㅼ젙 ?꾨즺',
-        '?ㅼ쓬遺???깆쓣 ?ㅼ떆 ????媛꾪렪濡쒓렇?몄쑝濡??ъ슜?????덉뼱??',
+        '설정 완료',
+        '다음부터 앱을 다시 열 때 간편로그인으로 사용할 수 있어요.',
       );
       closePinModal();
     } finally {
@@ -317,21 +317,21 @@ export default function SettingsScreen() {
     try {
       if (enabled) {
         const result = await authenticateWithBiometrics(
-          '?앹껜 ?몄쬆 ?ъ슜???꾪빐 蹂몄씤 ?뺤씤??吏꾪뻾?댁＜?몄슂.',
+          '생체 인증 사용을 위해 본인 확인을 진행해 주세요.',
         );
 
         if (!result.success) {
-          Alert.alert('?앹껜 ?몄쬆 ?ㅼ젙 ?ㅽ뙣', result.errorMessage ?? '?ㅼ떆 ?쒕룄?댁＜?몄슂.');
+          Alert.alert('생체 인증 설정 실패', result.errorMessage ?? '다시 시도해 주세요.');
           return;
         }
       }
 
       await persistBiometricEnabled(enabled);
       Alert.alert(
-        enabled ? '?앹껜 ?몄쬆 ?ъ슜' : '?앹껜 ?몄쬆 ?댁젣',
+        enabled ? '생체 인증 사용' : '생체 인증 해제',
         enabled
-          ? '?ㅼ쓬遺??媛꾪렪濡쒓렇???붾㈃?먯꽌 ?앹껜?몄쬆???ъ슜?????덉뼱??'
-          : '?댁젣 媛꾪렪濡쒓렇???붾㈃?먯꽌 ?앹껜?몄쬆???ъ슜?섏? ?딆븘??',
+          ? '다음부터 간편로그인 화면에서 생체 인증을 사용할 수 있어요.'
+          : '이제 간편로그인 화면에서 생체 인증을 사용하지 않아요.',
       );
     } finally {
       setIsUpdatingSecurity(false);
@@ -372,9 +372,9 @@ export default function SettingsScreen() {
     } catch (error) {
       const message = extractApiErrorMessage(
         error,
-        '?뚮┝ ?ㅼ젙??蹂寃쏀븯吏 紐삵뻽?댁슂. ?ㅼ떆 ?쒕룄??二쇱꽭??',
+        '알림 설정을 변경하지 못했어요. 다시 시도해 주세요.',
       );
-      Alert.alert('?뚮┝ ?ㅼ젙 蹂寃??ㅽ뙣', message);
+      Alert.alert('알림 설정 변경 실패', message);
 
       try {
         const latest = await getNotificationSettings();
@@ -411,18 +411,17 @@ export default function SettingsScreen() {
       }
 
       if (editMode === 'password') {
-        // 1. ??鍮꾨?踰덊샇 ?좏슚??寃??(蹂듭옟?? ?곗냽?? 諛섎났????
-        // ?꾩옱 濡쒓렇?몃맂 ?ъ슜?먯쓽 ?꾩씠?붿? ?議고븯湲??꾪빐 profile?.userId瑜??꾨떖?⑸땲??
+        // 새 비밀번호 유효성을 검증하고 현재 사용자 아이디 기준 중복 여부도 함께 확인합니다.
         const validation = validatePassword(newPw, profile?.userId || undefined);
         if (!validation.isValid) {
           throw new Error(validation.message);
         }
 
         if (currentPw === newPw) {
-          throw new Error('?꾩옱 鍮꾨?踰덊샇? ?ㅻⅨ ??鍮꾨?踰덊샇瑜??낅젰?댁＜?몄슂.');
+          throw new Error('현재 비밀번호와 다른 새 비밀번호를 입력해 주세요.');
         }
         if (newPw !== confirmPw) {
-          throw new Error('??鍮꾨?踰덊샇媛 ?쇱튂?섏? ?딆뒿?덈떎.');
+          throw new Error('새 비밀번호가 일치하지 않습니다.');
         }
 
 
@@ -437,15 +436,15 @@ export default function SettingsScreen() {
       if (editMode === 'password') {
         const presentation = buildAuthErrorPresentation(error, {
           flow: 'password-reset',
-          fallbackMessage: '鍮꾨?踰덊샇瑜?蹂寃쏀븯吏 紐삵뻽?댁슂.',
+          fallbackMessage: '비밀번호를 변경하지 못했어요.',
         });
         Alert.alert(presentation.title, presentation.alertMessage);
       } else {
         const message = extractApiErrorMessage(
           error,
-          '?ㅼ젙 蹂寃쎌쓣 ??ν븯吏 紐삵뻽?댁슂.',
+          '설정 변경을 완료하지 못했어요.',
         );
-        Alert.alert('?ㅼ젙 ????ㅽ뙣', message);
+        Alert.alert('설정 저장 실패', message);
       }
     } finally {
       setIsSubmitting(false);
@@ -457,25 +456,25 @@ export default function SettingsScreen() {
       (profile?.loginType ?? sessionLoginType) === 'SSAFY';
 
     Alert.alert(
-      '濡쒓렇?꾩썐',
+      '로그아웃',
       shouldLogoutSsafy
-        ? '濡쒓렇?꾩썐 ??SSAFY 釉뚮씪?곗? ?몄뀡???④퍡 醫낅즺?⑸땲??'
-        : '?뺣쭚 濡쒓렇?꾩썐 ?섏떆寃좎뒿?덇퉴?',
+        ? '로그아웃 후 SSAFY 브라우저 세션도 함께 종료됩니다.'
+        : '정말 로그아웃 하시겠어요?',
       [
-        { text: '痍⑥냼', style: 'cancel' },
+        { text: '취소', style: 'cancel' },
         {
-          text: '濡쒓렇?꾩썐',
+          text: '로그아웃',
           style: 'destructive',
           onPress: async () => {
             let logoutError: unknown = null;
 
             try {
-              // [P1 Fix] 濡쒓렇?꾩썐 ???쒕쾭???깅줉??FCM ?좏겙??癒쇱? ?쒓굅?⑸땲??
-              // ?ㅽ뙣?섎뜑?쇰룄 濡쒓렇?꾩썐 泥섎━??怨꾩냽 吏꾪뻾?⑸땲??
+              // 로그아웃 전에 서버에 등록된 FCM 토큰을 먼저 해제합니다.
+              // 실패하더라도 로그아웃 처리는 계속 진행합니다.
               try {
                 await fcmService.unregisterFcmToken();
               } catch (fcmError) {
-                console.warn('[Settings] FCM ?좏겙 ?댁젣 ?ㅽ뙣:', fcmError);
+                console.warn('[Settings] FCM 토큰 해제 실패:', fcmError);
               }
 
               await logoutRequest();
@@ -503,9 +502,9 @@ export default function SettingsScreen() {
             if (logoutError) {
               const message = extractApiErrorMessage(
                 logoutError,
-                '?쒕쾭 濡쒓렇?꾩썐 ?붿껌? ?ㅽ뙣?덉?留? ?꾩옱 湲곌린?먯꽌??濡쒓렇?꾩썐 泥섎━?섏뿀?듬땲??',
+                '서버 로그아웃 요청은 실패했지만 현재 기기에서는 로그아웃 처리했어요.',
               );
-              Alert.alert('濡쒓렇?꾩썐 ?덈궡', message);
+              Alert.alert('로그아웃 안내', message);
             }
           },
         },
@@ -514,13 +513,13 @@ export default function SettingsScreen() {
   };
 
   /**
-   * ?뚯썝 ?덊눜 ?붾㈃?쇰줈 ?대룞?⑸땲??
-   * - WithdrawScreen ?먯꽌 SMS 蹂몄씤 ?몄쬆 ???덊눜 泥섎━源뚯? 紐⑤몢 ?대떦?⑸땲??
-   * - ?깅줉???꾨줈???뺣낫瑜??④퍡 ?꾨떖???쎄린 ?꾩슜 蹂몄씤 ?뺤씤 UI瑜??꾩꽦?⑸땲??
+   * 회원 탈퇴 화면으로 이동합니다.
+   * - WithdrawScreen 에서 SMS 본인 인증과 탈퇴 처리를 함께 진행합니다.
+   * - 등록된 휴대폰 번호를 넘겨 본인 확인 UI를 바로 구성합니다.
    */
   const handleDeleteAccount = () => {
     if (!profile?.phoneNumber) {
-      Alert.alert('?뚯썝 ?덊눜 ?덈궡', '?깅줉???대???踰덊샇瑜??뺤씤?????ㅼ떆 ?쒕룄?댁＜?몄슂.');
+      Alert.alert('회원 탈퇴 안내', '등록된 휴대폰 번호를 확인한 뒤 다시 시도해 주세요.');
       return;
     }
 
@@ -683,7 +682,7 @@ export default function SettingsScreen() {
         onClose={() => setIsTermsModalVisible(false)}
       />
 
-      {/* ?뚯썝 ?덊눜??WithdrawScreen(蹂꾨룄 ?붾㈃)?먯꽌 SMS ?몄쬆 ??泥섎━?⑸땲??*/}
+      {/* 회원 탈퇴는 WithdrawScreen(별도 화면)에서 SMS 인증 후 처리됩니다. */}
     </>
 
   );
