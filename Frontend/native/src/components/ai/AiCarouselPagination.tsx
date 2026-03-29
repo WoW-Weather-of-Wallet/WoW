@@ -19,7 +19,7 @@ export default function AiCarouselPagination({
   return (
     <View
       className="flex-row items-center justify-center"
-      style={{ marginBottom: compact ? hp(18) : hp(30) }}
+      style={{ marginBottom: compact ? hp(8) : hp(10) }}
     >
       {Array.from({ length: pageCount }).map((_, index) => (
         <TouchableOpacity

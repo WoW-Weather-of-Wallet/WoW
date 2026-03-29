@@ -89,95 +89,89 @@ export default function AiFeedbackHomeScreen({
       scrollBottomPadding={isCompact ? scrollBottomPadding + hp(24) : scrollBottomPadding}
       backgroundColor={COLORS.backgroundSecondary}
     >
-      <View
-        style={{
-          marginTop: isCompact ? hp(12) : hp(20),
-          marginBottom: sectionGap,
-        }}
-      >
-        <Text style={titleStyle}>
-          AI가 내 소비를 분석해{'\n'}
-          <Text style={highlightStyle}>절약 포인트와 소비 유형</Text>
-          {'\n'}
-          을 알려드려요.
-        </Text>
-      </View>
+      <View style={{ flex: 1, marginTop: isCompact ? hp(12) : hp(18) }}>
+        <View style={{ gap: sectionGap }}>
+          <Text style={titleStyle}>
+            AI가 내 소비를 분석해{'\n'}
+            <Text style={highlightStyle}>절약 포인트와 소비 유형</Text>
+            {'\n'}
+            을 알려드려요.
+          </Text>
 
-      <View
-        style={{
-          marginBottom: sectionGap,
-          width: '100%',
-        }}
-      >
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          pagingEnabled
-          nestedScrollEnabled
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          disableIntervalMomentum
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-        >
-          {featureCards.map((item) => (
-            <View
-              key={item.id}
-              style={{
-                width: carouselPageWidth,
-                alignItems: 'center',
-              }}
+          <View style={{ width: '100%' }}>
+            <ScrollView
+              ref={scrollRef}
+              horizontal
+              pagingEnabled
+              nestedScrollEnabled
+              showsHorizontalScrollIndicator={false}
+              decelerationRate="fast"
+              disableIntervalMomentum
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
             >
-              <AiFeatureCarouselCard
-                title={item.title}
-                description={item.description}
-                layoutMode={contentLayoutMode}
-                width={carouselCardWidth}
-              >
-                {item.preview}
-              </AiFeatureCarouselCard>
-            </View>
-          ))}
-        </ScrollView>
-      </View>
+              {featureCards.map((item) => (
+                <View
+                  key={item.id}
+                  style={{
+                    width: carouselPageWidth,
+                    alignItems: 'center',
+                  }}
+                >
+                  <AiFeatureCarouselCard
+                    title={item.title}
+                    description={item.description}
+                    layoutMode={contentLayoutMode}
+                    width={carouselCardWidth}
+                  >
+                    {item.preview}
+                  </AiFeatureCarouselCard>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
 
-      <AiCarouselPagination
-        pageCount={featureCards.length}
-        activeIndex={activeIndex}
-        onPressPage={scrollToPage}
-        compact={isCompact}
-      />
+          <AiCarouselPagination
+            pageCount={featureCards.length}
+            activeIndex={activeIndex}
+            onPressPage={scrollToPage}
+            compact={isCompact}
+          />
+        </View>
 
-      <View
-        style={{
-          paddingBottom: isCompact ? hp(8) : hp(20),
-          width: '100%',
-        }}
-      >
-        <GradientButton
-          title={buttonTitle}
-          disabled={isAnalysisRunning}
-          style={{ width: '100%' }}
-          onPress={() => {
-            if (hasCurrentReport) {
-              navigation.navigate('AiResult');
-              return;
-            }
-
-            if (!isAnalysisRunning) {
-              startAnalysis({
-                year: reportPeriod.year,
-                month: reportPeriod.month,
-              });
-              simulateAnalysis({
-                year: reportPeriod.year,
-                month: reportPeriod.month,
-              });
-            }
-
-            navigation.navigate('AiLoading');
+        <View
+          style={{
+            marginTop: 'auto',
+            paddingTop: sectionGap,
+            paddingBottom: isCompact ? hp(8) : hp(12),
+            width: '100%',
           }}
-        />
+        >
+          <GradientButton
+            title={buttonTitle}
+            disabled={isAnalysisRunning}
+            style={{ width: '100%' }}
+            onPress={() => {
+              if (hasCurrentReport) {
+                navigation.navigate('AiResult');
+                return;
+              }
+
+              if (!isAnalysisRunning) {
+                startAnalysis({
+                  year: reportPeriod.year,
+                  month: reportPeriod.month,
+                });
+                simulateAnalysis({
+                  year: reportPeriod.year,
+                  month: reportPeriod.month,
+                });
+              }
+
+              navigation.navigate('AiLoading');
+            }}
+          />
+        </View>
       </View>
     </BottomTabScreenLayout>
   );

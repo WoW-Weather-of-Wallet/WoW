@@ -11,7 +11,7 @@ export default function CalendarHeroSummaryRow({
   goalLabel,
 }: CalendarHeroSummaryRowProps) {
   return (
-    <View style={{ marginTop: hp(2) }}>
+    <View style={{ marginTop: 0 }}>
       <View
         className="flex-row items-center"
         style={{

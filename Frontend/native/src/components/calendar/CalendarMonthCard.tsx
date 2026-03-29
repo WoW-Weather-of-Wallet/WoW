@@ -46,7 +46,7 @@ export default function CalendarMonthCard({
 
       <View
         className="flex-row flex-wrap"
-        style={{ rowGap: hp(5), marginTop: -hp(2) }}
+        style={{ rowGap: hp(1), marginTop: -hp(2) }}
       >
         {days.map((day) => (
           <CalendarDayCell

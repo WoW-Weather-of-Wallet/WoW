@@ -25,6 +25,7 @@ export default function AiResultScreen({
   const sessionUserId = useAuthStore((state) => state.user?.userId ?? null);
   const reportPeriod = resolveAiReportPeriod();
   const contentLayoutMode = isCompact ? 'compact' : 'regular';
+  const [bottomActionHeight, setBottomActionHeight] = React.useState(hp(104));
   const {
     reset,
     resultData,
@@ -83,9 +84,6 @@ export default function AiResultScreen({
     !currentPeriodResultData?.report && errorInfo?.canRetry
       ? '다시 시도하기'
       : buttonTitle;
-  const bottomActionHeight = showRetryButton
-    ? (isCompact ? hp(156) : hp(166))
-    : (isCompact ? hp(88) : hp(96));
 
   return (
     <BottomTabOverlayLayout
@@ -96,69 +94,85 @@ export default function AiResultScreen({
       bottomOverlayBottomPadding={isCompact ? hp(10) : hp(14)}
       bottomOverlayContent={
         <View
+          onLayout={(event) => {
+            const nextHeight = Math.ceil(event.nativeEvent.layout.height);
+            if (Math.abs(nextHeight - bottomActionHeight) > 2) {
+              setBottomActionHeight(nextHeight);
+            }
+          }}
           style={{
             gap: isCompact ? hp(10) : hp(12),
-            padding: wp(isCompact ? 14 : 16),
+            paddingTop: showRetryButton ? 0 : hp(12),
+            paddingHorizontal: showRetryButton ? 0 : wp(2),
+            paddingBottom: showRetryButton ? 0 : hp(2),
             borderRadius: RADIUS.xxl,
-            backgroundColor: COLORS.background,
-            borderWidth: 1,
-            borderColor: COLORS.surfaceBorder,
-            shadowColor: COLORS.textPrimary,
+            backgroundColor: COLORS.backgroundSecondary,
+            borderWidth: showRetryButton ? 1 : 0,
+            borderColor: showRetryButton ? COLORS.surfaceBorder : 'transparent',
+            shadowColor: showRetryButton ? COLORS.textPrimary : 'transparent',
             shadowOffset: { width: 0, height: -4 },
-            shadowOpacity: 0.04,
-            shadowRadius: 12,
-            elevation: 6,
+            shadowOpacity: showRetryButton ? 0.04 : 0,
+            shadowRadius: showRetryButton ? 12 : 0,
+            elevation: showRetryButton ? 6 : 0,
           }}
         >
-          {showRetryButton ? (
-            <GradientButton
-              title={retryButtonTitle}
-              variant="outline"
-              disabled={isRefreshing}
-              style={{ width: '100%' }}
-              onPress={() => {
-                void refreshLatestAnalysis({
-                  year: reportPeriod.year,
-                  month: reportPeriod.month,
-                  force: true,
-                  fromPush: Boolean(currentPeriodResultData?.fromPush),
-                });
-              }}
-            />
-          ) : null}
+          <View
+            style={{
+              gap: isCompact ? hp(10) : hp(12),
+              padding: showRetryButton ? wp(isCompact ? 14 : 16) : 0,
+              borderRadius: RADIUS.xxl,
+              backgroundColor: showRetryButton ? COLORS.background : 'transparent',
+            }}
+          >
+            {showRetryButton ? (
+              <GradientButton
+                title={retryButtonTitle}
+                variant="outline"
+                disabled={isRefreshing}
+                style={{ width: '100%' }}
+                onPress={() => {
+                  void refreshLatestAnalysis({
+                    year: reportPeriod.year,
+                    month: reportPeriod.month,
+                    force: true,
+                    fromPush: Boolean(currentPeriodResultData?.fromPush),
+                  });
+                }}
+              />
+            ) : null}
 
-          <GradientButton
-            title={primaryButtonTitle}
-            disabled={isRefreshing && !currentPeriodResultData?.report}
-            style={{ width: '100%' }}
-            onPress={handlePrimaryPress}
-          />
+            <GradientButton
+              title={primaryButtonTitle}
+              disabled={isRefreshing && !currentPeriodResultData?.report}
+              style={{ width: '100%' }}
+              onPress={handlePrimaryPress}
+            />
+          </View>
         </View>
       }
     >
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: pageHorizontal,
-          paddingTop: scrollTopPadding,
-          paddingBottom: bottomActionHeight + scrollBottomPadding,
+          paddingTop: scrollTopPadding + (isCompact ? hp(18) : hp(24)),
+          paddingBottom: bottomActionHeight + scrollBottomPadding + hp(12),
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View
-          entering={FadeInDown.duration(500)}
-          style={{ marginBottom: isCompact ? hp(24) : hp(32) }}
-        >
-          <AiResultHeader displayName={displayName} title={title} />
-        </Animated.View>
-
-        {cards.map((card, index) => (
-          <Animated.View
-            key={card.id}
-            entering={FadeInDown.delay((index + 1) * 100).duration(500)}
-          >
-            <AiResultSummaryCard {...card} layoutMode={contentLayoutMode} />
+        <View style={{ gap: isCompact ? hp(16) : hp(18) }}>
+          <Animated.View entering={FadeInDown.duration(500)}>
+            <AiResultHeader displayName={displayName} title={title} />
           </Animated.View>
-        ))}
+
+          {cards.map((card, index) => (
+            <Animated.View
+              key={card.id}
+              entering={FadeInDown.delay((index + 1) * 100).duration(500)}
+            >
+              <AiResultSummaryCard {...card} layoutMode={contentLayoutMode} />
+            </Animated.View>
+          ))}
+        </View>
       </ScrollView>
     </BottomTabOverlayLayout>
   );

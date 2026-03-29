@@ -81,7 +81,7 @@ export default function MainTabNavigator() {
         };
       }}
     >
-      <Tab.Screen name="MainHome" component={MainHomeScreen} options={{ tabBarLabel: '메인' }} />
+      <Tab.Screen name="MainHome" component={MainHomeScreen} options={{ tabBarLabel: '홈' }} />
       <Tab.Screen name="Calendar" component={CalendarScreen} options={{ tabBarLabel: '캘린더' }} />
       <Tab.Screen
         name="AiFeedback"

@@ -34,10 +34,10 @@ export default function CalendarDayCell({
       className="items-center justify-start"
       style={{
         width: '14.28%',
-        minHeight: hp(62),
+        minHeight: hp(58),
         borderRadius: RADIUS.lg,
-        paddingVertical: hp(6),
-        paddingTop: hp(6),
+        paddingVertical: hp(5),
+        paddingTop: hp(5),
         position: 'relative',
         opacity: isPaddingCell ? 0 : day.isFuture ? 0.72 : 1,
         backgroundColor: isSelected ? COLORS.primary : 'transparent',
@@ -53,12 +53,8 @@ export default function CalendarDayCell({
         <View
           style={{
             position: 'absolute',
-            top: -hp(2),
-            right: -wp(1),
-            minWidth: wp(18),
-            height: hp(18),
-            alignItems: 'center',
-            justifyContent: 'center',
+            bottom: hp(1),
+            left: wp(1.2),
             zIndex: 2,
             opacity: isSelected ? 0.92 : 1,
           }}
@@ -69,7 +65,7 @@ export default function CalendarDayCell({
 
       <View
         style={{
-          marginBottom: hp(4),
+          marginBottom: hp(3),
         }}
       >
         <View
@@ -105,7 +101,7 @@ export default function CalendarDayCell({
 
       <View
         className="items-center justify-center"
-        style={{ minHeight: hp(16), opacity: isPaddingCell ? 0 : 1 }}
+        style={{ minHeight: hp(14), opacity: isPaddingCell ? 0 : 1 }}
       >
         {day.weatherTone ? (
           <Ionicons
@@ -126,7 +122,7 @@ export default function CalendarDayCell({
             : isSelected
               ? COLORS.white
               : COLORS.spentRed,
-          marginTop: hp(4),
+          marginTop: hp(3),
         }}
       >
         {amountLabel}

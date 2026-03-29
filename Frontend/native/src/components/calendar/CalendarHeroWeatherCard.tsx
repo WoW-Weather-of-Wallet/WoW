@@ -36,7 +36,7 @@ export default function CalendarHeroWeatherCard({
         borderRadius: RADIUS.xl,
         paddingHorizontal: wp(14),
         paddingVertical: hp(12),
-        marginBottom: hp(12),
+        marginBottom: hp(10),
       }}
     >
       <View

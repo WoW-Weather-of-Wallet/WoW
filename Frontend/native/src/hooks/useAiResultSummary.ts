@@ -177,14 +177,14 @@ export function useAiResultSummary(
       },
       {
         id: 'goal',
-        title: '가장 먼저 볼 액션',
+        title: '먼저 조정해볼 항목',
         headline: formatCurrency(report.goal.savableAmount),
         description:
           report.goal.actionTip || '절약 가능 금액이 큰 항목부터 우선순위를 정해 조정해보세요.',
       },
       {
         id: 'overspending',
-        title: '절약 여지가 큰 항목',
+        title: '절약 우선순위 항목',
         description: topOverspendingItems.length
           ? '비중 차이가 큰 항목부터 순서대로 정리했어요.'
           : '이번 분석에서는 과소비로 분류된 항목이 없었어요.',
@@ -195,14 +195,6 @@ export function useAiResultSummary(
         title: '주요 소비 카테고리',
         description: '최근 3개월 집계 기준으로 금액이 큰 지출 항목입니다.',
         items: topCategoryItems,
-      },
-      {
-        id: 'completed-at',
-        title: '리포트 확인 시각',
-        headline: completedAtLabel,
-        description: fromPush
-          ? '알림을 통해 방금 도착한 최신 분석 결과입니다.'
-          : '현재 화면에서 표시 중인 AI 리포트를 확인한 시각입니다.',
       },
       ...tipCards,
     ];

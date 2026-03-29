@@ -19,7 +19,7 @@ export default function CalendarHeroHeader({
   return (
     <View
       className="flex-row items-center justify-between"
-      style={{ marginBottom: hp(18) }}
+      style={{ marginBottom: hp(14) }}
     >
       <View className="flex-row items-center" style={{ gap: wp(6) }}>
         <Text

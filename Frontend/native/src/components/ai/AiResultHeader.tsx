@@ -9,7 +9,7 @@ interface AiResultHeaderProps {
 
 export default function AiResultHeader({ displayName, title }: AiResultHeaderProps) {
   return (
-    <View style={{ marginBottom: hp(32) }}>
+    <View style={{ gap: hp(4) }}>
       <Text
         style={{
           fontSize: fp(24),
@@ -31,7 +31,6 @@ export default function AiResultHeader({ displayName, title }: AiResultHeaderPro
           fontSize: fp(24),
           fontFamily: FONTS.bold,
           color: COLORS.textPrimary,
-          marginTop: hp(4),
         }}
       >
         <Text

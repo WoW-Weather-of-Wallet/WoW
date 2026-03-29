@@ -5,12 +5,12 @@ import { COLORS, RADIUS, hp, wp } from '../../constants/theme';
 
 export function AiAnalysisPreview() {
   return (
-    <View className="items-center justify-center" style={{ width: wp(120), height: hp(120), marginBottom: hp(20) }}>
+    <View className="items-center justify-center" style={{ width: wp(112), height: hp(104) }}>
       <View
         className="justify-between bg-white"
         style={{
-          width: wp(110),
-          height: hp(100),
+          width: wp(104),
+          height: hp(88),
           borderRadius: RADIUS.md,
           padding: wp(10),
           borderWidth: 1,
@@ -93,12 +93,12 @@ export function AiAnalysisPreview() {
 
 export function AiGoalPreview() {
   return (
-    <View className="items-center justify-center" style={{ width: wp(120), height: hp(120), marginBottom: hp(20) }}>
+    <View className="items-center justify-center" style={{ width: wp(112), height: hp(104) }}>
       <View
         className="justify-between bg-white"
         style={{
-          width: wp(110),
-          height: hp(100),
+          width: wp(104),
+          height: hp(88),
           borderRadius: RADIUS.md,
           padding: wp(10),
           borderWidth: 1,
@@ -178,12 +178,12 @@ export function AiGoalPreview() {
 
 export function AiNotificationPreview() {
   return (
-    <View className="items-center justify-center" style={{ width: wp(120), height: hp(120), marginBottom: hp(20) }}>
+    <View className="items-center justify-center" style={{ width: wp(112), height: hp(104) }}>
       <View
         className="overflow-hidden bg-white"
         style={{
           width: wp(74),
-          height: hp(110),
+          height: hp(98),
           borderRadius: RADIUS.lg,
           borderWidth: 2,
           borderColor: 'rgba(0, 0, 0, 0.1)',

@@ -90,7 +90,7 @@ function CompletionCheck() {
   return (
     <View
       className="items-center justify-center"
-      style={{ marginBottom: 0, height: hp(240) }}
+      style={{ marginBottom: 0, height: hp(212) }}
     >
       <Animated.View
         style={[
@@ -129,7 +129,7 @@ export default function AiLoadingStage({
       ) : (
         <View
           className="items-center justify-center"
-          style={{ marginBottom: hp(40), height: hp(100) }}
+          style={{ marginBottom: hp(28), height: hp(92) }}
         >
           <PulseRing delayTime={0} />
           <PulseRing delayTime={1000} />
