@@ -1,4 +1,5 @@
 import type { LegendListItem, SpendingStyleMetric } from '../constants/main/types';
+import { COLORS } from '../constants/theme';
 import type { HomeSpendingTypeReason } from '../hooks/useHomeSpendingTypeSummary';
 import type { AiAnalysisReport } from '../services/ai';
 import type {
@@ -6,7 +7,14 @@ import type {
   SpendingMonthlyCompareResponse,
 } from '../services/main';
 
-const CATEGORY_COLORS = ['#E97975', '#7D8DF1', '#F3B84D', '#86D5D0', '#9D92F4', '#7DD3A7'];
+const CATEGORY_COLORS = [
+  COLORS.chartRed,
+  COLORS.chartBlue,
+  COLORS.chartYellow,
+  COLORS.chartGreen,
+  COLORS.primaryLight,
+  COLORS.dotMint,
+] as const;
 
 export const resolveSpendingIconName = (iconCode?: string | null) => {
   switch (iconCode) {

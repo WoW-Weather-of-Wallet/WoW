@@ -28,7 +28,7 @@ const GUIDE_SLIDES = [
   {
     key: 'memo',
     title: '하루 내역과 메모를 함께\n기록하고 관리해 보세요',
-    gradient: ['#6B67A7', '#4E4E96'],
+    gradient: [COLORS.primaryLight, COLORS.primary],
   },
   {
     key: 'upload',

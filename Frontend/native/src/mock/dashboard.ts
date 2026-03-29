@@ -4,6 +4,8 @@
 // 화면 구조와 상태 흐름을 먼저 검증하기 위한 더미 데이터를 둡니다.
 // =============================================
 
+import { COLORS } from '../constants/theme';
+
 export interface HomeInsight {
   id: string;
   label: string;
@@ -101,10 +103,38 @@ export const mockHomeInsights: HomeInsight[] = [
 ];
 
 export const mockSpendingCategories: HomeSpendingCategory[] = [
-  { id: 'dining-out', label: '외식', amount: 402000, ratio: 0.88, icon: 'restaurant-outline', color: '#F97316' },
-  { id: 'transport', label: '교통서비스', amount: 124000, ratio: 0.52, icon: 'subway-outline', color: '#2563EB' },
-  { id: 'shopping', label: '인터넷쇼핑', amount: 198000, ratio: 0.61, icon: 'bag-handle-outline', color: '#A855F7' },
-  { id: 'cafe', label: '커피/음료', amount: 71000, ratio: 0.34, icon: 'cafe-outline', color: '#14B8A6' },
+  {
+    id: 'dining-out',
+    label: '외식',
+    amount: 402000,
+    ratio: 0.88,
+    icon: 'restaurant-outline',
+    color: COLORS.warning,
+  },
+  {
+    id: 'transport',
+    label: '교통서비스',
+    amount: 124000,
+    ratio: 0.52,
+    icon: 'subway-outline',
+    color: COLORS.chartBlue,
+  },
+  {
+    id: 'shopping',
+    label: '인터넷쇼핑',
+    amount: 198000,
+    ratio: 0.61,
+    icon: 'bag-handle-outline',
+    color: COLORS.primaryLight,
+  },
+  {
+    id: 'cafe',
+    label: '커피/음료',
+    amount: 71000,
+    ratio: 0.34,
+    icon: 'cafe-outline',
+    color: COLORS.chartGreen,
+  },
 ];
 
 export const mockScheduleItems: HomeScheduleItem[] = [
@@ -127,8 +157,8 @@ export const mockMyCards: MyCardSummary[] = [
     cardType: '체크카드',
     ownerName: '이채목',
     lastDigits: '2031',
-    themeStart: '#6666EE',
-    themeEnd: '#8C82F7',
+    themeStart: COLORS.primary,
+    themeEnd: COLORS.primaryLight,
     billingDay: '매월 12일 결제',
   },
   {

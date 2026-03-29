@@ -45,8 +45,8 @@ export const COLORS = {
   primary: '#6666ee',
   primaryLight: '#8888f4',
   primaryDark: '#4d4dcc',
-  primarySoft: '#e0e0fb',
-  primary50: '#f0f0fd',
+  primarySoft: '#EAE9FF',
+  primary50: '#F4F3FF',
 
   // 배경
   background: '#FFFFFF',
@@ -62,7 +62,7 @@ export const COLORS = {
   // 보더
   border: '#E5E7EB',
   borderFocus: '#6666ee',
-  surfaceBorder: '#E7EAFA',
+  surfaceBorder: '#D9D7FF',
 
   // 상태
   success: '#10B981',
@@ -70,8 +70,8 @@ export const COLORS = {
   warning: '#F59E0B',
 
   // 그라데이션
-  gradientStart: '#7B7BF5',
-  gradientEnd: '#5252CC',
+  gradientStart: '#8888F4',
+  gradientEnd: '#6666EE',
 
   // 공통 그레이 스케일 (추가)
   white: '#FFFFFF',
@@ -88,12 +88,12 @@ export const COLORS = {
   gray900: '#111827',
 
   // 마이페이지 전용 악센트 컬러 (추가)
-  accentPrimaryLight: '#DCD8FF',
+  accentPrimaryLight: '#EAE9FF',
   accentMintLight: '#D7F4E9',
   accentGoldLight: '#F9EAC5',
-  cardOverlay1: '#DAD6FF',
-  cardOverlay2: '#E6E1FF',
-  cardOverlay3: '#F4F2FF',
+  cardOverlay1: '#E3E1FF',
+  cardOverlay2: '#EEEBFF',
+  cardOverlay3: '#F7F6FF',
 
   // SSAFY 로그인 그라데이션 (추가)
   blue500: '#3B82F6',
@@ -109,10 +109,10 @@ export const COLORS = {
   modalHandle: '#E1DEEF',
 
   // 홈 예산 카드 관련 (추가)
-  budgetGradientStart: '#FAFBFF',
-  budgetGradientEnd: '#EEF1FF',
-  aiBadgeBackground: '#EFEEFF',
-  progressTrackBackground: '#DDE2FF',
+  budgetGradientStart: '#F7F6FF',
+  budgetGradientEnd: '#EEEBFF',
+  aiBadgeBackground: '#EEEBFF',
+  progressTrackBackground: '#D9D7FF',
 
   // 차트 및 리포트 관련 (추가)
   chartRed: '#E97975',
@@ -128,7 +128,7 @@ export const COLORS = {
   insightBackground: '#FFF5E8',
   insightText: '#A86A18',
   mutedBackground: '#F1F2F6',
-  spendingTypeIntro: '#F4F2FF',
+  spendingTypeIntro: '#F7F6FF',
 
   // 주간 예보 및 기타 (추가)
   sundayRed: '#E17272',
@@ -136,21 +136,21 @@ export const COLORS = {
 
   // 사유 카드 유형별 배경 (추가)
   reasonRedBackground: '#FFF1F0',
-  reasonPurpleBackground: '#F2F1FF',
+  reasonPurpleBackground: '#EEEBFF',
   reasonGreenBackground: '#F1FAEA',
 
   // 시트 아이콘 헤더 배경 (추가)
   sheetIconBackground: '#EEEBFF',
 
   // 레이더 차트 전용 (추가)
-  radarGridOuter: '#D7D4F7',
-  radarGridInner: '#ECE9FB',
-  radarAxis: '#E6E3FA',
-  radarFill: '#8C82F733',
+  radarGridOuter: '#D9D7FF',
+  radarGridInner: '#EEEBFF',
+  radarAxis: '#E3E1FF',
+  radarFill: '#6666EE26',
 
   // 캘린더 히어로 관련 (추가)
-  calendarHeroStart: '#6E60D7',
-  calendarHeroEnd: '#8D73F2',
+  calendarHeroStart: '#8888F4',
+  calendarHeroEnd: '#6666EE',
   whiteOverlay14: '#FFFFFF14',
   whiteOverlay1E: '#FFFFFF1E',
   whiteOverlay22: '#FFFFFF22',
@@ -163,10 +163,10 @@ export const COLORS = {
   dotMint: '#7DD3A7',
   dotGold: '#E2BE63',
   dotRose: '#E97975',
-  todayRingBorder: '#DCD7FF',
+  todayRingBorder: '#D9D7FF',
 
   // 캘린더 상세 및 탭 관련 (추가)
-  calendarDayDetailBackground: '#F1F0FF',
+  calendarDayDetailBackground: '#EEEBFF',
   spentRed: '#D87272',
   tabSwitcherBackground: '#F5F4FA',
 
@@ -180,34 +180,34 @@ export const COLORS = {
   incomeGreen: '#6DBA7C',
 
   // 고정지출 상세 및 피커 관련 (추가)
-  fixedExpenseDetailSelectedBackground: '#F3F1FF',
+  fixedExpenseDetailSelectedBackground: '#EEEBFF',
   aiHintBackground: '#FFF8E9',
   aiHintTitle: '#B5851B',
   aiHintText: '#AB832B',
   chipSelectedBackground: '#F0EEFF',
-  stepperButtonBackground: '#EFEEFF',
-  pickerRowSelectedBackground: '#F2F0FF',
-  pickerRowSelectedBorder: '#D7D0FF',
+  stepperButtonBackground: '#EEEBFF',
+  pickerRowSelectedBackground: '#EEEBFF',
+  pickerRowSelectedBorder: '#D9D7FF',
 
   // 고정지출 관리 관련 (추가)
   headerButtonBackground: '#FFFFFF1E',
-  fixedExpenseSummaryBackground: '#8E84F5',
-  summaryTextLight: '#E4E0FF',
-  summaryTextHint: '#ECE8FF',
+  fixedExpenseSummaryBackground: '#8888F4',
+  summaryTextLight: '#ECEAFF',
+  summaryTextHint: '#F4F3FF',
   addButtonBackground: '#FFFFFF26',
   deleteChipBackground: '#FDECEC',
 
   // 캘린더 항목 추가 관련 (추가)
   addEntryTabBackground: '#F6F5FB',
   inputBorder: '#E3E1F0',
-  draftCardBackground: '#F7F5FF',
-  draftBadgeBackground: '#E3DCFF',
+  draftCardBackground: '#F7F6FF',
+  draftBadgeBackground: '#E3E1FF',
   chipBorder: '#DDD9F2',
   secondaryButtonBorder: '#E6E2F3',
   secondaryButtonDisabled: '#FAFAFC',
   excelIconGold: '#B08A5B',
-  bankChipBackground: '#ECE8FF',
-  uploadBoxBorder: '#C9C1FF',
+  bankChipBackground: '#EEEBFF',
+  uploadBoxBorder: '#D0CBFF',
   uploadBoxBackground: '#FCFBFF',
   noticeBackground: '#FFF8E8',
   noticeText: '#8C6A2D',
@@ -217,8 +217,8 @@ export const COLORS = {
   classifiedBadgeBackground: '#EAF6E4',
   classifiedBadgeText: '#7AA55A',
   needsCategoryBackground: '#FFF1DA',
-  resultIconBackground: '#F1EEFC',
-  resultDivider: '#EEEAF9',
+  resultIconBackground: '#EEEBFF',
+  resultDivider: '#E7E5FF',
 
   // 마이페이지/설정 관련 (추가)
   limitRed: '#EF4444', // Danger/Withdrawal red
