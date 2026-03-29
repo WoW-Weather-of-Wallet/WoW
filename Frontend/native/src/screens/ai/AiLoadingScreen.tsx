@@ -18,7 +18,7 @@ export default function AiLoadingScreen({
     <BottomTabOverlayLayout
       containerStyle={{
         flex: 1,
-        backgroundColor: COLORS.background,
+        backgroundColor: COLORS.backgroundSecondary,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: wp(24),
@@ -27,7 +27,7 @@ export default function AiLoadingScreen({
         alignItems: 'center',
         justifyContent: 'center',
       }}
-      backgroundColor={COLORS.background}
+      backgroundColor={COLORS.backgroundSecondary}
       topOverlayTopPadding={hp(16)}
       topOverlayStyle={{
         paddingHorizontal: wp(24),

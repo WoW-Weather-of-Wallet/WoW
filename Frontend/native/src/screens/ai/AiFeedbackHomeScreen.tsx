@@ -74,11 +74,11 @@ export default function AiFeedbackHomeScreen({
 
   return (
     <BottomTabScreenLayout
-      containerStyle={{ flex: 1, backgroundColor: COLORS.background }}
+      containerStyle={{ flex: 1, backgroundColor: COLORS.backgroundSecondary }}
       contentContainerStyle={{ flexGrow: 1, paddingHorizontal: horizontalPadding }}
       scrollTopPadding={isCompactHeight ? hp(12) : hp(20)}
       scrollBottomPadding={isCompactHeight ? hp(56) : hp(28)}
-      backgroundColor={COLORS.background}
+      backgroundColor={COLORS.backgroundSecondary}
     >
       <View
         style={{

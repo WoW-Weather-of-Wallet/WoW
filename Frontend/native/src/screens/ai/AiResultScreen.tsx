@@ -84,8 +84,8 @@ export default function AiResultScreen({
 
   return (
     <BottomTabOverlayLayout
-      containerStyle={{ flex: 1, backgroundColor: COLORS.background }}
-      backgroundColor={COLORS.background}
+      containerStyle={{ flex: 1, backgroundColor: COLORS.backgroundSecondary }}
+      backgroundColor={COLORS.backgroundSecondary}
       contentContainerStyle={{ flex: 1 }}
       bottomOverlayStyle={{ paddingHorizontal: wp(isCompactHeight ? 16 : 20) }}
       bottomOverlayBottomPadding={isCompactHeight ? hp(10) : hp(14)}
