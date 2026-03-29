@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { CALENDAR_TAB_OPTIONS } from '../../constants/calendar/ui';
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
@@ -26,25 +27,8 @@ export default function CalendarTabSwitcher({
     >
       {CALENDAR_TAB_OPTIONS.map((tab) => {
         const isActive = activeTab === tab.key;
-
-        return (
-          <TouchableOpacity
-            key={tab.key}
-            activeOpacity={0.88}
-            className="flex-1 flex-row items-center justify-center"
-            style={{
-              gap: wp(6),
-              paddingVertical: hp(12),
-              borderRadius: RADIUS.lg,
-              backgroundColor: isActive ? COLORS.primary : 'transparent',
-              shadowColor: isActive ? COLORS.primary : 'transparent',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: isActive ? 0.16 : 0,
-              shadowRadius: isActive ? 10 : 0,
-              elevation: isActive ? 3 : 0,
-            }}
-            onPress={() => onChange(tab.key)}
-          >
+        const content = (
+          <>
             <Ionicons
               name={tab.icon}
               size={wp(15)}
@@ -59,6 +43,53 @@ export default function CalendarTabSwitcher({
             >
               {tab.label}
             </Text>
+          </>
+        );
+
+        return (
+          <TouchableOpacity
+            key={tab.key}
+            activeOpacity={0.88}
+            className="flex-1"
+            style={{
+              borderRadius: RADIUS.lg,
+              shadowColor: isActive ? COLORS.primary : 'transparent',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isActive ? 0.16 : 0,
+              shadowRadius: isActive ? 10 : 0,
+              elevation: isActive ? 3 : 0,
+              overflow: 'hidden',
+            }}
+            onPress={() => onChange(tab.key)}
+          >
+            {isActive ? (
+              <LinearGradient
+                colors={[COLORS.primaryLight, COLORS.primary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: wp(6),
+                  paddingVertical: hp(12),
+                  borderRadius: RADIUS.lg,
+                }}
+              >
+                {content}
+              </LinearGradient>
+            ) : (
+              <View
+                className="flex-row items-center justify-center"
+                style={{
+                  gap: wp(6),
+                  paddingVertical: hp(12),
+                  borderRadius: RADIUS.lg,
+                }}
+              >
+                {content}
+              </View>
+            )}
           </TouchableOpacity>
         );
       })}
