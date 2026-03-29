@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
@@ -20,13 +20,16 @@ export default function AiResultSummaryCard({
   iconText,
   items,
 }: AiResultSummaryCardProps) {
+  const { height } = useWindowDimensions();
+  const isCompactHeight = height < 760;
+
   return (
     <View
       className="bg-white"
       style={{
         borderRadius: RADIUS.xxl,
-        padding: wp(20),
-        marginBottom: hp(24),
+        padding: isCompactHeight ? wp(18) : wp(20),
+        marginBottom: isCompactHeight ? hp(16) : hp(24),
         borderWidth: 1,
         borderColor: COLORS.surfaceBorder,
       }}

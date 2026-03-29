@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, useWindowDimensions } from 'react-native';
 
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 
@@ -7,25 +7,30 @@ interface AiFeatureCarouselCardProps {
   title: string;
   description: string;
   children: React.ReactNode;
+  compact?: boolean;
 }
 
 export default function AiFeatureCarouselCard({
   title,
   description,
   children,
+  compact,
 }: AiFeatureCarouselCardProps) {
+  const { height } = useWindowDimensions();
+  const isCompactHeight = compact ?? height < 760;
+
   return (
     <View
       className="items-center justify-center bg-white"
       style={{
         width: wp(310),
         maxWidth: 340,
-        height: hp(300),
+        height: isCompactHeight ? hp(276) : hp(300),
         marginRight: wp(16),
         borderRadius: RADIUS.xxl,
         borderWidth: 1,
         borderColor: 'rgba(0, 0, 0, 0.05)',
-        padding: wp(24),
+        padding: isCompactHeight ? wp(20) : wp(24),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08,
@@ -33,14 +38,14 @@ export default function AiFeatureCarouselCard({
         elevation: 3,
       }}
     >
-      <View style={{ marginBottom: hp(20) }}>{children}</View>
+      <View style={{ marginBottom: isCompactHeight ? hp(12) : hp(20) }}>{children}</View>
       <Text
         className="text-center"
         style={{
-          fontSize: fp(20),
+          fontSize: isCompactHeight ? fp(18) : fp(20),
           fontFamily: FONTS.bold,
           color: COLORS.textPrimary,
-          marginBottom: hp(12),
+          marginBottom: isCompactHeight ? hp(10) : hp(12),
         }}
       >
         {title}
@@ -48,11 +53,11 @@ export default function AiFeatureCarouselCard({
       <Text
         className="text-center"
         style={{
-          fontSize: fp(15),
+          fontSize: isCompactHeight ? fp(14) : fp(15),
           fontFamily: FONTS.regular,
           color: COLORS.textSecondary,
-          lineHeight: fp(22),
-          paddingHorizontal: wp(10),
+          lineHeight: isCompactHeight ? fp(20) : fp(22),
+          paddingHorizontal: isCompactHeight ? wp(4) : wp(10),
         }}
       >
         {description}

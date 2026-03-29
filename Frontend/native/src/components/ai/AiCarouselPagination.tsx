@@ -7,15 +7,20 @@ interface AiCarouselPaginationProps {
   pageCount: number;
   activeIndex: number;
   onPressPage: (index: number) => void;
+  compact?: boolean;
 }
 
 export default function AiCarouselPagination({
   pageCount,
   activeIndex,
   onPressPage,
+  compact = false,
 }: AiCarouselPaginationProps) {
   return (
-    <View className="flex-row items-center justify-center" style={{ marginBottom: hp(30) }}>
+    <View
+      className="flex-row items-center justify-center"
+      style={{ marginBottom: compact ? hp(18) : hp(30) }}
+    >
       {Array.from({ length: pageCount }).map((_, index) => (
         <TouchableOpacity
           key={`ai-pagination-${index}`}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 
 import {
@@ -18,17 +18,18 @@ import { matchesAiReportPeriod, resolveAiReportPeriod } from '../../utils/aiRepo
 export default function AiFeedbackHomeScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiFeedbackHome'>) {
+  const { height: screenHeight } = useWindowDimensions();
   const sessionUserId = useAuthStore((state) => state.user?.userId ?? null);
   const {
     status,
     resultData,
-    isRefreshing,
     startAnalysis,
     simulateAnalysis,
     refreshLatestAnalysis,
   } = useAiStore();
   const featureCards = useAiFeatureCards();
   const reportPeriod = resolveAiReportPeriod();
+  const isCompactHeight = screenHeight < 760;
   const { activeIndex, scrollRef, handleScroll, scrollToPage } = useAiFeatureCarousel({
     itemWidth: wp(326),
   });
@@ -60,24 +61,28 @@ export default function AiFeedbackHomeScreen({
     color: COLORS.primary,
   } as const;
 
+  const isAnalysisRunning = status === 'loading';
   const buttonTitle =
-    status === 'loading'
+    isAnalysisRunning
       ? 'AI 피드백 정리 중'
       : hasCurrentReport
         ? '이번 달 AI 피드백 보기'
-        : isRefreshing
-          ? '최신 AI 피드백 확인 중'
-          : 'AI 피드백 시작하기';
+        : 'AI 피드백 시작하기';
 
   return (
     <BottomTabScreenLayout
       containerStyle={{ flex: 1, backgroundColor: COLORS.background }}
-      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: wp(24) }}
-      scrollTopPadding={hp(20)}
-      scrollBottomPadding={hp(24)}
+      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: wp(isCompactHeight ? 20 : 24) }}
+      scrollTopPadding={isCompactHeight ? hp(12) : hp(20)}
+      scrollBottomPadding={isCompactHeight ? hp(56) : hp(28)}
       backgroundColor={COLORS.background}
     >
-      <View style={{ marginTop: hp(20), marginBottom: hp(40) }}>
+      <View
+        style={{
+          marginTop: isCompactHeight ? hp(12) : hp(20),
+          marginBottom: isCompactHeight ? hp(24) : hp(40),
+        }}
+      >
         <Text style={titleStyle}>
           AI가 내 소비를 분석해{'\n'}
           <Text style={highlightStyle}>절약 포인트와 소비 유형</Text>
@@ -88,8 +93,8 @@ export default function AiFeedbackHomeScreen({
 
       <View
         style={{
-          marginVertical: hp(30),
-          height: hp(320),
+          marginVertical: isCompactHeight ? hp(18) : hp(30),
+          height: isCompactHeight ? hp(292) : hp(320),
           width: '100%',
           maxWidth: 400,
           alignSelf: 'center',
@@ -110,6 +115,7 @@ export default function AiFeedbackHomeScreen({
               key={item.id}
               title={item.title}
               description={item.description}
+              compact={isCompactHeight}
             >
               {item.preview}
             </AiFeatureCarouselCard>
@@ -121,12 +127,19 @@ export default function AiFeedbackHomeScreen({
         pageCount={featureCards.length}
         activeIndex={activeIndex}
         onPressPage={scrollToPage}
+        compact={isCompactHeight}
       />
 
-      <View style={{ paddingBottom: hp(20), width: '100%' }}>
+      <View
+        style={{
+          paddingTop: isCompactHeight ? hp(4) : 0,
+          paddingBottom: isCompactHeight ? hp(8) : hp(20),
+          width: '100%',
+        }}
+      >
         <GradientButton
           title={buttonTitle}
-          disabled={isRefreshing && !hasCurrentReport}
+          disabled={isAnalysisRunning}
           style={{ width: '100%' }}
           onPress={() => {
             if (hasCurrentReport) {
@@ -134,7 +147,7 @@ export default function AiFeedbackHomeScreen({
               return;
             }
 
-            if (status === 'idle' || status === 'error' || status === 'success') {
+            if (!isAnalysisRunning) {
               startAnalysis({
                 year: reportPeriod.year,
                 month: reportPeriod.month,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -16,8 +16,10 @@ import { matchesAiReportPeriod, resolveAiReportPeriod } from '../../utils/aiRepo
 export default function AiResultScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiResult'>) {
+  const { height: screenHeight } = useWindowDimensions();
   const sessionUserId = useAuthStore((state) => state.user?.userId ?? null);
   const reportPeriod = resolveAiReportPeriod();
+  const isCompactHeight = screenHeight < 760;
   const {
     reset,
     resultData,
@@ -80,12 +82,15 @@ export default function AiResultScreen({
   return (
     <BottomTabScreenLayout
       containerStyle={{ flex: 1, backgroundColor: COLORS.background }}
-      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: wp(20) }}
-      scrollTopPadding={20}
-      scrollBottomPadding={hp(40)}
+      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: wp(isCompactHeight ? 16 : 20) }}
+      scrollTopPadding={isCompactHeight ? hp(12) : hp(20)}
+      scrollBottomPadding={isCompactHeight ? hp(60) : hp(40)}
       backgroundColor={COLORS.background}
     >
-      <Animated.View entering={FadeInDown.duration(500)} style={{ marginBottom: hp(32) }}>
+      <Animated.View
+        entering={FadeInDown.duration(500)}
+        style={{ marginBottom: isCompactHeight ? hp(24) : hp(32) }}
+      >
         <AiResultHeader displayName={displayName} title={title} />
       </Animated.View>
 
@@ -100,7 +105,11 @@ export default function AiResultScreen({
 
       <Animated.View
         entering={FadeInDown.delay(500).duration(500)}
-        style={{ marginTop: hp(16), gap: hp(12), width: '100%' }}
+        style={{
+          marginTop: isCompactHeight ? hp(10) : hp(16),
+          gap: isCompactHeight ? hp(10) : hp(12),
+          width: '100%',
+        }}
       >
         {showRetryButton ? (
           <GradientButton
