@@ -65,11 +65,11 @@
       "policy": "appVersion"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/e34c1023-81e3-4a5b-84e9-a1121a9beca8"
+      "fallbackToCacheTimeout": 0
     },
     "extra": {
       "eas": {
+
         "projectId": "f2ad7c84-70f0-44b9-ac60-fc686a5dff1c"
       }
     },
