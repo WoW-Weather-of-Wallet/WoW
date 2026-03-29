@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, useWindowDimensions } from 'react-native';
+import { ScrollView, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AiResultHeader, AiResultSummaryCard } from '../../components/ai';
-import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
+import BottomTabOverlayLayout from '../../components/common/BottomTabOverlayLayout';
 import GradientButton from '../../components/common/GradientButton';
-import { COLORS, hp, wp } from '../../constants/theme';
+import { COLORS, RADIUS, hp, wp } from '../../constants/theme';
 import { useAiResultSummary } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import { useAuthStore } from '../../store/authStore';
@@ -78,63 +78,83 @@ export default function AiResultScreen({
     !currentPeriodResultData?.report && errorInfo?.canRetry
       ? '다시 시도하기'
       : buttonTitle;
+  const bottomActionHeight = showRetryButton
+    ? (isCompactHeight ? hp(156) : hp(166))
+    : (isCompactHeight ? hp(88) : hp(96));
 
   return (
-    <BottomTabScreenLayout
+    <BottomTabOverlayLayout
       containerStyle={{ flex: 1, backgroundColor: COLORS.background }}
-      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: wp(isCompactHeight ? 16 : 20) }}
-      scrollTopPadding={isCompactHeight ? hp(12) : hp(20)}
-      scrollBottomPadding={isCompactHeight ? hp(60) : hp(40)}
       backgroundColor={COLORS.background}
-    >
-      <Animated.View
-        entering={FadeInDown.duration(500)}
-        style={{ marginBottom: isCompactHeight ? hp(24) : hp(32) }}
-      >
-        <AiResultHeader displayName={displayName} title={title} />
-      </Animated.View>
-
-      {cards.map((card, index) => (
-        <Animated.View
-          key={card.id}
-          entering={FadeInDown.delay((index + 1) * 100).duration(500)}
+      contentContainerStyle={{ flex: 1 }}
+      bottomOverlayStyle={{ paddingHorizontal: wp(isCompactHeight ? 16 : 20) }}
+      bottomOverlayBottomPadding={isCompactHeight ? hp(10) : hp(14)}
+      bottomOverlayContent={
+        <View
+          style={{
+            gap: isCompactHeight ? hp(10) : hp(12),
+            padding: wp(isCompactHeight ? 14 : 16),
+            borderRadius: RADIUS.xxl,
+            backgroundColor: COLORS.background,
+            borderWidth: 1,
+            borderColor: COLORS.surfaceBorder,
+            shadowColor: COLORS.textPrimary,
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.04,
+            shadowRadius: 12,
+            elevation: 6,
+          }}
         >
-          <AiResultSummaryCard {...card} />
-        </Animated.View>
-      ))}
+          {showRetryButton ? (
+            <GradientButton
+              title={retryButtonTitle}
+              variant="outline"
+              disabled={isRefreshing}
+              style={{ width: '100%' }}
+              onPress={() => {
+                void refreshLatestAnalysis({
+                  year: reportPeriod.year,
+                  month: reportPeriod.month,
+                  force: true,
+                  fromPush: Boolean(currentPeriodResultData?.fromPush),
+                });
+              }}
+            />
+          ) : null}
 
-      <Animated.View
-        entering={FadeInDown.delay(500).duration(500)}
-        style={{
-          marginTop: isCompactHeight ? hp(10) : hp(16),
-          gap: isCompactHeight ? hp(10) : hp(12),
-          width: '100%',
-        }}
-      >
-        {showRetryButton ? (
           <GradientButton
-            title={retryButtonTitle}
-            variant="outline"
-            disabled={isRefreshing}
+            title={primaryButtonTitle}
+            disabled={isRefreshing && !currentPeriodResultData?.report}
             style={{ width: '100%' }}
-            onPress={() => {
-              void refreshLatestAnalysis({
-                year: reportPeriod.year,
-                month: reportPeriod.month,
-                force: true,
-                fromPush: Boolean(currentPeriodResultData?.fromPush),
-              });
-            }}
+            onPress={handlePrimaryPress}
           />
-        ) : null}
+        </View>
+      }
+    >
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: wp(isCompactHeight ? 16 : 20),
+          paddingTop: isCompactHeight ? hp(12) : hp(20),
+          paddingBottom: bottomActionHeight + hp(24),
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View
+          entering={FadeInDown.duration(500)}
+          style={{ marginBottom: isCompactHeight ? hp(24) : hp(32) }}
+        >
+          <AiResultHeader displayName={displayName} title={title} />
+        </Animated.View>
 
-        <GradientButton
-          title={primaryButtonTitle}
-          disabled={isRefreshing && !currentPeriodResultData?.report}
-          style={{ width: '100%' }}
-          onPress={handlePrimaryPress}
-        />
-      </Animated.View>
-    </BottomTabScreenLayout>
+        {cards.map((card, index) => (
+          <Animated.View
+            key={card.id}
+            entering={FadeInDown.delay((index + 1) * 100).duration(500)}
+          >
+            <AiResultSummaryCard {...card} />
+          </Animated.View>
+        ))}
+      </ScrollView>
+    </BottomTabOverlayLayout>
   );
 }
