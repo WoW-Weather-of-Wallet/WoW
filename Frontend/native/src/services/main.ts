@@ -47,6 +47,16 @@ export interface CreateBudgetRequest {
   amount: number;
 }
 
+export interface CurrentBudgetResponse {
+  goalAmount: number;
+  totalSpent: number;
+  remainingAmount: number;
+  usagePercentage: number;
+  remainingDays: number;
+  dailyAvailable: number;
+  savedAmount: number;
+}
+
 export interface CreateBudgetResponse {
   id: number;
   amount: number;
@@ -65,6 +75,12 @@ export async function getSpendingMonthlyCompare() {
   const response = await nativeApi.get<ApiResponse<SpendingMonthlyCompareResponse>>(
     '/api/v1/spending/monthly/compare',
   );
+
+  return response.data.data;
+}
+
+export async function getCurrentBudget() {
+  const response = await nativeApi.get<ApiResponse<CurrentBudgetResponse>>('/api/v1/budget');
 
   return response.data.data;
 }

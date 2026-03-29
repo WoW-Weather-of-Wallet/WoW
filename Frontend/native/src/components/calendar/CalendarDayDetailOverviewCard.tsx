@@ -1,21 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
 import type { CalendarDayDetail } from '../../mock/calendar';
+import { buildHomeWeatherVisual } from '../../utils/homeWeatherPresentation';
 
 interface CalendarDayDetailOverviewCardProps {
   detail: CalendarDayDetail;
-}
-
-function getWeatherIconName(detail: CalendarDayDetail) {
-  if (detail.spentAmount === null) {
-    return 'moon-outline' as const;
-  }
-
-  return detail.weatherLabel === '\uB9D1\uC74C'
-    ? ('sunny-outline' as const)
-    : ('partly-sunny-outline' as const);
 }
 
 function getSpentAmountLabel(detail: CalendarDayDetail) {
@@ -37,10 +27,20 @@ function getTransactionCountLabel(detail: CalendarDayDetail) {
 export default function CalendarDayDetailOverviewCard({
   detail,
 }: CalendarDayDetailOverviewCardProps) {
+  const weatherVisual = useMemo(
+    () =>
+      buildHomeWeatherVisual({
+        weatherName: detail.weatherLabel,
+        description: detail.weatherHint,
+        iconCode: detail.weatherIconCode,
+      }),
+    [detail.weatherHint, detail.weatherIconCode, detail.weatherLabel],
+  );
+  const WeatherIcon = weatherVisual.icon;
+
   return (
     <>
       <View
-        className="flex-row items-center justify-between"
         style={{
           borderRadius: RADIUS.xl,
           backgroundColor: COLORS.calendarDayDetailBackground,
@@ -50,12 +50,8 @@ export default function CalendarDayDetailOverviewCard({
         }}
       >
         <View className="flex-row items-center" style={{ gap: wp(12) }}>
-          <Ionicons
-            name={getWeatherIconName(detail)}
-            size={wp(28)}
-            color={COLORS.primary}
-          />
-          <View>
+          <WeatherIcon size={wp(28)} color={weatherVisual.color} />
+          <View style={{ flex: 1 }}>
             <Text
               style={{
                 fontSize: fp(18),
@@ -77,15 +73,6 @@ export default function CalendarDayDetailOverviewCard({
             </Text>
           </View>
         </View>
-        <Text
-          style={{
-            fontSize: fp(26),
-            fontFamily: FONTS.bold,
-            color: COLORS.textSecondary,
-          }}
-        >
-          {detail.weatherTemperature}
-        </Text>
       </View>
 
       <View className="flex-row" style={{ gap: wp(12), marginBottom: hp(18) }}>

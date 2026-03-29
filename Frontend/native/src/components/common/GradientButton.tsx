@@ -24,6 +24,8 @@ interface GradientButtonProps {
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 const solidButtonStyle = {
+  width: '100%' as const,
+  minHeight: hp(56),
   paddingVertical: hp(16),
   borderRadius: RADIUS.xl,
   alignItems: 'center' as const,
@@ -38,6 +40,7 @@ const outlineButtonStyle = {
 const buttonTextStyle = {
   fontSize: fp(16),
   letterSpacing: 0.3,
+  textAlign: 'center' as const,
 };
 
 /**
@@ -80,6 +83,9 @@ export default function GradientButton({
         <Text
           className="font-sans-semibold text-text"
           style={[buttonTextStyle, { fontFamily: FONTS.semiBold }, textStyle]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.85}
         >
           {title}
         </Text>
@@ -105,6 +111,9 @@ export default function GradientButton({
         <Text
           className="font-sans-semibold text-text-inverse"
           style={[buttonTextStyle, { fontFamily: FONTS.semiBold }, textStyle]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.85}
         >
           {title}
         </Text>

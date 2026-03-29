@@ -32,10 +32,8 @@ export default function FixedExpensePickerSheet({
     <BottomSheetModal
       visible={visible}
       onClose={onClose}
-      title={'\uACE0\uC815\uC9C0\uCD9C\uB85C \uB4F1\uB85D\uD560 \uAC70\uB798 \uC120\uD0DD'}
-      subtitle={
-        '\uACE0\uC815\uC9C0\uCD9C\uB85C \uAD00\uB9AC\uD560 \uAC70\uB798\uB97C \uC120\uD0DD\uD558\uBA74 \uC774\uD6C4 \uC6D4\uBCC4 \uD750\uB984\uC744 \uBCF4\uB2E4 \uC27D\uAC8C \uD655\uC778\uD560 \uC218 \uC788\uC5B4\uC694.'
-      }
+      title={'\uACE0\uC815\uC9C0\uCD9C \uB4F1\uB85D'}
+      subtitle={'\uAC70\uB798\uB0B4\uC5ED\uC744 \uAC80\uC0C9\uD574\uBCF4\uC138\uC694.'}
     >
       <FixedExpensePickerSearchInput value={query} onChangeText={setQuery} />
 
@@ -105,7 +103,7 @@ export default function FixedExpensePickerSheet({
             color: COLORS.textInverse,
           }}
         >
-          {'\uC120\uD0DD\uD55C \uAC70\uB798 \uB4F1\uB85D'}
+          {'\uB0A9\uBD80\uC77C \uC9C0\uC815\uD558\uAE30'}
         </Text>
       </TouchableOpacity>
     </BottomSheetModal>

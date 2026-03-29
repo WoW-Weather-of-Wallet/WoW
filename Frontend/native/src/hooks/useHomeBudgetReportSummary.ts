@@ -25,21 +25,21 @@ export function useHomeBudgetReportSummary({
     const trimmedUserName = userName?.trim();
 
     const helperMessage = hasBudgetData
-      ? `이번 달 소비 ${spentAmount == null ? '-' : `${spentAmount.toLocaleString()}원`} / 총 예산 ${
+      ? `이번 달 소비 ${spentAmount == null ? '-' : `${spentAmount.toLocaleString()}원`} / 전체 예산 ${
           totalBudget == null ? '-' : `${totalBudget.toLocaleString()}원`
         }`
-      : '지출 데이터가 쌓이면 이번 달 예산 흐름을 더 정확하게 안내해 드릴게요.';
+      : '예산을 등록하면 이번 달 소비 흐름과 남은 금액을 한눈에 확인할 수 있어요.';
 
     const resolvedForecastText =
       forecastText?.trim() ||
       (hasBudgetData
-        ? '소비 흐름을 바탕으로 다음 예산 흐름도 함께 보여드릴게요.'
-        : '월간 리포트를 통해 소비 흐름과 예산 상태를 먼저 확인해 보세요.');
+        ? '현재 소비 흐름을 기준으로 이번 달 예산 사용 추이를 안내해 드릴게요.'
+        : '아직 등록된 예산이 없어요. 예산을 먼저 설정해 주세요.');
 
     const remainingValue =
-      remainingBudget == null ? '준비 중' : `${remainingBudget.toLocaleString()}원`;
+      remainingBudget == null ? '예산 미등록' : `${remainingBudget.toLocaleString()}원`;
     const usageLabel =
-      budgetUsageRate == null ? '예산 분석 대기' : `${budgetUsageRate}% 사용`;
+      budgetUsageRate == null ? '사용률 준비 중' : `${budgetUsageRate}% 사용`;
 
     return {
       usageRate,

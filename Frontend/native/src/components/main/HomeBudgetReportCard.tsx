@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { COLORS, RADIUS, wp } from '../../constants/theme';
+import { COLORS, RADIUS, hp, wp } from '../../constants/theme';
 import { useHomeBudgetReportSummary } from '../../hooks/useHomeBudgetReportSummary';
 import HomeBudgetReportHeader from './HomeBudgetReportHeader';
 import HomeBudgetReportStatus from './HomeBudgetReportStatus';
@@ -48,7 +48,8 @@ export default function HomeBudgetReportCard({
 
   const cardStyle = {
     borderRadius: RADIUS.xxl,
-    padding: wp(22),
+    paddingHorizontal: wp(22),
+    paddingVertical: hp(22),
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
   } as const;

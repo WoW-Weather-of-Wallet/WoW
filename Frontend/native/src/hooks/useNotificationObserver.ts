@@ -53,8 +53,11 @@ export const useNotificationObserver = () => {
 
       case 'ai_feedback':
         // AI 피드백 탭으로 이동
+        // Match the in-app toast behavior so both entry points land on the
+        // completed monthly report instead of the intermediate home screen.
         navigation.navigate('MainTabs', {
-          screen: 'AiFeedback'
+          screen: 'AiFeedback',
+          params: { screen: 'AiResult' }
         });
         break;
 

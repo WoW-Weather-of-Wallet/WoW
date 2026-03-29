@@ -108,6 +108,7 @@ export function mapDailyResponseToDetail(response: CalendarDailyResponse): Calen
     title: formatMonthDayTitle(response.date),
     weatherLabel,
     weatherHint,
+    weatherIconCode: response.weather.iconCode,
     weatherTemperature: response.weather.isForecast === 1 ? '예측' : '실측',
     spentAmount: derivedSpentAmount,
     transactionCount: derivedTransactionCount,

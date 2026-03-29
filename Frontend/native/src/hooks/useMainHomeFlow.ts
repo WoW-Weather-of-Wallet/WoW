@@ -13,8 +13,10 @@ import { getCalendarHeader } from '../services/calendar';
 import type { AiAnalysisReport } from '../services/ai';
 import {
   createBudget,
+  getCurrentBudget,
   getSpendingHalfYearly,
   getSpendingMonthlyCompare,
+  type CurrentBudgetResponse,
   type SpendingHalfYearlyResponse,
   type SpendingMonthlyCompareResponse,
 } from '../services/main';
@@ -24,6 +26,8 @@ import type { CalendarHeaderResponse } from '../types/calendar';
 import { matchesAiReportPeriod, resolveAiReportPeriod } from '../utils/aiReportPeriod';
 import { extractApiErrorMessage } from '../utils/error';
 import {
+  buildAiSpendingMetrics,
+  buildAiSpendingReasons,
   buildMonthlyComparisonLegend,
   buildMonthlyInsight,
   buildSpendingMetrics,
@@ -48,10 +52,10 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     React.useState<SpendingHalfYearlyResponse | null>(null);
   const [monthlyCompare, setMonthlyCompare] =
     React.useState<SpendingMonthlyCompareResponse | null>(null);
-  const [budgetAmount, setBudgetAmount] = React.useState<number | null>(null);
+  const [currentBudget, setCurrentBudget] = React.useState<CurrentBudgetResponse | null>(null);
   const [isWeatherLoading, setIsWeatherLoading] = React.useState(false);
   const [isBudgetSubmitting, setIsBudgetSubmitting] = React.useState(false);
-  const today = new Date();
+  const today = React.useMemo(() => new Date(), []);
   const reportPeriod = resolveAiReportPeriod({}, today);
   const monthLabel = `${today.getMonth() + 1}월`;
 
@@ -66,6 +70,7 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
       setAiAnalysis(null);
       setSpendingHalfYearly(null);
       setMonthlyCompare(null);
+      setCurrentBudget(null);
       setIsWeatherLoading(false);
       return;
     }
@@ -73,18 +78,20 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     setIsWeatherLoading(true);
 
     try {
-      const [headerResponse, halfYearlyResponse, monthlyCompareResponse] = await Promise.all([
+      const [headerResponse, halfYearlyResponse, monthlyCompareResponse, budgetResponse] = await Promise.all([
         getCalendarHeader({
           year: today.getFullYear(),
           month: today.getMonth() + 1,
         }),
         getSpendingHalfYearly(),
         getSpendingMonthlyCompare(),
+        getCurrentBudget(),
       ]);
 
       setLiveHeader(headerResponse);
       setSpendingHalfYearly(halfYearlyResponse);
       setMonthlyCompare(monthlyCompareResponse);
+      setCurrentBudget(budgetResponse);
 
       if (hasCurrentHomeAiSummary) {
         setAiAnalysis(null);
@@ -101,6 +108,7 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
       setAiAnalysis(null);
       setSpendingHalfYearly(null);
       setMonthlyCompare(null);
+      setCurrentBudget(null);
     } finally {
       setIsWeatherLoading(false);
     }
@@ -112,13 +120,31 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     }, [loadHomeData]),
   );
 
+  // When the monthly AI report exists, the card and the bottom sheet should
+  // read from the same source so users never see mixed half-yearly content.
+  const homeAiSummary = (hasCurrentHomeAiSummary ? latestAiResult?.report : null) ?? aiAnalysis;
+
   const handleCreateBudget = React.useCallback(
     async (amount: number) => {
       setIsBudgetSubmitting(true);
 
       try {
         const createdBudget = await createBudget({ amount });
-        setBudgetAmount(createdBudget.amount);
+        setCurrentBudget((previous) => ({
+          goalAmount: createdBudget.amount,
+          totalSpent: previous?.totalSpent ?? 0,
+          remainingAmount: previous?.totalSpent != null ? createdBudget.amount - previous.totalSpent : createdBudget.amount,
+          usagePercentage:
+            previous?.totalSpent != null && createdBudget.amount > 0
+              ? Math.max(0, Math.min(Math.round((previous.totalSpent / createdBudget.amount) * 100), 100))
+              : 0,
+          remainingDays: previous?.remainingDays ?? 0,
+          dailyAvailable:
+            previous?.remainingDays != null && previous.remainingDays > 0
+              ? Math.floor((createdBudget.amount - (previous?.totalSpent ?? 0)) / previous.remainingDays)
+              : 0,
+          savedAmount: previous?.savedAmount ?? 0,
+        }));
         closeReportModal();
         Alert.alert(
           '예산 등록 완료',
@@ -138,12 +164,12 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
   );
 
   const spendingMetrics = React.useMemo(
-    () => buildSpendingMetrics(spendingHalfYearly),
-    [spendingHalfYearly],
+    () => (homeAiSummary ? buildAiSpendingMetrics(homeAiSummary) : buildSpendingMetrics(spendingHalfYearly)),
+    [homeAiSummary, spendingHalfYearly],
   );
   const spendingReasons = React.useMemo(
-    () => buildSpendingReasons(spendingHalfYearly),
-    [spendingHalfYearly],
+    () => (homeAiSummary ? buildAiSpendingReasons(homeAiSummary) : buildSpendingReasons(spendingHalfYearly)),
+    [homeAiSummary, spendingHalfYearly],
   );
   const comparisonLegend = React.useMemo(
     () => buildMonthlyComparisonLegend(monthlyCompare),
@@ -161,8 +187,9 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     ? formatMonthLabel(monthlyCompare.lastMonth.year, monthlyCompare.lastMonth.month)
     : '-';
 
-  const spentAmount = monthlyCompare?.currentMonth.totalAmount ?? null;
-  const totalBudget = budgetAmount;
+  const spentAmount = currentBudget?.totalSpent ?? monthlyCompare?.currentMonth.totalAmount ?? null;
+  const totalBudget =
+    currentBudget != null && currentBudget.goalAmount > 0 ? currentBudget.goalAmount : null;
   const remainingBudget =
     totalBudget != null && spentAmount != null ? totalBudget - spentAmount : null;
   const budgetUsageRate =
@@ -185,8 +212,6 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     }),
     [isWeatherLoading, liveHeader?.description, liveHeader?.iconCode, liveHeader?.weatherName],
   );
-
-  const homeAiSummary = (hasCurrentHomeAiSummary ? latestAiResult?.report : null) ?? aiAnalysis;
 
   const spendingTypeCard = React.useMemo<HomeDashboardSpendingTypeCardData>(
     () => ({
