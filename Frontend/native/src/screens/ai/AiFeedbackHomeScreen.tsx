@@ -183,10 +183,12 @@ export default function AiFeedbackHomeScreen({
                 startAnalysis({
                   year: reportPeriod.year,
                   month: reportPeriod.month,
+                  userInitiated: true,
                 });
                 simulateAnalysis({
                   year: reportPeriod.year,
                   month: reportPeriod.month,
+                  userInitiated: true,
                 });
               }
 

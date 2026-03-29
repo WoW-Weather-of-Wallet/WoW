@@ -42,6 +42,10 @@ interface RefreshAiResultOptions extends GetAiAnalysisParams {
   force?: boolean;
 }
 
+interface GenerateAiResultOptions extends GetAiAnalysisParams {
+  userInitiated?: boolean;
+}
+
 interface AiState {
   status: AiStatus;
   resultData: AiResultData | null;
@@ -49,9 +53,9 @@ interface AiState {
   errorInfo: AiErrorState | null;
   isRefreshing: boolean;
 
-  startAnalysis: (params?: GetAiAnalysisParams) => void;
-  simulateAnalysis: (params?: GetAiAnalysisParams) => void;
-  runAnalysis: (params?: GetAiAnalysisParams) => Promise<AiResultData | null>;
+  startAnalysis: (params?: GenerateAiResultOptions) => void;
+  simulateAnalysis: (params?: GenerateAiResultOptions) => void;
+  runAnalysis: (params?: GenerateAiResultOptions) => Promise<AiResultData | null>;
   refreshLatestAnalysis: (params?: RefreshAiResultOptions) => Promise<AiAnalysisReport | null>;
   setSuccess: (data: AiResultData) => void;
   setError: (error?: AiErrorState | null) => void;
@@ -209,6 +213,10 @@ export const useAiStore = create<AiState>((set, get) => ({
   isRefreshing: false,
 
   startAnalysis: (params = {}) => {
+    if (!params.userInitiated) {
+      return;
+    }
+
     const currentPeriodResult = getCurrentPeriodResult(get().resultData, params);
 
     if (analysisTimer) {
@@ -226,6 +234,10 @@ export const useAiStore = create<AiState>((set, get) => ({
   },
 
   simulateAnalysis: (params = {}) => {
+    if (!params.userInitiated) {
+      return;
+    }
+
     const requestToken = nextAnalysisRequestToken();
     const currentState = get();
     const delayPromise = waitMinimumLoadingTime(ANALYSIS_MINIMUM_LOADING_MS);
@@ -278,6 +290,10 @@ export const useAiStore = create<AiState>((set, get) => ({
   },
 
   runAnalysis: async (params = {}) => {
+    if (!params.userInitiated) {
+      return null;
+    }
+
     const requestToken = nextAnalysisRequestToken();
 
     set({
