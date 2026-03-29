@@ -1,5 +1,5 @@
 import React, { PropsWithChildren, useMemo, useRef, useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { PanResponder, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,6 +37,8 @@ export default function BottomSheetModal({
 }: BottomSheetModalProps) {
   const insets = useSafeAreaInsets();
   const shouldPropagateSwipe = scrollable || swipeArea === 'sheet';
+  const shouldUseSheetSwipe = enableSwipeToClose && swipeArea === 'sheet';
+  const shouldUseHeaderSwipe = enableSwipeToClose && swipeArea === 'header';
   const scrollViewRef = useRef<ScrollView | null>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [scrollOffsetMax, setScrollOffsetMax] = useState(0);
@@ -47,6 +49,21 @@ export default function BottomSheetModal({
     },
     [],
   );
+  const headerPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          shouldUseHeaderSwipe
+          && gestureState.dy > 6
+          && Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.2,
+        onPanResponderRelease: (_, gestureState) => {
+          if (gestureState.dy > 28 || (gestureState.dy > 16 && gestureState.vy > 0.35)) {
+            onClose();
+          }
+        },
+      }),
+    [onClose, shouldUseHeaderSwipe],
+  );
 
   return (
     <Modal
@@ -56,8 +73,8 @@ export default function BottomSheetModal({
       backdropColor={COLORS.black}
       onBackdropPress={onClose}
       onBackButtonPress={onClose}
-      onSwipeComplete={enableSwipeToClose ? onClose : undefined}
-      swipeDirection={enableSwipeToClose ? ['down'] : undefined}
+      onSwipeComplete={shouldUseSheetSwipe ? onClose : undefined}
+      swipeDirection={shouldUseSheetSwipe ? ['down'] : undefined}
       swipeThreshold={18}
       scrollTo={scrollable ? handleScrollTo : undefined}
       scrollOffset={scrollable ? scrollOffset : 0}
@@ -78,7 +95,10 @@ export default function BottomSheetModal({
           maxHeight: '88%',
         }}
       >
-        <View style={{ paddingBottom: LAYOUT.topDockBottomPadding }}>
+        <View
+          style={{ paddingBottom: LAYOUT.topDockBottomPadding }}
+          {...(shouldUseHeaderSwipe ? headerPanResponder.panHandlers : {})}
+        >
           {showHandle ? (
             <View
               className="self-center items-center justify-center"
@@ -177,25 +197,29 @@ export default function BottomSheetModal({
         </View>
 
         {scrollable ? (
-          <ScrollView
-            ref={scrollViewRef}
-            bounces={false}
-            nestedScrollEnabled
-            showsVerticalScrollIndicator={false}
-            onLayout={(event) => {
-              setScrollViewHeight(event.nativeEvent.layout.height);
-            }}
-            onContentSizeChange={(_, contentHeight) => {
-              setScrollOffsetMax(Math.max(0, contentHeight - scrollViewHeight));
-            }}
-            onScroll={(event) => {
-              setScrollOffset(event.nativeEvent.contentOffset.y);
-            }}
-            scrollEventThrottle={16}
-            contentContainerStyle={{ paddingBottom: 4 }}
-          >
-            {children}
-          </ScrollView>
+          <View style={{ flexShrink: 1, maxHeight: '100%' }}>
+            <ScrollView
+              ref={scrollViewRef}
+              bounces={false}
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              style={{ flexGrow: 0, flexShrink: 1 }}
+              onLayout={(event) => {
+                setScrollViewHeight(event.nativeEvent.layout.height);
+              }}
+              onContentSizeChange={(_, contentHeight) => {
+                setScrollOffsetMax(Math.max(0, contentHeight - scrollViewHeight));
+              }}
+              onScroll={(event) => {
+                setScrollOffset(event.nativeEvent.contentOffset.y);
+              }}
+              scrollEventThrottle={16}
+              contentContainerStyle={{ paddingBottom: 4 }}
+            >
+              {children}
+            </ScrollView>
+          </View>
         ) : (
           children
         )}

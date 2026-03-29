@@ -341,7 +341,6 @@ export default function CalendarAddEntrySheet({
         onClose={onClose}
         scrollable={false}
         showCloseButton={false}
-        swipeArea="sheet"
         subtitle=""
       >
         <View style={{ height: sheetBodyHeight, minHeight: 420 }}>

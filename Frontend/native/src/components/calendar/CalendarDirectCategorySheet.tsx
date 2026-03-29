@@ -86,7 +86,6 @@ export default function CalendarDirectCategorySheet({
       title="카테고리 선택"
       subtitle="변경할 카테고리를 선택해주세요."
       scrollable={false}
-      swipeArea="sheet"
     >
       <ScrollView
         style={{ maxHeight: hp(430) }}

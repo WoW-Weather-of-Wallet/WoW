@@ -65,7 +65,6 @@ export default function FixedExpenseDetailSheet({
       title={sheetTitle}
       subtitle={sheetSubtitle}
       scrollable={false}
-      swipeArea="sheet"
     >
       <View style={{ height: sheetBodyHeight, minHeight: 320 }}>
         <ScrollView
