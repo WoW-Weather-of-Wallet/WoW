@@ -34,8 +34,8 @@ export default function HomeDashboardContent({
   const isCompact = layoutMode === 'compact';
   const isTall = layoutMode === 'tall';
   const cardHeights = isCompact
-    ? { weather: hp(168), spending: hp(140), budget: hp(278) }
-    : { weather: hp(184), spending: hp(154), budget: hp(304) };
+    ? { weather: hp(164), spending: hp(136), budget: hp(278) }
+    : { weather: hp(180), spending: hp(150), budget: hp(304) };
 
   const spacerStyle = isTall
     ? { minHeight: sectionGap, flexGrow: 1 }
