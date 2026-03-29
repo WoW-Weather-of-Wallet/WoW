@@ -19,7 +19,7 @@ export default function CalendarHeroHeader({
   return (
     <View
       className="flex-row items-center justify-between"
-      style={{ marginBottom: hp(24) }}
+      style={{ marginBottom: hp(18) }}
     >
       <View className="flex-row items-center" style={{ gap: wp(6) }}>
         <Text
@@ -53,8 +53,8 @@ export default function CalendarHeroHeader({
           borderColor: COLORS.whiteOverlay3A,
           backgroundColor: COLORS.whiteOverlay14,
           borderRadius: RADIUS.full,
-          paddingHorizontal: wp(16),
-          paddingVertical: hp(10),
+          paddingHorizontal: wp(14),
+          paddingVertical: hp(8),
         }}
       >
         <Text

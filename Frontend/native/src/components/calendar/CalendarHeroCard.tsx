@@ -43,9 +43,9 @@ export default function CalendarHeroCard({
       end={{ x: 1, y: 1 }}
       style={{
         borderRadius: RADIUS.xxl,
-        paddingHorizontal: wp(16),
-        paddingTop: hp(16),
-        paddingBottom: hp(18),
+        paddingHorizontal: wp(14),
+        paddingTop: hp(14),
+        paddingBottom: hp(14),
         overflow: 'hidden',
       }}
     >
@@ -58,7 +58,7 @@ export default function CalendarHeroCard({
 
       <View
         className="flex-row items-center"
-        style={{ gap: wp(12), marginBottom: hp(16) }}
+        style={{ gap: wp(10), marginBottom: hp(12) }}
       >
         <TouchableOpacity
           activeOpacity={0.85}
@@ -111,7 +111,7 @@ export default function CalendarHeroCard({
 
       <Text
         style={{
-          marginTop: hp(12),
+          marginTop: hp(10),
           fontSize: TYPOGRAPHY.caption.fontSize,
           lineHeight: TYPOGRAPHY.caption.lineHeight,
           fontFamily: FONTS.medium,

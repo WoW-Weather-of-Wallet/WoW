@@ -1,4 +1,5 @@
 import React from 'react';
+import { View } from 'react-native';
 
 import type { ResponsiveLayoutMode } from '../../hooks/useResponsiveLayoutMode';
 import { hp } from '../../constants/theme';
@@ -18,6 +19,7 @@ interface HomeDashboardContentProps {
   onPressSpendingType: () => void;
   onPressBudgetReport: () => void;
   layoutMode?: ResponsiveLayoutMode;
+  sectionGap?: number;
 }
 
 export default function HomeDashboardContent({
@@ -27,16 +29,20 @@ export default function HomeDashboardContent({
   onPressSpendingType,
   onPressBudgetReport,
   layoutMode = 'regular',
+  sectionGap = hp(18),
 }: HomeDashboardContentProps) {
-  const cardHeights =
-    layoutMode === 'compact'
-      ? { weather: hp(196), spending: hp(170), budget: hp(278) }
-      : layoutMode === 'tall'
-        ? { weather: hp(230), spending: hp(192), budget: hp(314) }
-        : { weather: hp(220), spending: hp(186), budget: hp(304) };
+  const isCompact = layoutMode === 'compact';
+  const isTall = layoutMode === 'tall';
+  const cardHeights = isCompact
+    ? { weather: hp(168), spending: hp(140), budget: hp(278) }
+    : { weather: hp(184), spending: hp(154), budget: hp(304) };
+
+  const spacerStyle = isTall
+    ? { minHeight: sectionGap, flexGrow: 1 }
+    : { height: sectionGap };
 
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <HomeTodayWeatherCard
         weatherName={weatherCard.weatherName}
         description={weatherCard.weatherDescription}
@@ -44,6 +50,7 @@ export default function HomeDashboardContent({
         isLoading={weatherCard.isWeatherLoading}
         style={{ minHeight: cardHeights.weather }}
       />
+      <View style={spacerStyle} />
       <HomeSpendingTypeCard
         onPress={onPressSpendingType}
         title={spendingTypeCard.spendingTypeTitle}
@@ -51,6 +58,7 @@ export default function HomeDashboardContent({
         iconName={spendingTypeCard.spendingTypeIconName}
         style={{ minHeight: cardHeights.spending }}
       />
+      <View style={spacerStyle} />
       <HomeBudgetReportCard
         monthLabel={budgetReportCard.monthLabel}
         userName={budgetReportCard.userName}
@@ -62,6 +70,6 @@ export default function HomeDashboardContent({
         onPress={onPressBudgetReport}
         style={{ minHeight: cardHeights.budget }}
       />
-    </>
+    </View>
   );
 }

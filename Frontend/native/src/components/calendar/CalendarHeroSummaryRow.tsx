@@ -19,8 +19,8 @@ export default function CalendarHeroSummaryRow({
           width: '100%',
           backgroundColor: COLORS.whiteOverlay1E,
           borderRadius: RADIUS.xl,
-          paddingHorizontal: wp(16),
-          paddingVertical: hp(12),
+          paddingHorizontal: wp(14),
+          paddingVertical: hp(10),
         }}
       >
         <Ionicons name="bulb-outline" size={wp(13)} color={COLORS.primary} />

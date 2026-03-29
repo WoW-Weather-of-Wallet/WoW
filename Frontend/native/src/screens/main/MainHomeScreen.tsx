@@ -32,8 +32,8 @@ export default function MainHomeScreen() {
       <BottomTabScreenLayout
         containerStyle={styles.container}
         contentContainerStyle={{
+          flexGrow: 1,
           paddingHorizontal: pageHorizontal,
-          gap: sectionGap,
         }}
         scrollTopPadding={scrollTopPadding}
         scrollBottomPadding={scrollBottomPadding}
@@ -45,6 +45,7 @@ export default function MainHomeScreen() {
           onPressSpendingType={spendingTypeModal.open}
           onPressBudgetReport={reportModal.open}
           layoutMode={mode}
+          sectionGap={sectionGap}
         />
       </BottomTabScreenLayout>
 

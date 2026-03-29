@@ -34,9 +34,9 @@ export default function CalendarHeroWeatherCard({
       style={{
         backgroundColor: COLORS.whiteOverlay14,
         borderRadius: RADIUS.xl,
-        paddingHorizontal: wp(16),
-        paddingVertical: hp(14),
-        marginBottom: hp(16),
+        paddingHorizontal: wp(14),
+        paddingVertical: hp(12),
+        marginBottom: hp(12),
       }}
     >
       <View
@@ -52,7 +52,7 @@ export default function CalendarHeroWeatherCard({
             lineHeight: TYPOGRAPHY.title.lineHeight,
             fontFamily: FONTS.bold,
             color: COLORS.white,
-            marginBottom: hp(4),
+            marginBottom: hp(2),
           }}
           >
           {weatherVisual.type}
