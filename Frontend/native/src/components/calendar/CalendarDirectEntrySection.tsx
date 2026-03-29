@@ -7,7 +7,6 @@ import type {
   ManualCalendarEntryDraft,
   ManualEntryPaymentMethod,
 } from '../../types/calendar';
-import CalendarCategorySelector from './CalendarCategorySelector';
 import CalendarDraftEntryCard from './CalendarDraftEntryCard';
 import CalendarFieldLabel from './CalendarFieldLabel';
 import CalendarPaymentMethodSelector from './CalendarPaymentMethodSelector';
@@ -24,7 +23,7 @@ interface CalendarDirectEntrySectionProps {
   isConfirmLoading: boolean;
   onChangeDateKey: (value: string) => void;
   onOpenDatePicker: () => void;
-  onSelectCategory: (value: CalendarEntryCategoryKey | null) => void;
+  onOpenCategorySheet: () => void;
   onSelectPaymentMethod: (value: ManualEntryPaymentMethod | null) => void;
   onChangeMerchantName: (value: string) => void;
   onChangeAmountInput: (value: string) => void;
@@ -70,7 +69,7 @@ export default function CalendarDirectEntrySection({
   isConfirmLoading,
   onChangeDateKey,
   onOpenDatePicker,
-  onSelectCategory,
+  onOpenCategorySheet,
   onSelectPaymentMethod,
   onChangeMerchantName,
   onChangeAmountInput,
@@ -79,6 +78,8 @@ export default function CalendarDirectEntrySection({
   onComplete,
 }: CalendarDirectEntrySectionProps) {
   const isCompleteDisabled = draftEntries.length === 0 || isConfirmLoading;
+  const selectedCategoryLabel = selectedCategory ?? '카테고리를 선택해주세요';
+  const isCategorySelected = selectedCategory !== null;
 
   return (
     <View style={{ flex: 1, minHeight: 0 }}>
@@ -122,11 +123,28 @@ export default function CalendarDirectEntrySection({
         ) : null}
 
         <CalendarFieldLabel label="카테고리" />
-        <CalendarCategorySelector
-          variant="chip"
-          selectedCategory={selectedCategory}
-          onSelect={onSelectCategory}
-        />
+        <TouchableOpacity
+          activeOpacity={0.86}
+          className="flex-row items-center justify-between"
+          style={inputShellStyle}
+          onPress={onOpenCategorySheet}
+        >
+          <Text
+            style={{
+              flex: 1,
+              fontSize: fp(16),
+              fontFamily: isCategorySelected ? FONTS.semiBold : FONTS.medium,
+              color: isCategorySelected ? COLORS.textPrimary : COLORS.textTertiary,
+            }}
+          >
+            {selectedCategoryLabel}
+          </Text>
+          <Ionicons
+            name="chevron-forward"
+            size={wp(20)}
+            color={COLORS.textSecondary}
+          />
+        </TouchableOpacity>
 
         <CalendarFieldLabel label="결제수단" />
         <CalendarPaymentMethodSelector

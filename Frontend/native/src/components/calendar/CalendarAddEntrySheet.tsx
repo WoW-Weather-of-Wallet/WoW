@@ -25,6 +25,7 @@ import {
 } from '../../utils/calendarAddEntry';
 import ExcelUploadGuideModal from './ExcelUploadGuideModal';
 import CalendarDatePickerSheet from './CalendarDatePickerSheet';
+import CalendarDirectCategorySheet from './CalendarDirectCategorySheet';
 import CalendarDirectEntrySection from './CalendarDirectEntrySection';
 import CalendarEntryModeToggle from './CalendarEntryModeToggle';
 import CalendarExcelUploadSection from './CalendarExcelUploadSection';
@@ -89,6 +90,7 @@ export default function CalendarAddEntrySheet({
   const [isConfirmLoading, setIsConfirmLoading] = useState(false);
   const [isExcelGuideVisible, setIsExcelGuideVisible] = useState(false);
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+  const [isDirectCategorySheetVisible, setIsDirectCategorySheetVisible] = useState(false);
 
   const handleOpenExcelGuide = useCallback(() => {
     setIsExcelGuideVisible(true);
@@ -112,6 +114,7 @@ export default function CalendarAddEntrySheet({
     setConfirmErrorMessage(null);
     setIsConfirmLoading(false);
     setIsDatePickerVisible(false);
+    setIsDirectCategorySheetVisible(false);
   }, [visible]);
 
   const selectedUploadItem = useMemo(() => {
@@ -358,7 +361,7 @@ export default function CalendarAddEntrySheet({
               isConfirmLoading={isConfirmLoading}
               onChangeDateKey={setDateKey}
               onOpenDatePicker={() => setIsDatePickerVisible(true)}
-              onSelectCategory={setSelectedCategory}
+              onOpenCategorySheet={() => setIsDirectCategorySheetVisible(true)}
               onSelectPaymentMethod={setSelectedPaymentMethod}
               onChangeMerchantName={setMerchantName}
               onChangeAmountInput={setAmountInput}
@@ -391,6 +394,15 @@ export default function CalendarAddEntrySheet({
         selectedItem={selectedUploadItem}
         onClose={() => setSelectedUploadItemId(null)}
         onSelectCategory={handleSelectUploadCategory}
+      />
+      <CalendarDirectCategorySheet
+        visible={isDirectCategorySheetVisible}
+        selectedCategory={selectedCategory}
+        onClose={() => setIsDirectCategorySheetVisible(false)}
+        onSelectCategory={(category) => {
+          setSelectedCategory(category);
+          setIsDirectCategorySheetVisible(false);
+        }}
       />
     </>
   );

@@ -4,6 +4,7 @@ export { default as CalendarDayDetailSheet } from './CalendarDayDetailSheet';
 export { default as CalendarDayDetailMemoSection } from './CalendarDayDetailMemoSection';
 export { default as CalendarDayDetailOverviewCard } from './CalendarDayDetailOverviewCard';
 export { default as CalendarDayDetailTransactionRow } from './CalendarDayDetailTransactionRow';
+export { default as CalendarDirectCategorySheet } from './CalendarDirectCategorySheet';
 export { default as CalendarDraftEntryCard } from './CalendarDraftEntryCard';
 export { default as CalendarDirectEntrySection } from './CalendarDirectEntrySection';
 export { default as CalendarEntryModeToggle } from './CalendarEntryModeToggle';
