@@ -36,8 +36,8 @@ export default function CalendarDayCell({
         width: '14.28%',
         minHeight: hp(58),
         borderRadius: RADIUS.lg,
-        paddingVertical: hp(5),
-        paddingTop: hp(5),
+        paddingVertical: hp(4),
+        paddingTop: hp(2),
         position: 'relative',
         opacity: isPaddingCell ? 0 : day.isFuture ? 0.72 : 1,
         backgroundColor: isSelected ? COLORS.primary : 'transparent',
@@ -65,7 +65,7 @@ export default function CalendarDayCell({
 
       <View
         style={{
-          marginBottom: hp(3),
+          marginBottom: hp(2),
         }}
       >
         <View

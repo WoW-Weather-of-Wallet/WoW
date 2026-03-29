@@ -21,6 +21,7 @@ import {
   SettingSection,
 } from '../../components/mypage';
 import { useAuthStore } from '../../store/authStore';
+import { useAiStore } from '../../store/aiStore';
 import { useLocalSecurityStore } from '../../store/localSecurityStore';
 import { fcmService } from '../../services/fcmService';
 import {
@@ -65,6 +66,7 @@ export default function MyPageScreen() {
   const logout = useAuthStore((state) => state.logout);
   const sessionUser = useAuthStore((state) => state.user);
   const sessionLoginType = useAuthStore((state) => state.loginType);
+  const aiResultData = useAiStore((state) => state.resultData);
   const securityPreferences = useLocalSecurityStore((state) => state.preferences);
   const refreshSecurityPreferences = useLocalSecurityStore((state) => state.refreshPreferences);
   const persistBiometricEnabled = useLocalSecurityStore((state) => state.setBiometricEnabled);
@@ -371,6 +373,19 @@ export default function MyPageScreen() {
     onClearPinCode: handleClearPinCode,
     onOpenTerms: () => setIsTermsModalVisible(true),
   });
+  const latestAiClusterLabel = useMemo(() => {
+    const clusterName = aiResultData?.report?.cluster?.name?.trim();
+
+    if (!clusterName) {
+      return null;
+    }
+
+    if (sessionUser?.userId && aiResultData?.ownerUserId && aiResultData.ownerUserId !== sessionUser.userId) {
+      return null;
+    }
+
+    return clusterName;
+  }, [aiResultData, sessionUser?.userId]);
 
   return (
     <>
@@ -385,6 +400,7 @@ export default function MyPageScreen() {
         topDockContent={
           <MyPageProfileDockCard
             name={displayName}
+            clusterLabel={latestAiClusterLabel}
             isLoading={isLoading}
           />
         }

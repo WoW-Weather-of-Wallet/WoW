@@ -38,7 +38,7 @@ export default function FixedExpenseManageModal({
 
         <View
           style={{
-            paddingTop: insets.top + hp(8),
+            paddingTop: insets.top,
             paddingHorizontal: wp(20),
             paddingBottom: hp(6),
           }}

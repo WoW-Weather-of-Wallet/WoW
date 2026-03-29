@@ -28,7 +28,7 @@ export default function AiResultScreen({
   const sessionUserName = useAuthStore((state) => state.user?.name ?? null);
   const reportPeriod = resolveAiReportPeriod();
   const contentLayoutMode = isCompact ? 'compact' : 'regular';
-  const [bottomActionHeight, setBottomActionHeight] = React.useState(hp(104));
+  const [bottomActionHeight, setBottomActionHeight] = React.useState(0);
   const {
     reset,
     resultData,
@@ -45,7 +45,7 @@ export default function AiResultScreen({
     [reportPeriod, resultData, sessionUserId],
   );
 
-  const { buttonTitle, cards } = useAiResultSummary(currentPeriodResultData, {
+  const { cards } = useAiResultSummary(currentPeriodResultData, {
     errorInfo,
     isRefreshing,
     isStale: false,
@@ -62,21 +62,6 @@ export default function AiResultScreen({
     }, [refreshLatestAnalysis, reportPeriod.month, reportPeriod.year]),
   );
 
-  const handlePrimaryPress = () => {
-    if (!currentPeriodResultData?.report && errorInfo?.canRetry) {
-      void refreshLatestAnalysis({
-        year: reportPeriod.year,
-        month: reportPeriod.month,
-        force: true,
-        fromPush: Boolean(currentPeriodResultData?.fromPush),
-      });
-      return;
-    }
-
-    reset();
-    navigation.navigate('AiFeedbackHome');
-  };
-
   const showRetryButton = Boolean(
     currentPeriodResultData?.report && errorInfo?.canRetry && !isRefreshing,
   );
@@ -84,19 +69,15 @@ export default function AiResultScreen({
   const retryButtonTitle = isRefreshing
     ? 'AI 피드백 다시 불러오는 중'
     : 'AI 피드백 다시 불러오기';
-  const primaryButtonTitle =
-    !currentPeriodResultData?.report && errorInfo?.canRetry
-      ? '다시 시도하기'
-      : buttonTitle;
 
   return (
     <BottomTabOverlayLayout
       containerStyle={{ flex: 1, backgroundColor: COLORS.backgroundSecondary }}
       backgroundColor={COLORS.backgroundSecondary}
       contentContainerStyle={{ flex: 1 }}
-      bottomOverlayStyle={{ paddingHorizontal: pageHorizontal }}
+      bottomOverlayStyle={showRetryButton ? { paddingHorizontal: pageHorizontal } : undefined}
       bottomOverlayBottomPadding={isCompact ? hp(10) : hp(14)}
-      bottomOverlayContent={
+      bottomOverlayContent={showRetryButton ? (
         <View
           onLayout={(event) => {
             const nextHeight = Math.ceil(event.nativeEvent.layout.height);
@@ -106,54 +87,45 @@ export default function AiResultScreen({
           }}
           style={{
             gap: isCompact ? hp(10) : hp(12),
-            paddingTop: showRetryButton ? 0 : hp(12),
-            paddingHorizontal: showRetryButton ? 0 : wp(2),
-            paddingBottom: showRetryButton ? 0 : hp(2),
+            paddingTop: 0,
+            paddingHorizontal: 0,
+            paddingBottom: 0,
             borderRadius: RADIUS.xxl,
             backgroundColor: COLORS.backgroundSecondary,
-            borderWidth: showRetryButton ? 1 : 0,
-            borderColor: showRetryButton ? COLORS.surfaceBorder : 'transparent',
-            shadowColor: showRetryButton ? COLORS.textPrimary : 'transparent',
+            borderWidth: 1,
+            borderColor: COLORS.surfaceBorder,
+            shadowColor: COLORS.textPrimary,
             shadowOffset: { width: 0, height: -4 },
-            shadowOpacity: showRetryButton ? 0.04 : 0,
-            shadowRadius: showRetryButton ? 12 : 0,
-            elevation: showRetryButton ? 6 : 0,
+            shadowOpacity: 0.04,
+            shadowRadius: 12,
+            elevation: 6,
           }}
         >
           <View
             style={{
               gap: isCompact ? hp(10) : hp(12),
-              padding: showRetryButton ? wp(isCompact ? 14 : 16) : 0,
+              padding: wp(isCompact ? 14 : 16),
               borderRadius: RADIUS.xxl,
-              backgroundColor: showRetryButton ? COLORS.background : 'transparent',
+              backgroundColor: COLORS.background,
             }}
           >
-            {showRetryButton ? (
-              <GradientButton
-                title={retryButtonTitle}
-                variant="outline"
-                disabled={isRefreshing}
-                style={{ width: '100%' }}
-                onPress={() => {
-                  void refreshLatestAnalysis({
-                    year: reportPeriod.year,
-                    month: reportPeriod.month,
-                    force: true,
-                    fromPush: Boolean(currentPeriodResultData?.fromPush),
-                  });
-                }}
-              />
-            ) : null}
-
             <GradientButton
-              title={primaryButtonTitle}
-              disabled={isRefreshing && !currentPeriodResultData?.report}
+              title={retryButtonTitle}
+              variant="outline"
+              disabled={isRefreshing}
               style={{ width: '100%' }}
-              onPress={handlePrimaryPress}
+              onPress={() => {
+                void refreshLatestAnalysis({
+                  year: reportPeriod.year,
+                  month: reportPeriod.month,
+                  force: true,
+                  fromPush: Boolean(currentPeriodResultData?.fromPush),
+                });
+              }}
             />
           </View>
         </View>
-      }
+      ) : null}
     >
       <ScrollView
         contentContainerStyle={{

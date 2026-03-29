@@ -38,7 +38,9 @@ export default function HomeTodayWeatherCard({
   }, [description, iconCode, isLoading, weatherName]);
 
   const today = new Date();
-  const dateString = `${today.getMonth() + 1}/${today.getDate()}`;
+  const yearString = String(today.getFullYear());
+  const monthString = String(today.getMonth() + 1).padStart(2, '0');
+  const dateString = String(today.getDate()).padStart(2, '0');
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
   const dayString = dayNames[today.getDay()];
   const WeatherIcon = weatherData.icon;
@@ -67,7 +69,7 @@ export default function HomeTodayWeatherCard({
         <HomeTodayWeatherHeader
           WeatherIcon={WeatherIcon}
           color={weatherData.color}
-          dateLabel={`${dateString} (${dayString})`}
+          dateLabel={`${yearString}년 ${monthString}월 ${dateString}일 (${dayString})`}
           typeLabel={weatherData.type}
           iconSize={wp(36)}
         />
