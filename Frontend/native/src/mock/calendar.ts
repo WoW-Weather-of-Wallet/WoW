@@ -46,6 +46,7 @@ export interface CalendarDayDetail {
   title: string;
   weatherLabel: string;
   weatherHint: string;
+  weatherIconCode?: string | null;
   weatherTemperature: string;
   spentAmount: number | null;
   transactionCount: number | null;
@@ -176,7 +177,7 @@ export const mockCalendarDayDetails: Record<string, CalendarDayDetail> = {
     title: '6월 18일 (수)',
     weatherLabel: '예정 지출 없음',
     weatherHint: '아직 등록된 내역이 없어요.',
-    weatherTemperature: '--',
+    weatherTemperature: '',
     spentAmount: null,
     transactionCount: null,
     memo: '다음 주 정기결제 전에 잔액 확인 필요.',
@@ -187,7 +188,7 @@ export const mockCalendarDayDetails: Record<string, CalendarDayDetail> = {
     title: '6월 19일 (목)',
     weatherLabel: '예정 지출 없음',
     weatherHint: '아직 등록된 내역이 없어요.',
-    weatherTemperature: '--',
+    weatherTemperature: '',
     spentAmount: null,
     transactionCount: null,
     memo: '',
@@ -198,7 +199,7 @@ export const mockCalendarDayDetails: Record<string, CalendarDayDetail> = {
     title: '6월 20일 (금)',
     weatherLabel: '예정 지출 없음',
     weatherHint: '아직 등록된 내역이 없어요.',
-    weatherTemperature: '--',
+    weatherTemperature: '',
     spentAmount: null,
     transactionCount: null,
     memo: '',

@@ -13,8 +13,10 @@ import { getCalendarHeader } from '../services/calendar';
 import type { AiAnalysisReport } from '../services/ai';
 import {
   createBudget,
+  getCurrentBudget,
   getSpendingHalfYearly,
   getSpendingMonthlyCompare,
+  type CurrentBudgetResponse,
   type SpendingHalfYearlyResponse,
   type SpendingMonthlyCompareResponse,
 } from '../services/main';
@@ -28,6 +30,8 @@ import type { CalendarHeaderResponse } from '../types/calendar';
 import { matchesAiReportPeriod, resolveAiReportPeriod } from '../utils/aiReportPeriod';
 import { extractApiErrorMessage } from '../utils/error';
 import {
+  buildAiSpendingMetrics,
+  buildAiSpendingReasons,
   buildMonthlyComparisonLegend,
   buildMonthlyInsight,
   buildSpendingMetrics,
@@ -52,7 +56,8 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     React.useState<SpendingHalfYearlyResponse | null>(null);
   const [monthlyCompare, setMonthlyCompare] =
     React.useState<SpendingMonthlyCompareResponse | null>(null);
-  const [budgetAmount, setBudgetAmount] = React.useState<number | null>(null);
+  const [currentBudget, setCurrentBudget] = React.useState<CurrentBudgetResponse | null>(null);
+  const [storedBudgetAmount, setStoredBudgetAmount] = React.useState<number | null>(null);
   const [isWeatherLoading, setIsWeatherLoading] = React.useState(false);
   const [isBudgetSubmitting, setIsBudgetSubmitting] = React.useState(false);
   const today = React.useMemo(() => new Date(), []);
@@ -62,13 +67,16 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
   const monthLabel = `${currentMonth}월`;
 
   const hasCurrentHomeAiSummary = React.useMemo(
-    () => matchesAiReportPeriod(latestAiResult, reportPeriod, sessionUserId) && Boolean(latestAiResult?.report),
+    () =>
+      matchesAiReportPeriod(latestAiResult, reportPeriod, sessionUserId) &&
+      Boolean(latestAiResult?.report),
     [latestAiResult, reportPeriod, sessionUserId],
   );
 
   React.useEffect(() => {
     if (!accessToken) {
-      setBudgetAmount(null);
+      setCurrentBudget(null);
+      setStoredBudgetAmount(null);
       return;
     }
 
@@ -83,7 +91,7 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
         return;
       }
 
-      setBudgetAmount(storedBudget);
+      setStoredBudgetAmount(storedBudget);
     });
 
     return () => {
@@ -97,6 +105,7 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
       setAiAnalysis(null);
       setSpendingHalfYearly(null);
       setMonthlyCompare(null);
+      setCurrentBudget(null);
       setIsWeatherLoading(false);
       return;
     }
@@ -104,14 +113,16 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     setIsWeatherLoading(true);
 
     try {
-      const [headerResult, halfYearlyResult, monthlyCompareResult] = await Promise.allSettled([
-        getCalendarHeader({
-          year: currentYear,
-          month: currentMonth,
-        }),
-        getSpendingHalfYearly(),
-        getSpendingMonthlyCompare(),
-      ]);
+      const [headerResult, halfYearlyResult, monthlyCompareResult, budgetResult] =
+        await Promise.allSettled([
+          getCalendarHeader({
+            year: currentYear,
+            month: currentMonth,
+          }),
+          getSpendingHalfYearly(),
+          getSpendingMonthlyCompare(),
+          getCurrentBudget(),
+        ]);
 
       if (headerResult.status === 'fulfilled') {
         setLiveHeader(headerResult.value);
@@ -129,6 +140,25 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
         setMonthlyCompare(monthlyCompareResult.value);
       } else {
         console.warn('Failed to load monthly compare data', monthlyCompareResult.reason);
+      }
+
+      if (budgetResult.status === 'fulfilled') {
+        setCurrentBudget(budgetResult.value);
+        setStoredBudgetAmount(
+          budgetResult.value.goalAmount > 0 ? budgetResult.value.goalAmount : null,
+        );
+
+        if (budgetResult.value.goalAmount > 0) {
+          void savePersistedHomeBudget({
+            amount: budgetResult.value.goalAmount,
+            ownerUserId: sessionUserId,
+            year: currentYear,
+            month: currentMonth,
+          });
+        }
+      } else {
+        console.warn('Failed to load current budget data', budgetResult.reason);
+        setCurrentBudget(null);
       }
 
       if (hasCurrentHomeAiSummary) {
@@ -154,6 +184,7 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     refreshLatestAnalysis,
     reportPeriod.month,
     reportPeriod.year,
+    sessionUserId,
   ]);
 
   useFocusEffect(
@@ -162,13 +193,45 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     }, [loadHomeData]),
   );
 
+  // Keep the card and the bottom sheet on the same data source
+  // so users do not see mixed AI and half-yearly messaging.
+  const homeAiSummary = (hasCurrentHomeAiSummary ? latestAiResult?.report : null) ?? aiAnalysis;
+
   const handleCreateBudget = React.useCallback(
     async (amount: number) => {
       setIsBudgetSubmitting(true);
 
       try {
         const createdBudget = await createBudget({ amount });
-        setBudgetAmount(createdBudget.amount);
+
+        setCurrentBudget((previous) => ({
+          goalAmount: createdBudget.amount,
+          totalSpent: previous?.totalSpent ?? 0,
+          remainingAmount:
+            previous?.totalSpent != null
+              ? createdBudget.amount - previous.totalSpent
+              : createdBudget.amount,
+          usagePercentage:
+            previous?.totalSpent != null && createdBudget.amount > 0
+              ? Math.max(
+                  0,
+                  Math.min(
+                    Math.round((previous.totalSpent / createdBudget.amount) * 100),
+                    100,
+                  ),
+                )
+              : 0,
+          remainingDays: previous?.remainingDays ?? 0,
+          dailyAvailable:
+            previous?.remainingDays != null && previous.remainingDays > 0
+              ? Math.floor(
+                  (createdBudget.amount - (previous?.totalSpent ?? 0)) /
+                    previous.remainingDays,
+                )
+              : 0,
+          savedAmount: previous?.savedAmount ?? 0,
+        }));
+        setStoredBudgetAmount(createdBudget.amount);
         await savePersistedHomeBudget({
           amount: createdBudget.amount,
           ownerUserId: sessionUserId,
@@ -194,12 +257,18 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
   );
 
   const spendingMetrics = React.useMemo(
-    () => buildSpendingMetrics(spendingHalfYearly),
-    [spendingHalfYearly],
+    () =>
+      homeAiSummary
+        ? buildAiSpendingMetrics(homeAiSummary)
+        : buildSpendingMetrics(spendingHalfYearly),
+    [homeAiSummary, spendingHalfYearly],
   );
   const spendingReasons = React.useMemo(
-    () => buildSpendingReasons(spendingHalfYearly),
-    [spendingHalfYearly],
+    () =>
+      homeAiSummary
+        ? buildAiSpendingReasons(homeAiSummary)
+        : buildSpendingReasons(spendingHalfYearly),
+    [homeAiSummary, spendingHalfYearly],
   );
   const comparisonLegend = React.useMemo(
     () => buildMonthlyComparisonLegend(monthlyCompare),
@@ -217,8 +286,12 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     ? formatMonthLabel(monthlyCompare.lastMonth.year, monthlyCompare.lastMonth.month)
     : '-';
 
-  const spentAmount = monthlyCompare?.currentMonth.totalAmount ?? null;
-  const totalBudget = budgetAmount;
+  const spentAmount =
+    currentBudget?.totalSpent ?? monthlyCompare?.currentMonth.totalAmount ?? null;
+  const totalBudget =
+    currentBudget != null && currentBudget.goalAmount > 0
+      ? currentBudget.goalAmount
+      : storedBudgetAmount;
   const remainingBudget =
     totalBudget != null && spentAmount != null ? totalBudget - spentAmount : null;
   const budgetUsageRate =
@@ -241,8 +314,6 @@ export function useMainHomeFlow({ closeReportModal }: UseMainHomeFlowParams) {
     }),
     [isWeatherLoading, liveHeader?.description, liveHeader?.iconCode, liveHeader?.weatherName],
   );
-
-  const homeAiSummary = (hasCurrentHomeAiSummary ? latestAiResult?.report : null) ?? aiAnalysis;
 
   const spendingTypeCard = React.useMemo<HomeDashboardSpendingTypeCardData>(
     () => ({

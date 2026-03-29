@@ -40,7 +40,7 @@ export default function TransactionHistoryGroupBlock({
               borderBottomColor: COLORS.border,
             }}
           >
-            <View className="flex-1 flex-row items-center" style={{ gap: wp(12) }}>
+            <View className="flex-1 flex-row items-center" style={{ gap: wp(12), minWidth: 0 }}>
               <View
                 className="items-center justify-center"
                 style={{
@@ -57,35 +57,34 @@ export default function TransactionHistoryGroupBlock({
                 />
               </View>
 
-              <View className="flex-1">
-                <View className="flex-row items-center" style={{ gap: wp(6), marginBottom: hp(4) }}>
+              <View className="flex-1" style={{ minWidth: 0 }}>
+                <View
+                  className="flex-row items-center"
+                  style={{ gap: wp(6), marginBottom: hp(4), minWidth: 0 }}
+                >
                   <Text
                     style={{
                       fontSize: fp(16),
                       fontFamily: FONTS.bold,
                       color: COLORS.textPrimary,
+                      flexShrink: 1,
                     }}
+                    numberOfLines={1}
                   >
                     {item.title}
                   </Text>
                   {item.isFixedExpense ? (
                     <View
+                      className="items-center justify-center"
                       style={{
+                        width: wp(20),
+                        height: wp(20),
                         borderRadius: RADIUS.full,
                         backgroundColor: COLORS.primary50,
-                        paddingHorizontal: wp(8),
-                        paddingVertical: hp(3),
+                        flexShrink: 0,
                       }}
                     >
-                      <Text
-                        style={{
-                          fontSize: fp(10),
-                          fontFamily: FONTS.semiBold,
-                          color: COLORS.primary,
-                        }}
-                      >
-                        고정
-                      </Text>
+                      <Ionicons name="bookmark" size={wp(11)} color={COLORS.primary} />
                     </View>
                   ) : null}
                 </View>
@@ -95,13 +94,14 @@ export default function TransactionHistoryGroupBlock({
                     fontFamily: FONTS.medium,
                     color: COLORS.textSecondary,
                   }}
+                  numberOfLines={1}
                 >
                   {item.category}
                 </Text>
               </View>
             </View>
 
-            <View className="items-end" style={{ gap: hp(4) }}>
+            <View className="items-end" style={{ gap: hp(4), paddingLeft: wp(10) }}>
               <Text
                 style={{
                   fontSize: fp(15),

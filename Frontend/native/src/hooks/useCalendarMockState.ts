@@ -43,7 +43,6 @@ import {
   removeTransactionFromGroups,
   replaceMonthCalendarDaySource,
   replaceMonthTransactionGroups,
-  resolveWeatherIconName,
 } from '../constants/calendar/transforms';
 import {
   addFixedExpense,
@@ -163,9 +162,9 @@ export function useCalendarMockState() {
     const displayedMonthKey = displayedMonth.getFullYear() * 12 + displayedMonth.getMonth();
     const monthDiff = currentMonthKey - displayedMonthKey;
 
-    // 백엔드 절약 금액 계산은 현재 월/전월만 지원하므로,
-    // 그보다 이전 달은 기존 mock 월 데이터를 유지해서 화면 사용성을 보장합니다.
-    if (!accessToken || (monthDiff !== 0 && monthDiff !== 1)) {
+    // 메인 상단과 캘린더 헤더 날씨 기준을 맞추기 위해
+    // 전전달과 다음 달까지는 백엔드 헤더를 그대로 사용합니다.
+    if (!accessToken || monthDiff < -1 || monthDiff > 2) {
       setLiveHeader(null);
       setHeaderFetchState('fallback');
       setHeaderErrorMessage(null);
@@ -533,6 +532,7 @@ export function useCalendarMockState() {
 
         setFixedExpenseItems(mapFixedExpenseSummaryItems(summaryResponse));
         setManageItems(mapFixedExpenseManageItems(manageResponse));
+        await reloadDisplayedMonthTransactionsData();
         setIsDetailSheetVisible(false);
         setEditingManageId(null);
         setIsManageModalVisible(true);
@@ -574,14 +574,7 @@ export function useCalendarMockState() {
 
         setFixedExpenseItems(mapFixedExpenseSummaryItems(summaryResponse));
         setManageItems(mapFixedExpenseManageItems(manageResponse));
-        setTransactionGroups((current) =>
-          current.map((group) => ({
-            ...group,
-            items: group.items.map((item) =>
-              item.id === selectedTransaction.id ? { ...item, isFixedExpense: true } : item,
-            ),
-          })),
-        );
+        await reloadDisplayedMonthTransactionsData();
         setIsDetailSheetVisible(false);
         setEditingManageId(null);
         setIsManageModalVisible(true);
@@ -741,6 +734,7 @@ export function useCalendarMockState() {
 
         setFixedExpenseItems(mapFixedExpenseSummaryItems(summaryResponse));
         setManageItems(mapFixedExpenseManageItems(manageResponse));
+        await reloadDisplayedMonthTransactionsData();
       } catch (error) {
         console.warn('Failed to delete fixed expense', error);
         Alert.alert('삭제 실패', '고정지출 삭제 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.');
@@ -985,7 +979,7 @@ export function useCalendarMockState() {
     fixedExpensesTotal,
     headerFetchState,
     headerErrorMessage,
-    weatherIconName: resolveWeatherIconName(liveHeader?.iconCode),
+    weatherIconCode: liveHeader?.iconCode,
     historyTitle: monthLabel,
     emptyHistoryTitle: `${monthLabel} 거래 내역이 없어요`,
     emptyHistoryDescription: `${monthLabel}에 등록된 소비 내역이 아직 없어요.`,
