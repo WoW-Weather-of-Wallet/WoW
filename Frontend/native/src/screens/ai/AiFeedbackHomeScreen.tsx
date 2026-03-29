@@ -94,7 +94,7 @@ export default function AiFeedbackHomeScreen({
     isAnalysisRunning
       ? 'AI 피드백 정리 중'
       : hasCurrentReport
-        ? '이번 달 AI 피드백 보기'
+        ? `${reportPeriod.month}월 AI 피드백 보기`
         : 'AI 피드백 시작하기';
 
   return (
