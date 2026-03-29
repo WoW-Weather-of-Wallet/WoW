@@ -23,10 +23,10 @@ export default function AiFeatureCarouselCard({
     <View
       className="items-center justify-center bg-white"
       style={{
-        width: wp(310),
-        maxWidth: 340,
+        width: '100%',
+        maxWidth: 360,
         height: isCompactHeight ? hp(276) : hp(300),
-        marginRight: wp(16),
+        alignSelf: 'center',
         borderRadius: RADIUS.xxl,
         borderWidth: 1,
         borderColor: 'rgba(0, 0, 0, 0.05)',

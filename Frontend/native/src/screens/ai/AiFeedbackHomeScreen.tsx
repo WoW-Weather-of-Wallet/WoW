@@ -1,15 +1,14 @@
 import React from 'react';
-import { ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Text, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 
 import {
-  AiCarouselPagination,
   AiFeatureCarouselCard,
 } from '../../components/ai';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import GradientButton from '../../components/common/GradientButton';
 import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
-import { useAiFeatureCards, useAiFeatureCarousel } from '../../hooks';
+import { useAiFeatureCards } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import { useAuthStore } from '../../store/authStore';
 import type { AiFeedbackStackScreenProps } from '../../types';
@@ -30,9 +29,6 @@ export default function AiFeedbackHomeScreen({
   const featureCards = useAiFeatureCards();
   const reportPeriod = resolveAiReportPeriod();
   const isCompactHeight = screenHeight < 760;
-  const { activeIndex, scrollRef, handleScroll, scrollToPage } = useAiFeatureCarousel({
-    itemWidth: wp(326),
-  });
 
   useFocusEffect(
     React.useCallback(() => {
@@ -93,46 +89,26 @@ export default function AiFeedbackHomeScreen({
 
       <View
         style={{
-          marginVertical: isCompactHeight ? hp(18) : hp(30),
-          height: isCompactHeight ? hp(292) : hp(320),
+          marginBottom: isCompactHeight ? hp(20) : hp(28),
           width: '100%',
-          maxWidth: 400,
-          alignSelf: 'center',
+          alignItems: 'center',
+          gap: isCompactHeight ? hp(14) : hp(18),
         }}
       >
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          pagingEnabled={false}
-          snapToInterval={wp(326)}
-          decelerationRate="fast"
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-        >
-          {featureCards.map((item) => (
-            <AiFeatureCarouselCard
-              key={item.id}
-              title={item.title}
-              description={item.description}
-              compact={isCompactHeight}
-            >
-              {item.preview}
-            </AiFeatureCarouselCard>
-          ))}
-        </ScrollView>
+        {featureCards.map((item) => (
+          <AiFeatureCarouselCard
+            key={item.id}
+            title={item.title}
+            description={item.description}
+            compact={isCompactHeight}
+          >
+            {item.preview}
+          </AiFeatureCarouselCard>
+        ))}
       </View>
-
-      <AiCarouselPagination
-        pageCount={featureCards.length}
-        activeIndex={activeIndex}
-        onPressPage={scrollToPage}
-        compact={isCompactHeight}
-      />
 
       <View
         style={{
-          paddingTop: isCompactHeight ? hp(4) : 0,
           paddingBottom: isCompactHeight ? hp(8) : hp(20),
           width: '100%',
         }}
