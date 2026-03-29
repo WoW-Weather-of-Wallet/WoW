@@ -33,10 +33,10 @@ export default function CalendarDayCell({
       className="items-center justify-start"
       style={{
         width: '14.28%',
-        minHeight: hp(66),
+        minHeight: hp(62),
         borderRadius: RADIUS.lg,
-        paddingVertical: hp(7),
-        paddingTop: hp(7),
+        paddingVertical: hp(6),
+        paddingTop: hp(6),
         position: 'relative',
         opacity: isPaddingCell ? 0 : day.isFuture ? 0.72 : 1,
         backgroundColor: isSelected ? COLORS.primary : 'transparent',
@@ -75,7 +75,7 @@ export default function CalendarDayCell({
             : isSelected
               ? COLORS.textInverse
               : COLORS.textPrimary,
-          marginBottom: hp(5),
+          marginBottom: hp(4),
         }}
       >
         {day.dayNumber}
@@ -104,7 +104,7 @@ export default function CalendarDayCell({
             : isSelected
               ? COLORS.white
               : COLORS.spentRed,
-          marginTop: hp(5),
+          marginTop: hp(4),
         }}
       >
         {amountLabel}
