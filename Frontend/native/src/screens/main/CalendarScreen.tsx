@@ -15,6 +15,8 @@ import {
   TransactionHistorySection,
 } from '../../components/calendar';
 
+const PAGE_SECTION_GAP = hp(18);
+
 export default function CalendarScreen() {
   const {
     overview,
@@ -200,7 +202,7 @@ const styles = {
   contentContainer: {
     paddingHorizontal: wp(20),
     paddingTop: hp(8),
-    gap: hp(18),
+    gap: PAGE_SECTION_GAP,
   },
   tabWrap: {
     backgroundColor: COLORS.background,

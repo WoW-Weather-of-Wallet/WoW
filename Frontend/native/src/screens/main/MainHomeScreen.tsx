@@ -6,6 +6,8 @@ import { COLORS, hp, wp } from '../../constants/theme';
 import { useMainHomeFlow } from '../../hooks/useMainHomeFlow';
 import { useModalState } from '../../hooks/useModalState';
 
+const PAGE_SECTION_GAP = hp(18);
+
 export default function MainHomeScreen() {
   const reportModal = useModalState();
   const spendingTypeModal = useModalState();
@@ -55,6 +57,6 @@ const styles = {
   },
   contentContainer: {
     paddingHorizontal: wp(20),
-    gap: hp(18),
+    gap: PAGE_SECTION_GAP,
   },
 } as const;

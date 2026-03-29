@@ -22,7 +22,7 @@ export default function HomeBudgetReportTexts({
   const forecastBoxStyle = {
     marginTop: hp(10),
     borderRadius: RADIUS.xl,
-    backgroundColor: COLORS.whiteOverlay3A,
+    backgroundColor: COLORS.primary50,
     paddingHorizontal: wp(12),
     paddingVertical: hp(11),
   } as const;

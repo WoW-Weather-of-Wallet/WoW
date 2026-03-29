@@ -1,6 +1,5 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { TouchableOpacity, View } from 'react-native';
 
 import { COLORS, RADIUS, hp, wp } from '../../constants/theme';
 import { useHomeBudgetReportSummary } from '../../hooks/useHomeBudgetReportSummary';
@@ -56,9 +55,11 @@ export default function HomeBudgetReportCard({
 
   return (
     <TouchableOpacity activeOpacity={0.94} onPress={onPress} className="overflow-hidden">
-      <LinearGradient
-        colors={[COLORS.budgetGradientStart, COLORS.budgetGradientEnd]}
-        style={cardStyle}
+      <View
+        style={{
+          ...cardStyle,
+          backgroundColor: COLORS.background,
+        }}
       >
         <HomeBudgetReportHeader monthLabel={monthLabel} userName={trimmedUserName} />
         <HomeBudgetReportStatus
@@ -71,7 +72,7 @@ export default function HomeBudgetReportCard({
           helperMessage={helperMessage}
           forecastMessage={forecastMessage}
         />
-      </LinearGradient>
+      </View>
     </TouchableOpacity>
   );
 }

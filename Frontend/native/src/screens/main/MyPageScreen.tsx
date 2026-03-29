@@ -47,6 +47,7 @@ import type { MyPageStackNavigationProp } from '../../types';
 type EditMode = 'profile' | 'phone' | 'password' | null;
 type PinModalStep = 'create' | 'confirm' | 'verify-current' | 'new' | 'confirm-new';
 type PinModalMode = 'setup' | 'change' | 'disable';
+const PAGE_SECTION_GAP = hp(18);
 
 /**
  * MyPageScreen (Settings Overhaul)
@@ -383,7 +384,7 @@ export default function MyPageScreen() {
           />
         }
         scrollViewStyle={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: wp(20), gap: hp(10) }}
+        contentContainerStyle={{ paddingHorizontal: wp(20), gap: PAGE_SECTION_GAP }}
         scrollTopPadding={hp(16)}
         scrollBottomPadding={hp(40)}
       >
@@ -437,7 +438,7 @@ export default function MyPageScreen() {
           </SettingSection>
         ))}
 
-        <View style={{ marginTop: hp(8) }}>
+        <View>
           <MyPageActionButtons
             onLogout={handleLogout}
             onDeleteAccount={handleDeleteAccount}
