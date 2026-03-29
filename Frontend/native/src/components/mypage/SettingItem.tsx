@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TouchableOpacity, View, Switch } from 'react-native';
+import { Platform, Text, TouchableOpacity, View, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, fp, hp, wp } from '../../constants/theme';
 
@@ -28,10 +28,19 @@ export default function SettingItem({
   isDanger = false,
   isDisabled = false,
 }: SettingItemProps) {
+  const rowHeight =
+    Platform.OS === 'android' && type === 'toggle'
+      ? hp(44)
+      : hp(54);
+  const rowStyle = {
+    height: rowHeight,
+    paddingHorizontal: wp(20),
+  } as const;
+
   const content = (
     <View
       className="flex-row items-center justify-between bg-surface"
-      style={{ paddingVertical: hp(16), paddingHorizontal: wp(20) }}
+      style={rowStyle}
     >
       <Text
         className="font-sans-medium text-text"
@@ -40,7 +49,10 @@ export default function SettingItem({
         {label}
       </Text>
 
-      <View className="flex-row items-center">
+      <View
+        className="flex-row items-center"
+        style={{ height: rowHeight, minHeight: rowHeight }}
+      >
         {value ? (
           <Text
             className="font-sans-medium text-text-tertiary"
@@ -67,6 +79,14 @@ export default function SettingItem({
             accessibilityLabel={label}
             trackColor={{ false: COLORS.switchTrackFalse, true: COLORS.primary }}
             thumbColor={COLORS.white}
+            style={
+              Platform.OS === 'android'
+                ? {
+                    marginVertical: -hp(2),
+                    transform: [{ scaleX: 0.7 }, { scaleY: 0.7 }],
+                  }
+                : undefined
+            }
           />
         )}
       </View>
