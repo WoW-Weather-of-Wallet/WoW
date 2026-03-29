@@ -17,15 +17,14 @@ export default function AiResultScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiResult'>) {
   const {
-    mode,
     isCompact,
-    isTall,
     pageHorizontal,
     scrollTopPadding,
     scrollBottomPadding,
   } = useResponsiveLayoutMode();
   const sessionUserId = useAuthStore((state) => state.user?.userId ?? null);
   const reportPeriod = resolveAiReportPeriod();
+  const contentLayoutMode = isCompact ? 'compact' : 'regular';
   const {
     reset,
     resultData,
@@ -85,8 +84,8 @@ export default function AiResultScreen({
       ? '다시 시도하기'
       : buttonTitle;
   const bottomActionHeight = showRetryButton
-    ? (isCompact ? hp(156) : isTall ? hp(174) : hp(166))
-    : (isCompact ? hp(88) : isTall ? hp(102) : hp(96));
+    ? (isCompact ? hp(156) : hp(166))
+    : (isCompact ? hp(88) : hp(96));
 
   return (
     <BottomTabOverlayLayout
@@ -94,7 +93,7 @@ export default function AiResultScreen({
       backgroundColor={COLORS.backgroundSecondary}
       contentContainerStyle={{ flex: 1 }}
       bottomOverlayStyle={{ paddingHorizontal: pageHorizontal }}
-      bottomOverlayBottomPadding={isCompact ? hp(10) : isTall ? hp(18) : hp(14)}
+      bottomOverlayBottomPadding={isCompact ? hp(10) : hp(14)}
       bottomOverlayContent={
         <View
           style={{
@@ -147,7 +146,7 @@ export default function AiResultScreen({
       >
         <Animated.View
           entering={FadeInDown.duration(500)}
-          style={{ marginBottom: isCompact ? hp(24) : isTall ? hp(36) : hp(32) }}
+          style={{ marginBottom: isCompact ? hp(24) : hp(32) }}
         >
           <AiResultHeader displayName={displayName} title={title} />
         </Animated.View>
@@ -157,7 +156,7 @@ export default function AiResultScreen({
             key={card.id}
             entering={FadeInDown.delay((index + 1) * 100).duration(500)}
           >
-            <AiResultSummaryCard {...card} layoutMode={mode} />
+            <AiResultSummaryCard {...card} layoutMode={contentLayoutMode} />
           </Animated.View>
         ))}
       </ScrollView>

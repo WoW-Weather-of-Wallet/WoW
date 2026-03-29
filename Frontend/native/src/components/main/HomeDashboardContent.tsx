@@ -32,7 +32,7 @@ export default function HomeDashboardContent({
     layoutMode === 'compact'
       ? { weather: hp(196), spending: hp(170), budget: hp(278) }
       : layoutMode === 'tall'
-        ? { weather: hp(246), spending: hp(208), budget: hp(332) }
+        ? { weather: hp(230), spending: hp(192), budget: hp(314) }
         : { weather: hp(220), spending: hp(186), budget: hp(304) };
 
   return (

@@ -19,10 +19,8 @@ export default function AiFeedbackHomeScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiFeedbackHome'>) {
   const {
-    mode,
     width: screenWidth,
     isCompact,
-    isTall,
     pageHorizontal,
     sectionGap,
     scrollTopPadding,
@@ -38,10 +36,11 @@ export default function AiFeedbackHomeScreen({
   } = useAiStore();
   const featureCards = useAiFeatureCards();
   const reportPeriod = resolveAiReportPeriod();
+  const contentLayoutMode = isCompact ? 'compact' : 'regular';
   const carouselPageWidth = Math.max(screenWidth - pageHorizontal * 2, 1);
   const carouselCardWidth = Math.min(
     carouselPageWidth,
-    wp(isCompact ? 320 : isTall ? 348 : 336),
+    wp(isCompact ? 320 : 336),
   );
   const { activeIndex, scrollRef, handleScroll, scrollToPage } = useAiFeatureCarousel({
     itemWidth: carouselPageWidth,
@@ -92,7 +91,7 @@ export default function AiFeedbackHomeScreen({
     >
       <View
         style={{
-          marginTop: isCompact ? hp(12) : isTall ? hp(24) : hp(20),
+          marginTop: isCompact ? hp(12) : hp(20),
           marginBottom: sectionGap,
         }}
       >
@@ -132,7 +131,7 @@ export default function AiFeedbackHomeScreen({
               <AiFeatureCarouselCard
                 title={item.title}
                 description={item.description}
-                layoutMode={mode}
+                layoutMode={contentLayoutMode}
                 width={carouselCardWidth}
               >
                 {item.preview}
@@ -151,7 +150,7 @@ export default function AiFeedbackHomeScreen({
 
       <View
         style={{
-          paddingBottom: isCompact ? hp(8) : isTall ? hp(24) : hp(20),
+          paddingBottom: isCompact ? hp(8) : hp(20),
           width: '100%',
         }}
       >

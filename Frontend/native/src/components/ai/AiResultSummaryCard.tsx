@@ -33,8 +33,8 @@ export default function AiResultSummaryCard({
       className="bg-white"
       style={{
         borderRadius: RADIUS.xxl,
-        padding: isCompactHeight ? wp(18) : isTallHeight ? wp(22) : wp(20),
-        marginBottom: isCompactHeight ? hp(16) : isTallHeight ? hp(28) : hp(24),
+        padding: isCompactHeight ? wp(18) : isTallHeight ? wp(21) : wp(20),
+        marginBottom: isCompactHeight ? hp(16) : isTallHeight ? hp(25) : hp(24),
         borderWidth: 1,
         borderColor: COLORS.surfaceBorder,
       }}

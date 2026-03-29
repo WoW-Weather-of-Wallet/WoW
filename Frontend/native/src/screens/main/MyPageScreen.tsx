@@ -386,6 +386,8 @@ export default function MyPageScreen() {
           <MyPageProfileDockCard
             name={displayName}
             badgeLabel={displayBadge}
+            userId={profile?.userId ?? sessionUser?.userId ?? null}
+            phoneLabel={maskPhoneNumber(profile?.phoneNumber ?? '') || '휴대폰 미등록'}
             isLoading={isLoading}
           />
         }

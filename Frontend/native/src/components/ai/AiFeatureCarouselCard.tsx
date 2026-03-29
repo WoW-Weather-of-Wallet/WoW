@@ -32,12 +32,12 @@ export default function AiFeatureCarouselCard({
       style={{
         width: width ?? '100%',
         maxWidth: 360,
-        height: isCompactHeight ? hp(276) : isTallHeight ? hp(322) : hp(300),
+        height: isCompactHeight ? hp(276) : isTallHeight ? hp(308) : hp(300),
         alignSelf: 'center',
         borderRadius: RADIUS.xxl,
         borderWidth: 1,
         borderColor: 'rgba(0, 0, 0, 0.05)',
-        padding: isCompactHeight ? wp(20) : isTallHeight ? wp(26) : wp(24),
+        padding: isCompactHeight ? wp(20) : isTallHeight ? wp(25) : wp(24),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08,
@@ -45,13 +45,13 @@ export default function AiFeatureCarouselCard({
         elevation: 3,
       }}
     >
-      <View style={{ marginBottom: isCompactHeight ? hp(12) : isTallHeight ? hp(24) : hp(20) }}>
+      <View style={{ marginBottom: isCompactHeight ? hp(12) : isTallHeight ? hp(22) : hp(20) }}>
         {children}
       </View>
       <Text
         className="text-center"
         style={{
-          fontSize: isCompactHeight ? fp(18) : isTallHeight ? fp(21) : fp(20),
+          fontSize: isCompactHeight ? fp(18) : fp(20),
           fontFamily: FONTS.bold,
           color: COLORS.textPrimary,
           marginBottom: isCompactHeight ? hp(10) : hp(12),
@@ -65,7 +65,7 @@ export default function AiFeatureCarouselCard({
           fontSize: isCompactHeight ? fp(14) : fp(15),
           fontFamily: FONTS.regular,
           color: COLORS.textSecondary,
-          lineHeight: isCompactHeight ? fp(20) : isTallHeight ? fp(23) : fp(22),
+          lineHeight: isCompactHeight ? fp(20) : isTallHeight ? fp(22) : fp(22),
           paddingHorizontal: isCompactHeight ? wp(4) : wp(10),
         }}
       >
