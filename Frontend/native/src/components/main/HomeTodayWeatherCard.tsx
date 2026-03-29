@@ -41,7 +41,7 @@ export default function HomeTodayWeatherCard({
   const WeatherIcon = weatherData.icon;
 
   return (
-    <View className="mb-4 overflow-hidden rounded-3xl bg-primary shadow-sm">
+    <View className="overflow-hidden rounded-3xl bg-primary shadow-sm">
       <View className="bg-primary-light/10 p-5">
         <HomeTodayWeatherHeader
           WeatherIcon={WeatherIcon}

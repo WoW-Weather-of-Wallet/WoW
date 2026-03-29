@@ -8,7 +8,7 @@ import {
 } from '../../components/ai';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import GradientButton from '../../components/common/GradientButton';
-import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
+import { COLORS, FONTS, LAYOUT, fp, hp, wp } from '../../constants/theme';
 import { useAiFeatureCards, useAiFeatureCarousel } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import { useAuthStore } from '../../store/authStore';
@@ -30,7 +30,7 @@ export default function AiFeedbackHomeScreen({
   const featureCards = useAiFeatureCards();
   const reportPeriod = resolveAiReportPeriod();
   const isCompactHeight = screenHeight < 760;
-  const horizontalPadding = wp(isCompactHeight ? 20 : 24);
+  const horizontalPadding = isCompactHeight ? wp(16) : LAYOUT.pageHorizontal;
   const carouselPageWidth = Math.max(screenWidth - horizontalPadding * 2, 1);
   const carouselCardWidth = Math.min(carouselPageWidth, wp(isCompactHeight ? 320 : 336));
   const { activeIndex, scrollRef, handleScroll, scrollToPage } = useAiFeatureCarousel({
@@ -83,7 +83,7 @@ export default function AiFeedbackHomeScreen({
       <View
         style={{
           marginTop: isCompactHeight ? hp(12) : hp(20),
-          marginBottom: isCompactHeight ? hp(24) : hp(40),
+          marginBottom: isCompactHeight ? hp(16) : LAYOUT.pageSectionGap,
         }}
       >
         <Text style={titleStyle}>
@@ -96,7 +96,7 @@ export default function AiFeedbackHomeScreen({
 
       <View
         style={{
-          marginBottom: isCompactHeight ? hp(20) : hp(28),
+          marginBottom: isCompactHeight ? hp(16) : LAYOUT.pageSectionGap,
           width: '100%',
         }}
       >

@@ -2,11 +2,9 @@ import React from 'react';
 
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import { HomeDashboardContent, HomeDashboardSheets } from '../../components/main';
-import { COLORS, hp, wp } from '../../constants/theme';
+import { COLORS, LAYOUT, hp } from '../../constants/theme';
 import { useMainHomeFlow } from '../../hooks/useMainHomeFlow';
 import { useModalState } from '../../hooks/useModalState';
-
-const PAGE_SECTION_GAP = hp(18);
 
 export default function MainHomeScreen() {
   const reportModal = useModalState();
@@ -56,7 +54,7 @@ const styles = {
     backgroundColor: COLORS.backgroundSecondary,
   },
   contentContainer: {
-    paddingHorizontal: wp(20),
-    gap: PAGE_SECTION_GAP,
+    paddingHorizontal: LAYOUT.pageHorizontal,
+    gap: LAYOUT.pageSectionGap,
   },
 } as const;

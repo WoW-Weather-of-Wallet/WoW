@@ -6,7 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AiResultHeader, AiResultSummaryCard } from '../../components/ai';
 import BottomTabOverlayLayout from '../../components/common/BottomTabOverlayLayout';
 import GradientButton from '../../components/common/GradientButton';
-import { COLORS, RADIUS, hp, wp } from '../../constants/theme';
+import { COLORS, LAYOUT, RADIUS, hp, wp } from '../../constants/theme';
 import { useAiResultSummary } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import { useAuthStore } from '../../store/authStore';
@@ -87,7 +87,7 @@ export default function AiResultScreen({
       containerStyle={{ flex: 1, backgroundColor: COLORS.backgroundSecondary }}
       backgroundColor={COLORS.backgroundSecondary}
       contentContainerStyle={{ flex: 1 }}
-      bottomOverlayStyle={{ paddingHorizontal: wp(isCompactHeight ? 16 : 20) }}
+      bottomOverlayStyle={{ paddingHorizontal: isCompactHeight ? wp(16) : LAYOUT.pageHorizontal }}
       bottomOverlayBottomPadding={isCompactHeight ? hp(10) : hp(14)}
       bottomOverlayContent={
         <View
@@ -133,7 +133,7 @@ export default function AiResultScreen({
     >
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: wp(isCompactHeight ? 16 : 20),
+          paddingHorizontal: isCompactHeight ? wp(16) : LAYOUT.pageHorizontal,
           paddingTop: isCompactHeight ? hp(12) : hp(20),
           paddingBottom: bottomActionHeight + hp(24),
         }}

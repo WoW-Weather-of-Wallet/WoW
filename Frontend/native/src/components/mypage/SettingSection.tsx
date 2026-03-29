@@ -12,7 +12,7 @@ interface SettingSectionProps {
  */
 export default function SettingSection({ title, children }: SettingSectionProps) {
   return (
-    <View style={{ marginTop: hp(4) }}>
+    <View>
       {title ? (
         <Text
           className="font-sans-bold uppercase text-text-tertiary"
@@ -27,4 +27,3 @@ export default function SettingSection({ title, children }: SettingSectionProps)
     </View>
   );
 }
-

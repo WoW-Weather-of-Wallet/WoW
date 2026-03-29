@@ -1,5 +1,5 @@
 import React from 'react';
-import { hp, COLORS, RADIUS, wp } from '../../constants/theme';
+import { hp, COLORS, LAYOUT, RADIUS } from '../../constants/theme';
 import { useCalendarScreenFlow } from '../../hooks';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import {
@@ -14,8 +14,6 @@ import {
   FixedExpenseSection,
   TransactionHistorySection,
 } from '../../components/calendar';
-
-const PAGE_SECTION_GAP = hp(18);
 
 export default function CalendarScreen() {
   const {
@@ -189,7 +187,7 @@ const styles = {
     backgroundColor: COLORS.backgroundSecondary,
   },
   topDock: {
-    paddingHorizontal: wp(20),
+    paddingHorizontal: LAYOUT.pageHorizontal,
     paddingBottom: hp(4),
     backgroundColor: COLORS.backgroundSecondary,
   },
@@ -200,14 +198,14 @@ const styles = {
     flex: 1,
   },
   contentContainer: {
-    paddingHorizontal: wp(20),
+    paddingHorizontal: LAYOUT.pageHorizontal,
     paddingTop: hp(8),
-    gap: PAGE_SECTION_GAP,
+    gap: LAYOUT.pageSectionGap,
   },
   tabWrap: {
     backgroundColor: COLORS.background,
     borderRadius: RADIUS.xxl,
-    padding: wp(8),
+    padding: LAYOUT.pageHorizontal * 0.4,
     marginTop: hp(6),
   },
 } as const;

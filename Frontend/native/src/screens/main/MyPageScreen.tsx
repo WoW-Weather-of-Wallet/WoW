@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import Constants from 'expo-constants';
-import { COLORS, hp, wp } from '../../constants/theme';
+import { COLORS, LAYOUT, hp, wp } from '../../constants/theme';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import {
   AgreedTermsModal,
@@ -47,7 +47,6 @@ import type { MyPageStackNavigationProp } from '../../types';
 type EditMode = 'profile' | 'phone' | 'password' | null;
 type PinModalStep = 'create' | 'confirm' | 'verify-current' | 'new' | 'confirm-new';
 type PinModalMode = 'setup' | 'change' | 'disable';
-const PAGE_SECTION_GAP = hp(18);
 
 /**
  * MyPageScreen (Settings Overhaul)
@@ -371,7 +370,7 @@ export default function MyPageScreen() {
       <BottomTabScreenLayout
         containerStyle={{ flex: 1, backgroundColor: COLORS.backgroundSecondary }}
         topDockStyle={{
-          paddingHorizontal: wp(20),
+          paddingHorizontal: LAYOUT.pageHorizontal,
           paddingBottom: hp(8),
           backgroundColor: COLORS.backgroundSecondary,
         }}
@@ -384,7 +383,10 @@ export default function MyPageScreen() {
           />
         }
         scrollViewStyle={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: wp(20), gap: PAGE_SECTION_GAP }}
+        contentContainerStyle={{
+          paddingHorizontal: LAYOUT.pageHorizontal,
+          gap: LAYOUT.pageSectionGap,
+        }}
         scrollTopPadding={hp(16)}
         scrollBottomPadding={hp(40)}
       >

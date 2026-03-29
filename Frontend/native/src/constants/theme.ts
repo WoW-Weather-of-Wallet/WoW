@@ -37,6 +37,11 @@ export const fp = (size: number): number => {
   return Math.round(PixelRatio.roundToNearestPixel(newSize));
 };
 
+export const LAYOUT = {
+  pageHorizontal: wp(20),
+  pageSectionGap: hp(18),
+};
+
 // =============================================
 // 색상 팔레트
 // =============================================
