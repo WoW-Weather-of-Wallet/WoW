@@ -1,6 +1,6 @@
 import React from 'react';
-import { hp, COLORS, LAYOUT, RADIUS } from '../../constants/theme';
-import { useCalendarScreenFlow } from '../../hooks';
+import { hp, COLORS, RADIUS } from '../../constants/theme';
+import { useCalendarScreenFlow, useResponsiveLayoutMode } from '../../hooks';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import {
   CalendarAddEntrySheet,
@@ -16,6 +16,13 @@ import {
 } from '../../components/calendar';
 
 export default function CalendarScreen() {
+  const {
+    isCompact,
+    pageHorizontal,
+    sectionGap,
+    topDockTopPadding,
+    scrollBottomPadding,
+  } = useResponsiveLayoutMode();
   const {
     overview,
     monthLabel,
@@ -73,8 +80,12 @@ export default function CalendarScreen() {
     <>
       <BottomTabScreenLayout
         containerStyle={styles.container}
-        topDockStyle={styles.topDock}
-        topDockTopPadding={hp(12)}
+        topDockStyle={{
+          paddingHorizontal: pageHorizontal,
+          paddingBottom: isCompact ? hp(3) : hp(4),
+          backgroundColor: COLORS.backgroundSecondary,
+        }}
+        topDockTopPadding={topDockTopPadding}
         topDockContent={
           <CalendarTopDockContent
             overview={overview}
@@ -88,14 +99,23 @@ export default function CalendarScreen() {
             onPressNextMonth={() => handleMoveMonth('next')}
             onPressAdd={handleOpenAddEntry}
             onPressInfo={handleOpenGuide}
-            noticeStyle={styles.notice}
-            tabWrapStyle={styles.tabWrap}
+            noticeStyle={{ marginBottom: isCompact ? hp(10) : hp(12) }}
+            tabWrapStyle={{
+              backgroundColor: COLORS.background,
+              borderRadius: RADIUS.xxl,
+              padding: pageHorizontal * 0.4,
+              marginTop: isCompact ? hp(4) : hp(6),
+            }}
           />
         }
         scrollViewStyle={styles.scrollView}
-        contentContainerStyle={styles.contentContainer}
-        scrollTopPadding={hp(8)}
-        scrollBottomPadding={hp(30)}
+        contentContainerStyle={{
+          paddingHorizontal: pageHorizontal,
+          paddingTop: isCompact ? hp(6) : hp(8),
+          gap: sectionGap,
+        }}
+        scrollTopPadding={0}
+        scrollBottomPadding={scrollBottomPadding}
       >
         {activeTab === 'calendar' ? (
           <>
@@ -186,26 +206,7 @@ const styles = {
     flex: 1,
     backgroundColor: COLORS.backgroundSecondary,
   },
-  topDock: {
-    paddingHorizontal: LAYOUT.pageHorizontal,
-    paddingBottom: hp(4),
-    backgroundColor: COLORS.backgroundSecondary,
-  },
-  notice: {
-    marginBottom: hp(12),
-  },
   scrollView: {
     flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: LAYOUT.pageHorizontal,
-    paddingTop: hp(8),
-    gap: LAYOUT.pageSectionGap,
-  },
-  tabWrap: {
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.xxl,
-    padding: LAYOUT.pageHorizontal * 0.4,
-    marginTop: hp(6),
   },
 } as const;

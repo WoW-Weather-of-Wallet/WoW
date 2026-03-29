@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, RADIUS, fp, hp, wp } from '../../constants/theme';
+import type { ResponsiveLayoutMode } from '../../hooks/useResponsiveLayoutMode';
 
 export interface AiResultSummaryCardProps {
   title: string;
@@ -10,6 +11,7 @@ export interface AiResultSummaryCardProps {
   iconName?: React.ComponentProps<typeof Ionicons>['name'];
   iconText?: string;
   items?: string[];
+  layoutMode?: ResponsiveLayoutMode;
 }
 
 export default function AiResultSummaryCard({
@@ -19,17 +21,20 @@ export default function AiResultSummaryCard({
   iconName,
   iconText,
   items,
+  layoutMode,
 }: AiResultSummaryCardProps) {
   const { height } = useWindowDimensions();
-  const isCompactHeight = height < 760;
+  const resolvedLayoutMode = layoutMode ?? (height < 760 ? 'compact' : 'regular');
+  const isCompactHeight = resolvedLayoutMode === 'compact';
+  const isTallHeight = resolvedLayoutMode === 'tall';
 
   return (
     <View
       className="bg-white"
       style={{
         borderRadius: RADIUS.xxl,
-        padding: isCompactHeight ? wp(18) : wp(20),
-        marginBottom: isCompactHeight ? hp(16) : hp(24),
+        padding: isCompactHeight ? wp(18) : isTallHeight ? wp(22) : wp(20),
+        marginBottom: isCompactHeight ? hp(16) : isTallHeight ? hp(28) : hp(24),
         borderWidth: 1,
         borderColor: COLORS.surfaceBorder,
       }}

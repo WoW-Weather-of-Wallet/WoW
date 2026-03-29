@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { wp } from '../../constants/theme';
 import {
@@ -15,6 +15,7 @@ interface HomeTodayWeatherCardProps {
   description?: string | null;
   iconCode?: string | null;
   isLoading?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 export default function HomeTodayWeatherCard({
@@ -22,6 +23,7 @@ export default function HomeTodayWeatherCard({
   description,
   iconCode,
   isLoading = false,
+  style,
 }: HomeTodayWeatherCardProps) {
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -41,8 +43,8 @@ export default function HomeTodayWeatherCard({
   const WeatherIcon = weatherData.icon;
 
   return (
-    <View className="overflow-hidden rounded-3xl bg-primary shadow-sm">
-      <View className="bg-primary-light/10 p-5">
+    <View className="overflow-hidden rounded-3xl bg-primary shadow-sm" style={style}>
+      <View className="bg-primary-light/10 p-5" style={{ flex: 1, justifyContent: 'space-between' }}>
         <HomeTodayWeatherHeader
           WeatherIcon={WeatherIcon}
           color={weatherData.color}

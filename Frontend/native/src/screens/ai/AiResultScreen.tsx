@@ -1,13 +1,13 @@
 import React from 'react';
-import { ScrollView, View, useWindowDimensions } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AiResultHeader, AiResultSummaryCard } from '../../components/ai';
 import BottomTabOverlayLayout from '../../components/common/BottomTabOverlayLayout';
 import GradientButton from '../../components/common/GradientButton';
-import { COLORS, LAYOUT, RADIUS, hp, wp } from '../../constants/theme';
-import { useAiResultSummary } from '../../hooks';
+import { COLORS, RADIUS, hp, wp } from '../../constants/theme';
+import { useAiResultSummary, useResponsiveLayoutMode } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import { useAuthStore } from '../../store/authStore';
 import type { AiFeedbackStackScreenProps } from '../../types';
@@ -16,10 +16,16 @@ import { matchesAiReportPeriod, resolveAiReportPeriod } from '../../utils/aiRepo
 export default function AiResultScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiResult'>) {
-  const { height: screenHeight } = useWindowDimensions();
+  const {
+    mode,
+    isCompact,
+    isTall,
+    pageHorizontal,
+    scrollTopPadding,
+    scrollBottomPadding,
+  } = useResponsiveLayoutMode();
   const sessionUserId = useAuthStore((state) => state.user?.userId ?? null);
   const reportPeriod = resolveAiReportPeriod();
-  const isCompactHeight = screenHeight < 760;
   const {
     reset,
     resultData,
@@ -79,21 +85,21 @@ export default function AiResultScreen({
       ? '다시 시도하기'
       : buttonTitle;
   const bottomActionHeight = showRetryButton
-    ? (isCompactHeight ? hp(156) : hp(166))
-    : (isCompactHeight ? hp(88) : hp(96));
+    ? (isCompact ? hp(156) : isTall ? hp(174) : hp(166))
+    : (isCompact ? hp(88) : isTall ? hp(102) : hp(96));
 
   return (
     <BottomTabOverlayLayout
       containerStyle={{ flex: 1, backgroundColor: COLORS.backgroundSecondary }}
       backgroundColor={COLORS.backgroundSecondary}
       contentContainerStyle={{ flex: 1 }}
-      bottomOverlayStyle={{ paddingHorizontal: isCompactHeight ? wp(16) : LAYOUT.pageHorizontal }}
-      bottomOverlayBottomPadding={isCompactHeight ? hp(10) : hp(14)}
+      bottomOverlayStyle={{ paddingHorizontal: pageHorizontal }}
+      bottomOverlayBottomPadding={isCompact ? hp(10) : isTall ? hp(18) : hp(14)}
       bottomOverlayContent={
         <View
           style={{
-            gap: isCompactHeight ? hp(10) : hp(12),
-            padding: wp(isCompactHeight ? 14 : 16),
+            gap: isCompact ? hp(10) : hp(12),
+            padding: wp(isCompact ? 14 : 16),
             borderRadius: RADIUS.xxl,
             backgroundColor: COLORS.background,
             borderWidth: 1,
@@ -133,15 +139,15 @@ export default function AiResultScreen({
     >
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: isCompactHeight ? wp(16) : LAYOUT.pageHorizontal,
-          paddingTop: isCompactHeight ? hp(12) : hp(20),
-          paddingBottom: bottomActionHeight + hp(24),
+          paddingHorizontal: pageHorizontal,
+          paddingTop: scrollTopPadding,
+          paddingBottom: bottomActionHeight + scrollBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View
           entering={FadeInDown.duration(500)}
-          style={{ marginBottom: isCompactHeight ? hp(24) : hp(32) }}
+          style={{ marginBottom: isCompact ? hp(24) : isTall ? hp(36) : hp(32) }}
         >
           <AiResultHeader displayName={displayName} title={title} />
         </Animated.View>
@@ -151,7 +157,7 @@ export default function AiResultScreen({
             key={card.id}
             entering={FadeInDown.delay((index + 1) * 100).duration(500)}
           >
-            <AiResultSummaryCard {...card} />
+            <AiResultSummaryCard {...card} layoutMode={mode} />
           </Animated.View>
         ))}
       </ScrollView>

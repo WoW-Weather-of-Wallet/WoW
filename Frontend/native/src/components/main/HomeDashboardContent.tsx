@@ -1,5 +1,7 @@
 import React from 'react';
 
+import type { ResponsiveLayoutMode } from '../../hooks/useResponsiveLayoutMode';
+import { hp } from '../../constants/theme';
 import type {
   HomeDashboardBudgetReportCardData,
   HomeDashboardSpendingTypeCardData,
@@ -15,6 +17,7 @@ interface HomeDashboardContentProps {
   budgetReportCard: HomeDashboardBudgetReportCardData;
   onPressSpendingType: () => void;
   onPressBudgetReport: () => void;
+  layoutMode?: ResponsiveLayoutMode;
 }
 
 export default function HomeDashboardContent({
@@ -23,7 +26,15 @@ export default function HomeDashboardContent({
   budgetReportCard,
   onPressSpendingType,
   onPressBudgetReport,
+  layoutMode = 'regular',
 }: HomeDashboardContentProps) {
+  const cardHeights =
+    layoutMode === 'compact'
+      ? { weather: hp(196), spending: hp(170), budget: hp(278) }
+      : layoutMode === 'tall'
+        ? { weather: hp(246), spending: hp(208), budget: hp(332) }
+        : { weather: hp(220), spending: hp(186), budget: hp(304) };
+
   return (
     <>
       <HomeTodayWeatherCard
@@ -31,12 +42,14 @@ export default function HomeDashboardContent({
         description={weatherCard.weatherDescription}
         iconCode={weatherCard.weatherIconCode}
         isLoading={weatherCard.isWeatherLoading}
+        style={{ minHeight: cardHeights.weather }}
       />
       <HomeSpendingTypeCard
         onPress={onPressSpendingType}
         title={spendingTypeCard.spendingTypeTitle}
         description={spendingTypeCard.spendingTypeDescription}
         iconName={spendingTypeCard.spendingTypeIconName}
+        style={{ minHeight: cardHeights.spending }}
       />
       <HomeBudgetReportCard
         monthLabel={budgetReportCard.monthLabel}
@@ -47,6 +60,7 @@ export default function HomeDashboardContent({
         totalBudget={budgetReportCard.totalBudget}
         forecastText={budgetReportCard.forecastText}
         onPress={onPressBudgetReport}
+        style={{ minHeight: cardHeights.budget }}
       />
     </>
   );

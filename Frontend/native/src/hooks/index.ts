@@ -23,6 +23,7 @@ export * from './usePhoneAuthFlow';
 export * from './usePhoneUpdateFlow';
 export * from './useRecoverySmsFlow';
 export * from './useResetPasswordFlow';
+export * from './useResponsiveLayoutMode';
 export * from './useSmsVerification';
 export * from './useSplashBootstrap';
 export * from './useSettingsScreenSections';

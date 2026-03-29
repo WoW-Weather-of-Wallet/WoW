@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import Constants from 'expo-constants';
-import { COLORS, LAYOUT, hp, wp } from '../../constants/theme';
+import { COLORS } from '../../constants/theme';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import {
   AgreedTermsModal,
@@ -41,7 +41,7 @@ import { extractApiErrorMessage } from '../../utils/error';
 import { buildAuthErrorPresentation } from '../../utils/authErrorPresentation';
 import { maskPhoneNumber } from '../../utils/phoneFormat';
 import { validatePassword } from '../../utils/validation';
-import { useMyPageSections } from '../../hooks';
+import { useMyPageSections, useResponsiveLayoutMode } from '../../hooks';
 import type { MyPageStackNavigationProp } from '../../types';
 
 type EditMode = 'profile' | 'phone' | 'password' | null;
@@ -54,6 +54,13 @@ type PinModalMode = 'setup' | 'change' | 'disable';
  * 보유 카드 및 연결 계좌 관련 코드는 주석 처리하여 보존합니다.
  */
 export default function MyPageScreen() {
+  const {
+    pageHorizontal,
+    sectionGap,
+    scrollTopPadding,
+    scrollBottomPadding,
+    topDockTopPadding,
+  } = useResponsiveLayoutMode();
   const navigation = useNavigation<MyPageStackNavigationProp<'MyPageHome'>>();
   const logout = useAuthStore((state) => state.logout);
   const sessionUser = useAuthStore((state) => state.user);
@@ -370,11 +377,11 @@ export default function MyPageScreen() {
       <BottomTabScreenLayout
         containerStyle={{ flex: 1, backgroundColor: COLORS.backgroundSecondary }}
         topDockStyle={{
-          paddingHorizontal: LAYOUT.pageHorizontal,
-          paddingBottom: hp(8),
+          paddingHorizontal: pageHorizontal,
+          paddingBottom: sectionGap * 0.45,
           backgroundColor: COLORS.backgroundSecondary,
         }}
-        topDockTopPadding={hp(12)}
+        topDockTopPadding={topDockTopPadding}
         topDockContent={
           <MyPageProfileDockCard
             name={displayName}
@@ -384,11 +391,11 @@ export default function MyPageScreen() {
         }
         scrollViewStyle={{ flex: 1 }}
         contentContainerStyle={{
-          paddingHorizontal: LAYOUT.pageHorizontal,
-          gap: LAYOUT.pageSectionGap,
+          paddingHorizontal: pageHorizontal,
+          gap: sectionGap,
         }}
-        scrollTopPadding={hp(16)}
-        scrollBottomPadding={hp(40)}
+        scrollTopPadding={scrollTopPadding + sectionGap * 0.25}
+        scrollBottomPadding={scrollBottomPadding + sectionGap * 0.5}
       >
         {/* [LEGACY: Legacy Sections - Preserved for Reference]
           <View style={styles.profileSummaryRow}>

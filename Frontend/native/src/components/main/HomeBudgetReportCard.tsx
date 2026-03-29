@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { COLORS, RADIUS, hp, wp } from '../../constants/theme';
 import { useHomeBudgetReportSummary } from '../../hooks/useHomeBudgetReportSummary';
@@ -16,6 +16,7 @@ interface HomeBudgetReportCardProps {
   totalBudget?: number | null;
   forecastText?: string | null;
   onPress: () => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 export default function HomeBudgetReportCard({
@@ -27,6 +28,7 @@ export default function HomeBudgetReportCard({
   totalBudget,
   forecastText,
   onPress,
+  style,
 }: HomeBudgetReportCardProps) {
   const {
     usageRate,
@@ -54,11 +56,18 @@ export default function HomeBudgetReportCard({
   } as const;
 
   return (
-    <TouchableOpacity activeOpacity={0.94} onPress={onPress} className="overflow-hidden">
+    <TouchableOpacity
+      activeOpacity={0.94}
+      onPress={onPress}
+      className="overflow-hidden"
+      style={style}
+    >
       <View
         style={{
           ...cardStyle,
           backgroundColor: COLORS.background,
+          flex: 1,
+          justifyContent: 'space-between',
         }}
       >
         <HomeBudgetReportHeader monthLabel={monthLabel} userName={trimmedUserName} />

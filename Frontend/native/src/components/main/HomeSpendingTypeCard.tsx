@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, type StyleProp, type ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useHomeSpendingTypeSummary } from '../../hooks/useHomeSpendingTypeSummary';
@@ -12,6 +12,7 @@ interface HomeSpendingTypeCardProps {
   title?: string | null;
   description?: string | null;
   iconName?: React.ComponentProps<typeof Ionicons>['name'];
+  style?: StyleProp<ViewStyle>;
 }
 
 export default function HomeSpendingTypeCard({
@@ -19,6 +20,7 @@ export default function HomeSpendingTypeCard({
   title,
   description,
   iconName = 'sparkles-outline',
+  style,
 }: HomeSpendingTypeCardProps) {
   const { displayTitle, displayDescription } = useHomeSpendingTypeSummary({
     title,
@@ -26,8 +28,8 @@ export default function HomeSpendingTypeCard({
   });
 
   return (
-    <TouchableOpacity activeOpacity={0.94} onPress={onPress}>
-      <SurfaceCard>
+    <TouchableOpacity activeOpacity={0.94} onPress={onPress} style={style}>
+      <SurfaceCard style={{ flex: 1, justifyContent: 'space-between' }}>
         <HomeSpendingTypeCardHeader title={displayTitle} iconName={iconName} />
         <HomeSpendingTypeCardDescription description={displayDescription} />
       </SurfaceCard>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 
 import {
@@ -8,8 +8,8 @@ import {
 } from '../../components/ai';
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import GradientButton from '../../components/common/GradientButton';
-import { COLORS, FONTS, LAYOUT, fp, hp, wp } from '../../constants/theme';
-import { useAiFeatureCards, useAiFeatureCarousel } from '../../hooks';
+import { COLORS, FONTS, fp, hp, wp } from '../../constants/theme';
+import { useAiFeatureCards, useAiFeatureCarousel, useResponsiveLayoutMode } from '../../hooks';
 import { useAiStore } from '../../store/aiStore';
 import { useAuthStore } from '../../store/authStore';
 import type { AiFeedbackStackScreenProps } from '../../types';
@@ -18,7 +18,16 @@ import { matchesAiReportPeriod, resolveAiReportPeriod } from '../../utils/aiRepo
 export default function AiFeedbackHomeScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiFeedbackHome'>) {
-  const { height: screenHeight, width: screenWidth } = useWindowDimensions();
+  const {
+    mode,
+    width: screenWidth,
+    isCompact,
+    isTall,
+    pageHorizontal,
+    sectionGap,
+    scrollTopPadding,
+    scrollBottomPadding,
+  } = useResponsiveLayoutMode();
   const sessionUserId = useAuthStore((state) => state.user?.userId ?? null);
   const {
     status,
@@ -29,10 +38,11 @@ export default function AiFeedbackHomeScreen({
   } = useAiStore();
   const featureCards = useAiFeatureCards();
   const reportPeriod = resolveAiReportPeriod();
-  const isCompactHeight = screenHeight < 760;
-  const horizontalPadding = isCompactHeight ? wp(16) : LAYOUT.pageHorizontal;
-  const carouselPageWidth = Math.max(screenWidth - horizontalPadding * 2, 1);
-  const carouselCardWidth = Math.min(carouselPageWidth, wp(isCompactHeight ? 320 : 336));
+  const carouselPageWidth = Math.max(screenWidth - pageHorizontal * 2, 1);
+  const carouselCardWidth = Math.min(
+    carouselPageWidth,
+    wp(isCompact ? 320 : isTall ? 348 : 336),
+  );
   const { activeIndex, scrollRef, handleScroll, scrollToPage } = useAiFeatureCarousel({
     itemWidth: carouselPageWidth,
   });
@@ -75,15 +85,15 @@ export default function AiFeedbackHomeScreen({
   return (
     <BottomTabScreenLayout
       containerStyle={{ flex: 1, backgroundColor: COLORS.backgroundSecondary }}
-      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: horizontalPadding }}
-      scrollTopPadding={isCompactHeight ? hp(12) : hp(20)}
-      scrollBottomPadding={isCompactHeight ? hp(56) : hp(28)}
+      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: pageHorizontal }}
+      scrollTopPadding={scrollTopPadding}
+      scrollBottomPadding={isCompact ? scrollBottomPadding + hp(24) : scrollBottomPadding}
       backgroundColor={COLORS.backgroundSecondary}
     >
       <View
         style={{
-          marginTop: isCompactHeight ? hp(12) : hp(20),
-          marginBottom: isCompactHeight ? hp(16) : LAYOUT.pageSectionGap,
+          marginTop: isCompact ? hp(12) : isTall ? hp(24) : hp(20),
+          marginBottom: sectionGap,
         }}
       >
         <Text style={titleStyle}>
@@ -96,7 +106,7 @@ export default function AiFeedbackHomeScreen({
 
       <View
         style={{
-          marginBottom: isCompactHeight ? hp(16) : LAYOUT.pageSectionGap,
+          marginBottom: sectionGap,
           width: '100%',
         }}
       >
@@ -122,7 +132,7 @@ export default function AiFeedbackHomeScreen({
               <AiFeatureCarouselCard
                 title={item.title}
                 description={item.description}
-                compact={isCompactHeight}
+                layoutMode={mode}
                 width={carouselCardWidth}
               >
                 {item.preview}
@@ -136,12 +146,12 @@ export default function AiFeedbackHomeScreen({
         pageCount={featureCards.length}
         activeIndex={activeIndex}
         onPressPage={scrollToPage}
-        compact={isCompactHeight}
+        compact={isCompact}
       />
 
       <View
         style={{
-          paddingBottom: isCompactHeight ? hp(8) : hp(20),
+          paddingBottom: isCompact ? hp(8) : isTall ? hp(24) : hp(20),
           width: '100%',
         }}
       >

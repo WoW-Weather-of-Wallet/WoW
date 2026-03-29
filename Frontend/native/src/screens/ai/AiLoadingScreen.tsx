@@ -4,12 +4,18 @@ import Animated from 'react-native-reanimated';
 import { COLORS, hp, wp } from '../../constants/theme';
 import BottomTabOverlayLayout from '../../components/common/BottomTabOverlayLayout';
 import { AiLoadingStage } from '../../components/ai';
-import { useAiLoadingFlow } from '../../hooks';
+import { useAiLoadingFlow, useResponsiveLayoutMode } from '../../hooks';
 import type { AiFeedbackStackScreenProps } from '../../types';
 
 export default function AiLoadingScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiLoading'>) {
+  const {
+    isCompact,
+    pageHorizontal,
+    topDockTopPadding,
+    scrollBottomPadding,
+  } = useResponsiveLayoutMode();
   const { currentStep, step, isLastStep, animatedProgressStyle } = useAiLoadingFlow({
     navigation,
   });
@@ -21,25 +27,25 @@ export default function AiLoadingScreen({
         backgroundColor: COLORS.backgroundSecondary,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: wp(24),
+        paddingHorizontal: pageHorizontal,
       }}
       contentContainerStyle={{
         alignItems: 'center',
         justifyContent: 'center',
       }}
       backgroundColor={COLORS.backgroundSecondary}
-      topOverlayTopPadding={hp(16)}
+      topOverlayTopPadding={topDockTopPadding + hp(4)}
       topOverlayStyle={{
-        paddingHorizontal: wp(24),
+        paddingHorizontal: pageHorizontal,
         zIndex: 2,
       }}
-      bottomOverlayBottomPadding={hp(30)}
+      bottomOverlayBottomPadding={scrollBottomPadding}
       bottomOverlayStyle={{ alignItems: 'center' }}
       bottomOverlayContent={
         <View
           className="overflow-hidden"
           style={{
-            width: wp(200),
+            width: isCompact ? wp(180) : wp(200),
             height: 4,
             borderRadius: 999,
             backgroundColor: COLORS.progressTrackBackground,

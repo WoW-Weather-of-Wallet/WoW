@@ -2,11 +2,19 @@ import React from 'react';
 
 import BottomTabScreenLayout from '../../components/common/BottomTabScreenLayout';
 import { HomeDashboardContent, HomeDashboardSheets } from '../../components/main';
-import { COLORS, LAYOUT, hp } from '../../constants/theme';
+import { COLORS } from '../../constants/theme';
+import { useResponsiveLayoutMode } from '../../hooks';
 import { useMainHomeFlow } from '../../hooks/useMainHomeFlow';
 import { useModalState } from '../../hooks/useModalState';
 
 export default function MainHomeScreen() {
+  const {
+    mode,
+    pageHorizontal,
+    sectionGap,
+    scrollTopPadding,
+    scrollBottomPadding,
+  } = useResponsiveLayoutMode();
   const reportModal = useModalState();
   const spendingTypeModal = useModalState();
   const {
@@ -23,9 +31,12 @@ export default function MainHomeScreen() {
     <>
       <BottomTabScreenLayout
         containerStyle={styles.container}
-        contentContainerStyle={styles.contentContainer}
-        scrollTopPadding={hp(12)}
-        scrollBottomPadding={hp(30)}
+        contentContainerStyle={{
+          paddingHorizontal: pageHorizontal,
+          gap: sectionGap,
+        }}
+        scrollTopPadding={scrollTopPadding}
+        scrollBottomPadding={scrollBottomPadding}
       >
         <HomeDashboardContent
           weatherCard={weatherCard}
@@ -33,6 +44,7 @@ export default function MainHomeScreen() {
           budgetReportCard={budgetReportCard}
           onPressSpendingType={spendingTypeModal.open}
           onPressBudgetReport={reportModal.open}
+          layoutMode={mode}
         />
       </BottomTabScreenLayout>
 
@@ -52,9 +64,5 @@ const styles = {
   container: {
     flex: 1,
     backgroundColor: COLORS.backgroundSecondary,
-  },
-  contentContainer: {
-    paddingHorizontal: LAYOUT.pageHorizontal,
-    gap: LAYOUT.pageSectionGap,
   },
 } as const;
