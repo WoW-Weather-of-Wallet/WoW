@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, View } from 'react-native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -18,6 +19,7 @@ export default function AiResultScreen({
   navigation,
 }: AiFeedbackStackScreenProps<'AiResult'>) {
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const {
     isCompact,
     pageHorizontal,
@@ -29,6 +31,8 @@ export default function AiResultScreen({
   const reportPeriod = resolveAiReportPeriod();
   const contentLayoutMode = isCompact ? 'compact' : 'regular';
   const [bottomActionHeight, setBottomActionHeight] = React.useState(0);
+  const headerHeight = hp(40);
+  const headerBottomSpacing = isCompact ? hp(14) : hp(16);
   const {
     reset,
     resultData,
@@ -75,6 +79,27 @@ export default function AiResultScreen({
       containerStyle={{ flex: 1, backgroundColor: COLORS.backgroundSecondary }}
       backgroundColor={COLORS.backgroundSecondary}
       contentContainerStyle={{ flex: 1 }}
+      topOverlayTopPadding={scrollTopPadding}
+      topOverlayStyle={{
+        paddingHorizontal: pageHorizontal,
+        paddingBottom: headerBottomSpacing,
+        backgroundColor: COLORS.backgroundSecondary,
+        zIndex: 2,
+      }}
+      topOverlayContent={
+        <AiStackHeader
+          title={headerTitle}
+          showBackButton
+          onPressBack={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+              return;
+            }
+
+            navigation.navigate('AiFeedbackHome');
+          }}
+        />
+      }
       bottomOverlayStyle={showRetryButton ? { paddingHorizontal: pageHorizontal } : undefined}
       bottomOverlayBottomPadding={isCompact ? hp(10) : hp(14)}
       bottomOverlayContent={showRetryButton ? (
@@ -130,27 +155,12 @@ export default function AiResultScreen({
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: pageHorizontal,
-          paddingTop: insets.top + scrollTopPadding,
-          paddingBottom: bottomActionHeight + scrollBottomPadding + hp(12),
+          paddingTop: insets.top + scrollTopPadding + headerHeight + headerBottomSpacing,
+          paddingBottom: bottomActionHeight + tabBarHeight + scrollBottomPadding + hp(12),
         }}
         showsVerticalScrollIndicator={false}
       >
         <View style={{ gap: isCompact ? hp(16) : hp(18) }}>
-          <Animated.View entering={FadeInDown.duration(500)}>
-            <AiStackHeader
-              title={headerTitle}
-              showBackButton
-              onPressBack={() => {
-                if (navigation.canGoBack()) {
-                  navigation.goBack();
-                  return;
-                }
-
-                navigation.navigate('AiFeedbackHome');
-              }}
-            />
-          </Animated.View>
-
           {cards.map((card, index) => (
             <Animated.View
               key={card.id}

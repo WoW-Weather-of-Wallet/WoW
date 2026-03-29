@@ -36,6 +36,7 @@ interface BottomSheetModalProps extends PropsWithChildren {
   scrollable?: boolean;
   enableSwipeToClose?: boolean;
   showCloseButton?: boolean;
+  swipeArea?: 'header' | 'sheet';
 }
 
 export default function BottomSheetModal({
@@ -47,6 +48,7 @@ export default function BottomSheetModal({
   scrollable = true,
   enableSwipeToClose = true,
   showCloseButton = false,
+  swipeArea = 'header',
   children,
 }: BottomSheetModalProps) {
   const insets = useSafeAreaInsets();
@@ -116,7 +118,7 @@ export default function BottomSheetModal({
   const headerBlock = (
     <View
       style={{ paddingBottom: hp(4) }}
-      {...(enableSwipeToClose ? panResponder.panHandlers : {})}
+      {...(enableSwipeToClose && swipeArea === 'header' ? panResponder.panHandlers : {})}
     >
       {showHandle ? (
         <View
@@ -228,6 +230,7 @@ export default function BottomSheetModal({
           accessibilityLabel="바텀시트 배경 닫기"
         />
         <Animated.View
+          {...(enableSwipeToClose && swipeArea === 'sheet' ? panResponder.panHandlers : {})}
           style={{
             backgroundColor: COLORS.background,
             borderTopLeftRadius: RADIUS.xxl,
