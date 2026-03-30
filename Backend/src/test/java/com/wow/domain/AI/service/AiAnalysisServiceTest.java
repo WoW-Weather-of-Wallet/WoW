@@ -2,16 +2,14 @@ package com.wow.domain.AI.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wow.domain.AI.dto.AiAnalysisResponse;
+import com.wow.domain.AI.service.AiAnalysisWriteService;
 import com.wow.domain.calendar.repository.TransactionRepository;
 import com.wow.domain.expensecategory.entity.ExpenseCategory;
-import com.wow.domain.expensecategory.repository.ExpenseCategoryRepository;
 import com.wow.domain.spendinganalysis.entity.AiAnalysis;
 import com.wow.domain.spendinganalysis.entity.AiAnalysisCategoryResult;
 import com.wow.domain.spendinganalysis.entity.AiAnalysisType;
 import com.wow.domain.spendinganalysis.entity.SpendingType;
-import com.wow.domain.spendinganalysis.repository.AiAnalysisCategoryResultRepository;
 import com.wow.domain.spendinganalysis.repository.AiAnalysisRepository;
-import com.wow.domain.spendinganalysis.repository.SpendingTypeRepository;
 import com.wow.domain.user.entity.Role;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
@@ -57,16 +55,10 @@ class AiAnalysisServiceTest {
     private TransactionRepository transactionRepository;
 
     @Mock
-    private ExpenseCategoryRepository expenseCategoryRepository;
-
-    @Mock
-    private SpendingTypeRepository spendingTypeRepository;
-
-    @Mock
     private AiAnalysisRepository aiAnalysisRepository;
 
     @Mock
-    private AiAnalysisCategoryResultRepository aiAnalysisCategoryResultRepository;
+    private AiAnalysisWriteService aiAnalysisWriteService;
 
     @Mock
     private UserRepository userRepository;
@@ -86,10 +78,8 @@ class AiAnalysisServiceTest {
         aiAnalysisService = new AiAnalysisService(
                 aiRestTemplate,
                 transactionRepository,
-                expenseCategoryRepository,
-                spendingTypeRepository,
                 aiAnalysisRepository,
-                aiAnalysisCategoryResultRepository,
+                aiAnalysisWriteService,
                 userRepository,
                 redisTemplate,
                 objectMapper
@@ -269,25 +259,11 @@ class AiAnalysisServiceTest {
         )).thenReturn(List.of(createSummary("커피/음료", 233500, 12L)));
         when(aiRestTemplate.exchange(any(String.class), any(), any(), eq(AiAnalysisResponse.class)))
                 .thenReturn(ResponseEntity.ok(aiResponse));
-        when(spendingTypeRepository.findById(1L)).thenReturn(Optional.of(spendingType));
-        when(aiAnalysisRepository.save(any(AiAnalysis.class))).thenReturn(savedAnalysis);
-        when(expenseCategoryRepository.findByCategoryName("커피/음료")).thenReturn(Optional.of(expenseCategory));
 
         AiAnalysisResponse response = aiAnalysisService.getAnalysis(1L, 2026, 3, true);
 
         assertThat(response.getGoal().getActionTip()).isEqualTo("커피/음료 구매 횟수를 주 3회 이내로 제한해보세요.");
-        verify(aiAnalysisRepository).deleteByUser_IdAndYearAndMonthAndAnalysisType(
-                1L, 2026, 3, AiAnalysisType.MONTHLY
-        );
-
-        ArgumentCaptor<AiAnalysis> analysisCaptor = ArgumentCaptor.forClass(AiAnalysis.class);
-        verify(aiAnalysisRepository).save(analysisCaptor.capture());
-        assertThat(analysisCaptor.getValue().getDescription()).contains("\"goal\"");
-
-        ArgumentCaptor<List<AiAnalysisCategoryResult>> categoryCaptor = ArgumentCaptor.forClass(List.class);
-        verify(aiAnalysisCategoryResultRepository).saveAll(categoryCaptor.capture());
-        assertThat(categoryCaptor.getValue()).hasSize(1);
-        assertThat(categoryCaptor.getValue().getFirst().getPrice()).isEqualTo(233500);
+        verify(aiAnalysisWriteService).persistMonthlyAnalysis(user, 2026, 3, aiResponse);
 
         verify(valueOperations).set(
                 eq(RedisKeys.AI_MONTHLY_REPORT_PREFIX + "1:2026:3"),

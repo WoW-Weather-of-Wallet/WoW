@@ -4,14 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wow.domain.AI.dto.AiAnalysisRequest;
 import com.wow.domain.AI.dto.AiAnalysisResponse;
 import com.wow.domain.calendar.repository.TransactionRepository;
-import com.wow.domain.expensecategory.repository.ExpenseCategoryRepository;
 import com.wow.domain.spendinganalysis.entity.AiAnalysis;
-import com.wow.domain.spendinganalysis.entity.AiAnalysisCategoryResult;
 import com.wow.domain.spendinganalysis.entity.AiAnalysisType;
-import com.wow.domain.spendinganalysis.entity.SpendingType;
-import com.wow.domain.spendinganalysis.repository.AiAnalysisCategoryResultRepository;
 import com.wow.domain.spendinganalysis.repository.AiAnalysisRepository;
-import com.wow.domain.spendinganalysis.repository.SpendingTypeRepository;
 import com.wow.domain.user.entity.User;
 import com.wow.domain.user.repository.UserRepository;
 import com.wow.global.constant.RedisKeys;
@@ -27,18 +22,17 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -67,10 +61,8 @@ public class AiAnalysisService {
 
     private final RestTemplate aiRestTemplate;
     private final TransactionRepository transactionRepository;
-    private final ExpenseCategoryRepository expenseCategoryRepository;
-    private final SpendingTypeRepository spendingTypeRepository;
     private final AiAnalysisRepository aiAnalysisRepository;
-    private final AiAnalysisCategoryResultRepository aiAnalysisCategoryResultRepository;
+    private final AiAnalysisWriteService aiAnalysisWriteService;
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
@@ -81,31 +73,29 @@ public class AiAnalysisService {
     public AiAnalysisService(
             @Qualifier("aiRestTemplate") RestTemplate aiRestTemplate,
             TransactionRepository transactionRepository,
-            ExpenseCategoryRepository expenseCategoryRepository,
-            SpendingTypeRepository spendingTypeRepository,
             AiAnalysisRepository aiAnalysisRepository,
-            AiAnalysisCategoryResultRepository aiAnalysisCategoryResultRepository,
+            AiAnalysisWriteService aiAnalysisWriteService,
             UserRepository userRepository,
             StringRedisTemplate redisTemplate,
             ObjectMapper objectMapper
     ) {
         this.aiRestTemplate = aiRestTemplate;
         this.transactionRepository = transactionRepository;
-        this.expenseCategoryRepository = expenseCategoryRepository;
-        this.spendingTypeRepository = spendingTypeRepository;
         this.aiAnalysisRepository = aiAnalysisRepository;
-        this.aiAnalysisCategoryResultRepository = aiAnalysisCategoryResultRepository;
+        this.aiAnalysisWriteService = aiAnalysisWriteService;
         this.userRepository = userRepository;
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
     }
 
-    @Transactional(noRollbackFor = {NotFoundException.class, InternalServerException.class})
+    // Calendar read APIs can call this path. We suspend any caller transaction so the
+    // generation branch can persist through the dedicated write service.
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public AiAnalysisResponse getAnalysis(Long userId, int year, int month) {
         return getAnalysis(userId, year, month, false);
     }
 
-    @Transactional(noRollbackFor = {NotFoundException.class, InternalServerException.class})
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public AiAnalysisResponse getAnalysis(Long userId, int year, int month, boolean generateIfAbsent) {
         String cacheKey = buildMonthlyAiReportCacheKey(userId, year, month);
         AiAnalysisResponse cached = readMonthlyAiReportCache(cacheKey);
@@ -160,7 +150,7 @@ public class AiAnalysisService {
         AiAnalysisRequest body = AiAnalysisRequest.from(summaries, false);
         AiAnalysisResponse aiReport = requestAiReport(body, userId, year, month);
 
-        persistMonthlyAnalysis(user, year, month, aiReport);
+        aiAnalysisWriteService.persistMonthlyAnalysis(user, year, month, aiReport);
         writeMonthlyAiReportCache(cacheKey, aiReport);
         return aiReport;
     }
@@ -194,71 +184,6 @@ public class AiAnalysisService {
             } catch (Exception ignored) {
                 // Immutable monthly reports remain in DB; cache eviction failure should not block edits.
             }
-        }
-    }
-
-    private void persistMonthlyAnalysis(User user, int year, int month, AiAnalysisResponse response) {
-        if (response.getCluster() == null || response.getCluster().getId() == null) {
-            log.warn("AI analysis response does not contain cluster info. userId={}", user.getId());
-            return;
-        }
-
-        SpendingType spendingType = spendingTypeRepository.findById(response.getCluster().getId().longValue())
-                .orElse(null);
-        if (spendingType == null) {
-            log.warn(
-                    "SpendingType not found for clusterId={}, userId={}",
-                    response.getCluster().getId(),
-                    user.getId()
-            );
-            return;
-        }
-
-        aiAnalysisRepository.deleteByUser_IdAndYearAndMonthAndAnalysisType(
-                user.getId(),
-                year,
-                month,
-                MONTHLY_ANALYSIS_TYPE
-        );
-
-        AiAnalysis aiAnalysis = aiAnalysisRepository.save(
-                AiAnalysis.builder()
-                        .user(user)
-                        .spendingType(spendingType)
-                        .year(year)
-                        .month(month)
-                        .analysisType(MONTHLY_ANALYSIS_TYPE)
-                        // We reuse the existing TEXT column so the whole monthly report can be
-                        // re-shown for the rest of the display month without a schema change.
-                        .description(serializeResponse(response))
-                        .build()
-        );
-
-        if (response.getCategories() == null || response.getCategories().isEmpty()) {
-            return;
-        }
-
-        List<AiAnalysisCategoryResult> categoryResults = new ArrayList<>();
-
-        for (AiAnalysisResponse.Category category : response.getCategories()) {
-            if (category == null || category.getName() == null) {
-                continue;
-            }
-
-            expenseCategoryRepository.findByCategoryName(category.getName())
-                    .ifPresent(expenseCategory -> categoryResults.add(
-                            AiAnalysisCategoryResult.builder()
-                                    .aiAnalysis(aiAnalysis)
-                                    .category(expenseCategory)
-                                    .myRatio(toBigDecimal(category.getMyRatio()))
-                                    .baseRatio(toBigDecimal(category.getBaseRatio()))
-                                    .price(category.getAmount() == null ? 0 : category.getAmount().intValue())
-                                    .build()
-                    ));
-        }
-
-        if (!categoryResults.isEmpty()) {
-            aiAnalysisCategoryResultRepository.saveAll(categoryResults);
         }
     }
 
@@ -307,10 +232,6 @@ public class AiAnalysisService {
             );
             throw new InternalServerException(AI_REQUEST_ERROR_MESSAGE, exception);
         }
-    }
-
-    private BigDecimal toBigDecimal(Double value) {
-        return value == null ? BigDecimal.ZERO : BigDecimal.valueOf(value);
     }
 
     private String buildMonthlyAiReportCacheKey(Long userId, int year, int month) {
