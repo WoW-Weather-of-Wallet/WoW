@@ -1,0 +1,78 @@
+{
+  "expo": {
+    "name": "WOW",
+    "slug": "wow-app",
+    "scheme": "wow",
+    "version": "0.7.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "splash": {
+      "image": "./src/assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.wow.app",
+      "buildNumber": "7",
+      "infoPlist": {
+        "NSCameraUsageDescription": "계정 인증 및 프로필 등록에 필요한 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.",
+        "NSPhotoLibraryUsageDescription": "계정 인증 및 프로필 등록에 필요한 이미지를 불러오기 위해 사진 보관함 접근 권한이 필요합니다.",
+        "NSFaceIDUsageDescription": "간편하고 안전한 로그인을 위해 생체 인증 권한이 필요합니다.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.wow.app",
+      "versionCode": 7,
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE",
+        "POST_NOTIFICATIONS",
+        "READ_SMS",
+        "READ_PHONE_STATE",
+        "CALL_PHONE",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "RECEIVE_BOOT_COMPLETED"
+      ]
+    },
+    "plugins": [
+      "expo-splash-screen",
+      "expo-font",
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "extra": {
+      "eas": {
+
+        "projectId": "f2ad7c84-70f0-44b9-ac60-fc686a5dff1c"
+      }
+    },
+    "owner": "ssafymok"
+  }
+}

@@ -1,0 +1,56 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/wowdb
+    username: weather
+    password: wallet
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+server:
+  port: 8080
+
+jwt:
+  secret: d2f8e1a3c7b94f6d2e0a5c8b1f3e7d9a4c2b6f8e0d3a5c7b9f1e4d6a8c0b2f4
+  access-exp-min: 30
+  refresh-exp-day: 14
+  issuer: wowDev
+
+sso:
+  ssafy:
+    client-id: fe7346c1-c83b-4a0f-a4f1-6f18d8a801d0
+    client-secret: edf4ab7d-5f30-4220-91d5-dffbc37ef7d3
+    redirect-uri: http://localhost:8080/sso/providers/ssafy/callback
+
+solapi:
+  api-key: NCSVXJ4FXYAR639Y
+  api-secret: O2SJPRZIGHGDFZPCQZZZVUAXQNKVTKYW
+  sender: "01082132858"
+
+cloud:
+  aws:
+    credentials:
+      access-key: AKIAW7FB3555IZHBLUZP
+      secret-key: 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
+    s3:
+      bucket: ssafyapp-stg-project-prv-data
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false
+
+flask:
+  url: http://127.0.0.1:5000

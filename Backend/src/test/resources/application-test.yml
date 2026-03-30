@@ -1,0 +1,49 @@
+spring:
+  datasource:
+    # 수정 이유:
+    # - contextLoads 테스트가 local 프로필로 실제 PostgreSQL에 붙으려다 실패하지 않도록
+    #   테스트 전용 인메모리 DB를 사용합니다.
+    url: jdbc:h2:mem:wow-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+jwt:
+  secret: dGVzdC1qd3Qtc2VjcmV0LWtleS0yMDI2LXdvdy10ZXN0LWp3dC1zZWNyZXQ=
+  access-exp-min: 30
+  refresh-exp-day: 14
+  issuer: wowTest
+
+sso:
+  ssafy:
+    client-id: test-client-id
+    client-secret: test-client-secret
+    redirect-uri: http://localhost:8080/sso/providers/ssafy/callback
+
+solapi:
+  api-key: test-api-key
+  api-secret: test-api-secret
+  sender: "01000000000"
+
+cloud:
+  aws:
+    credentials:
+      access-key: test-access-key
+      secret-key: test-secret-key
+    region:
+      static: ap-northeast-2
+    s3:
+      bucket: test-bucket

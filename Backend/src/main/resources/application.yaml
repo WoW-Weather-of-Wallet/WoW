@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: backend
+
+  profiles:
+    default: local
+
+  datasource:
+    url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+
+jwt:
+  access-exp-min: 30
+  refresh-exp-day: 14
+  issuer: wowDev
+
+sso:
+  ssafy:
+    client-id: ${SSO_SSAFY_CLIENT_ID}
+    client-secret: ${SSO_SSAFY_CLIENT_SECRET}
+    redirect-uri: ${SSO_SSAFY_REDIRECT_URI}
+
+solapi:
+  api-key: ${SOLAPI_API_KEY}
+  api-secret: ${SOLAPI_API_SECRET}
+  sender: ${SOLAPI_SENDER}
+
+flask:
+  url: http://127.0.0.1:5000
+
+ai:
+  server:
+    # 전처리 Flask(demo_app)와 분리해서, 실제 14B 리포트 서버(chatbot.py)를 별도 설정으로 둔다.
+    base-url: ${AI_SERVER_BASE_URL:http://127.0.0.1:8000}
