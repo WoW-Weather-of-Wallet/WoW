@@ -193,9 +193,9 @@
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/BE아이디3">
-        <img src="https://github.com/BE아이디3.png" width="120px;" alt="BE3"/><br />
-        <b>홍길동</b>
+      <a href="https://github.com/K-JW">
+        <img src="https://github.com/K-JW.png" width="120px;" alt="BE3"/><br />
+        <b>김진우</b>
       </a>
     </td>
   </tr>
@@ -211,12 +211,15 @@
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
 ![Spring Security](https://img.shields.io/badge/Spring_Security_&_JWT-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)
 ![JPA](https://img.shields.io/badge/JPA-59666C?style=for-the-badge&logo=hibernate&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 
 ### AI
 ![Flask](https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white)
 ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)
 ![Scikit-learn](https://img.shields.io/badge/Scikit--learn-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Qwen 2.5-14B](https://img.shields.io/badge/Qwen_2.5--14B-7A3EF0?style=for-the-badge&logo=openai&logoColor=white)
+![GMM](https://img.shields.io/badge/GMM-0C7CD5?style=for-the-badge&logo=scikitlearn&logoColor=white)
 
 ### Infra
 ![EC2](https://img.shields.io/badge/EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)
