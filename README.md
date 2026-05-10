@@ -100,8 +100,8 @@
 
 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
   <img src="assets/캘린더 달력.jpg" width="200" alt="캘린더 달력">
-  <img src="assets/캘린더 내역추가 카테고리선택.jpg" width="200" alt="카테고리 선택">
   <img src="assets/캘린더 내역추가 엑셀파일읽기.jpg" width="200" alt="엑셀 파일 읽기">
+  <img src="assets/캘린더 내역추가 카테고리선택.jpg" width="200" alt="카테고리 선택">
   <img src="assets/캘린더 고정지출 관리목록.jpg" width="200" alt="고정지출 관리">
 </div>
 
