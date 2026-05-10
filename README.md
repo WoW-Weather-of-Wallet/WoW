@@ -134,10 +134,7 @@
 <table>
   <!-- Frontend -->
   <tr>
-    <td align="center">
-      <img src="https://img.shields.io/badge/Frontend-61DAFB?style=for-the-badge&logo=react&logoColor=white"/>
-    </td>
-    <td align="center">
+    <td align="center" colspan="3">
       <img src="https://img.shields.io/badge/Frontend-61DAFB?style=for-the-badge&logo=react&logoColor=white"/>
     </td>
   </tr>
@@ -155,17 +152,12 @@
         <b>이채목</b>
       </a>
     </td>
+    <td></td>
   </tr>
 
   <!-- Backend -->
   <tr>
-    <td align="center">
-      <img src="https://img.shields.io/badge/Backend-6DB33F?style=for-the-badge&logo=spring&logoColor=white"/>
-    </td>
-    <td align="center">
-      <img src="https://img.shields.io/badge/Backend-6DB33F?style=for-the-badge&logo=spring&logoColor=white"/>
-    </td>
-    <td align="center">
+    <td align="center" colspan="3">
       <img src="https://img.shields.io/badge/Backend-6DB33F?style=for-the-badge&logo=spring&logoColor=white"/>
     </td>
   </tr>
@@ -179,13 +171,13 @@
     </td>
     <td align="center">
       <a href="https://github.com/basicprogram">
-        <img src="https://github.com/basicprogram.png" width="120px;" alt="BE2"/><br />
+        <img src="https://github.com/basicprogram.png" width="120px;" alt="오우택"/><br />
         <b>오우택</b>
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/K-JW">
-        <img src="https://github.com/K-JW.png" width="120px;" alt="BE3"/><br />
+        <img src="https://github.com/K-JW.png" width="120px;" alt="김진우"/><br />
         <b>김진우</b>
       </a>
     </td>
