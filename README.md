@@ -140,28 +140,19 @@
     <td align="center">
       <img src="https://img.shields.io/badge/Frontend-61DAFB?style=for-the-badge&logo=react&logoColor=white"/>
     </td>
-    <td align="center">
-      <img src="https://img.shields.io/badge/Frontend-61DAFB?style=for-the-badge&logo=react&logoColor=white"/>
-    </td>
   </tr>
 
   <tr>
     <td align="center">
-      <a href="https://github.com/FE아이디1">
-        <img src="https://github.com/FE아이디1.png" width="120px;" alt="FE1"/><br />
-        <b>진윤세</b>
+      <a href="https://github.com/1421176">
+        <img src="https://github.com/1421176.png" width="120px;" alt="진현제"/><br />
+        <b>진현제</b>
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/FE아이디2">
-        <img src="https://github.com/FE아이디2.png" width="120px;" alt="FE2"/><br />
-        <b>오우택</b>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/FE아이디3">
-        <img src="https://github.com/FE아이디3.png" width="120px;" alt="FE3"/><br />
-        <b>최인호</b>
+      <a href="https://github.com/ChaeMok">
+        <img src="https://github.com/ChaeMok.png" width="120px;" alt="이채목"/><br />
+        <b>이채목</b>
       </a>
     </td>
   </tr>
