@@ -170,8 +170,8 @@
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/basicprogram">
-        <img src="https://github.com/basicprogram.png" width="120px;" alt="오우택"/><br />
+      <a href="https://github.com/WooTaek-Oh">
+        <img src="https://github.com/WooTaek-Oh.png" width="120px;" alt="오우택"/><br />
         <b>오우택</b>
       </a>
     </td>
