@@ -31,7 +31,7 @@
 이처럼 소비를 효율적으로 관리하지 못해 발생하는 고민을 해결하고자, 우리는 다음과 같은 목표를 바탕으로 앱 개발을 진행하였습니다.
 
 - 계좌/카드 내역을 자동으로 파싱하여 소비 내역을 한눈에 제공합니다.
-- GMM을 활용한 소비 유형 제공과 카테고리 사용금액 분석을 제공합니다.
+- 군집분석(계층적 클러스터링)을 활용한 소비 유형 제공과 카테고리 사용금액 분석을 제공합니다.
 - 분석된 데이터를 Qwen2.5 AI를 활용하여 소비 패턴을 분석하고 날씨로 표현하며, 카테고리별 절약 금액과 행동 방향을 제시합니다.
 - 고정지출을 등록하여 매달 예정된 지출을 미리 파악하고 알림을 보내줍니다.
 
@@ -61,10 +61,10 @@
 - 납부일 알림 제공
 
 ### 🤖 AI 소비 분석 및 피드백 *(핵심 기능)*
-> GMM + Qwen2.5 기반 개인화 소비 분석 시스템
+> 계층적 군집분석(Agglomerative Clustering) + Qwen2.5 기반 개인화 소비 분석 시스템
 
 **📊 소비 분석**
-- 3개월 거래 데이터를 기반으로 소비 유형 자동 분류 (GMM)
+- 3개월 거래 데이터를 기반으로 소비 유형 자동 분류 (군집분석)
 - 카테고리별 소비 비중 및 전월 대비 변화 분석
 - 과소비 항목 및 소비 패턴 도출
 
@@ -195,6 +195,7 @@
 ![Spring Security](https://img.shields.io/badge/Spring_Security_&_JWT-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)
 ![JPA](https://img.shields.io/badge/JPA-59666C?style=for-the-badge&logo=hibernate&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase_Cloud_Messaging-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
 
 ### AI
 ![Flask](https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white)
@@ -202,7 +203,7 @@
 ![Scikit-learn](https://img.shields.io/badge/Scikit--learn-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Qwen 2.5-14B](https://img.shields.io/badge/Qwen_2.5--14B-7A3EF0?style=for-the-badge&logo=openai&logoColor=white)
-![GMM](https://img.shields.io/badge/GMM-0C7CD5?style=for-the-badge&logo=scikitlearn&logoColor=white)
+![Agglomerative Clustering](https://img.shields.io/badge/Agglomerative_Clustering-0C7CD5?style=for-the-badge&logo=scikitlearn&logoColor=white)
 
 ### Infra
 ![EC2](https://img.shields.io/badge/EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)
