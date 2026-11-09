@@ -59,6 +59,7 @@ import {
   getCalendarMonthly,
   getCalendarTransactions,
   getFixedExpenseManage,
+  updateCalendarMemo,
   updateFixedExpense,
   updateFixedExpenseEnable,
 } from '../services/calendar';
@@ -944,32 +945,43 @@ export function useCalendarMockState() {
     );
   }
 
-  function handleSaveMemo() {
+  async function handleSaveMemo() {
     if (!selectedDateKey) {
       return;
     }
 
+    const dateKey = selectedDateKey;
     const nextMemo = memoValue.trim();
 
-    // 메모 저장 API는 아직 연결하지 않았습니다.
-    // 캘린더 셀 표시(UI 비교)만 먼저 확인하기 위해 현재는 로컬 상태에만 반영합니다.
-    // TODO: 백엔드 메모 API가 준비되면 여기서 서버 저장을 연결합니다.
-    locallyEditedMemoDateKeysRef.current.add(selectedDateKey);
+    // 서버 응답을 기다리는 동안에도 시트를 바로 닫고 캘린더 셀에
+    // 변경 사항이 즉시 보이도록 먼저 로컬 상태에 낙관적으로 반영합니다.
+    locallyEditedMemoDateKeysRef.current.add(dateKey);
     setCalendarDayDetails((current) => {
-      const currentDetail = current[selectedDateKey] ?? buildFallbackDetail(selectedDateKey);
+      const currentDetail = current[dateKey] ?? buildFallbackDetail(dateKey);
 
       return {
         ...current,
-        [selectedDateKey]: {
+        [dateKey]: {
           ...currentDetail,
           memo: nextMemo,
         },
       };
     });
 
-    // API가 아직 없어서 저장 결과를 서버에서 재조회할 수 없으므로,
-    // 로컬 반영 직후 시트를 닫아 캘린더 셀 아이콘 변화를 바로 확인할 수 있게 둡니다.
     setSelectedDateKey(null);
+
+    try {
+      await updateCalendarMemo(dateKey, { memo: nextMemo });
+      // 서버 저장에 성공했으므로 이후 재조회 시 로컬 값을 지키지 않아도
+      // 서버 값과 동일합니다 — 로컬 보호 플래그를 해제합니다.
+      locallyEditedMemoDateKeysRef.current.delete(dateKey);
+    } catch (error) {
+      console.warn('Failed to save calendar memo', dateKey, error);
+      Alert.alert(
+        '메모 저장 실패',
+        getCalendarApiErrorMessage(error, '메모를 저장하지 못했어요. 잠시 후 다시 시도해주세요.'),
+      );
+    }
   }
 
   return {

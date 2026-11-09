@@ -12,6 +12,8 @@ import type {
   CalendarDailyResponse,
   CalendarHeaderParams,
   CalendarHeaderResponse,
+  CalendarMemoRequest,
+  CalendarMemoResponse,
   CalendarMonthlyParams,
   CalendarMonthlyResponse,
   CalendarOverrideRow,
@@ -233,6 +235,15 @@ export async function getCalendarDaily(params: CalendarDailyParams) {
     {
       params,
     },
+  );
+
+  return response.data.data;
+}
+
+export async function updateCalendarMemo(date: string, payload: CalendarMemoRequest) {
+  const response = await nativeApi.put<CalendarApiResponse<CalendarMemoResponse>>(
+    `/api/v1/calendar/${date}/memo`,
+    payload,
   );
 
   return response.data.data;

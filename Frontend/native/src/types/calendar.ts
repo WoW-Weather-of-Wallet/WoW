@@ -82,6 +82,15 @@ export interface CalendarDailyParams {
   date: string;
 }
 
+export interface CalendarMemoRequest {
+  memo: string;
+}
+
+export interface CalendarMemoResponse {
+  calendarId: number;
+  memo: string;
+}
+
 export interface CalendarDailyTransactionItem {
   merchantName: string;
   category: string;
